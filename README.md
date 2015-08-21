@@ -34,7 +34,7 @@ Access to the plugin is through ```navigator.codePush``` object.
 ## Getting started
 - Add the plugin to your application.
 - Add the configuration preferences to your ```config.xml```
-	```xml
+```xml
     <platform name="android">
         <preference name="CodePushDeploymentKey" value="YOUR-ANDROID-DEPLOYMENT-KEY" />
     </platform>
@@ -42,7 +42,7 @@ Access to the plugin is through ```navigator.codePush``` object.
         <preference name="CodePushDeploymentKey" value="YOUR-IOS-DEPLOYMENT-KEY" />
     </platform>
     <preference name="CodePushServer" value="HTTP://YOUR-CODE-PUSH-SERVER-URL" />
-	```
+```
 - Allow access to the Code Push server:
   - In ```config.xml```, add 
   ```xml
