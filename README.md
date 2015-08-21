@@ -1,3 +1,36 @@
+# cordova-plugin-code-push
+---
+This plugin provides easy integration with the Code Push service, allowing you to update your Cordova application outside the application stores.
+
+Access to the plugin is through ```navigator.codePush``` object.
+
+## Installation
+
+
+	cordova plugin add cordova-plugin-code-push
+
+
+## Supported platforms
+
+- Android
+- iOS
+
+## Methods
+- __queryUpdate__: Queries the server for update packages.
+- __download__: Downloads an update package from the server.
+- __abortDownload__: Aborts the current download session. 
+- __apply__: Applies a downloaded update package.
+- __applyWithRevertProtection__: Applies a downloaded update package with revert protection.
+- __updateSuccess__: Notifies the plugin that the update operation succeeded.
+- __updatePreviouslyFailed__: Checks if a package update was previously attempted but failed for a given update package hash.
+- __getCurrentPackage__: Gets information about the currently applied package.
+- __onBeforeApply__: Can be defined by the user to be notified immediately before an update package is applied.
+- __onAfterApply__: Can be defined by the user to be notified immediately after an update package has been applied.
+
+## Interfaces
+- __LocalPackage__
+- __RemotePackage__
+
 ## Getting started
 - Add the plugin to your application.
 - Add the configuration preferences to your ```config.xml```
@@ -35,18 +68,107 @@ You can create an update by simply zipping your platform's www folder:
 
 The service should now return an update when calling ```navigator.codePush.queryUpdate```.
 
-## queryUpdate(querySuccess, queryError)
+## LocalPackage
+Contains details about an update package that has been downloaded locally or already applied (currently installed package).
+### Properties
+- __deploymentKey__: Deployment key of the package. (String)
+- __description__: Package description. (String)
+- __label__: Package label. (String)
+- __appVersion__: The native version of the application this package update is intended for. (String)
+- __isMandatory__: Flag indicating if the update is mandatory. (Boolean)
+- __packageHash__: The hash value of the package. (String)
+- __packageSize__: The size of the package, in bytes. (Number)
+- __localPath__: The current, local path of the package. (String)
 
-## download(package, downloadSuccess, downloadError)
-    
-## abortDownload(abortSuccess, abortError)
-    
-## applyWithRevertProtection(newPackage, applySuccessTimeoutMillis, applySuccess, applyError)
-    
-## apply(newPackage, applySuccess, applyError)
-    
-## updateSuccess(notifySucceeded, notifyFailed)
-    
-## updatePreviouslyFailed(packageHash, checkSucceeded, checkFailed)
-    
-## getCurrentPackage(packageSuccess, packageError)
+## RemotePackage
+Contains details about an update package that is ready to be downloaded. This object contains very similar properties to ```LocalPackage```, with the difference that it has a ```downloadUrl``` property instead of the local path property.
+### Properties
+- __deploymentKey__: Deployment key of the package. (String)
+- __description__: Package description. (String)
+- __label__: Package label. (String)
+- __appVersion__: The native version of the application this package update is intended for. (String)
+- __isMandatory__: Flag indicating if the update is mandatory. (Boolean)
+- __packageHash__: The hash value of the package. (String)
+- __packageSize__: The size of the package, in bytes. (Number)
+- __downloadUrl__: The URL at which the package is available for download. (String)
+
+## navigator.codePush.queryUpdate
+Queries the Code Push server for updates.
+```javascript
+navigator.accelerometer.queryUpdate(querySuccess, queryError);
+```
+- __querySuccess__ Callback invoked in case of a successful response from the server.
+                          The callback takes one ```RemotePackage``` parameter. A non-null package is a valid update.
+                         A null package means the application is up to date.
+- __queryError__ Optional callback invoked in case of an error. The callback takes one error parameter, containing the details of the error.
+
+
+## navigator.codePush.download
+```javascript
+navigator.codePush.download(package, downloadSuccess, downloadError);
+```
+Downloads a package update from the Code Push service.
+     
+- __package__: The package to download.
+- __downloadSuccess__: Callback function invoked with one ```LocalPackage``` parameter, the downloaded package information, once the download completed successfully.
+- __downloadError__: Optional callback invoked in case of an error.
+
+## navigator.codePush.abortDownload
+```javascript
+navigator.codePush.abortDownload(abortSuccess, abortError)
+```
+Aborts the current download session, previously started with download().
+- __abortSuccess__: Optional callback invoked if the abort operation succeeded.
+- __abortError__: Optional callback invoked in case of an error.
+
+
+## navigator.codePush.applyWithRevertProtection
+```javascript
+navigator.codePush.applyWithRevertProtection(newPackage, applySuccessTimeoutMillis, applySuccess, applyError);
+``` 
+Applies a downloaded package with revert protection.
+
+	Important: If the updateSuccess() method is not invoked in the time specified by applySuccessTimeoutMillis, the application will be reverted to its previous version.
+- __newPackage__: The package update to apply.
+- __updateSuccessTimeoutMillis__: The milliseconds interval to wait for a ```navigator.codePush.updateSuccess``` call. If in the given interval a call to ```navigator.codePush.updateSuccess``` has not been received, the application is reverted to its previous version.
+- __applySuccess__: Callback invoked if the apply operation succeeded. This is the last callback to be invoked after the javascript context is reloaded in the application by launching the updated application. Invocation of this callback does not guarantee that the application will not be reverted, since it is invoked before the applySuccessTimeoutMillis countdown starts.
+- __applyError__: Optional callback inovoked in case of an error.
+
+## navigator.codePush.apply
+```javascript
+navigator.codePush.apply(newPackage, applySuccess, applyError);
+```
+Applies a downloaded package.
+- __newPackage__: The package update to apply.
+- __applySuccess__: Callback invoked if the apply operation succeeded. 
+- __applyError__: Optional callback inovoked in case of an error.
+
+## navigator.codePush.updateSuccess
+```javascript
+navigator.codePush.updateSuccess(notifySucceeded, notifyFailed);
+```
+Notifies the plugin that the update operation succeeded.
+Calling this function is required if ```navigator.codePush.applyWithRevertProtection``` is used for your update.
+If ```navigator.codePush.apply``` was used for the update instead, calling this function is not required and will result in a noop.
+- __notifySucceeded__: Optional callback invoked if the plugin was successfully notified.
+- __notifyFailed__: Optional callback invoked in case of an error during notifying the plugin.
+
+
+## navigator.codePush.updatePreviouslyFailed
+```javascript
+navigator.codePush.updatePreviouslyFailed(packageHash, checkSucceeded, checkFailed);
+```
+Checks if a package update was previously attempted but failed for a given package hash.
+Every reverted update attempted with applyWithRevertProtection() is stored such that the application developer has the option to ignore updates that previously failed. This way, an infinite update loop can be prevented in case of a bad update package.
+- __packageHash__: String hash of the package update to check.
+- __checkSucceeded__: Callback taking one boolean parameter invoked with the result of the check.
+- __checkFailed__: Optional callback invoked in case of an error.
+
+
+## navigator.codePush.getCurrentPackage
+```javascript
+navigator.codePush.getCurrentPackage(packageSuccess, packageError);
+```
+Get the currently installed package information. 
+- __packageSuccess__: Callback invoked with the currently deployed package information.
+- __packageError__: Optional callback invoked in case of an error.
