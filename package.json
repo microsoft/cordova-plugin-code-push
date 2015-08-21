@@ -1,0 +1,28 @@
+{
+  "name": "cordova-plugin-code-push",
+  "version": "0.0.1-dev",
+  "description": "Cordova Code Push Plugin",
+  "cordova": {
+    "id": "cordova-plugin-code-push",
+    "platforms": [
+      "android",
+      "ios",
+      "windows"
+    ]
+  },
+  "keywords": [
+    "cordova",
+    "code",
+    "push",
+    "plugin"
+  ],
+  "author": "Microsoft Corporation",
+  "license": "Licensed under the MIT license.",
+  "devDependencies": {
+    "gulp": "latest",
+    "gulp-typescript": "latest",
+    "tslint": "latest",
+    "del": "latest",
+    "run-sequence": "latest"
+  }
+}

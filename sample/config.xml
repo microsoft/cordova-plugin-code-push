@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='utf-8'?>
+    <widget id="io.cordova.hellocodepush" version="0.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+        <name>HelloCodePush</name>
+        <description>
+            A sample Apache Cordova application that uses the Code Push service.
+        </description>
+        <author email="dev@cordova.apache.org" href="http://cordova.io">
+            Apache Cordova Team
+        </author>
+
+        <!-- The contents of the main page can change between Code-Push updates, but not the name. -->
+        <content src="index.html" />
+
+        <plugin name="cordova-plugin-whitelist" version="1" />
+        <plugin name="cordova-plugin-code-push" version="0.0.1" />
+        <plugin name="cordova-plugin-dialogs" version="1.1.1" />
+
+        <!-- This sample application can communicate with any external domain.
+         If you want to restrict this, don't forget to enable communication with the Code-Push server URL as well. -->
+        <access origin="*" />
+
+        <allow-intent href="http://*/*" />
+        <allow-intent href="https://*/*" />
+        <allow-intent href="tel:*" />
+        <allow-intent href="sms:*" />
+        <allow-intent href="mailto:*" />
+        <allow-intent href="geo:*" />
+
+        <platform name="android">
+            <allow-intent href="market:*" />
+            <!-- Code Push deployment key for the Android platform. -->
+            <preference name="CodePushDeploymentKey" value="TODO_ADD_ANDROID_DEPLOYMENT_KEY" />
+        </platform>
+
+        <platform name="ios">
+            <allow-intent href="itms:*" />
+            <allow-intent href="itms-apps:*" />
+            <!-- Code Push deployment key for the iOS platform. -->
+            <preference name="CodePushDeploymentKey" value="TODO_ADD_IOS_DEPLOYMENT_KEY" />
+        </platform>
+
+        <!-- Code Push server URL. -->
+        <preference name="CodePushServer" value="TODO_ADD_SAMPLE_SERVER_URL />
+    </widget>
