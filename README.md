@@ -1,5 +1,5 @@
 # cordova-plugin-code-push
----
+
 This plugin provides easy integration with the Code Push service, allowing you to update your Cordova application outside the application stores.
 
 Access to the plugin is through ```navigator.codePush``` object.
@@ -45,13 +45,13 @@ Access to the plugin is through ```navigator.codePush``` object.
 	```
 - Allow access to the Code Push server:
   - In ```config.xml```, add 
-     ```xml
-     <access origin="HTTP://YOUR-CODE-PUSH-SERVER-URL" />
-     ```
+  ```xml
+  <access origin="HTTP://YOUR-CODE-PUSH-SERVER-URL" />
+  ```
   - In your html pages where the plugin is used, add the server URL to your existing Content Security Policy (CSP) header:
-  	```xml
-    <meta http-equiv="Content-Security-Policy" content="default-src HTTP://YOUR-CODE-PUSH-SERVER-URL 'self' ... ">
-    ```
+  ```xml
+  <meta http-equiv="Content-Security-Policy" content="default-src HTTP://YOUR-CODE-PUSH-SERVER-URL 'self' ... ">
+   ```
 - You are now ready to use the plugin in the application code. See the sample app for an example and the methods description for more details.
 
 ## Create an application update package
@@ -128,7 +128,7 @@ navigator.codePush.applyWithRevertProtection(newPackage, applySuccessTimeoutMill
 ``` 
 Applies a downloaded package with revert protection.
 
-	Important: If the updateSuccess() method is not invoked in the time specified by applySuccessTimeoutMillis, the application will be reverted to its previous version.
+__Important: If the ```navigator.codePush.updateSuccess``` method is not invoked in the time specified by applySuccessTimeoutMillis, the application will be reverted to its previous version.__
 - __newPackage__: The package update to apply.
 - __updateSuccessTimeoutMillis__: The milliseconds interval to wait for a ```navigator.codePush.updateSuccess``` call. If in the given interval a call to ```navigator.codePush.updateSuccess``` has not been received, the application is reverted to its previous version.
 - __applySuccess__: Callback invoked if the apply operation succeeded. This is the last callback to be invoked after the javascript context is reloaded in the application by launching the updated application. Invocation of this callback does not guarantee that the application will not be reverted, since it is invoked before the applySuccessTimeoutMillis countdown starts.
