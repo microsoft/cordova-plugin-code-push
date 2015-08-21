@@ -124,10 +124,10 @@ interface CodePushCordovaPlugin {
     
     /**
      * Applies a downloaded package with revert protection.
-     * If the updateSuccess() method is not invoked in the time specified by applySuccessTimeoutMillis, the application will be reverted to its previous version.
+     * If the updateSucceeded() method is not invoked in the time specified by applySuccessTimeoutMillis, the application will be reverted to its previous version.
      * 
      * @param newPackage The package update to apply.
-     * @param updateSuccessTimeoutMillis The milliseconds interval to wait for updateSuccess(). If in the given interval a call to updateSuccess() has not been received, the application is reverted to its previous version.
+     * @param applyTimeoutMillis The milliseconds interval to wait for updateSucceeded(). If in the given interval a call to updateSucceeded() has not been received, the application is reverted to its previous version.
      * @param applySuccess Callback invoked if the apply operation succeeded. This is the last callback to be invoked after the javascript context is reloaded in the application by launching the updated application.
      *                     Invocation of this callback does not guarantee that the application will not be reverted, since it is invoked before the applySuccessTimeoutMillis countdown starts.
      * @param applyError Optional callback inovoked in case of an error.
@@ -150,7 +150,7 @@ interface CodePushCordovaPlugin {
      * @param notifySucceeded Optional callback invoked if the plugin was successfully notified.
      * @param notifyFailed Optional callback invoked in case of an error during notifying the plugin.
      */
-    updateSuccess(notifySucceeded?: SuccessCallback<void>, notifyFailed?: ErrorCallback): void;
+    updateSucceeded(notifySucceeded?: SuccessCallback<void>, notifyFailed?: ErrorCallback): void;
     
     /**
      * Checks if a package update was previously attempted but failed for a given package hash.
@@ -161,7 +161,7 @@ interface CodePushCordovaPlugin {
      * @param checkSucceeded Callback taking one boolean parameter invoked with the result of the check.
      * @param checkFailed Optional callback invoked in case of an error.
      */
-    updatePreviouslyFailed(packageHash: string, checkSucceeded: SuccessCallback<boolean>, checkFailed?: ErrorCallback): void;
+    hasUpdatePreviouslyFailed(packageHash: string, checkSucceeded: SuccessCallback<boolean>, checkFailed?: ErrorCallback): void;
     
     /**
      * Get the current package information.

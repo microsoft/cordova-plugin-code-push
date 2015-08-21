@@ -84,7 +84,7 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
 }
 
 - (void)getServerURL:(CDVInvokedUrlCommand *)command {
-    [self sendResultForPreference:@"codepushserver" command:command];
+    [self sendResultForPreference:@"codepushserverurl" command:command];
 }
 
 - (void)getDeploymentKey:(CDVInvokedUrlCommand *)command {

@@ -32,7 +32,7 @@ public class CodePush extends CordovaPlugin {
     public static final String CODEPUSH_OLD_PACKAGE_PATH = "/codepush/oldPackage.json";
     public static final String CODEPUSH_CURRENT_PACKAGE_PATH = "/codepush/currentPackage.json";
     public static final String RESOURCES_BUNDLE = "resources.arsc";
-    private static String WWWAssetPathPrefix = "file:///android_asset/www/";
+    private static final String WWW_ASSET_PATH_PREFIX = "file:///android_asset/www/";
     private static final String FAILED_UPDATES_PREFERENCE = "FAILED_UPDATES";
     private static final String FAILED_UPDATES_KEY = "FAILED_UPDATES_KEY";
 
@@ -57,88 +57,108 @@ public class CodePush extends CordovaPlugin {
             this.returnStringPreference("codepushdeploymentkey", callbackContext);
             return true;
         } else if ("getNativeBuildTime".equals(action)) {
-            long millis = this.getApkEntryBuildTime(RESOURCES_BUNDLE);
-            if (millis == -1) {
-                callbackContext.error("Could not get the application buildstamp.");
-            } else {
-                String result = String.valueOf(millis);
-                callbackContext.success(result);
-            }
-            return true;
+            return execGetNativeBuildTime(callbackContext);
         } else if ("getAppVersion".equals(action)) {
-            try {
-                String appVersionName = this.getAppVersionName();
-                callbackContext.success(appVersionName);
-            } catch (PackageManager.NameNotFoundException e) {
-                callbackContext.error("Cannot get application version.");
-            }
-            return true;
+            return execGetAppVersion(callbackContext);
         } else if ("preapply".equals(action)) {
-            /* check if package is valid */
-            try {
-                final String startLocation = args.getString(0);
-                File startPage = this.getStartPageForPackage(startLocation);
-                if (startPage != null) {
-                    /* start page exists */
-                    callbackContext.success();
-                } else {
-                    callbackContext.error("Could not get the package start page");
-                }
-            } catch (Exception e) {
-                callbackContext.error("Could not get the package start page");
-            }
-            return true;
+            return execPreApply(args, callbackContext);
         } else if ("apply".equals(action)) {
-            try {
-                final String startLocation = args.getString(0);
-                final int updateSuccessTimeoutInMillis = args.optInt(1);
-
-                File startPage = this.getStartPageForPackage(startLocation);
-                if (startPage != null) {
-                    /* start page file exists */
-                    /* navigate to the start page */
-                    this.navigateToFile(startPage);
-
-                    if (updateSuccessTimeoutInMillis > 0) {
-                    /* start countdown for success */
-                        CodePush.ApplySucceeded = false;
-                        final CountDownTimer successTimer = new CountDownTimer(updateSuccessTimeoutInMillis, updateSuccessTimeoutInMillis) {
-                            @Override
-                            public void onTick(long millisUntilFinished) {
-                            /* empty - we are not interested in progress updates */
-                            }
-
-                            @Override
-                            public void onFinish() {
-                                onSuccessTimerFinish();
-                            }
-                        };
-                        successTimer.start();
-                    }
-
-                    callbackContext.success();
-                } else {
-                    callbackContext.error("Could not find the package start page.");
-                }
-            } catch (Exception e) {
-                callbackContext.error("Cound not read webview URL: " + e.getMessage());
-            }
-            return true;
+            return execApply(args, callbackContext);
         } else if ("updatesuccess".equals(action)) {
             this.ApplySucceeded = true;
             return true;
         } else if ("isfailedupdate".equals(action)) {
-            try {
-                final String packageHash = args.getString(0);
-                boolean isFailedUpdate = this.isFailedUpdate(packageHash);
-                callbackContext.success(isFailedUpdate ? 1 : 0);
-            } catch (JSONException e) {
-                callbackContext.error("Could not read the package hash: " + e.getMessage());
-            }
-            return true;
+            return execIsFailedUpdate(args, callbackContext);
         } else {
             return false;
         }
+    }
+
+    private boolean execIsFailedUpdate(CordovaArgs args, CallbackContext callbackContext) {
+        try {
+            final String packageHash = args.getString(0);
+            boolean isFailedUpdate = this.isFailedUpdate(packageHash);
+            callbackContext.success(isFailedUpdate ? 1 : 0);
+        } catch (JSONException e) {
+            callbackContext.error("Could not read the package hash: " + e.getMessage());
+        }
+        return true;
+    }
+
+    private boolean execApply(CordovaArgs args, CallbackContext callbackContext) {
+        try {
+            final String startLocation = args.getString(0);
+            final int updateSuccessTimeoutInMillis = args.optInt(1);
+
+            File startPage = this.getStartPageForPackage(startLocation);
+            if (startPage != null) {
+                /* start page file exists */
+                /* navigate to the start page */
+                this.navigateToFile(startPage);
+
+                if (updateSuccessTimeoutInMillis > 0) {
+                /* start countdown for success */
+                    CodePush.ApplySucceeded = false;
+                    final CountDownTimer successTimer = new CountDownTimer(updateSuccessTimeoutInMillis, updateSuccessTimeoutInMillis) {
+                        @Override
+                        public void onTick(long millisUntilFinished) {
+                        /* empty - we are not interested in progress updates */
+                        }
+
+                        @Override
+                        public void onFinish() {
+                            onSuccessTimerFinish();
+                        }
+                    };
+                    successTimer.start();
+                }
+
+                callbackContext.success();
+            } else {
+                callbackContext.error("Could not find the package start page.");
+            }
+        } catch (Exception e) {
+            callbackContext.error("Cound not read webview URL: " + e.getMessage());
+        }
+        return true;
+    }
+
+    private boolean execPreApply(CordovaArgs args, CallbackContext callbackContext) {
+    /* check if package is valid */
+        try {
+            final String startLocation = args.getString(0);
+            File startPage = this.getStartPageForPackage(startLocation);
+            if (startPage != null) {
+                /* start page exists */
+                callbackContext.success();
+            } else {
+                callbackContext.error("Could not get the package start page");
+            }
+        } catch (Exception e) {
+            callbackContext.error("Could not get the package start page");
+        }
+        return true;
+    }
+
+    private boolean execGetAppVersion(CallbackContext callbackContext) {
+        try {
+            String appVersionName = this.getAppVersionName();
+            callbackContext.success(appVersionName);
+        } catch (PackageManager.NameNotFoundException e) {
+            callbackContext.error("Cannot get application version.");
+        }
+        return true;
+    }
+
+    private boolean execGetNativeBuildTime(CallbackContext callbackContext) {
+        long millis = this.getApkEntryBuildTime(RESOURCES_BUNDLE);
+        if (millis == -1) {
+            callbackContext.error("Could not get the application buildstamp.");
+        } else {
+            String result = String.valueOf(millis);
+            callbackContext.success(result);
+        }
+        return true;
     }
 
     private void onSuccessTimerFinish() {
@@ -336,8 +356,8 @@ public class CodePush extends CordovaPlugin {
     private String getConfigStartPageName() {
         String launchUrl = this.getConfigLaunchUrl();
         int launchUrlLength = launchUrl.length();
-        if (launchUrl.startsWith(CodePush.WWWAssetPathPrefix)) {
-            launchUrl = launchUrl.substring(CodePush.WWWAssetPathPrefix.length(), launchUrlLength);
+        if (launchUrl.startsWith(CodePush.WWW_ASSET_PATH_PREFIX)) {
+            launchUrl = launchUrl.substring(CodePush.WWW_ASSET_PATH_PREFIX.length(), launchUrlLength);
         }
 
         return launchUrl;

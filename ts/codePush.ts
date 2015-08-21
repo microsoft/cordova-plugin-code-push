@@ -65,7 +65,7 @@ class CodePush implements CodePushCordovaPlugin {
      * @param notifySucceeded Optional callback invoked if the plugin was successfully notified.
      * @param notifyFailed Optional callback invoked in case of an error during notifying the plugin.
      */
-    public updateSuccess(notifySucceeded?: SuccessCallback<void>, notifyFailed?: ErrorCallback): void {
+    public updateSucceeded(notifySucceeded?: SuccessCallback<void>, notifyFailed?: ErrorCallback): void {
         cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updatesuccess", []);
     }
     
@@ -78,7 +78,7 @@ class CodePush implements CodePushCordovaPlugin {
      * @param checkSucceeded Callback taking one boolean parameter invoked with the result of the check.
      * @param checkFailed Optional callback invoked in case of an error.
      */
-    public updatePreviouslyFailed(packageHash: string, checkSucceeded: SuccessCallback<boolean>, checkFailed?: ErrorCallback): void {
+    public hasUpdatePreviouslyFailed(packageHash: string, checkSucceeded: SuccessCallback<boolean>, checkFailed?: ErrorCallback): void {
         var win = (failed?: number) => {
             checkSucceeded && checkSucceeded(!!failed);
         };
@@ -273,10 +273,10 @@ class CodePush implements CodePushCordovaPlugin {
 
     /**
      * Applies a downloaded package with revert protection.
-     * If the updateSuccess() method is not invoked in the time specified by applySuccessTimeoutMillis, the application will be reverted to its previous version.
+     * If the updateSucceeded() method is not invoked in the time specified by applySuccessTimeoutMillis, the application will be reverted to its previous version.
      * 
      * @param newPackage The package update to apply.
-     * @param updateSuccessTimeoutMillis The milliseconds interval to wait for updateSuccess(). If in the given interval a call to updateSuccess() has not been received, the application is reverted to its previous version.
+     * @param applySuccessTimeoutMillis The milliseconds interval to wait for updateSucceeded(). If in the given interval a call to updateSucceeded() has not been received, the application is reverted to its previous version.
      * @param applySuccess Callback invoked if the apply operation succeeded. This is the last callback to be invoked after the javascript context is reloaded in the application by launching the updated application.
      *                     Invocation of this callback does not guarantee that the application will not be reverted, since it is invoked before the applySuccessTimeoutMillis countdown starts.
      * @param applyError Optional callback inovoked in case of an error.

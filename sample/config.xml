@@ -40,5 +40,5 @@
         </platform>
 
         <!-- Code Push server URL. -->
-        <preference name="CodePushServer" value="TODO_ADD_SAMPLE_SERVER_URL />
+        <preference name="CodePushServerURL" value="TODO_ADD_SAMPLE_SERVER_URL />
     </widget>

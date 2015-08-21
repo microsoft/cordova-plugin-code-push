@@ -2,7 +2,7 @@
 
 This plugin provides easy integration with the Code Push service, allowing you to update your Cordova application outside the application stores.
 
-Access to the plugin is through ```navigator.codePush``` object.
+Access to the plugin is through the ```navigator.codePush``` object.
 
 ## Installation
 
@@ -16,16 +16,16 @@ Access to the plugin is through ```navigator.codePush``` object.
 - iOS
 
 ## Methods
-- __queryUpdate__: Queries the server for update packages.
-- __download__: Downloads an update package from the server.
-- __abortDownload__: Aborts the current download session. 
-- __apply__: Applies a downloaded update package.
-- __applyWithRevertProtection__: Applies a downloaded update package with revert protection.
-- __updateSuccess__: Notifies the plugin that the update operation succeeded.
-- __updatePreviouslyFailed__: Checks if a package update was previously attempted but failed for a given update package hash.
-- __getCurrentPackage__: Gets information about the currently applied package.
-- __onBeforeApply__: Can be defined by the user to be notified immediately before an update package is applied.
-- __onAfterApply__: Can be defined by the user to be notified immediately after an update package has been applied.
+- __[queryUpdate](#navigatorcodepushqueryupdate)__: Queries the server for update packages.
+- __[download](#navigatorcodepushdownload)__: Downloads an update package from the server.
+- __[abortDownload](#navigatorcodepushabortdownload)__: Aborts the current download session. 
+- __[apply](#navigatorcodepushapply)__: Applies a downloaded update package.
+- __[applyWithRevertProtection](#navigatorcodepushapplywithrevertprotection)__: Applies a downloaded update package with revert protection. This enables the application to revert to the previous version in case something goes wrong with the update.
+- __[updateSucceeded](#navigatorcodepushupdatesucceeded)__: Notifies the plugin that the update operation succeeded.
+- __[hasUpdatePreviouslyFailed](#navigatorcodepushhasupdatepreviouslyfailed)__: Checks if a package update was previously attempted but failed for a given update package hash.
+- __[getCurrentPackage](#navigatorcodepushgetcurrentpackage)__: Gets information about the currently applied package.
+- __[onBeforeApply](#navigatorcodepushonbeforeapply)__: Called immediately before an update package is applied. This method is commonly used for storing data that you want to persist across the update.
+- __[onAfterApply](#navigatorcodepushonafterapply)__: Called immediately after an update package has been applied. Similar to ```onBeforeApply``` this method can be used to process data persisted across the update.
 
 ## Interfaces
 - __LocalPackage__
@@ -41,16 +41,16 @@ Access to the plugin is through ```navigator.codePush``` object.
     <platform name="ios">
         <preference name="CodePushDeploymentKey" value="YOUR-IOS-DEPLOYMENT-KEY" />
     </platform>
-    <preference name="CodePushServer" value="HTTP://YOUR-CODE-PUSH-SERVER-URL" />
+    <preference name="CodePushServerURL" value="HTTP(S)://YOUR-CODE-PUSH-SERVER-URL" />
 ```
 - Allow access to the Code Push server:
   - In ```config.xml```, add 
   ```xml
-  <access origin="HTTP://YOUR-CODE-PUSH-SERVER-URL" />
+  <access origin="HTTP(S)://YOUR-CODE-PUSH-SERVER-URL" />
   ```
   - In your html pages where the plugin is used, add the server URL to your existing Content Security Policy (CSP) header:
   ```xml
-  <meta http-equiv="Content-Security-Policy" content="default-src HTTP://YOUR-CODE-PUSH-SERVER-URL 'self' ... ">
+  <meta http-equiv="Content-Security-Policy" content="default-src HTTP(S)://YOUR-CODE-PUSH-SERVER-URL 'self' ... ">
    ```
 - You are now ready to use the plugin in the application code. See the sample app for an example and the methods description for more details.
 
@@ -60,11 +60,11 @@ You can create an update by simply zipping your platform's www folder:
 - For Android:
   - The platform ```www``` folder is located at: ``` path_to_your_application/platform/android/assets/www```
   - Right click the folder and create a zip archive from it.
-  - Upload the archive to your Android specific deployment in the Code Push service dashboard.
+  - Upload the archive to your Android specific deployment using the Code Push CLI.
 - For iOS:
   - The platform ```www``` folder is located at: ```path_to_your_application/platform/ios/www```
   - Right click the folder and create a zip archive from it.
-  - Upload the archive to you iOS specific deployment in the Code Push service dashboard.
+  - Upload the archive to you iOS specific deployment using the Code Push CLI.
 
 The service should now return an update when calling ```navigator.codePush.queryUpdate```.
 
@@ -95,7 +95,7 @@ Contains details about an update package that is ready to be downloaded. This ob
 ## navigator.codePush.queryUpdate
 Queries the Code Push server for updates.
 ```javascript
-navigator.accelerometer.queryUpdate(querySuccess, queryError);
+navigator.codePush.queryUpdate(querySuccess, queryError);
 ```
 - __querySuccess__ Callback invoked in case of a successful response from the server.
                           The callback takes one ```RemotePackage``` parameter. A non-null package is a valid update.
@@ -109,7 +109,7 @@ navigator.codePush.download(package, downloadSuccess, downloadError);
 ```
 Downloads a package update from the Code Push service.
      
-- __package__: The package to download.
+- __package__: The ```RemotePackage``` to download.
 - __downloadSuccess__: Callback function invoked with one ```LocalPackage``` parameter, the downloaded package information, once the download completed successfully.
 - __downloadError__: Optional callback invoked in case of an error.
 
@@ -128,24 +128,24 @@ navigator.codePush.applyWithRevertProtection(newPackage, applySuccessTimeoutMill
 ``` 
 Applies a downloaded package with revert protection.
 
-__Important: If the ```navigator.codePush.updateSuccess``` method is not invoked in the time specified by applySuccessTimeoutMillis, the application will be reverted to its previous version.__
+__Important: If the ```navigator.codePush.updateSucceeded``` method is not invoked in the time specified by applySuccessTimeoutMillis, the application will be reverted to its previous version.__
 - __newPackage__: The package update to apply.
-- __updateSuccessTimeoutMillis__: The milliseconds interval to wait for a ```navigator.codePush.updateSuccess``` call. If in the given interval a call to ```navigator.codePush.updateSuccess``` has not been received, the application is reverted to its previous version.
-- __applySuccess__: Callback invoked if the apply operation succeeded. This is the last callback to be invoked after the javascript context is reloaded in the application by launching the updated application. Invocation of this callback does not guarantee that the application will not be reverted, since it is invoked before the applySuccessTimeoutMillis countdown starts.
-- __applyError__: Optional callback inovoked in case of an error.
+- __updateSucceededTimeoutMillis__: The milliseconds interval to wait for a ```navigator.codePush.updateSucceeded``` call. If in the given interval a call to ```navigator.codePush.updateSucceeded``` has not been received, the application is reverted to its previous version.
+- __updateSucceeded__: Callback invoked if the apply operation succeeded. This is the last callback to be invoked after the javascript context is reloaded in the application by launching the updated application. Invocation of this callback does not guarantee that the application will not be reverted, since it is invoked before the applySuccessTimeoutMillis countdown starts.
+- __applyError__: Optional callback invoked in case of an error.
 
 ## navigator.codePush.apply
 ```javascript
 navigator.codePush.apply(newPackage, applySuccess, applyError);
 ```
 Applies a downloaded package.
-- __newPackage__: The package update to apply.
+- __newPackage__: The ```LocalPackage``` update to apply.
 - __applySuccess__: Callback invoked if the apply operation succeeded. 
-- __applyError__: Optional callback inovoked in case of an error.
+- __applyError__: Optional callback invoked in case of an error.
 
-## navigator.codePush.updateSuccess
+## navigator.codePush.updateSucceeded
 ```javascript
-navigator.codePush.updateSuccess(notifySucceeded, notifyFailed);
+navigator.codePush.updateSucceeded(notifySucceeded, notifyFailed);
 ```
 Notifies the plugin that the update operation succeeded.
 Calling this function is required if ```navigator.codePush.applyWithRevertProtection``` is used for your update.
@@ -154,9 +154,9 @@ If ```navigator.codePush.apply``` was used for the update instead, calling this 
 - __notifyFailed__: Optional callback invoked in case of an error during notifying the plugin.
 
 
-## navigator.codePush.updatePreviouslyFailed
+## navigator.codePush.hasUpdatePreviouslyFailed
 ```javascript
-navigator.codePush.updatePreviouslyFailed(packageHash, checkSucceeded, checkFailed);
+navigator.codePush.hasUpdatePreviouslyFailed(packageHash, checkSucceeded, checkFailed);
 ```
 Checks if a package update was previously attempted but failed for a given package hash.
 Every reverted update attempted with applyWithRevertProtection() is stored such that the application developer has the option to ignore updates that previously failed. This way, an infinite update loop can be prevented in case of a bad update package.
