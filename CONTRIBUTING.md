@@ -16,11 +16,17 @@ Instead, modify the sources in the ```www``` folder and compile a new version of
 Follow these steps to build a new version of the plugin:
 - clone this repository
 - install the dependencies
-Navigate to the root folder from your command line console and run:
-	```npm install```
+
+	Navigate to the root folder from your command line console and run:
+	```
+	npm install
+	```
 - compile
-From the same root folder location, run:
-	```gulp```
-This will compile the sources and place them in the ```bin``` folder. Any compilation errors will be displayed in the console.
+
+	From the same root folder location, run:
+	```
+	gulp
+	```
+	This will compile the sources and place them in the ```bin``` folder. Any compilation errors will be displayed in the console.
 
 
