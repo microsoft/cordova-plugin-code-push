@@ -51,7 +51,7 @@ public class CodePush extends CordovaPlugin {
     @Override
     public boolean execute(String action, CordovaArgs args, final CallbackContext callbackContext) {
         if ("getServerURL".equals(action)) {
-            this.returnStringPreference("codepushserver", callbackContext);
+            this.returnStringPreference("codepushserverurl", callbackContext);
             return true;
         } else if ("getDeploymentKey".equals(action)) {
             this.returnStringPreference("codepushdeploymentkey", callbackContext);

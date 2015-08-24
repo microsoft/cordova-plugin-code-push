@@ -1,4 +1,4 @@
-/**
+/*
  *******************************************************
  *                                                     *
  *   Copyright (C) Microsoft. All rights reserved.     *
@@ -9,17 +9,12 @@
 /// <reference path="./typings/codePush.d.ts" />
 /// <reference path="./typings/fileSystem.d.ts" />
 /// <reference path="./typings/fileTransfer.d.ts" />
-/// <reference path="httpRequester.ts" />
-/// <reference path="fileUtil.ts" />
-/// <reference path="nativeAppInfo.ts" />
+/// <reference path="./typings/cordova.d.ts" />
 
 "use strict";
 
 declare var zip: any;
-
-import CodePushFileUtil = require("./fileUtil");
-import CodePushHttpRequester = require("./httpRequester");
-import NativeAppInfo = require("./nativeAppInfo");
+declare var cordova: Cordova;
 
 /**
  * This is the entry point to Cordova Code Push SDK.
@@ -102,7 +97,7 @@ class CodePush implements CodePushCordovaPlugin {
         };
 
         try {
-            CodePushFileUtil.readDataFile(CodePush.RootDir, CodePush.PackageInfoFile, (error: Error, content: string) => {
+            FileUtil.readDataFile(CodePush.RootDir, CodePush.PackageInfoFile, (error: Error, content: string) => {
                 if (error) {
                     handleError(error);
                 } else {
@@ -153,7 +148,7 @@ class CodePush implements CodePushCordovaPlugin {
      */
     public writeCurrentPackageInformation(packageInfoMetadata: IPackageInfoMetadata, callback: Callback<void>): void {
         var content = JSON.stringify(packageInfoMetadata);
-        CodePushFileUtil.writeStringToDataFile(content, CodePush.RootDir, CodePush.PackageInfoFile, true, callback);
+        FileUtil.writeStringToDataFile(content, CodePush.RootDir, CodePush.PackageInfoFile, true, callback);
     }
 
     /**
@@ -163,7 +158,7 @@ class CodePush implements CodePushCordovaPlugin {
      */
     public writeOldPackageInformation(callback: Callback<void>): void {
         var reportFileError = (error: FileError) => {
-            callback(CodePushFileUtil.fileErrorToError(error), null);
+            callback(FileUtil.fileErrorToError(error), null);
         };
 
         var copyFile = (fileToCopy: FileEntry) => {
@@ -178,7 +173,7 @@ class CodePush implements CodePushCordovaPlugin {
             if (error) {
                 callback(error, null);
             } else {
-                CodePushFileUtil.getDataFile(CodePush.RootDir, CodePush.OldPackageInfoFile, false, (error: Error, oldPackageFile: FileEntry) => {
+                FileUtil.getDataFile(CodePush.RootDir, CodePush.OldPackageInfoFile, false, (error: Error, oldPackageFile: FileEntry) => {
                     if (!error && !!oldPackageFile) {
                         /* file already exists */
                         oldPackageFile.remove(() => {
@@ -191,7 +186,7 @@ class CodePush implements CodePushCordovaPlugin {
             }
         };
 
-        CodePushFileUtil.getDataFile(CodePush.RootDir, CodePush.PackageInfoFile, false, gotFile);
+        FileUtil.getDataFile(CodePush.RootDir, CodePush.PackageInfoFile, false, gotFile);
     }
     
     /**
@@ -322,12 +317,12 @@ class CodePush implements CodePushCordovaPlugin {
             };
 
             var deleteDirectory = (dirLocation: string, deleteDirCallback: Callback<void>) => {
-                CodePushFileUtil.getDataDirectory(dirLocation, false, (oldDirError: Error, dirToDelete: DirectoryEntry) => {
+                FileUtil.getDataDirectory(dirLocation, false, (oldDirError: Error, dirToDelete: DirectoryEntry) => {
                     if (oldDirError) {
                         deleteDirCallback(oldDirError, null);
                     } else {
                         var win = () => { deleteDirCallback(null, null); };
-                        var fail = (e: FileError) => { deleteDirCallback(CodePushFileUtil.fileErrorToError(e), null); };
+                        var fail = (e: FileError) => { deleteDirCallback(FileUtil.fileErrorToError(e), null); };
                         dirToDelete.removeRecursively(win, fail);
                     }
                 });
@@ -392,12 +387,12 @@ class CodePush implements CodePushCordovaPlugin {
 
             var handleCleanDeployment = (cleanDeployCallback: Callback<void>) => {
                 // no diff manifest
-                CodePushFileUtil.getDataDirectory(newPackageLocation, true, (deployDirError: Error, deployDir: DirectoryEntry) => {
-                    CodePushFileUtil.getDataDirectory(CodePush.DownloadUnzipDir, false, (unzipDirErr: Error, unzipDir: DirectoryEntry) => {
+                FileUtil.getDataDirectory(newPackageLocation, true, (deployDirError: Error, deployDir: DirectoryEntry) => {
+                    FileUtil.getDataDirectory(CodePush.DownloadUnzipDir, false, (unzipDirErr: Error, unzipDir: DirectoryEntry) => {
                         if (unzipDirErr || deployDirError) {
                             cleanDeployCallback(new Error("Could not copy new package."), null);
                         } else {
-                            CodePushFileUtil.copyDirectoryEntriesTo(unzipDir, deployDir, (copyError: Error) => {
+                            FileUtil.copyDirectoryEntriesTo(unzipDir, deployDir, (copyError: Error) => {
                                 if (copyError) {
                                     cleanDeployCallback(copyError, null);
                                 } else {
@@ -409,17 +404,17 @@ class CodePush implements CodePushCordovaPlugin {
                 });
             };
             var copyCurrentPackage = (copyCallback: Callback<void>) => {
-                CodePushFileUtil.getDataDirectory(newPackageLocation, true, (deployDirError: Error, deployDir: DirectoryEntry) => {
+                FileUtil.getDataDirectory(newPackageLocation, true, (deployDirError: Error, deployDir: DirectoryEntry) => {
                     this.getCurrentPackage((currentPackage: LocalPackage) => {
                         if (deployDirError) {
                             applyError && applyError(new Error("Could not acquire the source/destination folders. "));
                         } else {
                             var success = (currentPackageDirectory: DirectoryEntry) => {
-                                CodePushFileUtil.copyDirectoryEntriesTo(currentPackageDirectory, deployDir, copyCallback);
+                                FileUtil.copyDirectoryEntriesTo(currentPackageDirectory, deployDir, copyCallback);
                             };
 
                             var fail = (fileSystemError: FileError) => {
-                                copyCallback(CodePushFileUtil.fileErrorToError(fileSystemError), null);
+                                copyCallback(FileUtil.fileErrorToError(fileSystemError), null);
                             };
 
                             window.resolveLocalFileSystemURL(currentPackage.localPath, success, fail);
@@ -434,13 +429,13 @@ class CodePush implements CodePushCordovaPlugin {
                     /* copy new files */
                     handleCleanDeployment((cleanDeployError: Error) => {
                         /* delete files mentioned in the manifest */
-                        var diffContent = CodePushFileUtil.readFileEntry(diffManifest, (error: Error, content: string) => {
+                        var diffContent = FileUtil.readFileEntry(diffManifest, (error: Error, content: string) => {
                             if (error || currentPackageError || cleanDeployError) {
                                 applyError && applyError(new Error("Cannot perform diff-update."));
                             } else {
                                 var manifest: IDiffManifest = JSON.parse(content);
-                                CodePushFileUtil.deleteEntriesFromDataDirectory(newPackageLocation, manifest.deletedFiles, (deleteError: Error) => {
-                                    CodePushFileUtil.getDataDirectory(newPackageLocation, true, (deployDirError: Error, deployDir: DirectoryEntry) => {
+                                FileUtil.deleteEntriesFromDataDirectory(newPackageLocation, manifest.deletedFiles, (deleteError: Error) => {
+                                    FileUtil.getDataDirectory(newPackageLocation, true, (deployDirError: Error, deployDir: DirectoryEntry) => {
                                         if (deleteError || deployDirError) {
                                             applyError && applyError(new Error("Cannot clean up deleted manifest files."));
                                         } else {
@@ -458,9 +453,9 @@ class CodePush implements CodePushCordovaPlugin {
                 if (unzipError) {
                     applyError && applyError(new Error("Could not unzip package. " + this.getErrorMessage(unzipError)));
                 } else {
-                    CodePushFileUtil.getDataDirectory(newPackageLocation, true, (deployDirError: Error, deployDir: DirectoryEntry) => {
+                    FileUtil.getDataDirectory(newPackageLocation, true, (deployDirError: Error, deployDir: DirectoryEntry) => {
                         // check for diff manifest
-                        CodePushFileUtil.getDataFile(CodePush.DownloadUnzipDir, CodePush.DiffManifestFile, false, (manifestError: Error, diffManifest: FileEntry) => {
+                        FileUtil.getDataFile(CodePush.DownloadUnzipDir, CodePush.DiffManifestFile, false, (manifestError: Error, diffManifest: FileEntry) => {
                             if (!manifestError && !!diffManifest) {
                                 handleDiffDeployment(diffManifest);
                             } else {
@@ -473,9 +468,9 @@ class CodePush implements CodePushCordovaPlugin {
                 }
             };
 
-            CodePushFileUtil.getDataDirectory(CodePush.DownloadUnzipDir, false, (error: Error, directoryEntry: DirectoryEntry) => {
+            FileUtil.getDataDirectory(CodePush.DownloadUnzipDir, false, (error: Error, directoryEntry: DirectoryEntry) => {
                 var unzipPackage = () => {
-                    CodePushFileUtil.getDataDirectory(CodePush.DownloadUnzipDir, true, (innerError: Error, unzipDir: DirectoryEntry) => {
+                    FileUtil.getDataDirectory(CodePush.DownloadUnzipDir, true, (innerError: Error, unzipDir: DirectoryEntry) => {
                         if (innerError) {
                             applyError && applyError(innerError);
                         } else {
@@ -489,7 +484,7 @@ class CodePush implements CodePushCordovaPlugin {
                     directoryEntry.removeRecursively(() => {
                         unzipPackage();
                     }, (cleanupError: FileError) => {
-                        applyError && applyError(CodePushFileUtil.fileErrorToError(cleanupError));
+                        applyError && applyError(FileUtil.fileErrorToError(cleanupError));
                     });
                 } else {
                     unzipPackage();
@@ -536,7 +531,7 @@ class CodePush implements CodePushCordovaPlugin {
                     } else {
                         var configuration: Configuration = { deploymentKey: deploymentKey, serverUrl: serverURL, ignoreAppVersion: this.ignoreAppVersion };
                         this.appDataDirectory = cordova.file.dataDirectory;
-                        this.acquisitionManager = new AcquisitionManager(new CodePushHttpRequester(), configuration);
+                        this.acquisitionManager = new AcquisitionManager(new HttpRequester(), configuration);
                         this.initialized = true;
                         callback(null, null);
                     }
@@ -591,6 +586,402 @@ interface IPackageInfoMetadata extends LocalPackage {
  */
 interface IDiffManifest {
     deletedFiles: string[];
+}
+
+/**
+ * File utilities for Code Push.
+ */
+class FileUtil {
+    public static directoryExists(rootUri: string, path: string, callback: Callback<boolean>): void {
+        FileUtil.getDirectory(rootUri, path, false, (error: Error, dirEntry: DirectoryEntry) => {
+            var dirExists: boolean = !error && !!dirEntry;
+            callback(null, dirExists);
+        });
+    }
+
+    public static fileErrorToError(fileError: FileError, message?: string): Error {
+        return new Error((message ? message : "An error has occurred while performing the operation. ") + " Error code: " + fileError.code);
+    }
+
+    public static getDataDirectory(path: string, createIfNotExists: boolean, callback: Callback<DirectoryEntry>): void {
+        FileUtil.getDirectory(cordova.file.dataDirectory, path, createIfNotExists, callback);
+    }
+
+    public static writeStringToDataFile(content: string, path: string, fileName: string, createIfNotExists: boolean, callback: Callback<void>): void {
+        FileUtil.writeStringToFile(content, cordova.file.dataDirectory, path, fileName, createIfNotExists, callback);
+    }
+
+    public static getApplicationDirectory(path: string, callback: Callback<DirectoryEntry>): void {
+        FileUtil.getApplicationEntry<DirectoryEntry>(path, callback);
+    }
+
+    public static getApplicationFile(path: string, callback: Callback<FileEntry>): void {
+        FileUtil.getApplicationEntry<FileEntry>(path, callback);
+    }
+
+    public static getOrCreateFile(parent: DirectoryEntry, path: string, createIfNotExists: boolean, success: (result: FileEntry) => void, fail: (error: FileError) => void): void {
+        var failFirst = (error: FileError) => {
+            if (!createIfNotExists) {
+                fail(error);
+            } else {
+                parent.getFile(path, { create: true, exclusive: false }, success, fail);
+            }
+        };
+
+        /* check if the file exists first */
+        parent.getFile(path, { create: false, exclusive: false }, success, failFirst);
+    }
+
+    public static getFile(rootUri: string, path: string, fileName: string, createIfNotExists: boolean, callback: Callback<FileEntry>): void {
+        FileUtil.getDirectory(rootUri, path, createIfNotExists, (error: Error, directoryEntry: DirectoryEntry) => {
+            if (error) {
+                callback(error, null);
+            } else {
+                FileUtil.getOrCreateFile(directoryEntry, fileName, createIfNotExists,
+                    (entry: FileEntry) => { callback(null, entry); },
+                    (error: FileError) => { callback(FileUtil.fileErrorToError(error), null); });
+            }
+        });
+    }
+
+    public static getDataFile(path: string, fileName: string, createIfNotExists: boolean, callback: Callback<FileEntry>): void {
+        FileUtil.getFile(cordova.file.dataDirectory, path, fileName, createIfNotExists, callback);
+    }
+
+    public static fileExists(rootUri: string, path: string, fileName: string, callback: Callback<boolean>): void {
+        FileUtil.getFile(rootUri, path, fileName, false, (error: Error, fileEntry: FileEntry) => {
+            var exists: boolean = !error && !!fileEntry;
+            callback(null, exists);
+        });
+    }
+    
+    /**
+     * Gets a DirectoryEntry based on a path.
+     */
+    public static getDirectory(rootUri: string, path: string, createIfNotExists: boolean, callback: Callback<DirectoryEntry>): void {
+        var pathArray: string[] = path.split("/");
+
+        var currentDir: DirectoryEntry;
+        var currentIndex = 0;
+
+        var appDirError = (error: FileError): void => {
+            callback(new Error("Could not get application subdirectory. Error code: " + error.code), null);
+        };
+
+        var rootDirSuccess = (appDir: DirectoryEntry): void => {
+            if (!createIfNotExists) {
+                appDir.getDirectory(path, { create: false, exclusive: false }, (directoryEntry: DirectoryEntry) => { callback(null, directoryEntry); }, appDirError);
+            } else {
+                currentDir = appDir;
+                if (currentIndex >= pathArray.length) {
+                    callback(null, appDir);
+                } else {
+                    var currentPath = pathArray[currentIndex];
+                    currentIndex++;
+
+                    if (currentPath) {
+                        /* Recursively call rootDirSuccess for all path segments */
+                        FileUtil.getOrCreateSubDirectory(appDir, currentPath, createIfNotExists, rootDirSuccess, appDirError);
+                    } else {
+                        /* Array has empty string elements, possibly due to leading or trailing slashes*/
+                        rootDirSuccess(appDir);
+                    }
+                }
+            }
+        };
+
+        window.resolveLocalFileSystemURL(rootUri, rootDirSuccess, appDirError);
+    }
+
+    public static dataDirectoryExists(path: string, callback: Callback<boolean>): void {
+        FileUtil.directoryExists(cordova.file.dataDirectory, path, callback);
+    }
+
+    public static copyDirectoryEntriesTo(sourceDir: DirectoryEntry, destinationDir: DirectoryEntry, callback: Callback<void>): void {
+
+        var fail = (error: FileError) => {
+            callback(FileUtil.fileErrorToError(error), null);
+        };
+
+        var success = (entries: Entry[]) => {
+            var i = 0;
+
+            var copyOne = () => {
+                if (i < entries.length) {
+                    var nextEntry = entries[i++];
+                    /* recursively call copyOne on copy success */
+
+                    var entryAlreadyInDestination = (destinationEntry: Entry) => {
+                        var replaceError = (fileError: FileError) => {
+                            callback(new Error("Error during entry replacement. Error code: " + fileError.code), null);
+                        };
+
+                        if (destinationEntry.isDirectory) {
+                            /* directory */
+                            FileUtil.copyDirectoryEntriesTo(<DirectoryEntry>nextEntry, <DirectoryEntry>destinationEntry, (error: Error) => {
+                                if (error) {
+                                    callback(error, null);
+                                } else {
+                                    copyOne();
+                                }
+                            });
+                        } else {
+                            /* file */
+                            var fileEntry = <FileEntry>destinationEntry;
+                            fileEntry.remove(() => {
+                                nextEntry.copyTo(destinationDir, nextEntry.name, copyOne, fail);
+                            }, replaceError);
+                        }
+                    };
+
+                    var entryNotInDestination = (error: FileError) => {
+                        /* just copy directory to destination */
+                        nextEntry.copyTo(destinationDir, nextEntry.name, copyOne, fail);
+                    };
+
+                    if (nextEntry.isDirectory) {
+                        destinationDir.getDirectory(nextEntry.name, { create: false, exclusive: false }, entryAlreadyInDestination, entryNotInDestination);
+                    } else {
+                        destinationDir.getFile(nextEntry.name, { create: false, exclusive: false }, entryAlreadyInDestination, entryNotInDestination);
+                    }
+                } else {
+                    /* copied all successfully */
+                    callback(null, null);
+                }
+            };
+
+            copyOne();
+        };
+
+        var directoryReader = sourceDir.createReader();
+        directoryReader.readEntries(success, fail);
+    }
+
+    public static deleteEntriesFromDataDirectory(dirPath: string, filesToDelete: string[], callback: Callback<void>): void {
+        FileUtil.getDataDirectory(dirPath, false, (error: Error, rootDir: DirectoryEntry) => {
+            if (error) {
+                callback(error, null);
+            } else {
+                var i = 0;
+
+                var deleteOne = () => {
+                    if (i < filesToDelete.length) {
+                        var continueDeleting = () => {
+                            i++;
+                            deleteOne();
+                        };
+
+                        var fail = (error: FileError) => {
+                            console.log("Could not delete file: " + filesToDelete[i]);
+                            /* If delete fails, silently continue */
+                            continueDeleting();
+                        };
+
+                        var success = (entry: FileEntry) => {
+                            entry.remove(continueDeleting, fail);
+                        };
+
+                        rootDir.getFile(filesToDelete[i], { create: false, exclusive: false }, success, fail);
+                    } else {
+                        callback(null, null);
+                    }
+                };
+
+                deleteOne();
+            }
+        });
+    }
+
+    public static writeStringToFile(content: string, rootUri: string, path: string, fileName: string, createIfNotExists: boolean, callback: Callback<void>): void {
+        var gotFile = (fileEntry: FileEntry) => {
+            fileEntry.createWriter((writer: FileWriter) => {
+                writer.onwriteend = (ev: ProgressEvent) => {
+                    callback(null, null);
+                };
+
+                writer.onerror = (ev: ProgressEvent) => {
+                    callback(writer.error, null);
+                };
+
+                writer.write(<any>content);
+            }, (error: FileError) => {
+                callback(new Error("Could write the current package information file. Error code: " + error.code), null);
+            });
+        };
+
+        FileUtil.getFile(rootUri, path, fileName, createIfNotExists, (error: Error, fileEntry: FileEntry) => {
+            if (error) {
+                callback(error, null);
+            } else {
+                gotFile(fileEntry);
+            }
+        });
+    }
+
+    public static readFileEntry(fileEntry: FileEntry, callback: Callback<string>): void {
+        fileEntry.file((file: File) => {
+            var fileReader = new FileReader();
+            fileReader.onloadend = (ev: any) => {
+                callback(null, ev.target.result);
+            };
+
+            fileReader.onerror = (ev: ErrorEvent) => {
+                callback(new Error("Could not get file. Error: " + ev.error), null);
+            };
+
+            fileReader.readAsText(file);
+        }, (error: FileError) => {
+            callback(new Error("Could not get file. Error code: " + error.code), null);
+        });
+    }
+
+    public static readFile(rootUri: string, path: string, fileName: string, callback: Callback<string>): void {
+        FileUtil.getFile(rootUri, path, fileName, false, (error: Error, fileEntry: FileEntry) => {
+            if (error) {
+                callback(error, null);
+            } else {
+                FileUtil.readFileEntry(fileEntry, callback);
+            }
+        });
+    }
+
+    public static readDataFile(path: string, fileName: string, callback: Callback<string>): void {
+        FileUtil.readFile(cordova.file.dataDirectory, path, fileName, callback);
+    }
+
+    private static getApplicationEntry<T extends Entry>(path: string, callback: Callback<T>): void {
+        var success = (entry: T) => {
+            callback(null, entry);
+        };
+
+        var fail = (error: FileError) => {
+            callback(FileUtil.fileErrorToError(error), null);
+        };
+
+        window.resolveLocalFileSystemURL(cordova.file.applicationDirectory + path, success, fail);
+    }
+
+    private static getOrCreateSubDirectory(parent: DirectoryEntry, path: string, createIfNotExists: boolean, success: (result: DirectoryEntry) => void, fail: (error: FileError) => void): void {
+        var failFirst = (error: FileError) => {
+            if (!createIfNotExists) {
+                fail(error);
+            } else {
+                parent.getDirectory(path, { create: true, exclusive: false }, success, fail);
+            }
+        };
+
+        /* check if the directory exists first */
+        parent.getDirectory(path, { create: false, exclusive: false }, success, failFirst);
+    }
+}
+
+/**
+ * XMLHttpRequest-based implementation of Http.Requester.
+ */
+class HttpRequester implements Http.Requester {
+    public request(verb: Http.Verb, url: string, callbackOrRequestBody: Callback<Http.Response> | string, callback?: Callback<Http.Response>): void {
+        var requestBody: string;
+        var requestCallback: Callback<Http.Response> = callback;
+
+        if (!requestCallback && typeof callbackOrRequestBody === "function") {
+            requestCallback = <Callback<Http.Response>>callbackOrRequestBody;
+        }
+
+        if (typeof callbackOrRequestBody === "string") {
+            requestBody = <string>callbackOrRequestBody;
+        }
+
+        var xhr = new XMLHttpRequest();
+        var methodName = this.getHttpMethodName(verb);
+        var callbackInvoked: boolean = false;
+        xhr.onreadystatechange = function(): void {
+            if (xhr.readyState === 4) {
+                if (callbackInvoked) {
+                    console.warn("Callback already invoked before.");
+                }
+
+                var response: Http.Response = { statusCode: xhr.status, body: xhr.responseText };
+                requestCallback && requestCallback(null, response);
+                callbackInvoked = true;
+            }
+        };
+        xhr.open(methodName, url, true);
+        xhr.send(requestBody);
+    }
+
+    /**
+     * Gets the HTTP method name as a string.
+     * The reason for which this is needed is because the Http.Verb enum is defined as a constant => Verb[Verb.METHOD_NAME] is not defined in the compiled JS.
+     */
+    private getHttpMethodName(verb: Http.Verb): string {
+        switch (verb) {
+            case Http.Verb.GET:
+                return "GET";
+            case Http.Verb.CONNECT:
+                return "CONNECT";
+            case Http.Verb.DELETE:
+                return "DELETE";
+            case Http.Verb.HEAD:
+                return "HEAD";
+            case Http.Verb.OPTIONS:
+                return "OPTIONS";
+            case Http.Verb.PATCH:
+                return "PATCH";
+            case Http.Verb.POST:
+                return "POST";
+            case Http.Verb.PUT:
+                return "PUT";
+            case Http.Verb.TRACE:
+                return "TRACE";
+            default:
+                return null;
+        }
+    }
+}
+
+/**
+ * Provides information about the native app.
+ */
+class NativeAppInfo {
+    /**
+     * Gets the application build timestamp.
+     */
+    public static getApplicationBuildTime(callback: Callback<String>): void {
+        var timestampSuccess = (timestamp?: String) => { callback(null, timestamp); };
+        var timestampError = () => { callback(new Error("Could not get application timestamp."), null); };
+
+        cordova.exec(timestampSuccess, timestampError, "CodePush", "getNativeBuildTime", []);
+    }
+
+    /**
+     * Gets the application version.
+     */
+    public static getApplicationVersion(callback: Callback<String>): void {
+        var versionSuccess = (version?: String) => { callback(null, version); };
+        var versionError = () => { callback(new Error("Could not get application version."), null); };
+
+        cordova.exec(versionSuccess, versionError, "CodePush", "getAppVersion", []);
+    }
+    
+    /**
+     * Gets the server URL from config.xml by calling into the native platform.
+     */
+    public static getServerURL(serverCallback: Callback<String>): void {
+        var serverSuccess = (serverURL?: String) => { serverCallback(null, serverURL); };
+        var serverError = () => { serverCallback(new Error("Server URL not found."), null); };
+
+        cordova.exec(serverSuccess, serverError, "CodePush", "getServerURL", []);
+    }
+
+    /**
+     * Gets the deployment key from config.xml by calling into the native platform.
+     */
+    public static getDeploymentKey(deploymentKeyCallback: Callback<String>): void {
+        var deploymentSuccess = (deploymentKey?: String) => { deploymentKeyCallback(null, deploymentKey); };
+        var deploymentError = () => { deploymentKeyCallback(new Error("Deployment key not found."), null); };
+
+        cordova.exec(deploymentSuccess, deploymentError, "CodePush", "getDeploymentKey", []);
+    }
 }
 
 var instance = new CodePush();

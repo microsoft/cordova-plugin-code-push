@@ -1,4 +1,14 @@
-/**
+
+ /******************************************************************************************** 
+ 	 THIS FILE HAS BEEN COMPILED FROM TYPESCRIPT SOURCES. 
+ 	 PLEASE DO NOT MODIFY THIS FILE AS YOU WILL LOSE YOUR CHANGES WHEN RECOMPILING. 
+ 	 ALSO, PLEASE DO NOT SUBMIT PULL REQUESTS WITH CHANGES TO THIS FILE. 
+ 	 INSTEAD, EDIT THE TYPESCRIPT SOURCES UNDER THE WWW FOLDER. 
+ 	 FOR MORE INFORMATION, PLEASE SEE CONTRIBUTING.MD. 
+ *********************************************************************************************/ 
+
+
+/*
  *******************************************************
  *                                                     *
  *   Copyright (C) Microsoft. All rights reserved.     *
@@ -8,46 +18,16 @@
 /// <reference path="./typings/codePush.d.ts" />
 /// <reference path="./typings/fileSystem.d.ts" />
 /// <reference path="./typings/fileTransfer.d.ts" />
-/// <reference path="httpRequester.ts" />
-/// <reference path="fileUtil.ts" />
-/// <reference path="nativeAppInfo.ts" />
+/// <reference path="./typings/cordova.d.ts" />
 "use strict";
-var CodePushFileUtil = require("./fileUtil");
-var CodePushHttpRequester = require("./httpRequester");
-var NativeAppInfo = require("./nativeAppInfo");
-/**
- * This is the entry point to Cordova Code Push SDK.
- * It provides the following features to the app developer:
- * - polling the server for new versions of the app
- * - downloading new versions locally
- * - unpacking and applying the update
- * - launching the child app
- */
 var CodePush = (function () {
     function CodePush(ignoreAppVersion) {
         this.initialized = false;
         this.ignoreAppVersion = !!ignoreAppVersion;
     }
-    /**
-     * Notifies the plugin that the update operation succeeded.
-     * Calling this function is required if applyWithRevertProtection() is used for your update.
-     * If apply() was used for the update instead, calling this function is a noop.
-     *
-     * @param notifySucceeded Optional callback invoked if the plugin was successfully notified.
-     * @param notifyFailed Optional callback invoked in case of an error during notifying the plugin.
-     */
     CodePush.prototype.updateSucceeded = function (notifySucceeded, notifyFailed) {
         cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updatesuccess", []);
     };
-    /**
-     * Checks if a package update was previously attempted but failed for a given package hash.
-     * Every reverted update attempted with applyWithRevertProtection() is stored such that the application developer has the option to ignore
-     * updates that previously failed. This way, an infinite update loop can be prevented in case of a bad update package.
-     *
-     * @param packageHash String hash of the package update to check.
-     * @param checkSucceeded Callback taking one boolean parameter invoked with the result of the check.
-     * @param checkFailed Optional callback invoked in case of an error.
-     */
     CodePush.prototype.hasUpdatePreviouslyFailed = function (packageHash, checkSucceeded, checkFailed) {
         var win = function (failed) {
             checkSucceeded && checkSucceeded(!!failed);
@@ -57,19 +37,13 @@ var CodePush = (function () {
         };
         cordova.exec(win, fail, "CodePush", "isfailedupdate", [packageHash]);
     };
-    /**
-     * Get the current package information.
-     *
-     * @param packageSuccess Callback invoked with the currently deployed package information.
-     * @param packageError Optional callback invoked in case of an error.
-     */
     CodePush.prototype.getCurrentPackage = function (packageSuccess, packageError) {
         var _this = this;
         var handleError = function (e) {
             packageError && packageError(new Error("Cannot read package information. " + _this.getErrorMessage(e)));
         };
         try {
-            CodePushFileUtil.readDataFile(CodePush.RootDir, CodePush.PackageInfoFile, function (error, content) {
+            FileUtil.readDataFile(CodePush.RootDir, CodePush.PackageInfoFile, function (error, content) {
                 if (error) {
                     handleError(error);
                 }
@@ -97,7 +71,6 @@ var CodePush = (function () {
                 }
                 else {
                     var defaultPackage = {
-                        /* for the default package, we only need the app version */
                         appVersion: appVersion,
                         deploymentKey: null,
                         description: null,
@@ -113,23 +86,13 @@ var CodePush = (function () {
         };
         this.getCurrentPackage(packageSuccess, currentPackageFailure);
     };
-    /**
-     * Writes the given local package information to the current package information file.
-     * @param packageInfoMetadata The object to serialize.
-     * @param callback In case of an error, this function will be called with the error as the fist parameter.
-     */
     CodePush.prototype.writeCurrentPackageInformation = function (packageInfoMetadata, callback) {
         var content = JSON.stringify(packageInfoMetadata);
-        CodePushFileUtil.writeStringToDataFile(content, CodePush.RootDir, CodePush.PackageInfoFile, true, callback);
+        FileUtil.writeStringToDataFile(content, CodePush.RootDir, CodePush.PackageInfoFile, true, callback);
     };
-    /**
-     * Backs up the current package information to the old package information file.
-     * This file is used for recovery in case of an update going wrong.
-     * @param callback In case of an error, this function will be called with the error as the fist parameter.
-     */
     CodePush.prototype.writeOldPackageInformation = function (callback) {
         var reportFileError = function (error) {
-            callback(CodePushFileUtil.fileErrorToError(error), null);
+            callback(FileUtil.fileErrorToError(error), null);
         };
         var copyFile = function (fileToCopy) {
             fileToCopy.getParent(function (parent) {
@@ -143,9 +106,8 @@ var CodePush = (function () {
                 callback(error, null);
             }
             else {
-                CodePushFileUtil.getDataFile(CodePush.RootDir, CodePush.OldPackageInfoFile, false, function (error, oldPackageFile) {
+                FileUtil.getDataFile(CodePush.RootDir, CodePush.OldPackageInfoFile, false, function (error, oldPackageFile) {
                     if (!error && !!oldPackageFile) {
-                        /* file already exists */
                         oldPackageFile.remove(function () {
                             copyFile(currentPackageFile);
                         }, reportFileError);
@@ -156,15 +118,8 @@ var CodePush = (function () {
                 });
             }
         };
-        CodePushFileUtil.getDataFile(CodePush.RootDir, CodePush.PackageInfoFile, false, gotFile);
+        FileUtil.getDataFile(CodePush.RootDir, CodePush.PackageInfoFile, false, gotFile);
     };
-    /**
-     * Downloads a package update from the Code Push service.
-     *
-     * @param package The package to download.
-     * @param downloadSuccess Called with one parameter, the downloaded package information, once the download completed successfully.
-     * @param downloadError Optional callback invoked in case of an error.
-     */
     CodePush.prototype.download = function (remotePackage, successCallback, errorCallback) {
         var _this = this;
         try {
@@ -202,44 +157,20 @@ var CodePush = (function () {
             errorCallback && errorCallback(new Error("An error ocurred while downloading the package. " + this.getErrorMessage(e)));
         }
     };
-    /**
-     * Aborts the current download session, previously started with download().
-     *
-     * @param abortSuccess Optional callback invoked if the abort operation succeeded.
-     * @param abortError Optional callback invoked in case of an error.
-     */
     CodePush.prototype.abortDownload = function (abortSuccess, abortError) {
         try {
             if (this.currentFileTransfer) {
                 this.currentFileTransfer.abort();
-                /* abort succeeded */
                 abortSuccess && abortSuccess();
             }
         }
         catch (e) {
-            /* abort failed */
             abortError && abortError(e);
         }
     };
-    /**
-     * Applies a downloaded package.
-     *
-     * @param applySuccess Callback invoked if the apply operation succeeded.
-     * @param applyError Optional callback inovoked in case of an error.
-     */
     CodePush.prototype.apply = function (newPackage, applySuccess, applyError) {
         this.applyWithRevertProtection(newPackage, 0, applySuccess, applyError);
     };
-    /**
-     * Applies a downloaded package with revert protection.
-     * If the updateSucceeded() method is not invoked in the time specified by applySuccessTimeoutMillis, the application will be reverted to its previous version.
-     *
-     * @param newPackage The package update to apply.
-     * @param applySuccessTimeoutMillis The milliseconds interval to wait for updateSucceeded(). If in the given interval a call to updateSucceeded() has not been received, the application is reverted to its previous version.
-     * @param applySuccess Callback invoked if the apply operation succeeded. This is the last callback to be invoked after the javascript context is reloaded in the application by launching the updated application.
-     *                     Invocation of this callback does not guarantee that the application will not be reverted, since it is invoked before the applySuccessTimeoutMillis countdown starts.
-     * @param applyError Optional callback inovoked in case of an error.
-     */
     CodePush.prototype.applyWithRevertProtection = function (newPackage, applySuccessTimeoutMillis, applySuccess, applyError) {
         var _this = this;
         if (!newPackage) {
@@ -277,13 +208,13 @@ var CodePush = (function () {
                 }
             };
             var deleteDirectory = function (dirLocation, deleteDirCallback) {
-                CodePushFileUtil.getDataDirectory(dirLocation, false, function (oldDirError, dirToDelete) {
+                FileUtil.getDataDirectory(dirLocation, false, function (oldDirError, dirToDelete) {
                     if (oldDirError) {
                         deleteDirCallback(oldDirError, null);
                     }
                     else {
                         var win = function () { deleteDirCallback(null, null); };
-                        var fail = function (e) { deleteDirCallback(CodePushFileUtil.fileErrorToError(e), null); };
+                        var fail = function (e) { deleteDirCallback(FileUtil.fileErrorToError(e), null); };
                         dirToDelete.removeRecursively(win, fail);
                     }
                 });
@@ -301,7 +232,6 @@ var CodePush = (function () {
                     invokeOnApplyCallback(_this.onBeforeApply, oldPackage, newPackage);
                     _this.writeOldPackageInformation(function (backupError) {
                         backupError && console.log("Package information was not backed up. " + _this.getErrorMessage(backupError));
-                        /* continue on error, current package information might be missing if this is the fist update */
                         writeNewPackageMetadata(deployDir, function (writeMetadataError) {
                             if (writeMetadataError) {
                                 applyError && applyError(writeMetadataError);
@@ -317,16 +247,13 @@ var CodePush = (function () {
                                 };
                                 var invokeSuccessAndApply = function () {
                                     applySuccess && applySuccess();
-                                    /* no neeed for callbacks, the javascript context will reload */
                                     cordova.exec(function () { }, function () { }, "CodePush", "apply", [deployDir.fullPath, applySuccessTimeoutMillis.toString()]);
                                 };
                                 var preApplySuccess = function () {
                                     if (applySuccessTimeoutMillis > 0) {
-                                        /* package will be cleaned up after success, on the native side */
                                         invokeSuccessAndApply();
                                     }
                                     else {
-                                        /* clean up the package, then invoke apply */
                                         silentCleanup(function (cleanupError) {
                                             invokeSuccessAndApply();
                                         });
@@ -343,14 +270,13 @@ var CodePush = (function () {
                 }, applyError);
             };
             var handleCleanDeployment = function (cleanDeployCallback) {
-                // no diff manifest
-                CodePushFileUtil.getDataDirectory(newPackageLocation, true, function (deployDirError, deployDir) {
-                    CodePushFileUtil.getDataDirectory(CodePush.DownloadUnzipDir, false, function (unzipDirErr, unzipDir) {
+                FileUtil.getDataDirectory(newPackageLocation, true, function (deployDirError, deployDir) {
+                    FileUtil.getDataDirectory(CodePush.DownloadUnzipDir, false, function (unzipDirErr, unzipDir) {
                         if (unzipDirErr || deployDirError) {
                             cleanDeployCallback(new Error("Could not copy new package."), null);
                         }
                         else {
-                            CodePushFileUtil.copyDirectoryEntriesTo(unzipDir, deployDir, function (copyError) {
+                            FileUtil.copyDirectoryEntriesTo(unzipDir, deployDir, function (copyError) {
                                 if (copyError) {
                                     cleanDeployCallback(copyError, null);
                                 }
@@ -363,17 +289,17 @@ var CodePush = (function () {
                 });
             };
             var copyCurrentPackage = function (copyCallback) {
-                CodePushFileUtil.getDataDirectory(newPackageLocation, true, function (deployDirError, deployDir) {
+                FileUtil.getDataDirectory(newPackageLocation, true, function (deployDirError, deployDir) {
                     _this.getCurrentPackage(function (currentPackage) {
                         if (deployDirError) {
                             applyError && applyError(new Error("Could not acquire the source/destination folders. "));
                         }
                         else {
                             var success = function (currentPackageDirectory) {
-                                CodePushFileUtil.copyDirectoryEntriesTo(currentPackageDirectory, deployDir, copyCallback);
+                                FileUtil.copyDirectoryEntriesTo(currentPackageDirectory, deployDir, copyCallback);
                             };
                             var fail = function (fileSystemError) {
-                                copyCallback(CodePushFileUtil.fileErrorToError(fileSystemError), null);
+                                copyCallback(FileUtil.fileErrorToError(fileSystemError), null);
                             };
                             window.resolveLocalFileSystemURL(currentPackage.localPath, success, fail);
                         }
@@ -381,19 +307,16 @@ var CodePush = (function () {
                 });
             };
             var handleDiffDeployment = function (diffManifest) {
-                /* copy old files */
                 copyCurrentPackage(function (currentPackageError) {
-                    /* copy new files */
                     handleCleanDeployment(function (cleanDeployError) {
-                        /* delete files mentioned in the manifest */
-                        var diffContent = CodePushFileUtil.readFileEntry(diffManifest, function (error, content) {
+                        var diffContent = FileUtil.readFileEntry(diffManifest, function (error, content) {
                             if (error || currentPackageError || cleanDeployError) {
                                 applyError && applyError(new Error("Cannot perform diff-update."));
                             }
                             else {
                                 var manifest = JSON.parse(content);
-                                CodePushFileUtil.deleteEntriesFromDataDirectory(newPackageLocation, manifest.deletedFiles, function (deleteError) {
-                                    CodePushFileUtil.getDataDirectory(newPackageLocation, true, function (deployDirError, deployDir) {
+                                FileUtil.deleteEntriesFromDataDirectory(newPackageLocation, manifest.deletedFiles, function (deleteError) {
+                                    FileUtil.getDataDirectory(newPackageLocation, true, function (deployDirError, deployDir) {
                                         if (deleteError || deployDirError) {
                                             applyError && applyError(new Error("Cannot clean up deleted manifest files."));
                                         }
@@ -412,9 +335,8 @@ var CodePush = (function () {
                     applyError && applyError(new Error("Could not unzip package. " + _this.getErrorMessage(unzipError)));
                 }
                 else {
-                    CodePushFileUtil.getDataDirectory(newPackageLocation, true, function (deployDirError, deployDir) {
-                        // check for diff manifest
-                        CodePushFileUtil.getDataFile(CodePush.DownloadUnzipDir, CodePush.DiffManifestFile, false, function (manifestError, diffManifest) {
+                    FileUtil.getDataDirectory(newPackageLocation, true, function (deployDirError, deployDir) {
+                        FileUtil.getDataFile(CodePush.DownloadUnzipDir, CodePush.DiffManifestFile, false, function (manifestError, diffManifest) {
                             if (!manifestError && !!diffManifest) {
                                 handleDiffDeployment(diffManifest);
                             }
@@ -427,9 +349,9 @@ var CodePush = (function () {
                     });
                 }
             };
-            CodePushFileUtil.getDataDirectory(CodePush.DownloadUnzipDir, false, function (error, directoryEntry) {
+            FileUtil.getDataDirectory(CodePush.DownloadUnzipDir, false, function (error, directoryEntry) {
                 var unzipPackage = function () {
-                    CodePushFileUtil.getDataDirectory(CodePush.DownloadUnzipDir, true, function (innerError, unzipDir) {
+                    FileUtil.getDataDirectory(CodePush.DownloadUnzipDir, true, function (innerError, unzipDir) {
                         if (innerError) {
                             applyError && applyError(innerError);
                         }
@@ -439,11 +361,10 @@ var CodePush = (function () {
                     });
                 };
                 if (!error && !!directoryEntry) {
-                    /* Unzip directory not clean */
                     directoryEntry.removeRecursively(function () {
                         unzipPackage();
                     }, function (cleanupError) {
-                        applyError && applyError(CodePushFileUtil.fileErrorToError(cleanupError));
+                        applyError && applyError(FileUtil.fileErrorToError(cleanupError));
                     });
                 }
                 else {
@@ -455,14 +376,6 @@ var CodePush = (function () {
             applyError && applyError(new Error("An error ocurred while applying the package. " + this.getErrorMessage(e)));
         }
     };
-    /**
-     * Queries the Code Push server for updates.
-     *
-     * @param querySuccess Callback invoked in case of a successful response from the server.
-     *                     The callback takes one RemotePackage parameter. A non-null package is a valid update.
-     *                     A null package means the application is up to date.
-     * @param queryError Optional callback invoked in case of an error.
-     */
     CodePush.prototype.queryUpdate = function (querySuccess, queryError) {
         var _this = this;
         try {
@@ -495,7 +408,7 @@ var CodePush = (function () {
                     else {
                         var configuration = { deploymentKey: deploymentKey, serverUrl: serverURL, ignoreAppVersion: _this.ignoreAppVersion };
                         _this.appDataDirectory = cordova.file.dataDirectory;
-                        _this.acquisitionManager = new AcquisitionManager(new CodePushHttpRequester(), configuration);
+                        _this.acquisitionManager = new AcquisitionManager(new HttpRequester(), configuration);
                         _this.initialized = true;
                         callback(null, null);
                     }
@@ -503,14 +416,9 @@ var CodePush = (function () {
             });
         }
         else {
-            /* already initialized */
             callback(null, null);
         }
     };
-    /**
-     * Given two Cordova style callbacks for success and error, this function returns a node.js
-     * style callback where the error is the first parameter and the result the second.
-     */
     CodePush.prototype.getNodeStyleCallbackFor = function (successCallback, errorCallback) {
         return function (error, result) {
             if (error) {
@@ -521,9 +429,6 @@ var CodePush = (function () {
             }
         };
     };
-    /**
-     * Gets the message of an error, if any.
-     */
     CodePush.prototype.getErrorMessage = function (e) {
         var result;
         if (e && e.message) {
@@ -541,6 +446,323 @@ var CodePush = (function () {
     CodePush.DeployDir = CodePush.RootDir + "/deploy";
     CodePush.VersionsDir = CodePush.DeployDir + "/versions";
     return CodePush;
+})();
+var FileUtil = (function () {
+    function FileUtil() {
+    }
+    FileUtil.directoryExists = function (rootUri, path, callback) {
+        FileUtil.getDirectory(rootUri, path, false, function (error, dirEntry) {
+            var dirExists = !error && !!dirEntry;
+            callback(null, dirExists);
+        });
+    };
+    FileUtil.fileErrorToError = function (fileError, message) {
+        return new Error((message ? message : "An error has occurred while performing the operation. ") + " Error code: " + fileError.code);
+    };
+    FileUtil.getDataDirectory = function (path, createIfNotExists, callback) {
+        FileUtil.getDirectory(cordova.file.dataDirectory, path, createIfNotExists, callback);
+    };
+    FileUtil.writeStringToDataFile = function (content, path, fileName, createIfNotExists, callback) {
+        FileUtil.writeStringToFile(content, cordova.file.dataDirectory, path, fileName, createIfNotExists, callback);
+    };
+    FileUtil.getApplicationDirectory = function (path, callback) {
+        FileUtil.getApplicationEntry(path, callback);
+    };
+    FileUtil.getApplicationFile = function (path, callback) {
+        FileUtil.getApplicationEntry(path, callback);
+    };
+    FileUtil.getOrCreateFile = function (parent, path, createIfNotExists, success, fail) {
+        var failFirst = function (error) {
+            if (!createIfNotExists) {
+                fail(error);
+            }
+            else {
+                parent.getFile(path, { create: true, exclusive: false }, success, fail);
+            }
+        };
+        parent.getFile(path, { create: false, exclusive: false }, success, failFirst);
+    };
+    FileUtil.getFile = function (rootUri, path, fileName, createIfNotExists, callback) {
+        FileUtil.getDirectory(rootUri, path, createIfNotExists, function (error, directoryEntry) {
+            if (error) {
+                callback(error, null);
+            }
+            else {
+                FileUtil.getOrCreateFile(directoryEntry, fileName, createIfNotExists, function (entry) { callback(null, entry); }, function (error) { callback(FileUtil.fileErrorToError(error), null); });
+            }
+        });
+    };
+    FileUtil.getDataFile = function (path, fileName, createIfNotExists, callback) {
+        FileUtil.getFile(cordova.file.dataDirectory, path, fileName, createIfNotExists, callback);
+    };
+    FileUtil.fileExists = function (rootUri, path, fileName, callback) {
+        FileUtil.getFile(rootUri, path, fileName, false, function (error, fileEntry) {
+            var exists = !error && !!fileEntry;
+            callback(null, exists);
+        });
+    };
+    FileUtil.getDirectory = function (rootUri, path, createIfNotExists, callback) {
+        var pathArray = path.split("/");
+        var currentDir;
+        var currentIndex = 0;
+        var appDirError = function (error) {
+            callback(new Error("Could not get application subdirectory. Error code: " + error.code), null);
+        };
+        var rootDirSuccess = function (appDir) {
+            if (!createIfNotExists) {
+                appDir.getDirectory(path, { create: false, exclusive: false }, function (directoryEntry) { callback(null, directoryEntry); }, appDirError);
+            }
+            else {
+                currentDir = appDir;
+                if (currentIndex >= pathArray.length) {
+                    callback(null, appDir);
+                }
+                else {
+                    var currentPath = pathArray[currentIndex];
+                    currentIndex++;
+                    if (currentPath) {
+                        FileUtil.getOrCreateSubDirectory(appDir, currentPath, createIfNotExists, rootDirSuccess, appDirError);
+                    }
+                    else {
+                        rootDirSuccess(appDir);
+                    }
+                }
+            }
+        };
+        window.resolveLocalFileSystemURL(rootUri, rootDirSuccess, appDirError);
+    };
+    FileUtil.dataDirectoryExists = function (path, callback) {
+        FileUtil.directoryExists(cordova.file.dataDirectory, path, callback);
+    };
+    FileUtil.copyDirectoryEntriesTo = function (sourceDir, destinationDir, callback) {
+        var fail = function (error) {
+            callback(FileUtil.fileErrorToError(error), null);
+        };
+        var success = function (entries) {
+            var i = 0;
+            var copyOne = function () {
+                if (i < entries.length) {
+                    var nextEntry = entries[i++];
+                    var entryAlreadyInDestination = function (destinationEntry) {
+                        var replaceError = function (fileError) {
+                            callback(new Error("Error during entry replacement. Error code: " + fileError.code), null);
+                        };
+                        if (destinationEntry.isDirectory) {
+                            FileUtil.copyDirectoryEntriesTo(nextEntry, destinationEntry, function (error) {
+                                if (error) {
+                                    callback(error, null);
+                                }
+                                else {
+                                    copyOne();
+                                }
+                            });
+                        }
+                        else {
+                            var fileEntry = destinationEntry;
+                            fileEntry.remove(function () {
+                                nextEntry.copyTo(destinationDir, nextEntry.name, copyOne, fail);
+                            }, replaceError);
+                        }
+                    };
+                    var entryNotInDestination = function (error) {
+                        nextEntry.copyTo(destinationDir, nextEntry.name, copyOne, fail);
+                    };
+                    if (nextEntry.isDirectory) {
+                        destinationDir.getDirectory(nextEntry.name, { create: false, exclusive: false }, entryAlreadyInDestination, entryNotInDestination);
+                    }
+                    else {
+                        destinationDir.getFile(nextEntry.name, { create: false, exclusive: false }, entryAlreadyInDestination, entryNotInDestination);
+                    }
+                }
+                else {
+                    callback(null, null);
+                }
+            };
+            copyOne();
+        };
+        var directoryReader = sourceDir.createReader();
+        directoryReader.readEntries(success, fail);
+    };
+    FileUtil.deleteEntriesFromDataDirectory = function (dirPath, filesToDelete, callback) {
+        FileUtil.getDataDirectory(dirPath, false, function (error, rootDir) {
+            if (error) {
+                callback(error, null);
+            }
+            else {
+                var i = 0;
+                var deleteOne = function () {
+                    if (i < filesToDelete.length) {
+                        var continueDeleting = function () {
+                            i++;
+                            deleteOne();
+                        };
+                        var fail = function (error) {
+                            console.log("Could not delete file: " + filesToDelete[i]);
+                            continueDeleting();
+                        };
+                        var success = function (entry) {
+                            entry.remove(continueDeleting, fail);
+                        };
+                        rootDir.getFile(filesToDelete[i], { create: false, exclusive: false }, success, fail);
+                    }
+                    else {
+                        callback(null, null);
+                    }
+                };
+                deleteOne();
+            }
+        });
+    };
+    FileUtil.writeStringToFile = function (content, rootUri, path, fileName, createIfNotExists, callback) {
+        var gotFile = function (fileEntry) {
+            fileEntry.createWriter(function (writer) {
+                writer.onwriteend = function (ev) {
+                    callback(null, null);
+                };
+                writer.onerror = function (ev) {
+                    callback(writer.error, null);
+                };
+                writer.write(content);
+            }, function (error) {
+                callback(new Error("Could write the current package information file. Error code: " + error.code), null);
+            });
+        };
+        FileUtil.getFile(rootUri, path, fileName, createIfNotExists, function (error, fileEntry) {
+            if (error) {
+                callback(error, null);
+            }
+            else {
+                gotFile(fileEntry);
+            }
+        });
+    };
+    FileUtil.readFileEntry = function (fileEntry, callback) {
+        fileEntry.file(function (file) {
+            var fileReader = new FileReader();
+            fileReader.onloadend = function (ev) {
+                callback(null, ev.target.result);
+            };
+            fileReader.onerror = function (ev) {
+                callback(new Error("Could not get file. Error: " + ev.error), null);
+            };
+            fileReader.readAsText(file);
+        }, function (error) {
+            callback(new Error("Could not get file. Error code: " + error.code), null);
+        });
+    };
+    FileUtil.readFile = function (rootUri, path, fileName, callback) {
+        FileUtil.getFile(rootUri, path, fileName, false, function (error, fileEntry) {
+            if (error) {
+                callback(error, null);
+            }
+            else {
+                FileUtil.readFileEntry(fileEntry, callback);
+            }
+        });
+    };
+    FileUtil.readDataFile = function (path, fileName, callback) {
+        FileUtil.readFile(cordova.file.dataDirectory, path, fileName, callback);
+    };
+    FileUtil.getApplicationEntry = function (path, callback) {
+        var success = function (entry) {
+            callback(null, entry);
+        };
+        var fail = function (error) {
+            callback(FileUtil.fileErrorToError(error), null);
+        };
+        window.resolveLocalFileSystemURL(cordova.file.applicationDirectory + path, success, fail);
+    };
+    FileUtil.getOrCreateSubDirectory = function (parent, path, createIfNotExists, success, fail) {
+        var failFirst = function (error) {
+            if (!createIfNotExists) {
+                fail(error);
+            }
+            else {
+                parent.getDirectory(path, { create: true, exclusive: false }, success, fail);
+            }
+        };
+        parent.getDirectory(path, { create: false, exclusive: false }, success, failFirst);
+    };
+    return FileUtil;
+})();
+var HttpRequester = (function () {
+    function HttpRequester() {
+    }
+    HttpRequester.prototype.request = function (verb, url, callbackOrRequestBody, callback) {
+        var requestBody;
+        var requestCallback = callback;
+        if (!requestCallback && typeof callbackOrRequestBody === "function") {
+            requestCallback = callbackOrRequestBody;
+        }
+        if (typeof callbackOrRequestBody === "string") {
+            requestBody = callbackOrRequestBody;
+        }
+        var xhr = new XMLHttpRequest();
+        var methodName = this.getHttpMethodName(verb);
+        var callbackInvoked = false;
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                if (callbackInvoked) {
+                    console.warn("Callback already invoked before.");
+                }
+                var response = { statusCode: xhr.status, body: xhr.responseText };
+                requestCallback && requestCallback(null, response);
+                callbackInvoked = true;
+            }
+        };
+        xhr.open(methodName, url, true);
+        xhr.send(requestBody);
+    };
+    HttpRequester.prototype.getHttpMethodName = function (verb) {
+        switch (verb) {
+            case 0:
+                return "GET";
+            case 7:
+                return "CONNECT";
+            case 4:
+                return "DELETE";
+            case 1:
+                return "HEAD";
+            case 6:
+                return "OPTIONS";
+            case 8:
+                return "PATCH";
+            case 2:
+                return "POST";
+            case 3:
+                return "PUT";
+            case 5:
+                return "TRACE";
+            default:
+                return null;
+        }
+    };
+    return HttpRequester;
+})();
+var NativeAppInfo = (function () {
+    function NativeAppInfo() {
+    }
+    NativeAppInfo.getApplicationBuildTime = function (callback) {
+        var timestampSuccess = function (timestamp) { callback(null, timestamp); };
+        var timestampError = function () { callback(new Error("Could not get application timestamp."), null); };
+        cordova.exec(timestampSuccess, timestampError, "CodePush", "getNativeBuildTime", []);
+    };
+    NativeAppInfo.getApplicationVersion = function (callback) {
+        var versionSuccess = function (version) { callback(null, version); };
+        var versionError = function () { callback(new Error("Could not get application version."), null); };
+        cordova.exec(versionSuccess, versionError, "CodePush", "getAppVersion", []);
+    };
+    NativeAppInfo.getServerURL = function (serverCallback) {
+        var serverSuccess = function (serverURL) { serverCallback(null, serverURL); };
+        var serverError = function () { serverCallback(new Error("Server URL not found."), null); };
+        cordova.exec(serverSuccess, serverError, "CodePush", "getServerURL", []);
+    };
+    NativeAppInfo.getDeploymentKey = function (deploymentKeyCallback) {
+        var deploymentSuccess = function (deploymentKey) { deploymentKeyCallback(null, deploymentKey); };
+        var deploymentError = function () { deploymentKeyCallback(new Error("Deployment key not found."), null); };
+        cordova.exec(deploymentSuccess, deploymentError, "CodePush", "getDeploymentKey", []);
+    };
+    return NativeAppInfo;
 })();
 var instance = new CodePush();
 module.exports = instance;

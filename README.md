@@ -15,6 +15,10 @@ Access to the plugin is through the ```navigator.codePush``` object.
 - Android
 - iOS
 
+## Compiling sources & contributing
+
+The JavaScript code in this plugin is compiled from TypeScript. Please see [this page](CONTRIBUTING.MD) for more details on contributing and how to build the project.
+
 ## Methods
 - __[queryUpdate](#navigatorcodepushqueryupdate)__: Queries the server for update packages.
 - __[download](#navigatorcodepushdownload)__: Downloads an update package from the server.
@@ -24,12 +28,12 @@ Access to the plugin is through the ```navigator.codePush``` object.
 - __[updateSucceeded](#navigatorcodepushupdatesucceeded)__: Notifies the plugin that the update operation succeeded.
 - __[hasUpdatePreviouslyFailed](#navigatorcodepushhasupdatepreviouslyfailed)__: Checks if a package update was previously attempted but failed for a given update package hash.
 - __[getCurrentPackage](#navigatorcodepushgetcurrentpackage)__: Gets information about the currently applied package.
-- __[onBeforeApply](#navigatorcodepushonbeforeapply)__: Called immediately before an update package is applied. This method is commonly used for storing data that you want to persist across the update.
-- __[onAfterApply](#navigatorcodepushonafterapply)__: Called immediately after an update package has been applied. Similar to ```onBeforeApply``` this method can be used to process data persisted across the update.
+- __onBeforeApply__: Called immediately before an update package is applied. This method is commonly used for storing data that you want to persist across the update.
+- __onAfterApply__: Called immediately after an update package has been applied. Similar to ```onBeforeApply``` this method can be used to process data persisted across the update.
 
 ## Interfaces
-- __LocalPackage__
-- __RemotePackage__
+- __[LocalPackage](#localpackage)__: Contains information about a locally installed package.
+- __[RemotePackage](#remotepackage)__: Contains information about an update package available for download.
 
 ## Getting started
 - Add the plugin to your application.

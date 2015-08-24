@@ -21,7 +21,8 @@
   "devDependencies": {
     "gulp": "latest",
     "gulp-typescript": "latest",
-    "tslint": "latest",
+    "gulp-insert": "latest",
+    "gulp-tslint": "latest",
     "del": "latest",
     "run-sequence": "latest"
   }
