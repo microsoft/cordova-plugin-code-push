@@ -3,7 +3,7 @@
 ## TypeScript
 
 All the JS code in this plugin is compiled from TypeScript sources. Please do not submit pull requests with direct changes to the JS files in ```bin``` directory.
-Instead, modify the sources in the ``www``` folder and compile a new version of the plugin. Read on for more details.
+Instead, modify the sources in the ```www``` folder and compile a new version of the plugin. Read on for more details.
 
 ## Building the plugin
 
