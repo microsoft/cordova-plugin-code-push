@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-code-push" version="0.0.1-dev">
+    <name>CodePush</name>
+    <description>Cordova Code Push</description>
+    <license>Apache 2.0</license>
+    <keywords>cordova,code,push</keywords>
+    <dependency id="cordova-plugin-code-push-acquisition" version=">=0.0.1" />
+    <dependency id="cordova-plugin-file-transfer" version=">=1.1.0" />
+    <dependency id="cordova-plugin-file" version=">=2.0.0" />
+    <dependency id="cordova-plugin-zip" version=">=3.0.0" />
+    <js-module src="bin/codePush.js" name="codePush">
+        <clobbers target="window.navigator.codePush" />
+    </js-module>
+    <platform name="android">
+        <source-file src="src/android/CodePush.java" target-dir="src/com/microsoft/cordova" />
+        <config-file target="config.xml" parent="/*">
+            <feature name="CodePush">
+                <param name="android-package" value="com.microsoft.cordova.CodePush" />
+                <param name="onload" value="true" />
+            </feature>
+        </config-file>
+    </platform>
+    <platform name="ios">
+        <header-file src="src/ios/CodePush.h" />
+        <source-file src="src/ios/CodePush.m" />
+        <config-file target="config.xml" parent="/*">
+            <feature name="CodePush">
+                <param name="ios-package" value="CodePush" />
+                <param name="onload" value="true" />
+            </feature>
+        </config-file>
+    </platform>
+</plugin>

@@ -1,0 +1,32 @@
+# Contributing
+
+## TypeScript
+
+All the JS code in this plugin is compiled from TypeScript sources. Please do not submit pull requests with direct changes to the JS files in ```bin``` directory.
+Instead, modify the sources in the ```www``` folder and compile a new version of the plugin. Read on for more details.
+
+## Building the plugin
+
+### Environment setup
+
+```node.js``` and ```npm``` are needed for building this project. ```npm``` comes bundled with the ```node.js``` installer. You can download the ```node.js``` installer here: https://nodejs.org/download/. 
+
+### Compile
+
+Follow these steps to build a new version of the plugin:
+- clone this repository
+- install the dependencies
+
+	Navigate to the root folder from your command line console and run:
+	```
+	npm install
+	```
+- compile
+
+	From the same root folder location, run:
+	```
+	gulp
+	```
+	This will compile the sources and place them in the ```bin``` folder. Any compilation errors will be displayed in the console.
+
+
