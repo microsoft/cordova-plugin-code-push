@@ -28,8 +28,7 @@ The JavaScript code in this plugin is compiled from TypeScript. Please see [this
 - __[updateSucceeded](#navigatorcodepushupdatesucceeded)__: Notifies the plugin that the update operation succeeded.
 - __[hasUpdatePreviouslyFailed](#navigatorcodepushhasupdatepreviouslyfailed)__: Checks if a package update was previously attempted but failed for a given update package hash.
 - __[getCurrentPackage](#navigatorcodepushgetcurrentpackage)__: Gets information about the currently applied package.
-- __onBeforeApply__: Called immediately before an update package is applied. This method is commonly used for storing data that you want to persist across the update.
-- __onAfterApply__: Called immediately after an update package has been applied. Similar to ```onBeforeApply``` this method can be used to process data persisted across the update.
+- __[didUpdate](#navigatorcodepushdidupdate)__: Verifies if this is the first run after an application update.
 
 ## Interfaces
 - __[LocalPackage](#localpackage)__: Contains information about a locally installed package.
@@ -176,3 +175,13 @@ navigator.codePush.getCurrentPackage(packageSuccess, packageError);
 Get the currently installed package information. 
 - __packageSuccess__: Callback invoked with the currently deployed package information.
 - __packageError__: Optional callback invoked in case of an error.
+
+## navigator.codePush.didUpdate
+```javascript
+navigator.codePush.didUpdate(didUpdateCallback);
+```
+Checks if this is the first application run after an update has been applied.
+- __didUpdateCallback__: Result callback invoked with three parameters:
+                         - A boolean parameter indicating if this is the first run after an update.
+                         - A ```LocalPackage``` parameter containing the old package information, if this is the first run after an update. Otherwise, it is null.
+                         - A ```LocalPackage``` parameter containing the current package information, if this is the first run after an update. Otherwise, it is null.

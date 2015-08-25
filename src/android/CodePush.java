@@ -38,6 +38,7 @@ public class CodePush extends CordovaPlugin {
 
     private CordovaWebView mainWebView;
     private boolean pluginDestroyed = false;
+    private boolean didUpdate = false;
     private static boolean ApplySucceeded = false;
     private static boolean ShouldClearHistoryOnLoad = false;
 
@@ -69,6 +70,12 @@ public class CodePush extends CordovaPlugin {
             return true;
         } else if ("isfailedupdate".equals(action)) {
             return execIsFailedUpdate(args, callbackContext);
+        } else if ("didUpdate".equals(action)) {
+            callbackContext.success(this.didUpdate ? 1 : 0);
+            if (this.didUpdate) {
+                this.didUpdate = false;
+            }
+            return true;
         } else {
             return false;
         }
@@ -95,6 +102,8 @@ public class CodePush extends CordovaPlugin {
                 /* start page file exists */
                 /* navigate to the start page */
                 this.navigateToFile(startPage);
+                /* this flag will clear when reloading the plugin or after a didUpdate call from the JS layer */
+                this.didUpdate = true;
 
                 if (updateSuccessTimeoutInMillis > 0) {
                 /* start countdown for success */
@@ -266,12 +275,6 @@ public class CodePush extends CordovaPlugin {
             if (file.exists()) {
                 this.deleteEntryRecursively(file);
             }
-        }
-
-        /* clean the old package metadata file */
-        File oldFile = new File(this.cordova.getActivity().getFilesDir() + CODEPUSH_OLD_PACKAGE_PATH);
-        if (oldFile.exists()) {
-            oldFile.delete();
         }
     }
 

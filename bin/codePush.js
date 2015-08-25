@@ -38,12 +38,18 @@ var CodePush = (function () {
         cordova.exec(win, fail, "CodePush", "isfailedupdate", [packageHash]);
     };
     CodePush.prototype.getCurrentPackage = function (packageSuccess, packageError) {
+        return this.getPackage(CodePush.PackageInfoFile, packageSuccess, packageError);
+    };
+    CodePush.prototype.getOldPackage = function (packageSuccess, packageError) {
+        return this.getPackage(CodePush.OldPackageInfoFile, packageSuccess, packageError);
+    };
+    CodePush.prototype.getPackage = function (packageFile, packageSuccess, packageError) {
         var _this = this;
         var handleError = function (e) {
             packageError && packageError(new Error("Cannot read package information. " + _this.getErrorMessage(e)));
         };
         try {
-            FileUtil.readDataFile(CodePush.RootDir, CodePush.PackageInfoFile, function (error, content) {
+            FileUtil.readDataFile(CodePush.RootDir, packageFile, function (error, content) {
                 if (error) {
                     handleError(error);
                 }
@@ -63,7 +69,13 @@ var CodePush = (function () {
         }
     };
     CodePush.prototype.getCurrentOrDefaultPackage = function (packageSuccess, packageError) {
-        var currentPackageFailure = function (error) {
+        this.getPackageInfoOrDefault(CodePush.PackageInfoFile, packageSuccess, packageError);
+    };
+    CodePush.prototype.getOldOrDefaultPackage = function (packageSuccess, packageError) {
+        this.getPackageInfoOrDefault(CodePush.OldPackageInfoFile, packageSuccess, packageError);
+    };
+    CodePush.prototype.getPackageInfoOrDefault = function (packageFile, packageSuccess, packageError) {
+        var packageFailure = function (error) {
             NativeAppInfo.getApplicationVersion(function (appVersionError, appVersion) {
                 if (appVersionError) {
                     console.log("Could not get application version." + appVersionError);
@@ -84,7 +96,7 @@ var CodePush = (function () {
                 }
             });
         };
-        this.getCurrentPackage(packageSuccess, currentPackageFailure);
+        this.getPackage(packageFile, packageSuccess, packageFailure);
     };
     CodePush.prototype.writeCurrentPackageInformation = function (packageInfoMetadata, callback) {
         var content = JSON.stringify(packageInfoMetadata);
@@ -199,14 +211,6 @@ var CodePush = (function () {
                     });
                 });
             };
-            var invokeOnApplyCallback = function (callback, oldPackage, newPackage) {
-                try {
-                    callback && callback(oldPackage, newPackage);
-                }
-                catch (e) {
-                    console.log("An error has occurred during the onApply() callback.");
-                }
-            };
             var deleteDirectory = function (dirLocation, deleteDirCallback) {
                 FileUtil.getDataDirectory(dirLocation, false, function (oldDirError, dirToDelete) {
                     if (oldDirError) {
@@ -229,7 +233,6 @@ var CodePush = (function () {
             };
             var donePackageFileCopy = function (deployDir) {
                 _this.getCurrentOrDefaultPackage(function (oldPackage) {
-                    invokeOnApplyCallback(_this.onBeforeApply, oldPackage, newPackage);
                     _this.writeOldPackageInformation(function (backupError) {
                         backupError && console.log("Package information was not backed up. " + _this.getErrorMessage(backupError));
                         writeNewPackageMetadata(deployDir, function (writeMetadataError) {
@@ -237,7 +240,6 @@ var CodePush = (function () {
                                 applyError && applyError(writeMetadataError);
                             }
                             else {
-                                invokeOnApplyCallback(_this.onAfterApply, oldPackage, newPackage);
                                 var silentCleanup = function (cleanCallback) {
                                     deleteDirectory(CodePush.DownloadDir, function (e1) {
                                         cleanOldPackage(oldPackage, function (e2) {
@@ -375,6 +377,28 @@ var CodePush = (function () {
         catch (e) {
             applyError && applyError(new Error("An error ocurred while applying the package. " + this.getErrorMessage(e)));
         }
+    };
+    CodePush.prototype.didUpdate = function (didUpdateCallback) {
+        var _this = this;
+        var respondWithFalse = function () {
+            didUpdateCallback(false, null, null);
+        };
+        var win = function (didUpdate) {
+            if (!!didUpdate) {
+                _this.getCurrentOrDefaultPackage(function (currentPackage) {
+                    _this.getOldOrDefaultPackage(function (oldPackage) {
+                        didUpdateCallback(true, oldPackage, currentPackage);
+                    }, respondWithFalse);
+                }, respondWithFalse);
+            }
+            else {
+                respondWithFalse();
+            }
+        };
+        var fail = function () {
+            respondWithFalse();
+        };
+        cordova.exec(win, fail, "CodePush", "didUpdate", []);
     };
     CodePush.prototype.queryUpdate = function (querySuccess, queryError) {
         var _this = this;
