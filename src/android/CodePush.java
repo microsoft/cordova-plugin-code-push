@@ -61,14 +61,14 @@ public class CodePush extends CordovaPlugin {
             return execGetNativeBuildTime(callbackContext);
         } else if ("getAppVersion".equals(action)) {
             return execGetAppVersion(callbackContext);
-        } else if ("preapply".equals(action)) {
+        } else if ("preApply".equals(action)) {
             return execPreApply(args, callbackContext);
         } else if ("apply".equals(action)) {
             return execApply(args, callbackContext);
-        } else if ("updatesuccess".equals(action)) {
+        } else if ("updateSuccess".equals(action)) {
             this.ApplySucceeded = true;
             return true;
-        } else if ("isfailedupdate".equals(action)) {
+        } else if ("isFailedUpdate".equals(action)) {
             return execIsFailedUpdate(args, callbackContext);
         } else if ("didUpdate".equals(action)) {
             callbackContext.success(this.didUpdate ? 1 : 0);

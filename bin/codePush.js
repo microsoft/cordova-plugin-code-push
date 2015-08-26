@@ -26,7 +26,7 @@ var CodePush = (function () {
         this.ignoreAppVersion = !!ignoreAppVersion;
     }
     CodePush.prototype.updateSucceeded = function (notifySucceeded, notifyFailed) {
-        cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updatesuccess", []);
+        cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updateSuccess", []);
     };
     CodePush.prototype.hasUpdatePreviouslyFailed = function (packageHash, checkSucceeded, checkFailed) {
         var win = function (failed) {
@@ -35,7 +35,7 @@ var CodePush = (function () {
         var fail = function (e) {
             checkFailed && checkFailed(e);
         };
-        cordova.exec(win, fail, "CodePush", "isfailedupdate", [packageHash]);
+        cordova.exec(win, fail, "CodePush", "isFailedUpdate", [packageHash]);
     };
     CodePush.prototype.getCurrentPackage = function (packageSuccess, packageError) {
         return this.getPackage(CodePush.PackageInfoFile, packageSuccess, packageError);
@@ -265,7 +265,7 @@ var CodePush = (function () {
                                     var error = new Error("An error has ocurred while applying the package. " + _this.getErrorMessage(applyError));
                                     applyError && applyError(error);
                                 };
-                                cordova.exec(preApplySuccess, preApplyFailure, "CodePush", "preapply", [deployDir.fullPath]);
+                                cordova.exec(preApplySuccess, preApplyFailure, "CodePush", "preApply", [deployDir.fullPath]);
                             }
                         });
                     });

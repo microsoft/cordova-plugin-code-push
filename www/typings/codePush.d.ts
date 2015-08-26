@@ -63,7 +63,7 @@ interface LocalPackage extends Package {
 interface Callback<T> { (error: Error, parameter: T): void; }
 interface SuccessCallback<T> { (result?: T): void; }
 interface ErrorCallback { (error?: Error): void; }
-interface OnUpdateCallback { (didUpdate?: boolean, oldPackage?: LocalPackage, newPackage?: LocalPackage): void; }
+interface DidUpdateCallback { (didUpdate?: boolean, oldPackage?: LocalPackage, newPackage?: LocalPackage): void; }
 
 interface Configuration {
     serverUrl: string;
@@ -83,10 +83,10 @@ interface CodePushCordovaPlugin {
      * 
      * @param didUpdateCallback Callback invoked with three parameters:
      *                          @param didUpdate boolean parameter indicating if this is the first run after an update.
-     *                          @param oldPackage LocalPackage parameter - if didUpdate is true, this parameter will contain the old package information; otherwise it is undefined
-     *                          @param newPackage LocalPackage parameter - if didUpdate is true, this parameter will contain the new package information; otherwise it is undefined
+     *                          @param oldPackage LocalPackage parameter - if didUpdate is true, this parameter will contain the old package information; otherwise it is null
+     *                          @param newPackage LocalPackage parameter - if didUpdate is true, this parameter will contain the new package information; otherwise it is null
      */
-    didUpdate(didUpdateCallback: OnUpdateCallback): void;
+    didUpdate(didUpdateCallback: DidUpdateCallback): void;
 
     /**
      * Queries the Code Push server for updates.

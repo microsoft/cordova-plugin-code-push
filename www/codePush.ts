@@ -58,7 +58,7 @@ class CodePush implements CodePushCordovaPlugin {
      * @param notifyFailed Optional callback invoked in case of an error during notifying the plugin.
      */
     public updateSucceeded(notifySucceeded?: SuccessCallback<void>, notifyFailed?: ErrorCallback): void {
-        cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updatesuccess", []);
+        cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updateSuccess", []);
     }
     
     /**
@@ -79,7 +79,7 @@ class CodePush implements CodePushCordovaPlugin {
             checkFailed && checkFailed(e);
         };
 
-        cordova.exec(win, fail, "CodePush", "isfailedupdate", [packageHash]);
+        cordova.exec(win, fail, "CodePush", "isFailedUpdate", [packageHash]);
     }
     
     /**
@@ -394,7 +394,7 @@ class CodePush implements CodePushCordovaPlugin {
                                     applyError && applyError(error);
                                 };
 
-                                cordova.exec(preApplySuccess, preApplyFailure, "CodePush", "preapply", [deployDir.fullPath]);
+                                cordova.exec(preApplySuccess, preApplyFailure, "CodePush", "preApply", [deployDir.fullPath]);
                             }
                         });
                     });
@@ -520,7 +520,7 @@ class CodePush implements CodePushCordovaPlugin {
      *                          @param oldPackage LocalPackage parameter - if didUpdate is true, this parameter will contain the old package information; otherwise it is undefined
      *                          @param newPackage LocalPackage parameter - if didUpdate is true, this parameter will contain the new package information; otherwise it is undefined
      */
-    public didUpdate(didUpdateCallback: OnUpdateCallback): void {
+    public didUpdate(didUpdateCallback: DidUpdateCallback): void {
 
         var respondWithFalse = () => {
             didUpdateCallback(false, null, null);

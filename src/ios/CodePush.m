@@ -26,7 +26,7 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
     }
 }
 
-- (void)updatesuccess:(CDVInvokedUrlCommand *)command {
+- (void)updateSuccess:(CDVInvokedUrlCommand *)command {
     updateSuccess = YES;
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
@@ -64,7 +64,7 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
-- (void)preapply:(CDVInvokedUrlCommand *)command {
+- (void)preApply:(CDVInvokedUrlCommand *)command {
     CDVPluginResult* pluginResult = nil;
     
     NSString* location = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
