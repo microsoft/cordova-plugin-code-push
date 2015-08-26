@@ -181,7 +181,7 @@ Get the currently installed package information.
 navigator.codePush.didUpdate(didUpdateCallback);
 ```
 Checks if this is the first application run after an update has been applied.
-- __didUpdateCallback__: Result callback invoked with three parameters:
-                         - A boolean parameter indicating if this is the first run after an update.
-                         - A ```LocalPackage``` parameter containing the old package information, if this is the first run after an update. Otherwise, it is null.
-                         - A ```LocalPackage``` parameter containing the current package information, if this is the first run after an update. Otherwise, it is null.
+- __didUpdateCallback__: Result callback invoked with three parameters
+  1. A boolean parameter indicating if this is the first run after an update.
+  2. A ```LocalPackage``` parameter containing the old package information, if this is the first run after an update. Otherwise, it is null.
+  3. A ```LocalPackage``` parameter containing the current package information, if this is the first run after an update. Otherwise, it is null.
