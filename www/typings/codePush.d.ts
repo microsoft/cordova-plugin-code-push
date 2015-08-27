@@ -22,7 +22,7 @@ declare module Http {
     }
 }
 
-interface  Navigator {
+interface Navigator {
     codePush: CodePushCordovaPlugin;
 }
 
@@ -63,7 +63,7 @@ interface LocalPackage extends Package {
 interface Callback<T> { (error: Error, parameter: T): void; }
 interface SuccessCallback<T> { (result?: T): void; }
 interface ErrorCallback { (error?: Error): void; }
-interface OnApplyCallback { (oldPackage: LocalPackage, newPackage: LocalPackage): void; }
+interface DidUpdateCallback { (didUpdate?: boolean, oldPackage?: LocalPackage, newPackage?: LocalPackage): void; }
 
 interface Configuration {
     serverUrl: string;
@@ -78,22 +78,15 @@ declare class AcquisitionManager {
 
 interface CodePushCordovaPlugin {
     /**
-     * Callback function invoked before apply taking two parameters, oldPackage and newPackage.
-     * At this moment, oldPackage is still the current package.
+     * Checks if this is the first application run after an update has been applied.
+     * The didUpdateCallback callback can be used for migrating data from the old app version to the new one.
      * 
-     * @param oldPackage The package about to be replaced during the update process.
-     * @param newPackage The new package about to be applied.
+     * @param didUpdateCallback Callback invoked with three parameters:
+     *                          @param didUpdate boolean parameter indicating if this is the first run after an update.
+     *                          @param oldPackage LocalPackage parameter - if didUpdate is true, this parameter will contain the old package information; otherwise it is null
+     *                          @param newPackage LocalPackage parameter - if didUpdate is true, this parameter will contain the new package information; otherwise it is null
      */
-    onBeforeApply: OnApplyCallback;
-    
-    /**
-     * Callback function invoked after apply taking two parameters, oldPackage and newPackage.
-     * At this moment, newPackage is the current package, and oldPackage is not cleaned up.
-     * 
-     * @param oldPackage The old package information.
-     * @param newPackage The current, updated package that just replaced the oldPackage.
-     */
-    onAfterApply: OnApplyCallback;
+    didUpdate(didUpdateCallback: DidUpdateCallback): void;
 
     /**
      * Queries the Code Push server for updates.

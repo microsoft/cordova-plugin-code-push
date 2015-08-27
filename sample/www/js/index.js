@@ -33,9 +33,29 @@ var app = {
     // The scope of 'this' is the event. In order to call the 'receivedEvent'
     // function, we must explicitly call 'app.receivedEvent(...);'
     onDeviceReady: function () {
-        app.receivedEvent('deviceready');
-        // Wait for 5s after the application started and check for updates.
-        setTimeout(app.checkAndInstallUpdates, 5000);
+        // Migrate data from older versions
+        navigator.codePush.didUpdate(function (didUpdate, oldPackage, newPackage) {
+            if (didUpdate) {
+                // first app run after update
+                if (oldPackage.label == null && newPackage.label === "1.0.0") {
+                    // migrate data from store version to version 1.0.0
+                } else if (oldPackage.label == null && newPackage.label === "2.0.0") {
+                    // migrate data from store version to version 2.0.0
+                } else if (oldPackage.label === "1.0.0" && newPackage.label === "2.0.0") {
+                    // migrate data from version 1.0.0 to version 2.0.0
+                }
+                // else { /* migrate other version combinations */}
+                
+                /* Notify the plugin that update succeeded. This is only required when using navigator.codePush.applyWithRevertProtection for applying the update. */
+                // navigator.codePush.updateSucceeded();
+            }
+            
+            // continue application initialization
+            app.receivedEvent('deviceready');
+            
+            // Wait for 5s after the application started and check for updates.
+            setTimeout(app.checkAndInstallUpdates, 5000);
+        });
     },
     // Update DOM on a Received Event
     receivedEvent: function (id) {
@@ -50,9 +70,6 @@ var app = {
     },
     // Uses the Code Push service configured in config.xml to check for updates, prompt the user and install them.
     checkAndInstallUpdates: function () {
-        // Register two callback functions to be executed before and after the update is applied.
-        navigator.codePush.onBeforeApply = app.beforeUpdate;
-        navigator.codePush.onAfterApply = app.afterUpdate;
         
         // Check the Code Push server for updates.
         console.log("Checking for updates...");
@@ -116,14 +133,6 @@ var app = {
             console.log(message + ":" + error.message);
             displayErrorMessage(message + ":" + error.message);
         }
-    },
-    // Called before the update, with the old and new package information.
-    beforeUpdate: function (oldPackage, newPackage) {
-        console.log("Before update called.");
-    },
-    // Called after the update, with the old and new package information.
-    afterUpdate: function (oldPackage, newPackage) {
-        console.log("After update called.");
     }
 };
 

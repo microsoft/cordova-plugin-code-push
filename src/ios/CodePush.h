@@ -7,8 +7,10 @@
 - (void)getNativeBuildTime:(CDVInvokedUrlCommand*)command;
 - (void)getAppVersion:(CDVInvokedUrlCommand*)command;
 - (void)apply:(CDVInvokedUrlCommand *)command;
-- (void)preapply:(CDVInvokedUrlCommand *)command;
+- (void)preApply:(CDVInvokedUrlCommand *)command;
 - (void)isFailedUpdate:(CDVInvokedUrlCommand *)command;
+- (void)didUpdate:(CDVInvokedUrlCommand *)command;
+- (void)updateSuccess:(CDVInvokedUrlCommand *)command;
 - (void)pluginInitialize;
 
 @end

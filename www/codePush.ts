@@ -44,9 +44,6 @@ class CodePush implements CodePushCordovaPlugin {
     private ignoreAppVersion: boolean;
     private initialized: boolean;
 
-    public onBeforeApply: { (oldPackage: LocalPackage, newPackage: LocalPackage): void };
-    public onAfterApply: { (oldPackage: LocalPackage, newPackage: LocalPackage): void };
-
     constructor(ignoreAppVersion?: boolean) {
         this.initialized = false;
         this.ignoreAppVersion = !!ignoreAppVersion;
@@ -61,7 +58,7 @@ class CodePush implements CodePushCordovaPlugin {
      * @param notifyFailed Optional callback invoked in case of an error during notifying the plugin.
      */
     public updateSucceeded(notifySucceeded?: SuccessCallback<void>, notifyFailed?: ErrorCallback): void {
-        cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updatesuccess", []);
+        cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updateSuccess", []);
     }
     
     /**
@@ -82,7 +79,7 @@ class CodePush implements CodePushCordovaPlugin {
             checkFailed && checkFailed(e);
         };
 
-        cordova.exec(win, fail, "CodePush", "isfailedupdate", [packageHash]);
+        cordova.exec(win, fail, "CodePush", "isFailedUpdate", [packageHash]);
     }
     
     /**
@@ -92,12 +89,33 @@ class CodePush implements CodePushCordovaPlugin {
      * @param packageError Optional callback invoked in case of an error.
      */
     public getCurrentPackage(packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
+        return this.getPackage(CodePush.PackageInfoFile, packageSuccess, packageError);
+    }
+    
+    /**
+     * Get the previous package information.
+     * 
+     * @param packageSuccess Callback invoked with the old package information.
+     * @param packageError Optional callback invoked in case of an error.
+     */
+    public getOldPackage(packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
+        return this.getPackage(CodePush.OldPackageInfoFile, packageSuccess, packageError);
+    }
+    
+    /**
+     * Reads package information from a give file.
+     * 
+     * @param packageFile The package file name.
+     * @param packageSuccess Callback invoked with the package information.
+     * @param packageError Optional callback invoked in case of an error.
+     */
+    public getPackage(packageFile: string, packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
         var handleError = (e: Error) => {
             packageError && packageError(new Error("Cannot read package information. " + this.getErrorMessage(e)));
         };
 
         try {
-            FileUtil.readDataFile(CodePush.RootDir, CodePush.PackageInfoFile, (error: Error, content: string) => {
+            FileUtil.readDataFile(CodePush.RootDir, packageFile, (error: Error, content: string) => {
                 if (error) {
                     handleError(error);
                 } else {
@@ -115,7 +133,15 @@ class CodePush implements CodePushCordovaPlugin {
     }
 
     public getCurrentOrDefaultPackage(packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
-        var currentPackageFailure = (error: Error) => {
+        this.getPackageInfoOrDefault(CodePush.PackageInfoFile, packageSuccess, packageError);
+    }
+
+    public getOldOrDefaultPackage(packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
+        this.getPackageInfoOrDefault(CodePush.OldPackageInfoFile, packageSuccess, packageError);
+    }
+
+    public getPackageInfoOrDefault(packageFile: string, packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
+        var packageFailure = (error: Error) => {
             NativeAppInfo.getApplicationVersion((appVersionError: Error, appVersion: string) => {
                 if (appVersionError) {
                     console.log("Could not get application version." + appVersionError);
@@ -138,7 +164,7 @@ class CodePush implements CodePushCordovaPlugin {
             });
         };
 
-        this.getCurrentPackage(packageSuccess, currentPackageFailure);
+        this.getPackage(packageFile, packageSuccess, packageFailure);
     }
     
     /**
@@ -308,14 +334,6 @@ class CodePush implements CodePushCordovaPlugin {
                 });
             };
 
-            var invokeOnApplyCallback = (callback: OnApplyCallback, oldPackage: LocalPackage, newPackage: LocalPackage) => {
-                try {
-                    callback && callback(oldPackage, newPackage);
-                } catch (e) {
-                    console.log("An error has occurred during the onApply() callback.");
-                }
-            };
-
             var deleteDirectory = (dirLocation: string, deleteDirCallback: Callback<void>) => {
                 FileUtil.getDataDirectory(dirLocation, false, (oldDirError: Error, dirToDelete: DirectoryEntry) => {
                     if (oldDirError) {
@@ -338,7 +356,6 @@ class CodePush implements CodePushCordovaPlugin {
 
             var donePackageFileCopy = (deployDir: DirectoryEntry) => {
                 this.getCurrentOrDefaultPackage((oldPackage: LocalPackage) => {
-                    invokeOnApplyCallback(this.onBeforeApply, oldPackage, newPackage);
                     this.writeOldPackageInformation((backupError: Error) => {
                         backupError && console.log("Package information was not backed up. " + this.getErrorMessage(backupError));
                         /* continue on error, current package information might be missing if this is the fist update */
@@ -346,7 +363,6 @@ class CodePush implements CodePushCordovaPlugin {
                             if (writeMetadataError) {
                                 applyError && applyError(writeMetadataError);
                             } else {
-                                invokeOnApplyCallback(this.onAfterApply, oldPackage, newPackage);
                                 var silentCleanup = (cleanCallback: Callback<void>) => {
                                     deleteDirectory(CodePush.DownloadDir, (e1: Error) => {
                                         cleanOldPackage(oldPackage, (e2: Error) => {
@@ -378,7 +394,7 @@ class CodePush implements CodePushCordovaPlugin {
                                     applyError && applyError(error);
                                 };
 
-                                cordova.exec(preApplySuccess, preApplyFailure, "CodePush", "preapply", [deployDir.fullPath]);
+                                cordova.exec(preApplySuccess, preApplyFailure, "CodePush", "preApply", [deployDir.fullPath]);
                             }
                         });
                     });
@@ -493,6 +509,41 @@ class CodePush implements CodePushCordovaPlugin {
         } catch (e) {
             applyError && applyError(new Error("An error ocurred while applying the package. " + this.getErrorMessage(e)));
         }
+    }
+    
+    /**
+     * Checks if this is the first application run after an update has been applied.
+     * The didUpdateCallback callback can be used for migrating data from the old app version to the new one.
+     * 
+     * @param didUpdateCallback Callback invoked with three parameters:
+     *                          @param didUpdate boolean parameter indicating if this is the first run after an update.
+     *                          @param oldPackage LocalPackage parameter - if didUpdate is true, this parameter will contain the old package information; otherwise it is undefined
+     *                          @param newPackage LocalPackage parameter - if didUpdate is true, this parameter will contain the new package information; otherwise it is undefined
+     */
+    public didUpdate(didUpdateCallback: DidUpdateCallback): void {
+
+        var respondWithFalse = () => {
+            didUpdateCallback(false, null, null);
+        };
+
+        var win = (didUpdate?: number) => {
+            if (!!didUpdate) {
+                this.getCurrentOrDefaultPackage((currentPackage: LocalPackage) => {
+                    this.getOldOrDefaultPackage((oldPackage: LocalPackage) => {
+                        didUpdateCallback(true, oldPackage, currentPackage);
+                    }, respondWithFalse);
+                }, respondWithFalse);
+            }
+            else {
+                respondWithFalse();
+            }
+        };
+
+        var fail = () => {
+            respondWithFalse();
+        };
+
+        cordova.exec(win, fail, "CodePush", "didUpdate", []);
     }
 
     /**

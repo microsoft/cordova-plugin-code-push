@@ -4,6 +4,7 @@
 @implementation CodePush
 
 bool updateSuccess = false;
+bool didUpdate = false;
 NSString* const FailedUpdatesKey = @"FAILED_UPDATES";
 NSString* const OldPackageManifestName = @"oldPackage.json";
 NSString* const CurrentPackageManifestName = @"currentPackage.json";
@@ -25,7 +26,7 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
     }
 }
 
-- (void)updatesuccess:(CDVInvokedUrlCommand *)command {
+- (void)updateSuccess:(CDVInvokedUrlCommand *)command {
     updateSuccess = YES;
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
@@ -41,7 +42,7 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
     else {
         bool applied = [self loadPackage: location];
         if (applied ) {
-            
+            didUpdate = YES;
             NSString* successTimeoutMillisString = [command argumentAtIndex:1 withDefault:nil andClass:[NSString class]];
             if (successTimeoutMillisString) {
                 /* Start the revert timer */
@@ -63,7 +64,7 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
-- (void)preapply:(CDVInvokedUrlCommand *)command {
+- (void)preApply:(CDVInvokedUrlCommand *)command {
     CDVPluginResult* pluginResult = nil;
     
     NSString* location = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
@@ -161,14 +162,6 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
     // delete the package folder
     [self cleanPackageDirectory:oldMetadata];
     
-    // delete the metadata file
-    NSString* libraryLocation = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-    NSArray* manifestLocationArray = @[libraryLocation, @"NoCloud", @"codepush", OldPackageManifestName];
-    NSString* manifestLocation = [NSString pathWithComponents:manifestLocationArray];
-    if ([[NSFileManager defaultManager] fileExistsAtPath: manifestLocation]) {
-        [[NSFileManager defaultManager] removeItemAtPath:manifestLocation error:nil];
-    }
-    
     // delete the downloads folder
     [self cleanDownloads];
 }
@@ -258,7 +251,6 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
-
 - (void)isFailedUpdate:(CDVInvokedUrlCommand *)command {
     CDVPluginResult* result;
     NSString* packageHash = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
@@ -270,6 +262,14 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:failedHash ? 1 : 0];
     }
     
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
+- (void)didUpdate:(CDVInvokedUrlCommand *)command {
+    CDVPluginResult* result =  [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt: didUpdate ? 1 : 0];
+    if (didUpdate) {
+        didUpdate = NO;
+    }
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
