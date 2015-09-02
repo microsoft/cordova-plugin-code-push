@@ -22,7 +22,7 @@ declare module Http {
     }
 }
 
-interface Navigator {
+interface Window {
     codePush: CodePushCordovaPlugin;
 }
 

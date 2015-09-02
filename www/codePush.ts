@@ -52,9 +52,29 @@ class CodePush implements CodePushCordovaPlugin {
      *                     A null package means the application is up to date.
      * @param queryError Optional callback invoked in case of an error.
      */
-    public checkForUpdate(querySuccess: SuccessCallback<IRemotePackage>, queryError?: ErrorCallback): void {
+    public checkForUpdate(querySuccess: SuccessCallback<RemotePackage>, queryError?: ErrorCallback): void {
         try {
-            var callback: Callback<RemotePackage> = CallbackUtil.getNodeStyleCallbackFor(querySuccess, queryError);
+            var callback: Callback<RemotePackage> = (error: Error, remotePackage: IRemotePackage) => {
+                if (error) {
+                    queryError && queryError(error);
+                }
+                else {
+                    NativeAppInfo.applyFailed(remotePackage.packageHash, (applyFailed: boolean) => {
+                        var result: RemotePackage = new RemotePackage();
+                        result.appVersion = remotePackage.appVersion;
+                        result.deploymentKey = remotePackage.deploymentKey;
+                        result.description = remotePackage.description;
+                        result.downloadUrl = remotePackage.downloadUrl;
+                        result.isMandatory = remotePackage.isMandatory;
+                        result.label = remotePackage.label;
+                        result.packageHash = remotePackage.packageHash;
+                        result.packageSize = remotePackage.packageSize;
+                        result.failedApply = applyFailed;
+                        querySuccess(result);
+                    });
+                }
+            };
+
             this.createAcquisitionManager((initError: Error, acquisitionManager: AcquisitionManager) => {
                 if (initError) {
                     queryError && queryError(initError);

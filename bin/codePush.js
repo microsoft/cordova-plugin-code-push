@@ -14,6 +14,7 @@
 /// <reference path="../typings/cordova.d.ts" />
 "use strict";
 var LocalPackage = require("./localPackage");
+var RemotePackage = require("./remotePackage");
 var HttpRequester = require("./httpRequester");
 var CallbackUtil = require("./callbackUtil");
 var NativeAppInfo = require("./nativeAppInfo");
@@ -28,7 +29,26 @@ var CodePush = (function () {
     };
     CodePush.prototype.checkForUpdate = function (querySuccess, queryError) {
         try {
-            var callback = CallbackUtil.getNodeStyleCallbackFor(querySuccess, queryError);
+            var callback = function (error, remotePackage) {
+                if (error) {
+                    queryError && queryError(error);
+                }
+                else {
+                    NativeAppInfo.applyFailed(remotePackage.packageHash, function (applyFailed) {
+                        var result = new RemotePackage();
+                        result.appVersion = remotePackage.appVersion;
+                        result.deploymentKey = remotePackage.deploymentKey;
+                        result.description = remotePackage.description;
+                        result.downloadUrl = remotePackage.downloadUrl;
+                        result.isMandatory = remotePackage.isMandatory;
+                        result.label = remotePackage.label;
+                        result.packageHash = remotePackage.packageHash;
+                        result.packageSize = remotePackage.packageSize;
+                        result.failedApply = applyFailed;
+                        querySuccess(result);
+                    });
+                }
+            };
             this.createAcquisitionManager(function (initError, acquisitionManager) {
                 if (initError) {
                     queryError && queryError(initError);

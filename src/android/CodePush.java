@@ -70,14 +70,29 @@ public class CodePush extends CordovaPlugin {
             return true;
         } else if ("isFailedUpdate".equals(action)) {
             return execIsFailedUpdate(args, callbackContext);
-        } else if ("didUpdate".equals(action)) {
-            callbackContext.success(this.didUpdate ? 1 : 0);
-            if (this.didUpdate) {
-                this.didUpdate = false;
-            }
+        } else if ("isFirstRun".equals(action)) {
+            execIsFirstRun(args, callbackContext);
             return true;
         } else {
             return false;
+        }
+    }
+
+    private void execIsFirstRun(CordovaArgs args, CallbackContext callbackContext) {
+        try {
+            boolean isFirstRun = false;
+            String packageHash = args.getString(0);
+            CodePushPackageMetadata currentPackageMetadata = getCurrentPackageMetadata();
+            if (null != currentPackageMetadata) {
+                /* This is the first run for a package if we just updated, and the current package hash matches the one provided. */
+                isFirstRun = (null != packageHash
+                        && !packageHash.isEmpty()
+                        && packageHash.equals(currentPackageMetadata.packageHash)
+                        && didUpdate);
+            }
+            callbackContext.success(isFirstRun ? 1 : 0);
+        } catch (JSONException e) {
+            callbackContext.error("Invalid package hash. " + e.getMessage());
         }
     }
 

@@ -101,10 +101,10 @@ var LocalPackage = (function (_super) {
                                 };
                                 var invokeSuccessAndApply = function () {
                                     applySuccess && applySuccess();
-                                    cordova.exec(function () { }, function () { }, "CodePush", "apply", [deployDir.fullPath, rollbackTimeout.toString()]);
+                                    cordova.exec(function () { }, function () { }, "CodePush", "apply", [deployDir.fullPath, timeout.toString()]);
                                 };
                                 var preApplySuccess = function () {
-                                    if (rollbackTimeout > 0) {
+                                    if (timeout > 0) {
                                         invokeSuccessAndApply();
                                     }
                                     else {

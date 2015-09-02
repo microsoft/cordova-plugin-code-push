@@ -131,11 +131,11 @@ class LocalPackage extends Package implements ILocalPackage {
                                 var invokeSuccessAndApply = () => {
                                     applySuccess && applySuccess();
                                     /* no neeed for callbacks, the javascript context will reload */
-                                    cordova.exec(() => { }, () => { }, "CodePush", "apply", [deployDir.fullPath, rollbackTimeout.toString()]);
+                                    cordova.exec(() => { }, () => { }, "CodePush", "apply", [deployDir.fullPath, timeout.toString()]);
                                 };
 
                                 var preApplySuccess = () => {
-                                    if (rollbackTimeout > 0) {
+                                    if (timeout > 0) {
                                         /* package will be cleaned up after success, on the native side */
                                         invokeSuccessAndApply();
                                     } else {
