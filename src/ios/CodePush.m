@@ -265,11 +265,20 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
-- (void)didUpdate:(CDVInvokedUrlCommand *)command {
-    CDVPluginResult* result =  [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt: didUpdate ? 1 : 0];
-    if (didUpdate) {
-        didUpdate = NO;
+- (void)isFirstRun:(CDVInvokedUrlCommand *)command {
+    CDVPluginResult* result;
+    BOOL isFirstRun = NO;
+    
+    NSString* packageHash = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
+    CodePushPackageMetadata* currentPackageMetadata = [self getCurrentPackageMetadata];
+    if (currentPackageMetadata) {
+        isFirstRun = (nil != packageHash
+                      && [packageHash length] > 0
+                      && [packageHash isEqualToString:currentPackageMetadata.packageHash]
+                      && didUpdate);
     }
+    
+    result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:isFirstRun ? 1 : 0];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 

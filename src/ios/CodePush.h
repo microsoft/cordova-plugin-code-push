@@ -9,7 +9,7 @@
 - (void)apply:(CDVInvokedUrlCommand *)command;
 - (void)preApply:(CDVInvokedUrlCommand *)command;
 - (void)isFailedUpdate:(CDVInvokedUrlCommand *)command;
-- (void)didUpdate:(CDVInvokedUrlCommand *)command;
+- (void)isFirstRun:(CDVInvokedUrlCommand *)command;
 - (void)updateSuccess:(CDVInvokedUrlCommand *)command;
 - (void)pluginInitialize;
 

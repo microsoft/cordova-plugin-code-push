@@ -34,19 +34,24 @@ var CodePush = (function () {
                     queryError && queryError(error);
                 }
                 else {
-                    NativeAppInfo.applyFailed(remotePackage.packageHash, function (applyFailed) {
-                        var result = new RemotePackage();
-                        result.appVersion = remotePackage.appVersion;
-                        result.deploymentKey = remotePackage.deploymentKey;
-                        result.description = remotePackage.description;
-                        result.downloadUrl = remotePackage.downloadUrl;
-                        result.isMandatory = remotePackage.isMandatory;
-                        result.label = remotePackage.label;
-                        result.packageHash = remotePackage.packageHash;
-                        result.packageSize = remotePackage.packageSize;
-                        result.failedApply = applyFailed;
-                        querySuccess(result);
-                    });
+                    if (remotePackage) {
+                        NativeAppInfo.applyFailed(remotePackage.packageHash, function (applyFailed) {
+                            var result = new RemotePackage();
+                            result.appVersion = remotePackage.appVersion;
+                            result.deploymentKey = remotePackage.deploymentKey;
+                            result.description = remotePackage.description;
+                            result.downloadUrl = remotePackage.downloadUrl;
+                            result.isMandatory = remotePackage.isMandatory;
+                            result.label = remotePackage.label;
+                            result.packageHash = remotePackage.packageHash;
+                            result.packageSize = remotePackage.packageSize;
+                            result.failedApply = applyFailed;
+                            querySuccess(result);
+                        });
+                    }
+                    else {
+                        querySuccess(null);
+                    }
                 }
             };
             this.createAcquisitionManager(function (initError, acquisitionManager) {
