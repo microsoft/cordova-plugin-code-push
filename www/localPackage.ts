@@ -73,7 +73,7 @@ class LocalPackage extends Package implements ILocalPackage {
                 if (unzipError) {
                     applyError && applyError(new Error("Could not unzip package. " + CallbackUtil.getErrorMessage(unzipError)));
                 } else {
-                    LocalPackage.handleCleanDeployment(newPackageLocation, CallbackUtil.getNodeStyleCallbackFor<DirectoryEntry>(donePackageFileCopy, applyError));
+                    LocalPackage.handleDeployment(newPackageLocation, CallbackUtil.getNodeStyleCallbackFor<DirectoryEntry>(donePackageFileCopy, applyError));
                 }
             };
 
@@ -253,7 +253,7 @@ class LocalPackage extends Package implements ILocalPackage {
             /* copy new files */
             LocalPackage.handleCleanDeployment(newPackageLocation, (cleanDeployError: Error) => {
                 /* delete files mentioned in the manifest */
-                var diffContent = FileUtil.readFileEntry(diffManifest, (error: Error, content: string) => {
+                FileUtil.readFileEntry(diffManifest, (error: Error, content: string) => {
                     if (error || currentPackageError || cleanDeployError) {
                         handleError(new Error("Cannot perform diff-update."));
                     } else {

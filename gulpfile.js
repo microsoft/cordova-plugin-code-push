@@ -51,6 +51,7 @@ gulp.task("tslint", function () {
 				"check-open-brace"
 			],
 			"no-unreachable": true,
+			"no-unused-variable": true,
 			"no-use-before-declare": true,
 			"quotemark": [true,
 				"double"

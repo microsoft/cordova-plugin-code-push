@@ -48,7 +48,7 @@ var LocalPackage = (function (_super) {
                     applyError && applyError(new Error("Could not unzip package. " + CallbackUtil.getErrorMessage(unzipError)));
                 }
                 else {
-                    LocalPackage.handleCleanDeployment(newPackageLocation, CallbackUtil.getNodeStyleCallbackFor(donePackageFileCopy, applyError));
+                    LocalPackage.handleDeployment(newPackageLocation, CallbackUtil.getNodeStyleCallbackFor(donePackageFileCopy, applyError));
                 }
             };
             FileUtil.getDataDirectory(LocalPackage.DownloadUnzipDir, false, function (error, directoryEntry) {
@@ -212,7 +212,7 @@ var LocalPackage = (function (_super) {
         };
         LocalPackage.copyCurrentPackage(newPackageLocation, function (currentPackageError) {
             LocalPackage.handleCleanDeployment(newPackageLocation, function (cleanDeployError) {
-                var diffContent = FileUtil.readFileEntry(diffManifest, function (error, content) {
+                FileUtil.readFileEntry(diffManifest, function (error, content) {
                     if (error || currentPackageError || cleanDeployError) {
                         handleError(new Error("Cannot perform diff-update."));
                     }
