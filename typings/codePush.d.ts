@@ -81,7 +81,7 @@ interface ILocalPackage extends IPackage {
     localPath: string;
     
     /**
-     * Indicates if this is the current application run is the first one after the package was applied.
+     * Indicates if the current application run is the first one after the package was applied.
      */
     isFirstRun: boolean;
     

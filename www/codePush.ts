@@ -41,7 +41,7 @@ class CodePush implements CodePushCordovaPlugin {
     * @param packageError Optional callback invoked in case of an error.
     */
     public getCurrentPackage(packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
-        return LocalPackage.getPackage(LocalPackage.PackageInfoFile, packageSuccess, packageError);
+        return LocalPackage.getPackageInfoOrNull(LocalPackage.PackageInfoFile, packageSuccess, packageError);
     }
 
     /**

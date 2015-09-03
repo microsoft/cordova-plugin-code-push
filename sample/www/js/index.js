@@ -34,20 +34,15 @@ var app = {
     // function, we must explicitly call 'app.receivedEvent(...);'
     onDeviceReady: function () {
         // Migrate data from older versions
-        navigator.codePush.didUpdate(function (didUpdate, oldPackage, newPackage) {
-            if (didUpdate) {
-                // first app run after update
-                if (oldPackage.label == null && newPackage.label === "1.0.0") {
+        codePush.getCurrentPackage(function (currentPackage) {
+            // getCurrentPackage returns null if no update was installed (app store version)
+            if (currentPackage && currentPackage.isFirstRun) {
+                // First run after an update, migrate date
+                if (currentPackage.appVersion === "1.0.0") {
                     // migrate data from store version to version 1.0.0
-                } else if (oldPackage.label == null && newPackage.label === "2.0.0") {
-                    // migrate data from store version to version 2.0.0
-                } else if (oldPackage.label === "1.0.0" && newPackage.label === "2.0.0") {
-                    // migrate data from version 1.0.0 to version 2.0.0
+                } else if (currentPackage.appVersion === "2.0.0") {
+                    // migrate data to version 2.0.0
                 }
-                // else { /* migrate other version combinations */}
-                
-                /* Notify the plugin that update succeeded. This is only required when using navigator.codePush.applyWithRevertProtection for applying the update. */
-                // navigator.codePush.updateSucceeded();
             }
             
             // continue application initialization
@@ -55,7 +50,11 @@ var app = {
             
             // Wait for 5s after the application started and check for updates.
             setTimeout(app.checkAndInstallUpdates, 5000);
-        });
+            
+            // Notify the plugin that update succeeded. This is only required when using LocalPackage.apply with a rollbackTimeout parameter.
+            // codePush.notifyApplicationReady();
+
+        }, app.getErrorHandler("Error while retrieving the current package."));
     },
     // Update DOM on a Received Event
     receivedEvent: function (id) {
@@ -73,7 +72,7 @@ var app = {
         
         // Check the Code Push server for updates.
         console.log("Checking for updates...");
-        navigator.codePush.queryUpdate(app.onQuerySuccess, app.getErrorHandler("Checking for update failed."));
+        codePush.checkForUpdate(app.onQuerySuccess, app.getErrorHandler("Checking for update failed."));
     },
     // Called after the Code Push server responded the queryUpdate call
     onQuerySuccess: function (remotePackage) {
@@ -90,7 +89,7 @@ var app = {
                     case 1:
                         /* Install */
                         console.log("Downloading package...");
-                        navigator.codePush.download(remotePackage, app.onDownloadSuccess, app.getErrorHandler("Downloading the update package failed."));
+                        remotePackage.download(app.onDownloadSuccess, app.getErrorHandler("Downloading the update package failed."));
                         break;
                     case 2:
                         /* Cancel */
@@ -116,7 +115,7 @@ var app = {
         };
 
         console.log("Applying package...");
-        navigator.codePush.apply(localPackage, applyCallback, app.getErrorHandler("Apply failed."));
+        localPackage.apply(applyCallback, app.getErrorHandler("Apply failed."));
     },
     // Returns an error handler that logs the error to the console and displays a notification containing the error message.
     getErrorHandler: function (message) {

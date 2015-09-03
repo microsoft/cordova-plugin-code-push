@@ -335,6 +335,9 @@ var LocalPackage = (function (_super) {
         };
         LocalPackage.getPackage(packageFile, packageSuccess, packageFailure);
     };
+    LocalPackage.getPackageInfoOrNull = function (packageFile, packageSuccess, packageError) {
+        LocalPackage.getPackage(packageFile, packageSuccess, packageSuccess.bind(null, null));
+    };
     LocalPackage.RootDir = "codepush";
     LocalPackage.DownloadDir = LocalPackage.RootDir + "/download";
     LocalPackage.DownloadUnzipDir = LocalPackage.DownloadDir + "/unzipped";

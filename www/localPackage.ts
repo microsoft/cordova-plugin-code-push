@@ -405,6 +405,10 @@ class LocalPackage extends Package implements ILocalPackage {
 
         LocalPackage.getPackage(packageFile, packageSuccess, packageFailure);
     }
+
+    public static getPackageInfoOrNull(packageFile: string, packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
+        LocalPackage.getPackage(packageFile, packageSuccess, packageSuccess.bind(null, null));
+    }
 }
 
 

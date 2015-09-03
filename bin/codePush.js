@@ -25,7 +25,7 @@ var CodePush = (function () {
         cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updateSuccess", []);
     };
     CodePush.prototype.getCurrentPackage = function (packageSuccess, packageError) {
-        return LocalPackage.getPackage(LocalPackage.PackageInfoFile, packageSuccess, packageError);
+        return LocalPackage.getPackageInfoOrNull(LocalPackage.PackageInfoFile, packageSuccess, packageError);
     };
     CodePush.prototype.checkForUpdate = function (querySuccess, queryError) {
         try {
