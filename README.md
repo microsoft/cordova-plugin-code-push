@@ -78,6 +78,7 @@ Contains details about an update package that has been downloaded locally or alr
 - __failedApply__: Boolean version indicating if this update package was previously attempted and the update failed. (Boolean)
 - __localPath__: The current, local path of the package. (String)
 - __isFirstRun__: Flag indicating if the current application run is the first one after the package was applied. (Boolean)
+
 ### Methods
 - __apply(applySuccess, applyError, rollbackTimeout)__: Applies this package to the application. The application will be reloaded with this package and on every application launch this package will be loaded.
 If the rollbackTimeout parameter is provided, the application will wait for a codePush.notifyApplicationReady() for the given number of milliseconds.
@@ -96,6 +97,7 @@ Contains details about an update package that is available for download.
 - __packageSize__: The size of the package, in bytes. (Number)
 - __failedApply__: Boolean version indicating if this update package was previously attempted and the update failed. (Boolean)
 - __downloadUrl__: The URL at which the package is available for download. (String)
+
 ### Methods
 - __download(downloadSuccess, downloadError)__: Downloads the package update from the Code Push service. The ```downloadSuccess``` callback is invoked with a ```LocalPackage``` argument, representing the downloaded package.
 - __abortDownload(abortSuccess, abortError)__: Aborts the current download session, if any.
