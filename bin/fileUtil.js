@@ -132,12 +132,7 @@ var FileUtil = (function () {
                     var entryNotInDestination = function (error) {
                         nextEntry.copyTo(destinationDir, nextEntry.name, copyOne, fail);
                     };
-                    if (nextEntry.isDirectory) {
-                        destinationDir.getDirectory(nextEntry.name, { create: false, exclusive: false }, entryAlreadyInDestination, entryNotInDestination);
-                    }
-                    else {
-                        destinationDir.getFile(nextEntry.name, { create: false, exclusive: false }, entryAlreadyInDestination, entryNotInDestination);
-                    }
+                    FileUtil.entryExistsInDirectory(nextEntry, destinationDir, entryAlreadyInDestination, entryNotInDestination);
                 }
                 else {
                     callback(null, null);
@@ -147,6 +142,27 @@ var FileUtil = (function () {
         };
         var directoryReader = sourceDir.createReader();
         directoryReader.readEntries(success, fail);
+    };
+    FileUtil.entryExistsInDirectory = function (entry, destinationDir, exists, doesNotExist) {
+        var options = { create: false, exclusive: false };
+        if (entry.isDirectory) {
+            destinationDir.getDirectory(entry.name, options, exists, doesNotExist);
+        }
+        else {
+            destinationDir.getFile(entry.name, options, exists, doesNotExist);
+        }
+    };
+    FileUtil.deleteDirectory = function (dirLocation, deleteDirCallback) {
+        FileUtil.getDataDirectory(dirLocation, false, function (oldDirError, dirToDelete) {
+            if (oldDirError) {
+                deleteDirCallback(oldDirError, null);
+            }
+            else {
+                var win = function () { deleteDirCallback(null, null); };
+                var fail = function (e) { deleteDirCallback(FileUtil.fileErrorToError(e), null); };
+                dirToDelete.removeRecursively(win, fail);
+            }
+        });
     };
     FileUtil.deleteEntriesFromDataDirectory = function (dirPath, filesToDelete, callback) {
         FileUtil.getDataDirectory(dirPath, false, function (error, rootDir) {

@@ -24,15 +24,10 @@ var HttpRequester = (function () {
         }
         var xhr = new XMLHttpRequest();
         var methodName = this.getHttpMethodName(verb);
-        var callbackInvoked = false;
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4) {
-                if (callbackInvoked) {
-                    console.warn("Callback already invoked before.");
-                }
                 var response = { statusCode: xhr.status, body: xhr.responseText };
                 requestCallback && requestCallback(null, response);
-                callbackInvoked = true;
             }
         };
         xhr.open(methodName, url, true);

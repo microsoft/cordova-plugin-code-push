@@ -54,7 +54,7 @@ class NativeAppInfo {
      * Every reverted update attempted with rollback protection is stored such that the application developer has the option to ignore
      * updates that previously failed. This way, an infinite update loop can be prevented in case of a bad update package.
      */
-    public static applyFailed(packageHash: string, checkCallback: SuccessCallback<boolean>): void {
+    public static isFailedUpdate(packageHash: string, checkCallback: SuccessCallback<boolean>): void {
         var win = (failed?: number) => {
             checkCallback && checkCallback(!!failed);
         };

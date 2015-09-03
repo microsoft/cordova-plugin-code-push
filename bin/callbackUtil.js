@@ -24,11 +24,7 @@ var CallbackUtil = (function () {
         };
     };
     CallbackUtil.getErrorMessage = function (e) {
-        var result;
-        if (e && e.message) {
-            return e.message;
-        }
-        return result;
+        return e && e.message;
     };
     return CallbackUtil;
 })();

@@ -35,7 +35,7 @@ var CodePush = (function () {
                 }
                 else {
                     if (remotePackage) {
-                        NativeAppInfo.applyFailed(remotePackage.packageHash, function (applyFailed) {
+                        NativeAppInfo.isFailedUpdate(remotePackage.packageHash, function (applyFailed) {
                             var result = new RemotePackage();
                             result.appVersion = remotePackage.appVersion;
                             result.deploymentKey = remotePackage.deploymentKey;

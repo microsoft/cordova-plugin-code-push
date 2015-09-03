@@ -26,13 +26,7 @@ class CallbackUtil {
      * Gets the message of an error, if any.
      */
     public static getErrorMessage(e: Error): string {
-        var result: string;
-
-        if (e && e.message) {
-            return e.message;
-        }
-
-        return result;
+        return e && e.message;
     }
 }
 

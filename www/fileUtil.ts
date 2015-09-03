@@ -46,7 +46,7 @@ class FileUtil {
             }
         };
 
-        /* check if the file exists first */
+        /* check if the file exists first - getFile fails if the file exists and the create flag is set to true */
         parent.getFile(path, { create: false, exclusive: false }, success, failFirst);
     }
 
@@ -157,11 +157,7 @@ class FileUtil {
                         nextEntry.copyTo(destinationDir, nextEntry.name, copyOne, fail);
                     };
 
-                    if (nextEntry.isDirectory) {
-                        destinationDir.getDirectory(nextEntry.name, { create: false, exclusive: false }, entryAlreadyInDestination, entryNotInDestination);
-                    } else {
-                        destinationDir.getFile(nextEntry.name, { create: false, exclusive: false }, entryAlreadyInDestination, entryNotInDestination);
-                    }
+                    FileUtil.entryExistsInDirectory(nextEntry, destinationDir, entryAlreadyInDestination, entryNotInDestination);
                 } else {
                     /* copied all successfully */
                     callback(null, null);
@@ -175,6 +171,37 @@ class FileUtil {
         directoryReader.readEntries(success, fail);
     }
 
+    /**
+     * Checks if an entry already exists in a given directory.
+     */
+    public static entryExistsInDirectory(entry: Entry, destinationDir: DirectoryEntry, exists: SuccessCallback<Entry>, doesNotExist: { (error: FileError): void; }): void {
+        var options: Flags = { create: false, exclusive: false };
+
+        if (entry.isDirectory) {
+            destinationDir.getDirectory(entry.name, options, exists, doesNotExist);
+        } else {
+            destinationDir.getFile(entry.name, options, exists, doesNotExist);
+        }
+    }
+
+    /**
+     * Recursively deletes the contents of a directory. 
+     */
+    public static deleteDirectory(dirLocation: string, deleteDirCallback: Callback<void>) {
+        FileUtil.getDataDirectory(dirLocation, false, (oldDirError: Error, dirToDelete: DirectoryEntry) => {
+            if (oldDirError) {
+                deleteDirCallback(oldDirError, null);
+            } else {
+                var win = () => { deleteDirCallback(null, null); };
+                var fail = (e: FileError) => { deleteDirCallback(FileUtil.fileErrorToError(e), null); };
+                dirToDelete.removeRecursively(win, fail);
+            }
+        });
+    }
+
+    /**
+     * Deletes a given set of files from a directory.
+     */
     public static deleteEntriesFromDataDirectory(dirPath: string, filesToDelete: string[], callback: Callback<void>): void {
         FileUtil.getDataDirectory(dirPath, false, (error: Error, rootDir: DirectoryEntry) => {
             if (error) {
@@ -210,6 +237,9 @@ class FileUtil {
         });
     }
 
+    /**
+     * Writes a string to a file.
+     */
     public static writeStringToFile(content: string, rootUri: string, path: string, fileName: string, createIfNotExists: boolean, callback: Callback<void>): void {
         var gotFile = (fileEntry: FileEntry) => {
             fileEntry.createWriter((writer: FileWriter) => {

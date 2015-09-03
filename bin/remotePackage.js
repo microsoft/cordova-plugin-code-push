@@ -36,7 +36,7 @@ var RemotePackage = (function (_super) {
                 var downloadSuccess = function (fileEntry) {
                     _this.currentFileTransfer = null;
                     fileEntry.file(function (file) {
-                        NativeAppInfo.applyFailed(_this.packageHash, function (applyFailed) {
+                        NativeAppInfo.isFailedUpdate(_this.packageHash, function (applyFailed) {
                             var localPackage = new LocalPackage();
                             localPackage.deploymentKey = _this.deploymentKey;
                             localPackage.description = _this.description;

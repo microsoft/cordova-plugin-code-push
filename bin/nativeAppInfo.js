@@ -34,7 +34,7 @@ var NativeAppInfo = (function () {
         var deploymentError = function () { deploymentKeyCallback(new Error("Deployment key not found."), null); };
         cordova.exec(deploymentSuccess, deploymentError, "CodePush", "getDeploymentKey", []);
     };
-    NativeAppInfo.applyFailed = function (packageHash, checkCallback) {
+    NativeAppInfo.isFailedUpdate = function (packageHash, checkCallback) {
         var win = function (failed) {
             checkCallback && checkCallback(!!failed);
         };

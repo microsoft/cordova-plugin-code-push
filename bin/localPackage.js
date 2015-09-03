@@ -40,167 +40,15 @@ var LocalPackage = (function (_super) {
                 applyError = errorCallbackOrRollbackTimeout;
             }
             var newPackageLocation = LocalPackage.VersionsDir + "/" + this.packageHash;
-            var writeNewPackageMetadata = function (deployDir, writeMetadataCallback) {
-                NativeAppInfo.getApplicationBuildTime(function (buildTimeError, timestamp) {
-                    NativeAppInfo.getApplicationVersion(function (appVersionError, appVersion) {
-                        buildTimeError && console.log("Could not get application build time. " + buildTimeError);
-                        appVersionError && console.log("Could not get application version." + appVersionError);
-                        var currentPackageMetadata = {
-                            nativeBuildTime: timestamp,
-                            localPath: deployDir.fullPath,
-                            appVersion: appVersion,
-                            deploymentKey: _this.deploymentKey,
-                            description: _this.description,
-                            isMandatory: _this.isMandatory,
-                            packageSize: _this.packageSize,
-                            label: _this.label,
-                            packageHash: _this.packageHash,
-                            isFirstRun: false,
-                            failedApply: false,
-                            apply: undefined
-                        };
-                        LocalPackage.writeCurrentPackageInformation(currentPackageMetadata, writeMetadataCallback);
-                    });
-                });
-            };
-            var deleteDirectory = function (dirLocation, deleteDirCallback) {
-                FileUtil.getDataDirectory(dirLocation, false, function (oldDirError, dirToDelete) {
-                    if (oldDirError) {
-                        deleteDirCallback(oldDirError, null);
-                    }
-                    else {
-                        var win = function () { deleteDirCallback(null, null); };
-                        var fail = function (e) { deleteDirCallback(FileUtil.fileErrorToError(e), null); };
-                        dirToDelete.removeRecursively(win, fail);
-                    }
-                });
-            };
-            var cleanOldPackage = function (oldPackage, cleanPackageCallback) {
-                if (oldPackage && oldPackage.localPath) {
-                    deleteDirectory(oldPackage.localPath, cleanPackageCallback);
-                }
-                else {
-                    cleanPackageCallback(new Error("The package could not be found."), null);
-                }
-            };
             var donePackageFileCopy = function (deployDir) {
-                LocalPackage.getCurrentOrDefaultPackage(function (oldPackage) {
-                    LocalPackage.writeOldPackageInformation(function (backupError) {
-                        backupError && console.log("Package information was not backed up. " + CallbackUtil.getErrorMessage(backupError));
-                        writeNewPackageMetadata(deployDir, function (writeMetadataError) {
-                            if (writeMetadataError) {
-                                applyError && applyError(writeMetadataError);
-                            }
-                            else {
-                                var silentCleanup = function (cleanCallback) {
-                                    deleteDirectory(LocalPackage.DownloadDir, function (e1) {
-                                        cleanOldPackage(oldPackage, function (e2) {
-                                            cleanCallback(e1 || e2, null);
-                                        });
-                                    });
-                                };
-                                var invokeSuccessAndApply = function () {
-                                    applySuccess && applySuccess();
-                                    cordova.exec(function () { }, function () { }, "CodePush", "apply", [deployDir.fullPath, timeout.toString()]);
-                                };
-                                var preApplySuccess = function () {
-                                    if (timeout > 0) {
-                                        invokeSuccessAndApply();
-                                    }
-                                    else {
-                                        silentCleanup(function (cleanupError) {
-                                            invokeSuccessAndApply();
-                                        });
-                                    }
-                                };
-                                var preApplyFailure = function (applyError) {
-                                    var error = new Error("An error has ocurred while applying the package. " + CallbackUtil.getErrorMessage(applyError));
-                                    applyError && applyError(error);
-                                };
-                                cordova.exec(preApplySuccess, preApplyFailure, "CodePush", "preApply", [deployDir.fullPath]);
-                            }
-                        });
-                    });
-                }, applyError);
-            };
-            var handleCleanDeployment = function (cleanDeployCallback) {
-                FileUtil.getDataDirectory(newPackageLocation, true, function (deployDirError, deployDir) {
-                    FileUtil.getDataDirectory(LocalPackage.DownloadUnzipDir, false, function (unzipDirErr, unzipDir) {
-                        if (unzipDirErr || deployDirError) {
-                            cleanDeployCallback(new Error("Could not copy new package."), null);
-                        }
-                        else {
-                            FileUtil.copyDirectoryEntriesTo(unzipDir, deployDir, function (copyError) {
-                                if (copyError) {
-                                    cleanDeployCallback(copyError, null);
-                                }
-                                else {
-                                    cleanDeployCallback(null, null);
-                                }
-                            });
-                        }
-                    });
-                });
-            };
-            var copyCurrentPackage = function (copyCallback) {
-                FileUtil.getDataDirectory(newPackageLocation, true, function (deployDirError, deployDir) {
-                    LocalPackage.getPackage(LocalPackage.PackageInfoFile, function (currentPackage) {
-                        if (deployDirError) {
-                            applyError && applyError(new Error("Could not acquire the source/destination folders. "));
-                        }
-                        else {
-                            var success = function (currentPackageDirectory) {
-                                FileUtil.copyDirectoryEntriesTo(currentPackageDirectory, deployDir, copyCallback);
-                            };
-                            var fail = function (fileSystemError) {
-                                copyCallback(FileUtil.fileErrorToError(fileSystemError), null);
-                            };
-                            window.resolveLocalFileSystemURL(currentPackage.localPath, success, fail);
-                        }
-                    }, applyError);
-                });
-            };
-            var handleDiffDeployment = function (diffManifest) {
-                copyCurrentPackage(function (currentPackageError) {
-                    handleCleanDeployment(function (cleanDeployError) {
-                        var diffContent = FileUtil.readFileEntry(diffManifest, function (error, content) {
-                            if (error || currentPackageError || cleanDeployError) {
-                                applyError && applyError(new Error("Cannot perform diff-update."));
-                            }
-                            else {
-                                var manifest = JSON.parse(content);
-                                FileUtil.deleteEntriesFromDataDirectory(newPackageLocation, manifest.deletedFiles, function (deleteError) {
-                                    FileUtil.getDataDirectory(newPackageLocation, true, function (deployDirError, deployDir) {
-                                        if (deleteError || deployDirError) {
-                                            applyError && applyError(new Error("Cannot clean up deleted manifest files."));
-                                        }
-                                        else {
-                                            donePackageFileCopy(deployDir);
-                                        }
-                                    });
-                                });
-                            }
-                        });
-                    });
-                });
+                _this.finishApply(deployDir, timeout, applySuccess, applyError);
             };
             var newPackageUnzipped = function (unzipError) {
                 if (unzipError) {
                     applyError && applyError(new Error("Could not unzip package. " + CallbackUtil.getErrorMessage(unzipError)));
                 }
                 else {
-                    FileUtil.getDataDirectory(newPackageLocation, true, function (deployDirError, deployDir) {
-                        FileUtil.getDataFile(LocalPackage.DownloadUnzipDir, LocalPackage.DiffManifestFile, false, function (manifestError, diffManifest) {
-                            if (!manifestError && !!diffManifest) {
-                                handleDiffDeployment(diffManifest);
-                            }
-                            else {
-                                handleCleanDeployment(function () {
-                                    donePackageFileCopy(deployDir);
-                                });
-                            }
-                        });
-                    });
+                    LocalPackage.handleCleanDeployment(newPackageLocation, CallbackUtil.getNodeStyleCallbackFor(donePackageFileCopy, applyError));
                 }
             };
             FileUtil.getDataDirectory(LocalPackage.DownloadUnzipDir, false, function (error, directoryEntry) {
@@ -230,11 +78,166 @@ var LocalPackage = (function (_super) {
             applyError && applyError(new Error("An error ocurred while applying the package. " + CallbackUtil.getErrorMessage(e)));
         }
     };
+    LocalPackage.prototype.cleanOldPackage = function (oldPackage, cleanPackageCallback) {
+        if (oldPackage && oldPackage.localPath) {
+            FileUtil.deleteDirectory(oldPackage.localPath, cleanPackageCallback);
+        }
+        else {
+            cleanPackageCallback(new Error("The package could not be found."), null);
+        }
+    };
+    ;
+    LocalPackage.prototype.finishApply = function (deployDir, timeout, applySuccess, applyError) {
+        var _this = this;
+        LocalPackage.getCurrentOrDefaultPackage(function (oldPackage) {
+            LocalPackage.backupPackageInformationFile(function (backupError) {
+                backupError && console.log("First update: back up package information skipped. " + CallbackUtil.getErrorMessage(backupError));
+                _this.writeNewPackageMetadata(deployDir, function (writeMetadataError) {
+                    if (writeMetadataError) {
+                        applyError && applyError(writeMetadataError);
+                    }
+                    else {
+                        var silentCleanup = function (cleanCallback) {
+                            FileUtil.deleteDirectory(LocalPackage.DownloadDir, function (e1) {
+                                _this.cleanOldPackage(oldPackage, function (e2) {
+                                    cleanCallback(e1 || e2, null);
+                                });
+                            });
+                        };
+                        var invokeSuccessAndApply = function () {
+                            applySuccess && applySuccess();
+                            cordova.exec(function () { }, function () { }, "CodePush", "apply", [deployDir.fullPath, timeout.toString()]);
+                        };
+                        var preApplySuccess = function () {
+                            if (timeout > 0) {
+                                invokeSuccessAndApply();
+                            }
+                            else {
+                                silentCleanup(function (cleanupError) {
+                                    invokeSuccessAndApply();
+                                });
+                            }
+                        };
+                        var preApplyFailure = function (applyError) {
+                            var error = new Error("An error has ocurred while applying the package. " + CallbackUtil.getErrorMessage(applyError));
+                            applyError && applyError(error);
+                        };
+                        cordova.exec(preApplySuccess, preApplyFailure, "CodePush", "preApply", [deployDir.fullPath]);
+                    }
+                });
+            });
+        }, applyError);
+    };
+    LocalPackage.handleDeployment = function (newPackageLocation, deployCallback) {
+        FileUtil.getDataDirectory(newPackageLocation, true, function (deployDirError, deployDir) {
+            FileUtil.getDataFile(LocalPackage.DownloadUnzipDir, LocalPackage.DiffManifestFile, false, function (manifestError, diffManifest) {
+                if (!manifestError && !!diffManifest) {
+                    LocalPackage.handleDiffDeployment(newPackageLocation, diffManifest, deployCallback);
+                }
+                else {
+                    LocalPackage.handleCleanDeployment(newPackageLocation, function (error) {
+                        deployCallback(error, deployDir);
+                    });
+                }
+            });
+        });
+    };
+    LocalPackage.prototype.writeNewPackageMetadata = function (deployDir, writeMetadataCallback) {
+        var _this = this;
+        NativeAppInfo.getApplicationBuildTime(function (buildTimeError, timestamp) {
+            NativeAppInfo.getApplicationVersion(function (appVersionError, appVersion) {
+                buildTimeError && console.log("Could not get application build time. " + buildTimeError);
+                appVersionError && console.log("Could not get application version." + appVersionError);
+                var currentPackageMetadata = {
+                    nativeBuildTime: timestamp,
+                    localPath: deployDir.fullPath,
+                    appVersion: appVersion,
+                    deploymentKey: _this.deploymentKey,
+                    description: _this.description,
+                    isMandatory: _this.isMandatory,
+                    packageSize: _this.packageSize,
+                    label: _this.label,
+                    packageHash: _this.packageHash,
+                    isFirstRun: false,
+                    failedApply: false,
+                    apply: undefined
+                };
+                LocalPackage.writeCurrentPackageInformation(currentPackageMetadata, writeMetadataCallback);
+            });
+        });
+    };
+    LocalPackage.handleCleanDeployment = function (newPackageLocation, cleanDeployCallback) {
+        FileUtil.getDataDirectory(newPackageLocation, true, function (deployDirError, deployDir) {
+            FileUtil.getDataDirectory(LocalPackage.DownloadUnzipDir, false, function (unzipDirErr, unzipDir) {
+                if (unzipDirErr || deployDirError) {
+                    cleanDeployCallback(new Error("Could not copy new package."), null);
+                }
+                else {
+                    FileUtil.copyDirectoryEntriesTo(unzipDir, deployDir, function (copyError) {
+                        if (copyError) {
+                            cleanDeployCallback(copyError, null);
+                        }
+                        else {
+                            cleanDeployCallback(null, deployDir);
+                        }
+                    });
+                }
+            });
+        });
+    };
+    LocalPackage.copyCurrentPackage = function (newPackageLocation, copyCallback) {
+        var handleError = function (e) {
+            copyCallback && copyCallback(e, null);
+        };
+        FileUtil.getDataDirectory(newPackageLocation, true, function (deployDirError, deployDir) {
+            LocalPackage.getPackage(LocalPackage.PackageInfoFile, function (currentPackage) {
+                if (deployDirError) {
+                    handleError(new Error("Could not acquire the source/destination folders. "));
+                }
+                else {
+                    var success = function (currentPackageDirectory) {
+                        FileUtil.copyDirectoryEntriesTo(currentPackageDirectory, deployDir, copyCallback);
+                    };
+                    var fail = function (fileSystemError) {
+                        copyCallback && copyCallback(FileUtil.fileErrorToError(fileSystemError), null);
+                    };
+                    window.resolveLocalFileSystemURL(currentPackage.localPath, success, fail);
+                }
+            }, handleError);
+        });
+    };
+    LocalPackage.handleDiffDeployment = function (newPackageLocation, diffManifest, diffCallback) {
+        var handleError = function (e) {
+            diffCallback(e, null);
+        };
+        LocalPackage.copyCurrentPackage(newPackageLocation, function (currentPackageError) {
+            LocalPackage.handleCleanDeployment(newPackageLocation, function (cleanDeployError) {
+                var diffContent = FileUtil.readFileEntry(diffManifest, function (error, content) {
+                    if (error || currentPackageError || cleanDeployError) {
+                        handleError(new Error("Cannot perform diff-update."));
+                    }
+                    else {
+                        var manifest = JSON.parse(content);
+                        FileUtil.deleteEntriesFromDataDirectory(newPackageLocation, manifest.deletedFiles, function (deleteError) {
+                            FileUtil.getDataDirectory(newPackageLocation, true, function (deployDirError, deployDir) {
+                                if (deleteError || deployDirError) {
+                                    handleError(new Error("Cannot clean up deleted manifest files."));
+                                }
+                                else {
+                                    diffCallback(null, deployDir);
+                                }
+                            });
+                        });
+                    }
+                });
+            });
+        });
+    };
     LocalPackage.writeCurrentPackageInformation = function (packageInfoMetadata, callback) {
         var content = JSON.stringify(packageInfoMetadata);
         FileUtil.writeStringToDataFile(content, LocalPackage.RootDir, LocalPackage.PackageInfoFile, true, callback);
     };
-    LocalPackage.writeOldPackageInformation = function (callback) {
+    LocalPackage.backupPackageInformationFile = function (callback) {
         var reportFileError = function (error) {
             callback(FileUtil.fileErrorToError(error), null);
         };
@@ -296,7 +299,7 @@ var LocalPackage = (function (_super) {
             packageError && packageError(new Error("Invalid package metadata."));
         }
         else {
-            NativeAppInfo.applyFailed(metadata.packageHash, function (applyFailed) {
+            NativeAppInfo.isFailedUpdate(metadata.packageHash, function (applyFailed) {
                 NativeAppInfo.isFirstRun(metadata.packageHash, function (isFirstRun) {
                     var localPackage = new LocalPackage();
                     localPackage.appVersion = metadata.appVersion;

@@ -60,7 +60,7 @@ class CodePush implements CodePushCordovaPlugin {
                 }
                 else {
                     if (remotePackage) {
-                        NativeAppInfo.applyFailed(remotePackage.packageHash, (applyFailed: boolean) => {
+                        NativeAppInfo.isFailedUpdate(remotePackage.packageHash, (applyFailed: boolean) => {
                             var result: RemotePackage = new RemotePackage();
                             result.appVersion = remotePackage.appVersion;
                             result.deploymentKey = remotePackage.deploymentKey;

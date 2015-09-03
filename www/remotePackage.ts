@@ -39,7 +39,7 @@ class RemotePackage extends Package implements IRemotePackage {
 
                     fileEntry.file((file: File) => {
 
-                        NativeAppInfo.applyFailed(this.packageHash, (applyFailed: boolean) => {
+                        NativeAppInfo.isFailedUpdate(this.packageHash, (applyFailed: boolean) => {
                             var localPackage = new LocalPackage();
                             localPackage.deploymentKey = this.deploymentKey;
                             localPackage.description = this.description;

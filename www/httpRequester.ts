@@ -20,16 +20,10 @@ class HttpRequester implements Http.Requester {
 
         var xhr = new XMLHttpRequest();
         var methodName = this.getHttpMethodName(verb);
-        var callbackInvoked: boolean = false;
         xhr.onreadystatechange = function(): void {
             if (xhr.readyState === 4) {
-                if (callbackInvoked) {
-                    console.warn("Callback already invoked before.");
-                }
-
                 var response: Http.Response = { statusCode: xhr.status, body: xhr.responseText };
                 requestCallback && requestCallback(null, response);
-                callbackInvoked = true;
             }
         };
         xhr.open(methodName, url, true);
