@@ -12,8 +12,8 @@ class CallbackUtil {
      * Given two Cordova style callbacks for success and error, this function returns a node.js
      * style callback where the error is the first parameter and the result the second.
      */
-    public static getNodeStyleCallbackFor<T>(successCallback: SuccessCallback<T>, errorCallback: ErrorCallback): Callback<T> {
-        return (error: Error, result: T) => {
+    public static getNodeStyleCallbackFor<T>(successCallback: SuccessCallback<T>, errorCallback: { (error?: any): void; }): Callback<T> {
+        return (error: any, result: T) => {
             if (error) {
                 errorCallback && errorCallback(error);
             } else {

@@ -41,6 +41,7 @@ var LocalPackage = (function (_super) {
             }
             var newPackageLocation = LocalPackage.VersionsDir + "/" + this.packageHash;
             var donePackageFileCopy = function (deployDir) {
+                _this.localPath = deployDir.fullPath;
                 _this.finishApply(deployDir, timeout, applySuccess, applyError);
             };
             var newPackageUnzipped = function (unzipError) {
@@ -150,7 +151,7 @@ var LocalPackage = (function (_super) {
                 appVersionError && console.log("Could not get application version." + appVersionError);
                 var currentPackageMetadata = {
                     nativeBuildTime: timestamp,
-                    localPath: deployDir.fullPath,
+                    localPath: _this.localPath,
                     appVersion: appVersion,
                     deploymentKey: _this.deploymentKey,
                     description: _this.description,
@@ -201,7 +202,7 @@ var LocalPackage = (function (_super) {
                     var fail = function (fileSystemError) {
                         copyCallback && copyCallback(FileUtil.fileErrorToError(fileSystemError), null);
                     };
-                    window.resolveLocalFileSystemURL(currentPackage.localPath, success, fail);
+                    FileUtil.getDataDirectory(currentPackage.localPath, false, CallbackUtil.getNodeStyleCallbackFor(success, fail));
                 }
             }, handleError);
         });

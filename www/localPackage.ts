@@ -66,6 +66,7 @@ class LocalPackage extends Package implements ILocalPackage {
             var newPackageLocation = LocalPackage.VersionsDir + "/" + this.packageHash;
 
             var donePackageFileCopy = (deployDir: DirectoryEntry) => {
+                this.localPath = deployDir.fullPath;
                 this.finishApply(deployDir, timeout, applySuccess, applyError);
             };
 
@@ -182,7 +183,7 @@ class LocalPackage extends Package implements ILocalPackage {
 
                 var currentPackageMetadata: IPackageInfoMetadata = {
                     nativeBuildTime: timestamp,
-                    localPath: deployDir.fullPath,
+                    localPath: this.localPath,
                     appVersion: appVersion,
                     deploymentKey: this.deploymentKey,
                     description: this.description,
@@ -237,7 +238,7 @@ class LocalPackage extends Package implements ILocalPackage {
                         copyCallback && copyCallback(FileUtil.fileErrorToError(fileSystemError), null);
                     };
 
-                    window.resolveLocalFileSystemURL(currentPackage.localPath, success, fail);
+                    FileUtil.getDataDirectory(currentPackage.localPath, false, CallbackUtil.getNodeStyleCallbackFor(success, fail));
                 }
             }, handleError);
         });
