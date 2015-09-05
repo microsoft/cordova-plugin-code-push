@@ -66,6 +66,7 @@ class LocalPackage extends Package implements ILocalPackage {
             var newPackageLocation = LocalPackage.VersionsDir + "/" + this.packageHash;
 
             var donePackageFileCopy = (deployDir: DirectoryEntry) => {
+                this.localPath = deployDir.fullPath;
                 this.finishApply(deployDir, timeout, applySuccess, applyError);
             };
 
@@ -116,7 +117,7 @@ class LocalPackage extends Package implements ILocalPackage {
         LocalPackage.getCurrentOrDefaultPackage((oldPackage: LocalPackage) => {
             LocalPackage.backupPackageInformationFile((backupError: Error) => {
                 backupError && console.log("First update: back up package information skipped. " + CallbackUtil.getErrorMessage(backupError));
-                /* continue on error, current package information might be missing if this is the fist update */
+                /* continue on error, current package information is missing if this is the fist update */
                 this.writeNewPackageMetadata(deployDir, (writeMetadataError: Error) => {
                     if (writeMetadataError) {
                         applyError && applyError(writeMetadataError);
@@ -147,8 +148,9 @@ class LocalPackage extends Package implements ILocalPackage {
                             }
                         };
 
-                        var preApplyFailure = (applyError?: any) => {
-                            var error = new Error("An error has ocurred while applying the package. " + CallbackUtil.getErrorMessage(applyError));
+                        var preApplyFailure = (preApplyError?: any) => {
+                            console.log("Preapply failure: " + CallbackUtil.getErrorMessage(preApplyError));
+                            var error = new Error("An error has ocurred while applying the package. " + CallbackUtil.getErrorMessage(preApplyError));
                             applyError && applyError(error);
                         };
 
@@ -182,7 +184,7 @@ class LocalPackage extends Package implements ILocalPackage {
 
                 var currentPackageMetadata: IPackageInfoMetadata = {
                     nativeBuildTime: timestamp,
-                    localPath: deployDir.fullPath,
+                    localPath: this.localPath,
                     appVersion: appVersion,
                     deploymentKey: this.deploymentKey,
                     description: this.description,
@@ -237,7 +239,7 @@ class LocalPackage extends Package implements ILocalPackage {
                         copyCallback && copyCallback(FileUtil.fileErrorToError(fileSystemError), null);
                     };
 
-                    window.resolveLocalFileSystemURL(currentPackage.localPath, success, fail);
+                    FileUtil.getDataDirectory(currentPackage.localPath, false, CallbackUtil.getNodeStyleCallbackFor(success, fail));
                 }
             }, handleError);
         });
