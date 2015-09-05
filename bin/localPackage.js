@@ -119,8 +119,9 @@ var LocalPackage = (function (_super) {
                                 });
                             }
                         };
-                        var preApplyFailure = function (applyError) {
-                            var error = new Error("An error has ocurred while applying the package. " + CallbackUtil.getErrorMessage(applyError));
+                        var preApplyFailure = function (preApplyError) {
+                            console.log("Preapply failure: " + CallbackUtil.getErrorMessage(preApplyError));
+                            var error = new Error("An error has ocurred while applying the package. " + CallbackUtil.getErrorMessage(preApplyError));
                             applyError && applyError(error);
                         };
                         cordova.exec(preApplySuccess, preApplyFailure, "CodePush", "preApply", [deployDir.fullPath]);
