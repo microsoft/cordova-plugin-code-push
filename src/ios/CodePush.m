@@ -1,4 +1,5 @@
 #import <Cordova/CDV.h>
+#import <Cordova/CDVConfigParser.h>
 #import "CodePush.h"
 
 @implementation CodePush
@@ -210,7 +211,7 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
 
 - (NSURL *)getStartPageURLForLocalPackage:(NSString*)packageLocation {
     if (packageLocation) {
-        NSString* startPage = ((CDVViewController *)self.viewController).startPage;
+        NSString* startPage = [self getConfigLaunchUrl];
         NSString* libraryLocation = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
         NSArray* realLocationArray = @[libraryLocation, @"NoCloud", packageLocation, @"www", startPage];
         NSString* realStartPageLocation = [NSString pathWithComponents:realLocationArray];
@@ -220,6 +221,19 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
     }
     
     return nil;
+}
+
+- (NSString*)getConfigLaunchUrl
+{
+    CDVConfigParser* delegate = [[CDVConfigParser alloc] init];
+    NSString* configPath = [[NSBundle mainBundle] pathForResource:@"config" ofType:@"xml"];
+    NSURL* configUrl = [NSURL fileURLWithPath:configPath];
+    
+    NSXMLParser* configParser = [[NSXMLParser alloc] initWithContentsOfURL:configUrl];
+    [configParser setDelegate:((id < NSXMLParserDelegate >)delegate)];
+    [configParser parse];
+    
+    return delegate.startPage;
 }
 
 - (void)redirectStartPageToURL:(NSString*)packageLocation{
