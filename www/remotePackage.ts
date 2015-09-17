@@ -8,7 +8,7 @@ declare var cordova: Cordova;
 import LocalPackage = require("./localPackage");
 import Package = require("./package");
 import NativeAppInfo = require("./nativeAppInfo");
-import CallbackUtil = require("./callbackUtil");
+import CodePushUtil = require("./codePushUtil");
 
 /**
  * Defines a remote package, which represents an update package available for download.
@@ -30,9 +30,9 @@ class RemotePackage extends Package implements IRemotePackage {
      */
     public download(successCallback: SuccessCallback<LocalPackage>, errorCallback?: ErrorCallback): void {
         try {
-            CallbackUtil.logMessage("Downloading update package ...");
+            CodePushUtil.logMessage("Downloading update package ...");
             if (!this.downloadUrl) {
-                CallbackUtil.logAndForwardError(new Error("The remote package does not contain a download URL."), errorCallback);
+                CodePushUtil.invokeErrorCallback(new Error("The remote package does not contain a download URL."), errorCallback);
             } else {
                 this.currentFileTransfer = new FileTransfer();
 
@@ -52,24 +52,24 @@ class RemotePackage extends Package implements IRemotePackage {
                             localPackage.isFirstRun = false;
                             localPackage.failedApply = applyFailed;
                             localPackage.localPath = fileEntry.toInternalURL();
-                            
-                            CallbackUtil.logMessage("Package download success: " + JSON.stringify(localPackage));
+
+                            CodePushUtil.logMessage("Package download success: " + JSON.stringify(localPackage));
                             successCallback && successCallback(localPackage);
                         });
                     }, (fileError: FileError) => {
-                        CallbackUtil.logAndForwardError(new Error("Could not access local package. Error code: " + fileError.code), errorCallback);
+                        CodePushUtil.invokeErrorCallback(new Error("Could not access local package. Error code: " + fileError.code), errorCallback);
                     });
                 };
 
                 var downloadError = (error: FileTransferError) => {
                     this.currentFileTransfer = null;
-                    CallbackUtil.logAndForwardError(new Error(error.body), errorCallback);
+                    CodePushUtil.invokeErrorCallback(new Error(error.body), errorCallback);
                 };
 
                 this.currentFileTransfer.download(this.downloadUrl, cordova.file.dataDirectory + LocalPackage.DownloadDir + "/" + LocalPackage.PackageUpdateFileName, downloadSuccess, downloadError, true);
             }
         } catch (e) {
-            CallbackUtil.logAndForwardError(new Error("An error ocurred while downloading the package. " + (e && e.message) ? e.message : ""), errorCallback);
+            CodePushUtil.invokeErrorCallback(new Error("An error ocurred while downloading the package. " + (e && e.message) ? e.message : ""), errorCallback);
         }
     }
     

@@ -16,7 +16,7 @@
 var LocalPackage = require("./localPackage");
 var RemotePackage = require("./remotePackage");
 var HttpRequester = require("./httpRequester");
-var CallbackUtil = require("./callbackUtil");
+var CodePushUtil = require("./codePushUtil");
 var NativeAppInfo = require("./nativeAppInfo");
 var CodePush = (function () {
     function CodePush() {
@@ -31,7 +31,7 @@ var CodePush = (function () {
         try {
             var callback = function (error, remotePackage) {
                 if (error) {
-                    CallbackUtil.logAndForwardError(error, queryError);
+                    CodePushUtil.invokeErrorCallback(error, queryError);
                 }
                 else {
                     if (remotePackage) {
@@ -46,31 +46,31 @@ var CodePush = (function () {
                             result.packageHash = remotePackage.packageHash;
                             result.packageSize = remotePackage.packageSize;
                             result.failedApply = applyFailed;
-                            CallbackUtil.logMessage("An update is available. " + JSON.stringify(result));
+                            CodePushUtil.logMessage("An update is available. " + JSON.stringify(result));
                             querySuccess(result);
                         });
                     }
                     else {
-                        CallbackUtil.logMessage("The application is up to date.");
+                        CodePushUtil.logMessage("The application is up to date.");
                         querySuccess(null);
                     }
                 }
             };
             this.createAcquisitionManager(function (initError, acquisitionManager) {
                 if (initError) {
-                    CallbackUtil.logAndForwardError(initError, queryError);
+                    CodePushUtil.invokeErrorCallback(initError, queryError);
                 }
                 else {
                     LocalPackage.getCurrentOrDefaultPackage(function (localPackage) {
                         acquisitionManager.queryUpdateWithCurrentPackage(localPackage, callback);
                     }, function (error) {
-                        CallbackUtil.logAndForwardError(error, queryError);
+                        CodePushUtil.invokeErrorCallback(error, queryError);
                     });
                 }
             });
         }
         catch (e) {
-            CallbackUtil.logAndForwardError(new Error("An error ocurred while querying for updates." + CallbackUtil.getErrorMessage(e)), queryError);
+            CodePushUtil.invokeErrorCallback(new Error("An error ocurred while querying for updates." + CodePushUtil.getErrorMessage(e)), queryError);
         }
     };
     CodePush.prototype.createAcquisitionManager = function (callback) {

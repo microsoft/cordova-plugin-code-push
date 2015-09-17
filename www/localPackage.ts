@@ -7,7 +7,7 @@ declare var zip: any;
 import Package = require("./package");
 import NativeAppInfo = require("./nativeAppInfo");
 import FileUtil = require("./fileUtil");
-import CallbackUtil = require("./callbackUtil");
+import CodePushUtil = require("./codePushUtil");
 
 /**
  * Defines a local package. 
@@ -49,7 +49,7 @@ class LocalPackage extends Package implements ILocalPackage {
     */
     public apply(applySuccess: SuccessCallback<void>, errorCallbackOrRollbackTimeout?: ErrorCallback | number, rollbackTimeout?: number): void {
         try {
-            CallbackUtil.logMessage("Applying update package ...");
+            CodePushUtil.logMessage("Applying update package ...");
 
             var timeout = 0;
             var applyError: ErrorCallback;
@@ -66,7 +66,7 @@ class LocalPackage extends Package implements ILocalPackage {
                 if (typeof errorCallbackOrRollbackTimeout === "function") {
                     errorCallback = <ErrorCallback>errorCallbackOrRollbackTimeout;
                 }
-                CallbackUtil.logAndForwardError(error, errorCallback);
+                CodePushUtil.invokeErrorCallback(error, errorCallback);
             };
 
             var newPackageLocation = LocalPackage.VersionsDir + "/" + this.packageHash;
@@ -78,9 +78,9 @@ class LocalPackage extends Package implements ILocalPackage {
 
             var newPackageUnzipped = (unzipError: any) => {
                 if (unzipError) {
-                    applyError && applyError(new Error("Could not unzip package. " + CallbackUtil.getErrorMessage(unzipError)));
+                    applyError && applyError(new Error("Could not unzip package. " + CodePushUtil.getErrorMessage(unzipError)));
                 } else {
-                    LocalPackage.handleDeployment(newPackageLocation, CallbackUtil.getNodeStyleCallbackFor<DirectoryEntry>(donePackageFileCopy, applyError));
+                    LocalPackage.handleDeployment(newPackageLocation, CodePushUtil.getNodeStyleCallbackFor<DirectoryEntry>(donePackageFileCopy, applyError));
                 }
             };
 
@@ -107,7 +107,7 @@ class LocalPackage extends Package implements ILocalPackage {
                 }
             });
         } catch (e) {
-            applyError && applyError(new Error("An error ocurred while applying the package. " + CallbackUtil.getErrorMessage(e)));
+            applyError && applyError(new Error("An error ocurred while applying the package. " + CodePushUtil.getErrorMessage(e)));
         }
     }
 
@@ -122,7 +122,7 @@ class LocalPackage extends Package implements ILocalPackage {
     private finishApply(deployDir: DirectoryEntry, timeout: number, applySuccess: SuccessCallback<void>, applyError: ErrorCallback): void {
         LocalPackage.getCurrentOrDefaultPackage((oldPackage: LocalPackage) => {
             LocalPackage.backupPackageInformationFile((backupError: Error) => {
-                backupError && CallbackUtil.logMessage("First update: back up package information skipped. ");
+                backupError && CodePushUtil.logMessage("First update: back up package information skipped. ");
                 /* continue on error, current package information is missing if this is the fist update */
                 this.writeNewPackageMetadata(deployDir, (writeMetadataError: Error) => {
                     if (writeMetadataError) {
@@ -137,7 +137,7 @@ class LocalPackage extends Package implements ILocalPackage {
                         };
 
                         var invokeSuccessAndApply = () => {
-                            CallbackUtil.logMessage("Apply succeeded.");
+                            CodePushUtil.logMessage("Apply succeeded.");
                             applySuccess && applySuccess();
                             /* no neeed for callbacks, the javascript context will reload */
                             cordova.exec(() => { }, () => { }, "CodePush", "apply", [deployDir.fullPath, timeout.toString()]);
@@ -156,8 +156,8 @@ class LocalPackage extends Package implements ILocalPackage {
                         };
 
                         var preApplyFailure = (preApplyError?: any) => {
-                            CallbackUtil.logMessage("Preapply failure: " + CallbackUtil.getErrorMessage(preApplyError));
-                            var error = new Error("An error has ocurred while applying the package. " + CallbackUtil.getErrorMessage(preApplyError));
+                            CodePushUtil.logError("Preapply failure.", preApplyError);
+                            var error = new Error("An error has ocurred while applying the package. " + CodePushUtil.getErrorMessage(preApplyError));
                             applyError && applyError(error);
                         };
 
@@ -186,8 +186,8 @@ class LocalPackage extends Package implements ILocalPackage {
     private writeNewPackageMetadata(deployDir: DirectoryEntry, writeMetadataCallback: Callback<void>): void {
         NativeAppInfo.getApplicationBuildTime((buildTimeError: Error, timestamp: string) => {
             NativeAppInfo.getApplicationVersion((appVersionError: Error, appVersion: string) => {
-                buildTimeError && CallbackUtil.logMessage("Could not get application build time. " + buildTimeError);
-                appVersionError && CallbackUtil.logMessage("Could not get application version." + appVersionError);
+                buildTimeError && CodePushUtil.logError("Could not get application build time. " + buildTimeError);
+                appVersionError && CodePushUtil.logError("Could not get application version." + appVersionError);
 
                 var currentPackageMetadata: IPackageInfoMetadata = {
                     nativeBuildTime: timestamp,
@@ -246,7 +246,7 @@ class LocalPackage extends Package implements ILocalPackage {
                         copyCallback && copyCallback(FileUtil.fileErrorToError(fileSystemError), null);
                     };
 
-                    FileUtil.getDataDirectory(currentPackage.localPath, false, CallbackUtil.getNodeStyleCallbackFor(success, fail));
+                    FileUtil.getDataDirectory(currentPackage.localPath, false, CodePushUtil.getNodeStyleCallbackFor(success, fail));
                 }
             }, handleError);
         });
@@ -349,7 +349,7 @@ class LocalPackage extends Package implements ILocalPackage {
      */
     public static getPackage(packageFile: string, packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
         var handleError = (e: Error) => {
-            packageError && packageError(new Error("Cannot read package information. " + CallbackUtil.getErrorMessage(e)));
+            packageError && packageError(new Error("Cannot read package information. " + CodePushUtil.getErrorMessage(e)));
         };
 
         try {
@@ -406,7 +406,7 @@ class LocalPackage extends Package implements ILocalPackage {
         var packageFailure = (error: Error) => {
             NativeAppInfo.getApplicationVersion((appVersionError: Error, appVersion: string) => {
                 if (appVersionError) {
-                    CallbackUtil.logMessage("Could not get application version." + appVersionError);
+                    CodePushUtil.logError("Could not get application version." + appVersionError);
                     packageError(appVersionError);
                 } else {
                     var defaultPackage: LocalPackage = new LocalPackage();

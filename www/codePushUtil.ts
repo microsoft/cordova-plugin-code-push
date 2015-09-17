@@ -5,9 +5,15 @@
 declare var zip: any;
 
 /**
- * Callback / error utilities.
+ * Callback / error / logging utilities.
  */
-class CallbackUtil {
+class CodePushUtil {
+
+    /**
+     * Tag used for logging to the console.
+     */
+    private static TAG: string = "[CodePush]";
+    
 	/**
      * Given two Cordova style callbacks for success and error, this function returns a node.js
      * style callback where the error is the first parameter and the result the second.
@@ -32,8 +38,8 @@ class CallbackUtil {
     /**
      * Logs the error to the console and then forwards it to the provided ErrorCallback, if any.
      */
-    public static logAndForwardError = (error: Error, errorCallback: ErrorCallback): void => {
-        CallbackUtil.logMessage(CallbackUtil.getErrorMessage(error));
+    public static invokeErrorCallback = (error: Error, errorCallback: ErrorCallback): void => {
+        CodePushUtil.logError(null, error);
         errorCallback && errorCallback(error);
     };
 
@@ -41,8 +47,16 @@ class CallbackUtil {
      * Logs a message using the CodePush tag.
      */
     public static logMessage(msg: string): void {
-        console.log("[CodePush] " + msg);
+        console.log(CodePushUtil.TAG + " " + msg);
+    }
+    
+    /**
+     * Logs an error message using the CodePush tag.
+     */
+    public static logError(message: String, error?: Error): void {
+        var errorMessage = message || "" + " " + CodePushUtil.getErrorMessage(error);
+        console.error(CodePushUtil.TAG + " " + errorMessage);
     }
 }
 
-export = CallbackUtil;
+export = CodePushUtil;

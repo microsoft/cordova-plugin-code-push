@@ -19,7 +19,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 var Package = require("./package");
 var NativeAppInfo = require("./nativeAppInfo");
 var FileUtil = require("./fileUtil");
-var CallbackUtil = require("./callbackUtil");
+var CodePushUtil = require("./codePushUtil");
 var LocalPackage = (function (_super) {
     __extends(LocalPackage, _super);
     function LocalPackage() {
@@ -28,7 +28,7 @@ var LocalPackage = (function (_super) {
     LocalPackage.prototype.apply = function (applySuccess, errorCallbackOrRollbackTimeout, rollbackTimeout) {
         var _this = this;
         try {
-            CallbackUtil.logMessage("Applying update package ...");
+            CodePushUtil.logMessage("Applying update package ...");
             var timeout = 0;
             var applyError;
             if (typeof rollbackTimeout === "number") {
@@ -42,7 +42,7 @@ var LocalPackage = (function (_super) {
                 if (typeof errorCallbackOrRollbackTimeout === "function") {
                     errorCallback = errorCallbackOrRollbackTimeout;
                 }
-                CallbackUtil.logAndForwardError(error, errorCallback);
+                CodePushUtil.invokeErrorCallback(error, errorCallback);
             };
             var newPackageLocation = LocalPackage.VersionsDir + "/" + this.packageHash;
             var donePackageFileCopy = function (deployDir) {
@@ -51,10 +51,10 @@ var LocalPackage = (function (_super) {
             };
             var newPackageUnzipped = function (unzipError) {
                 if (unzipError) {
-                    applyError && applyError(new Error("Could not unzip package. " + CallbackUtil.getErrorMessage(unzipError)));
+                    applyError && applyError(new Error("Could not unzip package. " + CodePushUtil.getErrorMessage(unzipError)));
                 }
                 else {
-                    LocalPackage.handleDeployment(newPackageLocation, CallbackUtil.getNodeStyleCallbackFor(donePackageFileCopy, applyError));
+                    LocalPackage.handleDeployment(newPackageLocation, CodePushUtil.getNodeStyleCallbackFor(donePackageFileCopy, applyError));
                 }
             };
             FileUtil.getDataDirectory(LocalPackage.DownloadUnzipDir, false, function (error, directoryEntry) {
@@ -81,7 +81,7 @@ var LocalPackage = (function (_super) {
             });
         }
         catch (e) {
-            applyError && applyError(new Error("An error ocurred while applying the package. " + CallbackUtil.getErrorMessage(e)));
+            applyError && applyError(new Error("An error ocurred while applying the package. " + CodePushUtil.getErrorMessage(e)));
         }
     };
     LocalPackage.prototype.cleanOldPackage = function (oldPackage, cleanPackageCallback) {
@@ -97,7 +97,7 @@ var LocalPackage = (function (_super) {
         var _this = this;
         LocalPackage.getCurrentOrDefaultPackage(function (oldPackage) {
             LocalPackage.backupPackageInformationFile(function (backupError) {
-                backupError && CallbackUtil.logMessage("First update: back up package information skipped. ");
+                backupError && CodePushUtil.logMessage("First update: back up package information skipped. ");
                 _this.writeNewPackageMetadata(deployDir, function (writeMetadataError) {
                     if (writeMetadataError) {
                         applyError && applyError(writeMetadataError);
@@ -111,7 +111,7 @@ var LocalPackage = (function (_super) {
                             });
                         };
                         var invokeSuccessAndApply = function () {
-                            CallbackUtil.logMessage("Apply succeeded.");
+                            CodePushUtil.logMessage("Apply succeeded.");
                             applySuccess && applySuccess();
                             cordova.exec(function () { }, function () { }, "CodePush", "apply", [deployDir.fullPath, timeout.toString()]);
                         };
@@ -126,8 +126,8 @@ var LocalPackage = (function (_super) {
                             }
                         };
                         var preApplyFailure = function (preApplyError) {
-                            CallbackUtil.logMessage("Preapply failure: " + CallbackUtil.getErrorMessage(preApplyError));
-                            var error = new Error("An error has ocurred while applying the package. " + CallbackUtil.getErrorMessage(preApplyError));
+                            CodePushUtil.logError("Preapply failure.", preApplyError);
+                            var error = new Error("An error has ocurred while applying the package. " + CodePushUtil.getErrorMessage(preApplyError));
                             applyError && applyError(error);
                         };
                         cordova.exec(preApplySuccess, preApplyFailure, "CodePush", "preApply", [deployDir.fullPath]);
@@ -154,8 +154,8 @@ var LocalPackage = (function (_super) {
         var _this = this;
         NativeAppInfo.getApplicationBuildTime(function (buildTimeError, timestamp) {
             NativeAppInfo.getApplicationVersion(function (appVersionError, appVersion) {
-                buildTimeError && CallbackUtil.logMessage("Could not get application build time. " + buildTimeError);
-                appVersionError && CallbackUtil.logMessage("Could not get application version." + appVersionError);
+                buildTimeError && CodePushUtil.logError("Could not get application build time. " + buildTimeError);
+                appVersionError && CodePushUtil.logError("Could not get application version." + appVersionError);
                 var currentPackageMetadata = {
                     nativeBuildTime: timestamp,
                     localPath: _this.localPath,
@@ -209,7 +209,7 @@ var LocalPackage = (function (_super) {
                     var fail = function (fileSystemError) {
                         copyCallback && copyCallback(FileUtil.fileErrorToError(fileSystemError), null);
                     };
-                    FileUtil.getDataDirectory(currentPackage.localPath, false, CallbackUtil.getNodeStyleCallbackFor(success, fail));
+                    FileUtil.getDataDirectory(currentPackage.localPath, false, CodePushUtil.getNodeStyleCallbackFor(success, fail));
                 }
             }, handleError);
         });
@@ -280,7 +280,7 @@ var LocalPackage = (function (_super) {
     };
     LocalPackage.getPackage = function (packageFile, packageSuccess, packageError) {
         var handleError = function (e) {
-            packageError && packageError(new Error("Cannot read package information. " + CallbackUtil.getErrorMessage(e)));
+            packageError && packageError(new Error("Cannot read package information. " + CodePushUtil.getErrorMessage(e)));
         };
         try {
             FileUtil.readDataFile(LocalPackage.RootDir, packageFile, function (error, content) {
@@ -334,7 +334,7 @@ var LocalPackage = (function (_super) {
         var packageFailure = function (error) {
             NativeAppInfo.getApplicationVersion(function (appVersionError, appVersion) {
                 if (appVersionError) {
-                    CallbackUtil.logMessage("Could not get application version." + appVersionError);
+                    CodePushUtil.logError("Could not get application version." + appVersionError);
                     packageError(appVersionError);
                 }
                 else {
