@@ -20,6 +20,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 var LocalPackage = require("./localPackage");
 var Package = require("./package");
 var NativeAppInfo = require("./nativeAppInfo");
+var CallbackUtil = require("./callbackUtil");
 var RemotePackage = (function (_super) {
     __extends(RemotePackage, _super);
     function RemotePackage() {
@@ -28,8 +29,9 @@ var RemotePackage = (function (_super) {
     RemotePackage.prototype.download = function (successCallback, errorCallback) {
         var _this = this;
         try {
+            CallbackUtil.logMessage("Downloading update package ...");
             if (!this.downloadUrl) {
-                errorCallback && errorCallback(new Error("The remote package does not contain a download URL."));
+                CallbackUtil.logAndForwardError(new Error("The remote package does not contain a download URL."), errorCallback);
             }
             else {
                 this.currentFileTransfer = new FileTransfer();
@@ -47,21 +49,22 @@ var RemotePackage = (function (_super) {
                             localPackage.isFirstRun = false;
                             localPackage.failedApply = applyFailed;
                             localPackage.localPath = fileEntry.toInternalURL();
+                            CallbackUtil.logMessage("Package download success: " + JSON.stringify(localPackage));
                             successCallback && successCallback(localPackage);
                         });
                     }, function (fileError) {
-                        errorCallback && errorCallback(new Error("Could not access local package. Error code: " + fileError.code));
+                        CallbackUtil.logAndForwardError(new Error("Could not access local package. Error code: " + fileError.code), errorCallback);
                     });
                 };
                 var downloadError = function (error) {
                     _this.currentFileTransfer = null;
-                    errorCallback && errorCallback(new Error(error.body));
+                    CallbackUtil.logAndForwardError(new Error(error.body), errorCallback);
                 };
                 this.currentFileTransfer.download(this.downloadUrl, cordova.file.dataDirectory + LocalPackage.DownloadDir + "/" + LocalPackage.PackageUpdateFileName, downloadSuccess, downloadError, true);
             }
         }
         catch (e) {
-            errorCallback && errorCallback(new Error("An error ocurred while downloading the package. " + (e && e.message) ? e.message : ""));
+            CallbackUtil.logAndForwardError(new Error("An error ocurred while downloading the package. " + (e && e.message) ? e.message : ""), errorCallback);
         }
     };
     RemotePackage.prototype.abortDownload = function (abortSuccess, abortError) {

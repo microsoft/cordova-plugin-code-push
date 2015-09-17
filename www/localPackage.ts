@@ -49,6 +49,8 @@ class LocalPackage extends Package implements ILocalPackage {
     */
     public apply(applySuccess: SuccessCallback<void>, errorCallbackOrRollbackTimeout?: ErrorCallback | number, rollbackTimeout?: number): void {
         try {
+            CallbackUtil.logMessage("Applying update package ...");
+
             var timeout = 0;
             var applyError: ErrorCallback;
             
@@ -59,9 +61,13 @@ class LocalPackage extends Package implements ILocalPackage {
                 timeout = <number>errorCallbackOrRollbackTimeout;
             }
 
-            if (typeof errorCallbackOrRollbackTimeout === "function") {
-                applyError = <ErrorCallback>errorCallbackOrRollbackTimeout;
-            }
+            applyError = (error: Error): void => {
+                var errorCallback: ErrorCallback;
+                if (typeof errorCallbackOrRollbackTimeout === "function") {
+                    errorCallback = <ErrorCallback>errorCallbackOrRollbackTimeout;
+                }
+                CallbackUtil.logAndForwardError(error, errorCallback);
+            };
 
             var newPackageLocation = LocalPackage.VersionsDir + "/" + this.packageHash;
 
@@ -116,7 +122,7 @@ class LocalPackage extends Package implements ILocalPackage {
     private finishApply(deployDir: DirectoryEntry, timeout: number, applySuccess: SuccessCallback<void>, applyError: ErrorCallback): void {
         LocalPackage.getCurrentOrDefaultPackage((oldPackage: LocalPackage) => {
             LocalPackage.backupPackageInformationFile((backupError: Error) => {
-                backupError && console.log("First update: back up package information skipped. " + CallbackUtil.getErrorMessage(backupError));
+                backupError && CallbackUtil.logMessage("First update: back up package information skipped. ");
                 /* continue on error, current package information is missing if this is the fist update */
                 this.writeNewPackageMetadata(deployDir, (writeMetadataError: Error) => {
                     if (writeMetadataError) {
@@ -131,6 +137,7 @@ class LocalPackage extends Package implements ILocalPackage {
                         };
 
                         var invokeSuccessAndApply = () => {
+                            CallbackUtil.logMessage("Apply succeeded.");
                             applySuccess && applySuccess();
                             /* no neeed for callbacks, the javascript context will reload */
                             cordova.exec(() => { }, () => { }, "CodePush", "apply", [deployDir.fullPath, timeout.toString()]);
@@ -149,7 +156,7 @@ class LocalPackage extends Package implements ILocalPackage {
                         };
 
                         var preApplyFailure = (preApplyError?: any) => {
-                            console.log("Preapply failure: " + CallbackUtil.getErrorMessage(preApplyError));
+                            CallbackUtil.logMessage("Preapply failure: " + CallbackUtil.getErrorMessage(preApplyError));
                             var error = new Error("An error has ocurred while applying the package. " + CallbackUtil.getErrorMessage(preApplyError));
                             applyError && applyError(error);
                         };
@@ -179,8 +186,8 @@ class LocalPackage extends Package implements ILocalPackage {
     private writeNewPackageMetadata(deployDir: DirectoryEntry, writeMetadataCallback: Callback<void>): void {
         NativeAppInfo.getApplicationBuildTime((buildTimeError: Error, timestamp: string) => {
             NativeAppInfo.getApplicationVersion((appVersionError: Error, appVersion: string) => {
-                buildTimeError && console.log("Could not get application build time. " + buildTimeError);
-                appVersionError && console.log("Could not get application version." + appVersionError);
+                buildTimeError && CallbackUtil.logMessage("Could not get application build time. " + buildTimeError);
+                appVersionError && CallbackUtil.logMessage("Could not get application version." + appVersionError);
 
                 var currentPackageMetadata: IPackageInfoMetadata = {
                     nativeBuildTime: timestamp,
@@ -399,7 +406,7 @@ class LocalPackage extends Package implements ILocalPackage {
         var packageFailure = (error: Error) => {
             NativeAppInfo.getApplicationVersion((appVersionError: Error, appVersion: string) => {
                 if (appVersionError) {
-                    console.log("Could not get application version." + appVersionError);
+                    CallbackUtil.logMessage("Could not get application version." + appVersionError);
                     packageError(appVersionError);
                 } else {
                     var defaultPackage: LocalPackage = new LocalPackage();

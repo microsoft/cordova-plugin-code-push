@@ -28,6 +28,7 @@ var LocalPackage = (function (_super) {
     LocalPackage.prototype.apply = function (applySuccess, errorCallbackOrRollbackTimeout, rollbackTimeout) {
         var _this = this;
         try {
+            CallbackUtil.logMessage("Applying update package ...");
             var timeout = 0;
             var applyError;
             if (typeof rollbackTimeout === "number") {
@@ -36,9 +37,13 @@ var LocalPackage = (function (_super) {
             else if (!rollbackTimeout && typeof errorCallbackOrRollbackTimeout === "number") {
                 timeout = errorCallbackOrRollbackTimeout;
             }
-            if (typeof errorCallbackOrRollbackTimeout === "function") {
-                applyError = errorCallbackOrRollbackTimeout;
-            }
+            applyError = function (error) {
+                var errorCallback;
+                if (typeof errorCallbackOrRollbackTimeout === "function") {
+                    errorCallback = errorCallbackOrRollbackTimeout;
+                }
+                CallbackUtil.logAndForwardError(error, errorCallback);
+            };
             var newPackageLocation = LocalPackage.VersionsDir + "/" + this.packageHash;
             var donePackageFileCopy = function (deployDir) {
                 _this.localPath = deployDir.fullPath;
@@ -92,7 +97,7 @@ var LocalPackage = (function (_super) {
         var _this = this;
         LocalPackage.getCurrentOrDefaultPackage(function (oldPackage) {
             LocalPackage.backupPackageInformationFile(function (backupError) {
-                backupError && console.log("First update: back up package information skipped. " + CallbackUtil.getErrorMessage(backupError));
+                backupError && CallbackUtil.logMessage("First update: back up package information skipped. ");
                 _this.writeNewPackageMetadata(deployDir, function (writeMetadataError) {
                     if (writeMetadataError) {
                         applyError && applyError(writeMetadataError);
@@ -106,6 +111,7 @@ var LocalPackage = (function (_super) {
                             });
                         };
                         var invokeSuccessAndApply = function () {
+                            CallbackUtil.logMessage("Apply succeeded.");
                             applySuccess && applySuccess();
                             cordova.exec(function () { }, function () { }, "CodePush", "apply", [deployDir.fullPath, timeout.toString()]);
                         };
@@ -120,7 +126,7 @@ var LocalPackage = (function (_super) {
                             }
                         };
                         var preApplyFailure = function (preApplyError) {
-                            console.log("Preapply failure: " + CallbackUtil.getErrorMessage(preApplyError));
+                            CallbackUtil.logMessage("Preapply failure: " + CallbackUtil.getErrorMessage(preApplyError));
                             var error = new Error("An error has ocurred while applying the package. " + CallbackUtil.getErrorMessage(preApplyError));
                             applyError && applyError(error);
                         };
@@ -148,8 +154,8 @@ var LocalPackage = (function (_super) {
         var _this = this;
         NativeAppInfo.getApplicationBuildTime(function (buildTimeError, timestamp) {
             NativeAppInfo.getApplicationVersion(function (appVersionError, appVersion) {
-                buildTimeError && console.log("Could not get application build time. " + buildTimeError);
-                appVersionError && console.log("Could not get application version." + appVersionError);
+                buildTimeError && CallbackUtil.logMessage("Could not get application build time. " + buildTimeError);
+                appVersionError && CallbackUtil.logMessage("Could not get application version." + appVersionError);
                 var currentPackageMetadata = {
                     nativeBuildTime: timestamp,
                     localPath: _this.localPath,
@@ -328,7 +334,7 @@ var LocalPackage = (function (_super) {
         var packageFailure = function (error) {
             NativeAppInfo.getApplicationVersion(function (appVersionError, appVersion) {
                 if (appVersionError) {
-                    console.log("Could not get application version." + appVersionError);
+                    CallbackUtil.logMessage("Could not get application version." + appVersionError);
                     packageError(appVersionError);
                 }
                 else {

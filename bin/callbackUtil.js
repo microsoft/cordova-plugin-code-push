@@ -24,7 +24,14 @@ var CallbackUtil = (function () {
         };
     };
     CallbackUtil.getErrorMessage = function (e) {
-        return e && e.message;
+        return e && e.message || e && e.toString() || "";
+    };
+    CallbackUtil.logMessage = function (msg) {
+        console.log("[CodePush] " + msg);
+    };
+    CallbackUtil.logAndForwardError = function (error, errorCallback) {
+        CallbackUtil.logMessage(CallbackUtil.getErrorMessage(error));
+        errorCallback && errorCallback(error);
     };
     return CallbackUtil;
 })();

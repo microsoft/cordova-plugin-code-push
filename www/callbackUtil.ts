@@ -23,10 +23,25 @@ class CallbackUtil {
     }
     
     /**
-     * Gets the message of an error, if any.
+     * Gets the message of an error, if any. Otherwise it returns the empty string.
      */
     public static getErrorMessage(e: Error): string {
-        return e && e.message;
+        return e && e.message || e && e.toString() || "";
+    }
+
+    /**
+     * Logs the error to the console and then forwards it to the provided ErrorCallback, if any.
+     */
+    public static logAndForwardError = (error: Error, errorCallback: ErrorCallback): void => {
+        CallbackUtil.logMessage(CallbackUtil.getErrorMessage(error));
+        errorCallback && errorCallback(error);
+    };
+
+    /**
+     * Logs a message using the CodePush tag.
+     */
+    public static logMessage(msg: string): void {
+        console.log("[CodePush] " + msg);
     }
 }
 
