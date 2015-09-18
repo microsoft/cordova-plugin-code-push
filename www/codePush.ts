@@ -11,7 +11,7 @@ declare var cordova: Cordova;
 import LocalPackage = require("./localPackage");
 import RemotePackage = require("./remotePackage");
 import HttpRequester = require("./httpRequester");
-import CallbackUtil = require("./callbackUtil");
+import CodePushUtil = require("./codePushUtil");
 import NativeAppInfo = require("./nativeAppInfo");
 
 /**
@@ -56,7 +56,7 @@ class CodePush implements CodePushCordovaPlugin {
         try {
             var callback: Callback<RemotePackage> = (error: Error, remotePackage: IRemotePackage) => {
                 if (error) {
-                    queryError && queryError(error);
+                    CodePushUtil.invokeErrorCallback(error, queryError);
                 }
                 else {
                     if (remotePackage) {
@@ -71,10 +71,12 @@ class CodePush implements CodePushCordovaPlugin {
                             result.packageHash = remotePackage.packageHash;
                             result.packageSize = remotePackage.packageSize;
                             result.failedApply = applyFailed;
+                            CodePushUtil.logMessage("An update is available. " + JSON.stringify(result));
                             querySuccess(result);
                         });
                     }
                     else {
+                        CodePushUtil.logMessage("The application is up to date.");
                         querySuccess(null);
                     }
                 }
@@ -82,17 +84,17 @@ class CodePush implements CodePushCordovaPlugin {
 
             this.createAcquisitionManager((initError: Error, acquisitionManager: AcquisitionManager) => {
                 if (initError) {
-                    queryError && queryError(initError);
+                    CodePushUtil.invokeErrorCallback(initError, queryError);
                 } else {
                     LocalPackage.getCurrentOrDefaultPackage((localPackage: LocalPackage) => {
                         acquisitionManager.queryUpdateWithCurrentPackage(localPackage, callback);
                     }, (error: Error) => {
-                        queryError && queryError(error);
+                        CodePushUtil.invokeErrorCallback(error, queryError);
                     });
                 }
             });
         } catch (e) {
-            queryError && queryError(new Error("An error ocurred while querying for updates." + CallbackUtil.getErrorMessage(e)));
+            CodePushUtil.invokeErrorCallback(new Error("An error ocurred while querying for updates." + CodePushUtil.getErrorMessage(e)), queryError);
         }
     }
 

@@ -22,7 +22,7 @@
             <clobbers target="RemotePackage" />
         </js-module>
 
-        <js-module src="bin/callbackUtil.js" name="callbackUtil">
+        <js-module src="bin/codePushUtil.js" name="codePushUtil">
             <runs/>
         </js-module>
 

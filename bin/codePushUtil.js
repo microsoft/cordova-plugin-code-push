@@ -10,10 +10,10 @@
 
 /// <reference path="../typings/codePush.d.ts" />
 "use strict";
-var CallbackUtil = (function () {
-    function CallbackUtil() {
+var CodePushUtil = (function () {
+    function CodePushUtil() {
     }
-    CallbackUtil.getNodeStyleCallbackFor = function (successCallback, errorCallback) {
+    CodePushUtil.getNodeStyleCallbackFor = function (successCallback, errorCallback) {
         return function (error, result) {
             if (error) {
                 errorCallback && errorCallback(error);
@@ -23,9 +23,21 @@ var CallbackUtil = (function () {
             }
         };
     };
-    CallbackUtil.getErrorMessage = function (e) {
-        return e && e.message;
+    CodePushUtil.getErrorMessage = function (e) {
+        return e && e.message || e && e.toString() || "";
     };
-    return CallbackUtil;
+    CodePushUtil.logMessage = function (msg) {
+        console.log(CodePushUtil.TAG + " " + msg);
+    };
+    CodePushUtil.logError = function (message, error) {
+        var errorMessage = message || "" + " " + CodePushUtil.getErrorMessage(error);
+        console.error(CodePushUtil.TAG + " " + errorMessage);
+    };
+    CodePushUtil.TAG = "[CodePush]";
+    CodePushUtil.invokeErrorCallback = function (error, errorCallback) {
+        CodePushUtil.logError(null, error);
+        errorCallback && errorCallback(error);
+    };
+    return CodePushUtil;
 })();
-module.exports = CallbackUtil;
+module.exports = CodePushUtil;
