@@ -4,7 +4,7 @@
  	 PLEASE DO NOT MODIFY THIS FILE AS YOU WILL LOSE YOUR CHANGES WHEN RECOMPILING. 
  	 ALSO, PLEASE DO NOT SUBMIT PULL REQUESTS WITH CHANGES TO THIS FILE. 
  	 INSTEAD, EDIT THE TYPESCRIPT SOURCES UNDER THE WWW FOLDER. 
- 	 FOR MORE INFORMATION, PLEASE SEE CONTRIBUTING.MD. 
+ 	 FOR MORE INFORMATION, PLEASE SEE CONTRIBUTING.md. 
  *********************************************************************************************/ 
 
 
@@ -14,8 +14,7 @@
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var LocalPackage = require("./localPackage");
 var Package = require("./package");

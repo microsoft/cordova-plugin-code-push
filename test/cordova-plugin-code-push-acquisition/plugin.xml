@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-code-push-acquisition" version="0.0.1-dev">
+	<name>CodePushAcquisition</name>
+	<description>Code Push Acquisition Plugin for Apache Cordova</description>
+	<license>Apache 2.0</license>
+	<keywords>cordova,code,push,acquisition</keywords>
+	<repo>https://github.com/Microsoft/hybrid-mobile-deploy.git</repo>
+	<js-module src="script/acquisition-sdk.js" name="AcquisitionManager">
+		<merges target="window" />
+	</js-module>
+</plugin>

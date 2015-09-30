@@ -10,35 +10,35 @@
         <dependency id="cordova-plugin-file" version=">=2.0.0" />
         <dependency id="cordova-plugin-zip" version=">=3.0.0" />
 
-        <js-module src="bin/codePush.js" name="codePush">
+        <js-module src="bin/www/codePush.js" name="codePush">
             <clobbers target="codePush" />
         </js-module>
 
-        <js-module src="bin/localPackage.js" name="localPackage">
+        <js-module src="bin/www/localPackage.js" name="localPackage">
             <clobbers target="LocalPackage" />
         </js-module>
 
-        <js-module src="bin/remotePackage.js" name="remotePackage">
+        <js-module src="bin/www/remotePackage.js" name="remotePackage">
             <clobbers target="RemotePackage" />
         </js-module>
 
-        <js-module src="bin/codePushUtil.js" name="codePushUtil">
+        <js-module src="bin/www/codePushUtil.js" name="codePushUtil">
             <runs/>
         </js-module>
 
-        <js-module src="bin/fileUtil.js" name="fileUtil">
+        <js-module src="bin/www/fileUtil.js" name="fileUtil">
             <runs/>
         </js-module>
 
-        <js-module src="bin/httpRequester.js" name="httpRequester">
+        <js-module src="bin/www/httpRequester.js" name="httpRequester">
             <runs/>
         </js-module>
 
-        <js-module src="bin/nativeAppInfo.js" name="nativeAppInfo">
+        <js-module src="bin/www/nativeAppInfo.js" name="nativeAppInfo">
             <runs/>
         </js-module>
 
-        <js-module src="bin/package.js" name="package">
+        <js-module src="bin/www/package.js" name="package">
             <runs/>
         </js-module>
 
