@@ -30,7 +30,7 @@ var app = {
     },
     // Update DOM on a Received Event
     receivedDeviceReady: function () {
-        document.getElementById("deviceready").innerText = "Device is ready";
+        document.getElementById("deviceready").innerText = "Device is ready (scenario - download update)";
         console.log('Received Event: deviceready');
     },
     checkForUpdates: function () {
@@ -45,12 +45,21 @@ var app = {
         }
         else {
             console.log("There is an update available. Remote package:" + JSON.stringify(remotePackage));
-            app.sendTestMessage("CHECK_UPDATE_AVAILABLE", [remotePackage]);
+            console.log("Downloading package...");
+            remotePackage.download(app.downloadSuccess, app.downloadError);
         }
     },
     checkError: function (error) {
         console.log("An error ocurred while checking for errors.");
         app.sendTestMessage("CHECK_ERROR");
+    },
+    downloadSuccess: function (localPackage) {
+        console.log("Download succeeded.");
+        app.sendTestMessage("DOWNLOAD_SUCCEEDED", [localPackage]);
+    },
+    downloadError: function (error) {
+        console.log("Download error.");
+        app.sendTestMessage("DOWNLOAD_ERROR");
     },
     sendTestMessage: function (message, args) {
         var xhr = new XMLHttpRequest();

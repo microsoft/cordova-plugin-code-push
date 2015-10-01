@@ -22,15 +22,16 @@ export class ProjectManager {
     public static ANDROID_KEY_PLACEHOLDER: string = "CODE_PUSH_ANDROID_DEPOYMENT_KEY";
     public static IOS_KEY_PLACEHOLDER: string = "CODE_PUSH_IOS_DEPLOYMENT_KEY";
     public static SERVER_URL_PLACEHOLDER: string = "CODE_PUSH_SERVER_URL";
+    public static INDEX_JS_PLACEHOLDER: string = "CODE_PUSH_INDEX_JS_PATH";
 
 	/**
 	 * Creates a new cordova test application at the specified path, and configures it
 	 * with the given server URL, android and ios deployment keys.
 	 */
-    public static setupTemplate(destinationPath: string, templatePath: string, serverURL: string, androidKey: string, iosKey: string, appName: string, appNamespace: string): Q.Promise<void> {
+    public static setupTemplate(destinationPath: string, templatePath: string, serverURL: string, androidKey: string, iosKey: string, appName: string, appNamespace: string, jsPath: string): Q.Promise<void> {
         var configXmlPath = path.join(destinationPath, "config.xml");
         var indexHtmlPath = path.join(destinationPath, "www/index.html");
-        var indexJsPath = path.join(destinationPath, "www/js/index.js");
+        var indexJsPath = path.join(destinationPath, "www/" + jsPath);
 
         if (fs.existsSync(destinationPath)) {
             del.sync([destinationPath], { force: true });
@@ -42,6 +43,7 @@ export class ProjectManager {
             .then<void>(ProjectManager.replaceString.bind(undefined, configXmlPath, ProjectManager.IOS_KEY_PLACEHOLDER, iosKey))
             .then<void>(ProjectManager.replaceString.bind(undefined, configXmlPath, ProjectManager.SERVER_URL_PLACEHOLDER, serverURL))
             .then<void>(ProjectManager.replaceString.bind(undefined, indexHtmlPath, ProjectManager.SERVER_URL_PLACEHOLDER, serverURL))
+            .then<void>(ProjectManager.replaceString.bind(undefined, indexHtmlPath, ProjectManager.INDEX_JS_PLACEHOLDER, jsPath))
             .then<void>(ProjectManager.replaceString.bind(undefined, indexJsPath, ProjectManager.SERVER_URL_PLACEHOLDER, serverURL));
     }
 

@@ -19,4 +19,6 @@ export class TestMessage {
     public static CHECK_UP_TO_DATE = "CHECK_UP_TO_DATE";
     public static CHECK_UPDATE_AVAILABLE = "CHECK_UPDATE_AVAILABLE";
     public static CHECK_ERROR = "CHECK_ERROR";
+    public static DOWNLOAD_SUCCEEDED = "DOWNLOAD_SUCCEEDED";
+    public static DOWNLOAD_ERROR = "DOWNLOAD_ERROR";
 }
