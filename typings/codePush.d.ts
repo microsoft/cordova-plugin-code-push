@@ -123,9 +123,15 @@ interface Configuration {
     ignoreAppVersion?: boolean;
 }
 
+declare class AcquisitionStatus {
+    static DeploymentSucceeded: string;
+    static DeploymentFailed: string;
+}
+
 declare class AcquisitionManager {
     constructor(httpRequester: Http.Requester, configuration: Configuration);
     public queryUpdateWithCurrentPackage(currentPackage: IPackage, callback?: Callback<IRemotePackage|NativeUpdateNotification>): void;
+    public reportStatus(status: string, message?: string, callback?: Callback<void>): void;
 }
 
 interface CodePushCordovaPlugin {

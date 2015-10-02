@@ -15,9 +15,9 @@
 "use strict";
 var LocalPackage = require("./localPackage");
 var RemotePackage = require("./remotePackage");
-var HttpRequester = require("./httpRequester");
 var CodePushUtil = require("./codePushUtil");
 var NativeAppInfo = require("./nativeAppInfo");
+var Sdk = require("./sdk");
 var CodePush = (function () {
     function CodePush() {
     }
@@ -56,7 +56,7 @@ var CodePush = (function () {
                     }
                 }
             };
-            this.createAcquisitionManager(function (initError, acquisitionManager) {
+            Sdk.getAcquisitionManager(function (initError, acquisitionManager) {
                 if (initError) {
                     CodePushUtil.invokeErrorCallback(initError, queryError);
                 }
@@ -72,20 +72,6 @@ var CodePush = (function () {
         catch (e) {
             CodePushUtil.invokeErrorCallback(new Error("An error ocurred while querying for updates." + CodePushUtil.getErrorMessage(e)), queryError);
         }
-    };
-    CodePush.prototype.createAcquisitionManager = function (callback) {
-        NativeAppInfo.getServerURL(function (serverError, serverURL) {
-            NativeAppInfo.getDeploymentKey(function (depolymentKeyError, deploymentKey) {
-                if (!serverURL || !deploymentKey) {
-                    callback(new Error("Could not get the Code Push configuration. Please check your config.xml file."), null);
-                }
-                else {
-                    var configuration = { deploymentKey: deploymentKey, serverUrl: serverURL, ignoreAppVersion: false };
-                    var acquisitionManager = new AcquisitionManager(new HttpRequester(), configuration);
-                    callback(null, acquisitionManager);
-                }
-            });
-        });
     };
     return CodePush;
 })();
