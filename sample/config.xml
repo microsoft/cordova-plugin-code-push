@@ -38,7 +38,4 @@
             <!-- Code Push deployment key for the iOS platform. -->
             <preference name="CodePushDeploymentKey" value="TODO_ADD_IOS_DEPLOYMENT_KEY" />
         </platform>
-
-        <!-- Code Push server URL. -->
-        <preference name="CodePushServerURL" value="TODO_ADD_SAMPLE_SERVER_URL />
     </widget>

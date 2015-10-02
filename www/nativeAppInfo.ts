@@ -5,10 +5,13 @@
 
 declare var cordova: Cordova;
 
+const DefaultServerUrl: string = "https://codepush.azurewebsites.net/";
+
 /**
  * Provides information about the native app.
  */
 class NativeAppInfo {
+    
     /**
      * Gets the application build timestamp.
      */
@@ -34,7 +37,9 @@ class NativeAppInfo {
      */
     public static getServerURL(serverCallback: Callback<String>): void {
         var serverSuccess = (serverURL?: String) => { serverCallback(null, serverURL); };
-        var serverError = () => { serverCallback(new Error("Server URL not found."), null); };
+        
+        /* Default to the production CodePush server. */
+        var serverError = () => { serverCallback(null, DefaultServerUrl); };
 
         cordova.exec(serverSuccess, serverError, "CodePush", "getServerURL", []);
     }

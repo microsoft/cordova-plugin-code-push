@@ -11,6 +11,7 @@
 /// <reference path="../typings/codePush.d.ts" />
 /// <reference path="../typings/cordova.d.ts" />
 "use strict";
+var DefaultServerUrl = "https://codepush.azurewebsites.net/";
 var NativeAppInfo = (function () {
     function NativeAppInfo() {
     }
@@ -26,7 +27,7 @@ var NativeAppInfo = (function () {
     };
     NativeAppInfo.getServerURL = function (serverCallback) {
         var serverSuccess = function (serverURL) { serverCallback(null, serverURL); };
-        var serverError = function () { serverCallback(new Error("Server URL not found."), null); };
+        var serverError = function () { serverCallback(null, DefaultServerUrl); };
         cordova.exec(serverSuccess, serverError, "CodePush", "getServerURL", []);
     };
     NativeAppInfo.getDeploymentKey = function (deploymentKeyCallback) {

@@ -38,16 +38,15 @@ The JavaScript code in this plugin is compiled from TypeScript. Please see [this
     <platform name="ios">
         <preference name="CodePushDeploymentKey" value="YOUR-IOS-DEPLOYMENT-KEY" />
     </platform>
-    <preference name="CodePushServerURL" value="HTTP(S)://YOUR-CODE-PUSH-SERVER-URL" />
 ```
 - Allow access to the Code Push server:
   - In ```config.xml```, add 
   ```xml
-  <access origin="HTTP(S)://YOUR-CODE-PUSH-SERVER-URL" />
+  <access origin="https://codepush.azurewebsites.net/ " />
   ```
   - In your html pages where the plugin is used, add the server URL to your existing Content Security Policy (CSP) header:
   ```xml
-  <meta http-equiv="Content-Security-Policy" content="default-src HTTP(S)://YOUR-CODE-PUSH-SERVER-URL 'self' ... ">
+  <meta http-equiv="Content-Security-Policy" content="default-src https://codepush.azurewebsites.net/ 'self' ... ">
    ```
 - You are now ready to use the plugin in the application code. See the sample app for an example and the methods description for more details.
 

@@ -72,10 +72,10 @@ var app = {
         
         // Check the Code Push server for updates.
         console.log("Checking for updates...");
-        codePush.checkForUpdate(app.onQuerySuccess, app.getErrorHandler("Checking for update failed."));
+        codePush.checkForUpdate(app.checkSuccess, app.getErrorHandler("Checking for update failed."));
     },
-    // Called after the Code Push server responded the queryUpdate call
-    onQuerySuccess: function (remotePackage) {
+    // Called after the Code Push server responded the checkForUpdate call
+    checkSuccess: function (remotePackage) {
         if (!remotePackage) {
             // A null remotePackage means that the server successfully responded, but there is no update available.
             console.log("The application is up to date.");
