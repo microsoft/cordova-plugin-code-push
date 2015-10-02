@@ -10,21 +10,28 @@ import HttpRequester = require("./httpRequester");
  * Interacts with the Code Push Acquisition SDK.
  */
 class Sdk {
+
+    private static Instance: AcquisitionManager;
+    
     /**
      * Reads the Code Push configuration and creates an AcquisitionManager instance using it.
      */
-    public static createAcquisitionManager(callback: Callback<AcquisitionManager>): void {
-        NativeAppInfo.getServerURL((serverError: Error, serverURL: string) => {
-            NativeAppInfo.getDeploymentKey((depolymentKeyError: Error, deploymentKey: string) => {
-                if (!serverURL || !deploymentKey) {
-                    callback(new Error("Could not get the Code Push configuration. Please check your config.xml file."), null);
-                } else {
-                    var configuration: Configuration = { deploymentKey: deploymentKey, serverUrl: serverURL, ignoreAppVersion: false };
-                    var acquisitionManager: AcquisitionManager = new AcquisitionManager(new HttpRequester(), configuration);
-                    callback(null, acquisitionManager);
-                }
+    public static getAcquisitionManager(callback: Callback<AcquisitionManager>): void {
+        if (Sdk.Instance) {
+            callback(null, Sdk.Instance);
+        } else {
+            NativeAppInfo.getServerURL((serverError: Error, serverURL: string) => {
+                NativeAppInfo.getDeploymentKey((depolymentKeyError: Error, deploymentKey: string) => {
+                    if (!serverURL || !deploymentKey) {
+                        callback(new Error("Could not get the Code Push configuration. Please check your config.xml file."), null);
+                    } else {
+                        var configuration: Configuration = { deploymentKey: deploymentKey, serverUrl: serverURL, ignoreAppVersion: false };
+                        Sdk.Instance = new AcquisitionManager(new HttpRequester(), configuration);
+                        callback(null, Sdk.Instance);
+                    }
+                });
             });
-        });
+        }
     }
 
     /**
@@ -32,7 +39,7 @@ class Sdk {
      */
     public static reportStatus(status: string, callback?: Callback<void>) {
         try {
-            Sdk.createAcquisitionManager((error: Error, acquisitionManager: AcquisitionManager) => {
+            Sdk.getAcquisitionManager((error: Error, acquisitionManager: AcquisitionManager) => {
                 if (error) {
                     callback && callback(error, null);
                 }

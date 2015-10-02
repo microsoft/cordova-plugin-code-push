@@ -82,7 +82,7 @@ class CodePush implements CodePushCordovaPlugin {
                 }
             };
 
-            Sdk.createAcquisitionManager((initError: Error, acquisitionManager: AcquisitionManager) => {
+            Sdk.getAcquisitionManager((initError: Error, acquisitionManager: AcquisitionManager) => {
                 if (initError) {
                     CodePushUtil.invokeErrorCallback(initError, queryError);
                 } else {

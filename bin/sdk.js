@@ -16,23 +16,28 @@ var HttpRequester = require("./httpRequester");
 var Sdk = (function () {
     function Sdk() {
     }
-    Sdk.createAcquisitionManager = function (callback) {
-        NativeAppInfo.getServerURL(function (serverError, serverURL) {
-            NativeAppInfo.getDeploymentKey(function (depolymentKeyError, deploymentKey) {
-                if (!serverURL || !deploymentKey) {
-                    callback(new Error("Could not get the Code Push configuration. Please check your config.xml file."), null);
-                }
-                else {
-                    var configuration = { deploymentKey: deploymentKey, serverUrl: serverURL, ignoreAppVersion: false };
-                    var acquisitionManager = new AcquisitionManager(new HttpRequester(), configuration);
-                    callback(null, acquisitionManager);
-                }
+    Sdk.getAcquisitionManager = function (callback) {
+        if (Sdk.Instance) {
+            callback(null, Sdk.Instance);
+        }
+        else {
+            NativeAppInfo.getServerURL(function (serverError, serverURL) {
+                NativeAppInfo.getDeploymentKey(function (depolymentKeyError, deploymentKey) {
+                    if (!serverURL || !deploymentKey) {
+                        callback(new Error("Could not get the Code Push configuration. Please check your config.xml file."), null);
+                    }
+                    else {
+                        var configuration = { deploymentKey: deploymentKey, serverUrl: serverURL, ignoreAppVersion: false };
+                        Sdk.Instance = new AcquisitionManager(new HttpRequester(), configuration);
+                        callback(null, Sdk.Instance);
+                    }
+                });
             });
-        });
+        }
     };
     Sdk.reportStatus = function (status, callback) {
         try {
-            Sdk.createAcquisitionManager(function (error, acquisitionManager) {
+            Sdk.getAcquisitionManager(function (error, acquisitionManager) {
                 if (error) {
                     callback && callback(error, null);
                 }

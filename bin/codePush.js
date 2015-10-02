@@ -56,7 +56,7 @@ var CodePush = (function () {
                     }
                 }
             };
-            Sdk.createAcquisitionManager(function (initError, acquisitionManager) {
+            Sdk.getAcquisitionManager(function (initError, acquisitionManager) {
                 if (initError) {
                     CodePushUtil.invokeErrorCallback(initError, queryError);
                 }
