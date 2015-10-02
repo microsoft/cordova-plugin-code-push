@@ -102,7 +102,14 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
 
 - (void)sendResultForPreference:(NSString*)preferenceName command:(CDVInvokedUrlCommand*)command {
     NSString* preferenceValue = ((CDVViewController *)self.viewController).settings[preferenceName];
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:preferenceValue];
+    // length of NIL is zero
+    CDVPluginResult* pluginResult;
+    if ([preferenceValue length] > 0) {
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:preferenceValue];
+    } else {
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[NSString stringWithFormat:@"Could not find preference %@", preferenceName]];
+    }
+    
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
