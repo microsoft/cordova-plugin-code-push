@@ -8,6 +8,7 @@ import Package = require("./package");
 import NativeAppInfo = require("./nativeAppInfo");
 import FileUtil = require("./fileUtil");
 import CodePushUtil = require("./codePushUtil");
+import Sdk = require("./sdk");
 
 /**
  * Defines a local package. 
@@ -67,6 +68,7 @@ class LocalPackage extends Package implements ILocalPackage {
                     errorCallback = <ErrorCallback>errorCallbackOrRollbackTimeout;
                 }
                 CodePushUtil.invokeErrorCallback(error, errorCallback);
+                Sdk.reportStatus(AcquisitionStatus.DeploymentFailed);
             };
 
             var newPackageLocation = LocalPackage.VersionsDir + "/" + this.packageHash;
@@ -144,6 +146,7 @@ class LocalPackage extends Package implements ILocalPackage {
                         };
 
                         var preApplySuccess = () => {
+                            Sdk.reportStatus(AcquisitionStatus.DeploymentSucceeded);
                             if (timeout > 0) {
                                 /* package will be cleaned up after success, on the native side */
                                 invokeSuccessAndApply();

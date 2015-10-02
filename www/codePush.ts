@@ -10,9 +10,9 @@ declare var cordova: Cordova;
 
 import LocalPackage = require("./localPackage");
 import RemotePackage = require("./remotePackage");
-import HttpRequester = require("./httpRequester");
 import CodePushUtil = require("./codePushUtil");
 import NativeAppInfo = require("./nativeAppInfo");
+import Sdk = require("./sdk");
 
 /**
  * This is the entry point to Cordova Code Push SDK.
@@ -82,7 +82,7 @@ class CodePush implements CodePushCordovaPlugin {
                 }
             };
 
-            this.createAcquisitionManager((initError: Error, acquisitionManager: AcquisitionManager) => {
+            Sdk.createAcquisitionManager((initError: Error, acquisitionManager: AcquisitionManager) => {
                 if (initError) {
                     CodePushUtil.invokeErrorCallback(initError, queryError);
                 } else {
@@ -96,23 +96,6 @@ class CodePush implements CodePushCordovaPlugin {
         } catch (e) {
             CodePushUtil.invokeErrorCallback(new Error("An error ocurred while querying for updates." + CodePushUtil.getErrorMessage(e)), queryError);
         }
-    }
-
-    /**
-     * Reads the Code Push configuration and creates an AcquisitionManager instance using it.
-     */
-    private createAcquisitionManager(callback: Callback<AcquisitionManager>): void {
-        NativeAppInfo.getServerURL((serverError: Error, serverURL: string) => {
-            NativeAppInfo.getDeploymentKey((depolymentKeyError: Error, deploymentKey: string) => {
-                if (!serverURL || !deploymentKey) {
-                    callback(new Error("Could not get the Code Push configuration. Please check your config.xml file."), null);
-                } else {
-                    var configuration: Configuration = { deploymentKey: deploymentKey, serverUrl: serverURL, ignoreAppVersion: false };
-                    var acquisitionManager: AcquisitionManager = new AcquisitionManager(new HttpRequester(), configuration);
-                    callback(null, acquisitionManager);
-                }
-            });
-        });
     }
 }
 

@@ -41,6 +41,10 @@
         <js-module src="bin/package.js" name="package">
             <runs/>
         </js-module>
+        
+        <js-module src="bin/sdk.js" name="sdk">
+            <runs/>
+        </js-module>
 
         <platform name="android">
             <source-file src="src/android/CodePush.java" target-dir="src/com/microsoft/cordova" />

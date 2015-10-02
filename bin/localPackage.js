@@ -19,6 +19,7 @@ var Package = require("./package");
 var NativeAppInfo = require("./nativeAppInfo");
 var FileUtil = require("./fileUtil");
 var CodePushUtil = require("./codePushUtil");
+var Sdk = require("./sdk");
 var LocalPackage = (function (_super) {
     __extends(LocalPackage, _super);
     function LocalPackage() {
@@ -42,6 +43,7 @@ var LocalPackage = (function (_super) {
                     errorCallback = errorCallbackOrRollbackTimeout;
                 }
                 CodePushUtil.invokeErrorCallback(error, errorCallback);
+                Sdk.reportStatus(AcquisitionStatus.DeploymentFailed);
             };
             var newPackageLocation = LocalPackage.VersionsDir + "/" + this.packageHash;
             var donePackageFileCopy = function (deployDir) {
@@ -115,6 +117,7 @@ var LocalPackage = (function (_super) {
                             cordova.exec(function () { }, function () { }, "CodePush", "apply", [deployDir.fullPath, timeout.toString()]);
                         };
                         var preApplySuccess = function () {
+                            Sdk.reportStatus(AcquisitionStatus.DeploymentSucceeded);
                             if (timeout > 0) {
                                 invokeSuccessAndApply();
                             }
