@@ -8,9 +8,11 @@
 import tm = require("./projectManager");
 import tu = require("./testUtil");
 import su = require("./serverUtil");
+import platform = require("./platform");
 import path = require("path");
 import os = require("os");
 import assert = require("assert");
+import Q = require("q");
 
 var express = require("express");
 var bodyparser = require("body-parser");
@@ -21,8 +23,9 @@ var templatePath = path.join(__dirname, "../../test/template");
 var acquisitionPluginPath = path.join(__dirname, "../../test/cordova-plugin-code-push-acquisition");
 var thisPluginPath = path.join(__dirname, "../..");
 var testRunDirectory = path.join(os.tmpdir(), "cordova-plugin-code-push", "test-run");
+var updatesDirectory = path.join(os.tmpdir(), "cordova-plugin-code-push", "updates");
 var serverUrl = testUtil.readMockServerName();
-var targetPlatform = testUtil.readTargetPlatform();
+var targetPlatform: platform.IPlatform = platform.PlatformResolver.resolvePlatform(testUtil.readTargetPlatform());
 
 const AndroidKey = "mock-android-deployment-key";
 const IOSKey = "mock-ios-deployment-key";
@@ -31,24 +34,29 @@ const TestNamespace = "com.microsoft.codepush.test";
 
 const ScenarioCheckForUpdatePath = "js/scenarioCheckForUpdate.js";
 const ScenarioDownloadUpdate = "js/scenarioDownloadUpdate.js";
+const ScenarioApply = "js/scenarioApply.js";
+const UpdateDeviceReady = "js/updateDeviceReady.js";
+
 
 var app: any;
 var server: any;
 var mockResponse: any;
 var testMessageCallback: (requestBody: any) => void;
 var mockUpdatePackagePath: string;
+var messageIndex = 0;
 
 function cleanupScenario() {
     if (server) {
         server.close();
         server = undefined;
     }
+    messageIndex = 0;
 }
 
 function setupScenario(scenarioPath: string): Q.Promise<void> {
     console.log("\nScenario: " + scenarioPath);
     console.log("Mock server url: " + serverUrl);
-    console.log("Target platform: " + targetPlatform);
+    console.log("Target platform: " + targetPlatform && targetPlatform.getCordovaName());
 
     app = express();
     app.use(bodyparser.json());
@@ -77,6 +85,20 @@ function setupScenario(scenarioPath: string): Q.Promise<void> {
         .then<void>(templateManager.addPlugin.bind(undefined, testRunDirectory, acquisitionPluginPath))
         .then<void>(templateManager.addPlugin.bind(undefined, testRunDirectory, thisPluginPath))
         .then<void>(templateManager.buildPlatform.bind(undefined, testRunDirectory, targetPlatform));
+}
+
+function createMockResponse(): su.CheckForUpdateResponseMock {
+    var updateReponse = new su.CheckForUpdateResponseMock();
+    updateReponse.isAvailable = true;
+    updateReponse.appVersion = "1.0.0";
+    updateReponse.downloadURL = "mock.url/download";
+    updateReponse.isMandatory = true;
+    updateReponse.label = "mock-update";
+    updateReponse.packageHash = "12345-67890";
+    updateReponse.packageSize = 12345;
+    updateReponse.updateAppVersion = false;
+
+    return updateReponse;
 }
 
 describe("window.codePush", function() {
@@ -116,16 +138,7 @@ describe("window.codePush", function() {
         });
 
         it("should handle update scenario", function(done) {
-            var updateReponse = new su.CheckForUpdateResponseMock();
-            updateReponse.isAvailable = true;
-            updateReponse.appVersion = "1.0.0";
-            updateReponse.downloadURL = "http://mock.url";
-            updateReponse.isMandatory = true;
-            updateReponse.label = "update1";
-            updateReponse.packageHash = "12345-67890";
-            updateReponse.packageSize = 12345;
-            updateReponse.updateAppVersion = false;
-
+            var updateReponse = createMockResponse();
             mockResponse = { updateInfo: updateReponse };
 
             testMessageCallback = (requestBody: any) => {
@@ -168,16 +181,8 @@ describe("window.codePush", function() {
         });
 
         var getMockResponse = (): su.CheckForUpdateResponseMock => {
-            var updateReponse = new su.CheckForUpdateResponseMock();
-            updateReponse.isAvailable = true;
-            updateReponse.appVersion = "1.0.0";
+            var updateReponse = createMockResponse();
             updateReponse.downloadURL = serverUrl + "/download";
-            updateReponse.isMandatory = true;
-            updateReponse.label = "verify-download-scenario";
-            updateReponse.packageHash = "12345-67890";
-            updateReponse.packageSize = 12345;
-            updateReponse.updateAppVersion = false;
-
             return updateReponse;
         };
 
@@ -209,6 +214,78 @@ describe("window.codePush", function() {
 
             console.log("Running project...");
             templateManager.runPlatform(testRunDirectory, targetPlatform, true);
+        });
+    });
+
+    describe("#localPackage.apply", function() {
+
+        after(() => {
+            cleanupScenario();
+        });
+
+        before(() => {
+            return setupScenario(ScenarioApply);
+        });
+
+        var getMockResponse = (): su.CheckForUpdateResponseMock => {
+            var updateReponse = createMockResponse();
+            updateReponse.downloadURL = serverUrl + "/download";
+            return updateReponse;
+        };
+
+        var setupUpdateProject = (scenarioPath: string, version: string): Q.Promise<void> => {
+            console.log("Creating an update at location: " + updatesDirectory);
+            return templateManager.setupTemplate(updatesDirectory, templatePath, serverUrl, AndroidKey, IOSKey, TestAppName, TestNamespace, scenarioPath, version)
+                .then<void>(templateManager.addPlatform.bind(undefined, updatesDirectory, targetPlatform))
+                .then<void>(templateManager.addPlugin.bind(undefined, updatesDirectory, acquisitionPluginPath))
+                .then<void>(templateManager.addPlugin.bind(undefined, updatesDirectory, thisPluginPath))
+                .then<void>(templateManager.buildPlatform.bind(undefined, updatesDirectory, targetPlatform));
+        };
+
+        it("should handle unzip errors", function(done) {
+            mockResponse = { updateInfo: getMockResponse() };
+
+            /* pass an invalid zip file, here, config.xml */
+            mockUpdatePackagePath = path.join(templatePath, "config.xml");
+
+            testMessageCallback = (requestBody: any) => {
+                assert.equal(su.TestMessage.APPLY_ERROR, requestBody.message);
+                done();
+            };
+
+            console.log("Running project...");
+            templateManager.runPlatform(testRunDirectory, targetPlatform, true);
+        });
+
+        it("should handle apply", function(done) {
+            mockResponse = { updateInfo: getMockResponse() };
+
+            /* create an update */
+            setupUpdateProject(UpdateDeviceReady, "Update 1")
+                .then<string>(templateManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                .then<void>((updatePath: string) => {
+                    var deferred = Q.defer<void>();
+                    mockUpdatePackagePath = updatePath;
+                    testMessageCallback = (requestBody: any) => {
+                        try {
+                            console.log("Message index: " + messageIndex);
+                            if (messageIndex === 0) {
+                                assert.equal(su.TestMessage.APPLY_SUCCESS, requestBody.message);
+                            } else if (messageIndex === 1) {
+                                assert.equal(su.TestMessage.DEVICE_READY_AFTER_UPDATE, requestBody.message);
+                                deferred.resolve(undefined);
+                            }
+                            messageIndex++;
+                        } catch (e) {
+                            deferred.reject(e);
+                        }
+                    };
+
+                    console.log("Running project...");
+                    templateManager.runPlatform(testRunDirectory, targetPlatform, true);
+                    return deferred.promise;
+                })
+                .done(done, done);
         });
     });
 });

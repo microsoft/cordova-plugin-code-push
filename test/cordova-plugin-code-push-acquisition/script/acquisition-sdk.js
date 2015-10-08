@@ -1,4 +1,12 @@
 /// <reference path="../definitions/harness.d.ts" />
+var AcquisitionStatus = (function () {
+    function AcquisitionStatus() {
+    }
+    AcquisitionStatus.DeploymentSucceeded = "DeploymentSucceeded";
+    AcquisitionStatus.DeploymentFailed = "DeploymentFailed";
+    return AcquisitionStatus;
+})();
+exports.AcquisitionStatus = AcquisitionStatus;
 var AcquisitionManager = (function () {
     function AcquisitionManager(httpRequester, configuration) {
         this._httpRequester = httpRequester;
@@ -61,6 +69,35 @@ var AcquisitionManager = (function () {
                 downloadUrl: updateInfo.downloadURL
             };
             callback(null, remotePackage);
+        });
+    };
+    AcquisitionManager.prototype.reportStatus = function (status, message, callback) {
+        var url = this._serverUrl + "reportStatus";
+        var body;
+        switch (status) {
+            case AcquisitionStatus.DeploymentSucceeded:
+            case AcquisitionStatus.DeploymentFailed:
+                url += "/deploy";
+                body = JSON.stringify({ deploymentKey: this._deploymentKey, status: status, message: message });
+                break;
+            default:
+                if (callback) {
+                    callback(new Error("Unrecognized status."), null);
+                }
+                return;
+        }
+        this._httpRequester.request(2 /* POST */, url, body, function (error, response) {
+            if (callback) {
+                if (error) {
+                    callback(error, null);
+                    return;
+                }
+                if (response.statusCode !== 200) {
+                    callback(new Error(response.statusCode + ": " + response.body), null);
+                    return;
+                }
+                callback(null, null);
+            }
         });
     };
     return AcquisitionManager;
