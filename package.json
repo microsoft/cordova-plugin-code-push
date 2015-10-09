@@ -24,6 +24,12 @@
     "gulp-insert": "latest",
     "gulp-tslint": "latest",
     "del": "latest",
-    "run-sequence": "latest"
+    "run-sequence": "latest",
+    "q": "latest",
+    "replace": "latest",
+    "mkdirp": "latest",
+    "express": "latest",
+    "body-parser": "latest",
+    "archiver": "latest"
   }
 }
