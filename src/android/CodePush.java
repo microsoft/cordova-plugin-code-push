@@ -67,6 +67,7 @@ public class CodePush extends CordovaPlugin {
             return execApply(args, callbackContext);
         } else if ("updateSuccess".equals(action)) {
             this.ApplySucceeded = true;
+            callbackContext.success();
             return true;
         } else if ("isFailedUpdate".equals(action)) {
             return execIsFailedUpdate(args, callbackContext);

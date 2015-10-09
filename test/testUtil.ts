@@ -7,6 +7,14 @@ export class TestUtil {
 
     public static MOCK_SERVER_OPTION_NAME: string = "--mockserver";
     public static PLATFORM_OPTION_NAME: string = "--platform";
+    public static TARGET_OPTION_NAME: string = "--target";
+
+    /**
+     * Reads the target emulator name.
+     */
+    public static readTargetEmulator(): string {
+        return TestUtil.readMochaCommandLineOption(TestUtil.TARGET_OPTION_NAME);
+    }
 
 	/**
 	 * Reads the mock Code Push server URL parameter passed to mocha.

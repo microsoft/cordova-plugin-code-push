@@ -12,7 +12,7 @@ var app = {
     },
     // Update DOM on a Received Event
     receivedDeviceReady: function () {
-        document.getElementById("deviceready").innerText = "Device is ready (scenario - check for update)";
+        document.getElementById("deviceready").innerText = "Device is ready (scenario - applyWithRevert)";
         console.log('Received Event: deviceready');
     },
     checkForUpdates: function () {
@@ -26,13 +26,35 @@ var app = {
             app.sendTestMessage("CHECK_UP_TO_DATE");
         }
         else {
-            console.log("There is an update available. Remote package:" + JSON.stringify(remotePackage));
-            app.sendTestMessage("CHECK_UPDATE_AVAILABLE", [remotePackage]);
+            if (remotePackage.failedApply) {
+                app.sendTestMessage("UPDATE_FAILED_PREVIOUSLY");
+            } else {
+                console.log("There is an update available. Remote package:" + JSON.stringify(remotePackage));
+                console.log("Downloading package...");
+                remotePackage.download(app.downloadSuccess, app.downloadError);
+            }
         }
     },
     checkError: function (error) {
         console.log("An error ocurred while checking for errors.");
         app.sendTestMessage("CHECK_ERROR");
+    },
+    downloadSuccess: function (localPackage) {
+        console.log("Download succeeded.");
+        /* Wait for 5s before we revert the application if notifyApplicationReady is not invoked. */
+        localPackage.apply(app.applySuccess, app.applyError, 5000);
+    },
+    downloadError: function (error) {
+        console.log("Download error.");
+        app.sendTestMessage("DOWNLOAD_ERROR");
+    },
+    applySuccess: function () {
+        console.log("Apply success.");
+        app.sendTestMessage("APPLY_SUCCESS");
+    },
+    applyError: function (error) {
+        console.log("Apply error.");
+        app.sendTestMessage("APPLY_ERROR");
     },
     sendTestMessage: function (message, args) {
         var xhr = new XMLHttpRequest();

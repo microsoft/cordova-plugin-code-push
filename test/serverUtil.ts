@@ -15,6 +15,9 @@ export class CheckForUpdateResponseMock {
     isMandatory: boolean;
 }
 
+/**
+ * Contains all the messages sent from the application to the mock server during tests.
+ */
 export class TestMessage {
     public static CHECK_UP_TO_DATE = "CHECK_UP_TO_DATE";
     public static CHECK_UPDATE_AVAILABLE = "CHECK_UPDATE_AVAILABLE";
@@ -25,4 +28,7 @@ export class TestMessage {
     public static APPLY_ERROR = "APPLY_ERROR";
     public static DEVICE_READY_AFTER_UPDATE = "DEVICE_READY_AFTER_UPDATE";
     public static UPDATE_FAILED_PREVIOUSLY = "UPDATE_FAILED_PREVIOUSLY";
+    public static APPLICATION_NOT_REVERTED = "APPLICATION_NOT_REVERTED";
+    public static NOTIFY_APP_READY_SUCCESS = "NOTIFY_APP_READY_SUCCESS";
+    public static NOTIFY_APP_READY_FAILURE = "NOTIFY_APP_READY_FAILURE";
 }

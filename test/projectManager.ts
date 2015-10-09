@@ -147,7 +147,11 @@ export class ProjectManager {
      */
     private static execAndLogChildProcess(command: string, options?: child_process.IExecOptions): Q.Promise<void> {
         var deferred = Q.defer<void>();
-
+        
+        options = options || {};
+        options.maxBuffer = 1024 * 500;
+           
+        console.log("Running command: " + command);
         child_process.exec(command, options, (error: Error, stdout: Buffer, stderr: Buffer) => {
 
             stdout && console.log(stdout);

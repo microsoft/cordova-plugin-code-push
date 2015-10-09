@@ -1,5 +1,7 @@
 var gulp = require("gulp");
 var path = require("path");
+var child_process = require("child_process");
+var runSequence = require("run-sequence");
 
 var sourcePath = "./www";
 var testPath = "./test";
@@ -27,8 +29,23 @@ var tsCompileOptions = {
     "removeComments": true
 };
 
+function executeCommand(command, args, callback) {
+    var process = child_process.spawn(command, args);
+
+    process.stdout.on('data', function(data) {
+        console.log("" + data);        
+    });
+    
+    process.stderr.on('data', function(data) {
+        console.error("" + data);
+    });
+    
+    process.on('exit', function(code) {
+        callback(code === 0 ? undefined : "Error code: " + code);
+    });
+};
+
 gulp.task("compile", function (callback) {
-    var runSequence = require("run-sequence");
     runSequence("compile-src", "compile-test", callback);
 });
 
@@ -104,6 +121,21 @@ gulp.task("clean", function () {
 });
 
 gulp.task("default", function (callback) {
-    var runSequence = require("run-sequence");
     runSequence("clean", "compile", "tslint", callback);
-}); 
+});
+
+gulp.task("test-ios", function (callback) {
+    var command = "mocha";
+    var args = ["./bin/test", "--mockserver", "http://127.0.0.1:3000", "--platform", "ios", "--target", "iPhone-4s"];
+    executeCommand(command, args, callback);
+});
+
+gulp.task("test-android", function (callback) {
+    var command = "mocha";
+    var args = ["./bin/test", "--mockserver", "http://10.0.2.2:3000", "--platform", "android"];
+    executeCommand(command, args, callback);
+});
+
+gulp.task("test", function (callback) {
+    runSequence("default", "test-android", "test-ios", callback);
+});
