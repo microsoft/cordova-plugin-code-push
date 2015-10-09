@@ -1,10 +1,9 @@
-/**
- *******************************************************
- *                                                     *
- *   Copyright (C) Microsoft. All rights reserved.     *
- *                                                     *
- *******************************************************
- */
+// Type definitions for Apache Cordova Code Push plugin.
+// Project: https://github.com/Microsoft/cordova-plugin-code-push
+// 
+// Copyright (c) Microsoft Corporation
+// All rights reserved.
+// Licensed under the MIT license.
 
 declare module Http {
     export const enum Verb {
