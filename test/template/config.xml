@@ -1,12 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
-    <widget id="io.cordova.test.codepush" version="0.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <widget id="io.cordova.test.codepush" version="1.0.0-beta" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
         <name>CodePushTest</name>
         <description>
             A sample Apache Cordova application that is used for testing the Code Push plugin.
         </description>
-        <author email="dev@cordova.apache.org" href="http://cordova.io">
-            Apache Cordova Team
-        </author>
 
         <!-- The contents of the main page can change between Code-Push updates, but not the name. -->
         <content src="index.html" />
