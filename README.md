@@ -1,6 +1,6 @@
 # cordova-plugin-code-push
 
-This plugin provides easy integration with the Code Push service, allowing you to update your Cordova application outside the application stores.
+This plugin provides easy integration with the Code Push service, allowing you to easily update your Cordova application.
 
 Access to the plugin is through the ```window.codePush``` object. The object is available after the ```deviceready``` event.
 
