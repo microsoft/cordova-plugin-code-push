@@ -1,6 +1,6 @@
 # cordova-plugin-code-push
 
-This plugin provides easy integration with the Code Push service, allowing you to easily update your Cordova application.
+This plugin provides integration with the CodePush service, allowing you to easily update your Cordova application.
 
 Access to the plugin is through the ```window.codePush``` object. The object is available after the ```deviceready``` event.
 
@@ -30,7 +30,8 @@ The JavaScript code in this plugin is compiled from TypeScript. Please see [this
 
 ## Getting started
 - Add the plugin to your application.
-- Add the configuration preferences to your ```config.xml```
+- Create one deployment per target platform using the [CodePush CLI](https://github.com/Microsoft/code-push/tree/master/cli)
+- Add the deployment keys to your ```config.xml```
 ```xml
     <platform name="android">
         <preference name="CodePushDeploymentKey" value="YOUR-ANDROID-DEPLOYMENT-KEY" />
