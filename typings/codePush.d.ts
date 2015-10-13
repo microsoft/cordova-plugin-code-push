@@ -98,6 +98,25 @@ interface ILocalPackage extends IPackage {
 }
 
 /**
+ * Decomposed static side of RemotePackage.
+ * For Class Decomposition guidelines see http://www.typescriptlang.org/Handbook#writing-dts-files-guidelines-and-specifics
+ */
+interface RemotePackage_Static {
+    new (): IRemotePackage;
+}
+
+/**
+ * Decomposed static side of LocalPackage.
+ * For Class Decomposition guidelines see http://www.typescriptlang.org/Handbook#writing-dts-files-guidelines-and-specifics
+ */
+interface LocalPackage_Static {
+    new (): ILocalPackage;
+}
+
+declare var RemotePackage: RemotePackage_Static;
+declare var LocalPackage: LocalPackage_Static;
+
+/**
  * Defines the JSON format of the current package information file.
  * This file is stored in the local storage of the device and persists between store updates and code-push updates.
  * 
