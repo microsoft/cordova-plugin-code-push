@@ -6,19 +6,24 @@
     "id": "cordova-plugin-code-push",
     "platforms": [
       "android",
-      "ios",
-      "windows"
+      "ios"
     ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Microsoft/cordova-plugin-code-push"
   },
   "keywords": [
     "cordova",
     "code",
     "push",
-    "plugin"
+    "ecosystem:cordova",
+    "cordova-android",
+    "cordova-ios"
   ],
-   "peerDependencies": {
+  "peerDependencies": {
     "code-push": ">=1.0.0-beta",
-    "cordova-plugin-file-transfer" : ">=1.3.0",
+    "cordova-plugin-file-transfer": ">=1.3.0",
     "cordova-plugin-file": ">=3.0.0",
     "cordova-plugin-zip": ">=3.0.0"
   },

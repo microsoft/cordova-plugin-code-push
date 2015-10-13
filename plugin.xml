@@ -42,7 +42,7 @@
         <js-module src="bin/www/package.js" name="package">
             <runs/>
         </js-module>
-        
+
         <js-module src="bin/www/sdk.js" name="sdk">
             <runs/>
         </js-module>
