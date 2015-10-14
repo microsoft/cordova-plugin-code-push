@@ -112,49 +112,53 @@ Contains details about an update package that is available for download.
 ## codePush.checkForUpdate
 Queries the Code Push server for updates.
 ```javascript
-codePush.checkForUpdate(updateSuccess, updateError);
+codePush.checkForUpdate(onUpdate, onError);
 ```
-- __updateSuccess__ Callback invoked in case of a successful response from the server.
+- __onUpdate__ Callback invoked in case of a successful response from the server.
                           The callback takes one ```RemotePackage``` parameter. A non-null package is a valid update.
                          A null package means the application is up to date.
-- __updateError__ Optional callback invoked in case of an error. The callback takes one error parameter, containing the details of the error.
+- __onError__ Optional callback invoked in case of an error. The callback takes one error parameter, containing the details of the error.
 
 ### Example
 ```javascript
-window.codePush.checkForUpdate(
-    function (remotePackage) {
-        if (!remotePackage) {
-            console.log("The application is up to date.");
-        } else {
-            console.log("A CodePush update is available. Package hash: " + remotePackage.packageHash);
-        }
-    },
-    function (error) {
-        console.log("An error ocurred while checking for updates. " + error);
-    });
+var onError = function (error) {
+    console.log("An error occurred. " + error);
+};
+
+var onUpdate = function (remotePackage) {
+    if (!remotePackage) {
+        console.log("The application is up to date.");
+    } else {
+        console.log("A CodePush update is available. Package hash: " + remotePackage.packageHash);
+    }
+};
+
+window.codePush.checkForUpdate(onUpdate, onError);
 ```
 
 ## codePush.getCurrentPackage
 ```javascript
-codePush.getCurrentPackage(packageSuccess, packageError);
+codePush.getCurrentPackage(onPackageSuccess, onError);
 ```
 Get the currently installed package information. 
-- __packageSuccess__: Callback invoked with the currently deployed package information. If the application did not install updates yet, ```packageSuccess``` will be called with a ```null``` argument.
-- __packageError__: Optional callback invoked in case of an error.
+- __onPackageSuccess__: Callback invoked with the currently deployed package information. If the application did not install updates yet, ```packageSuccess``` will be called with a ```null``` argument.
+- __onError__: Optional callback invoked in case of an error.
 
 ### Example
 ```javascript
-window.codePush.getCurrentPackage(
-    function (localPackage) {
-        if (!localPackage) {
-            console.log("The application has no CodePush updates installed (App Store Version).");
-        } else {
-            console.log("The current CodePush update: " + localPackage.packageHash);
-        }
-    },
-    function (error) {
-        console.log("Could not get the current package information. " + error);
-    });
+var onError = function (error) {
+    console.log("An error occurred. " + error);
+};
+
+var onPackageSuccess = function (localPackage) {
+    if (!localPackage) {
+        console.log("The application has no CodePush updates installed (App Store Version).");
+    } else {
+        console.log("The currently installed CodePush update: " + localPackage.packageHash);
+    }
+};
+
+window.codePush.getCurrentPackage(onPackageSuccess, onError);
 ```
 
 ## codePush.notifyApplicationReady
