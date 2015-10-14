@@ -1,0 +1,9 @@
+.npmignore
+.gitignore
+gulpfile.js
+node_modules/*
+sample/*
+test/*
+www/*
+bin/test/*
+typings/*
