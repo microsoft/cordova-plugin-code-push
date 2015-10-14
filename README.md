@@ -52,16 +52,23 @@ The JavaScript code in this plugin is compiled from TypeScript. Please see [this
 - You are now ready to use the plugin in the application code. See the sample app for an example and the methods description for more details.
 
 ## Create an application update package
-You can create an update by simply zipping your platform's www folder:
-- Build your application.
-- For Android:
-  - The platform ```www``` folder is located at: ``` path_to_your_application/platform/android/assets/www```
-  - Right click the folder and create a zip archive from it.
-  - Upload the archive to your Android specific deployment using the Code Push CLI.
-- For iOS:
-  - The platform ```www``` folder is located at: ```path_to_your_application/platform/ios/www```
-  - Right click the folder and create a zip archive from it.
-  - Upload the archive to you iOS specific deployment using the Code Push CLI.
+You can create an update by simply zipping and deploying your platform's www folder. The [CodePush CLI](https://github.com/Microsoft/code-push/tree/master/cli) has a ```deploy``` command for this.
+
+1. Build your application
+
+  ```
+  cordova build
+  ```
+2. Deploy update using the [CodePush CLI](https://github.com/Microsoft/code-push/tree/master/cli)
+
+  - For Android:
+  ```
+  code-push deploy <appName> path_to_your_app/platforms/android/assets/www <minAppVersion> --deploymentName <AndroidDeploymentName>
+  ```
+  - For iOS:
+  ```
+  code-push deploy <appName> path_to_your_app/platforms/ios/www <minAppVersion> --deploymentName <iOSDeploymentName>
+  ```
 
 The service should now return an update when calling ```codePush.checkForUpdate```.
 
@@ -112,6 +119,21 @@ codePush.checkForUpdate(updateSuccess, updateError);
                          A null package means the application is up to date.
 - __updateError__ Optional callback invoked in case of an error. The callback takes one error parameter, containing the details of the error.
 
+### Example
+```javascript
+window.codePush.checkForUpdate(
+    function (remotePackage) {
+        if (!remotePackage) {
+            console.log("The application is up to date.");
+        } else {
+            console.log("A CodePush update is available. Package hash: " + remotePackage.packageHash);
+        }
+    },
+    function (error) {
+        console.log("An error ocurred while checking for updates. " + error);
+    });
+```
+
 ## codePush.getCurrentPackage
 ```javascript
 codePush.getCurrentPackage(packageSuccess, packageError);
@@ -119,6 +141,21 @@ codePush.getCurrentPackage(packageSuccess, packageError);
 Get the currently installed package information. 
 - __packageSuccess__: Callback invoked with the currently deployed package information. If the application did not install updates yet, ```packageSuccess``` will be called with a ```null``` argument.
 - __packageError__: Optional callback invoked in case of an error.
+
+### Example
+```javascript
+window.codePush.getCurrentPackage(
+    function (localPackage) {
+        if (!localPackage) {
+            console.log("The application has no CodePush updates installed (App Store Version).");
+        } else {
+            console.log("The current CodePush update: " + localPackage.packageHash);
+        }
+    },
+    function (error) {
+        console.log("Could not get the current package information. " + error);
+    });
+```
 
 ## codePush.notifyApplicationReady
 ```javascript
