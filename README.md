@@ -21,7 +21,7 @@ A Cordova application's assets (HTML, javascript, CSS files and other resources)
 
 CodePush is here to simplify this process by allowing you to instantly update your application's assets without having to submit a new update to the store. We do this by packaging the application assets in a zip archive and sending it to the CodePush server. In the application, we install and persist the update. Then, since these are all web assets, the application will just reload from the updated package location. We store the update packages in the internal storage of the device.
 
-For an easy way to get started, please see our [sample](/sample application) and our [getting started guide](#getting-started).
+For an easy way to get started, please see our [sample application](/sample) and our [getting started guide](#getting-started).
 
 ## Compiling sources & contributing
 
