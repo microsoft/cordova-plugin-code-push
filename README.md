@@ -97,7 +97,7 @@ Contains details about an update package that has been downloaded locally or alr
 ### Methods
 - __apply(applySuccess, applyError, rollbackTimeout)__: Applies this package to the application. The application will be reloaded with this package and on every application launch this package will be loaded.
 If the rollbackTimeout parameter is provided, the application will wait for a `codePush.notifyApplicationReady()` for the given number of milliseconds.
-If codePush.notifyApplicationReady() is called before the time period specified by rollbackTimeout, the apply operation is considered a success.
+If `codePush.notifyApplicationReady()` is called before the time period specified by `rollbackTimeout`, the apply operation is considered a success.
 Otherwise, the apply operation will be marked as failed, and the application is reverted to its previous version.
 
   #### Example
