@@ -34,10 +34,10 @@ var app = {
     // function, we must explicitly call 'app.receivedEvent(...);'
     onDeviceReady: function () {
         // Migrate data from older versions
-        codePush.getCurrentPackage(function (currentPackage) {
+        window.codePush.getCurrentPackage(function (currentPackage) {
             // getCurrentPackage returns null if no update was installed (app store version)
             if (currentPackage && currentPackage.isFirstRun) {
-                // First run after an update, migrate date
+                // First run after an update, migrate data
                 if (currentPackage.appVersion === "1.0.0") {
                     // migrate data from store version to version 1.0.0
                 } else if (currentPackage.appVersion === "2.0.0") {
@@ -72,7 +72,7 @@ var app = {
         
         // Check the Code Push server for updates.
         console.log("Checking for updates...");
-        codePush.checkForUpdate(app.checkSuccess, app.getErrorHandler("Checking for update failed."));
+        window.codePush.checkForUpdate(app.checkSuccess, app.getErrorHandler("Checking for update failed."));
     },
     // Called after the Code Push server responded the checkForUpdate call
     checkSuccess: function (remotePackage) {
