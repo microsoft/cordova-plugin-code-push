@@ -24,7 +24,7 @@ var Sdk = (function () {
             NativeAppInfo.getServerURL(function (serverError, serverURL) {
                 NativeAppInfo.getDeploymentKey(function (depolymentKeyError, deploymentKey) {
                     if (!serverURL || !deploymentKey) {
-                        callback(new Error("Could not get the Code Push configuration. Please check your config.xml file."), null);
+                        callback(new Error("Could not get the CodePush configuration. Please check your config.xml file."), null);
                     }
                     else {
                         var configuration = { deploymentKey: deploymentKey, serverUrl: serverURL, ignoreAppVersion: false };

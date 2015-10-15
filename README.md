@@ -17,7 +17,7 @@ Access to the plugin is through the ```window.codePush``` object. The object is 
 
 ## How does it work?
 
-A Cordova application's assets (HTML, javascript, CSS files and other resources) are traditionally loaded from the application installation location on the target device. After you submit an update to the store, the user downloads the update, and those assets will be replaced with the new assets.
+A Cordova application's assets (HTML, JavaScript, CSS files and other resources) are traditionally loaded from the application installation location on the target device. After you submit an update to the store, the user downloads the update, and those assets will be replaced with the new assets.
 
 CodePush is here to simplify this process by allowing you to instantly update your application's assets without having to submit a new update to the store. We do this by packaging the application assets in a zip archive and sending it to the CodePush server. In the application, we install and persist the update. Then, since these are all web assets, the application will just reload from the updated package location. We store the update packages in the internal storage of the device.
 
@@ -48,7 +48,7 @@ The JavaScript code in this plugin is compiled from TypeScript. Please see [this
         <preference name="CodePushDeploymentKey" value="YOUR-IOS-DEPLOYMENT-KEY" />
     </platform>
 ```
-- Allow access to the Code Push server:
+- Allow access to the CodePush server:
   - In ```config.xml```, add 
   ```xml
   <access origin="https://codepush.azurewebsites.net/ " />
@@ -114,7 +114,7 @@ Otherwise, the apply operation will be marked as failed, and the application is 
 	    localPackage.apply(onApplySuccess, onError);
 	};
 	
-	var onUpdate = function (remotePackage) {
+	var onUpdateCheck = function (remotePackage) {
 	    if (!remotePackage) {
 	        console.log("The application is up to date.");
 	    } else {
@@ -123,7 +123,7 @@ Otherwise, the apply operation will be marked as failed, and the application is 
 	    }
 	};
 	
-	window.codePush.checkForUpdate(onUpdate, onError);
+	window.codePush.checkForUpdate(onUpdateCheck, onError);
 	```
 
 For an example on how to use the rollbackTimeout parameter to protect against a bad update, see the [notifyApplicationReady() documentation](#codepushnotifyapplicationready).
@@ -142,7 +142,7 @@ Contains details about an update package that is available for download.
 - __downloadUrl__: The URL at which the package is available for download. (String)
 
 ### Methods
-- __download(downloadSuccess, downloadError)__: Downloads the package update from the Code Push service. The ```downloadSuccess``` callback is invoked with a ```LocalPackage``` argument, representing the downloaded package.
+- __download(downloadSuccess, downloadError)__: Downloads the package update from the CodePush service. The ```downloadSuccess``` callback is invoked with a ```LocalPackage``` argument, representing the downloaded package.
   ### Example
   ```javascript
   	var onError = function (error) {
@@ -154,7 +154,7 @@ Contains details about an update package that is available for download.
 	    // you can now update your application to the downloaded version by calling localPackage.apply()
 	};
 	
-	var onUpdate = function (remotePackage) {
+	var onUpdateCheck = function (remotePackage) {
 	    if (!remotePackage) {
 	        console.log("The application is up to date.");
 	    } else {
@@ -163,16 +163,16 @@ Contains details about an update package that is available for download.
 	    }
 	};
 	
-	window.codePush.checkForUpdate(onUpdate, onError);
+	window.codePush.checkForUpdate(onUpdateCheck, onError);
   ```
 - __abortDownload(abortSuccess, abortError)__: Aborts the current download session, if any.
 
 ## codePush.checkForUpdate
-Queries the Code Push server for updates.
+Queries the CodePush server for updates.
 ```javascript
-codePush.checkForUpdate(onUpdate, onError);
+codePush.checkForUpdate(onUpdateCheck, onError);
 ```
-- __onUpdate__ Callback invoked in case of a successful response from the server.
+- __onUpdateCheck__ Callback invoked in case of a successful response from the server.
                           The callback takes one ```RemotePackage``` parameter. A non-null package is a valid update.
                          A null package means the application is up to date.
 - __onError__ Optional callback invoked in case of an error. The callback takes one error parameter, containing the details of the error.
@@ -183,7 +183,7 @@ var onError = function (error) {
     console.log("An error occurred. " + error);
 };
 
-var onUpdate = function (remotePackage) {
+var onUpdateCheck = function (remotePackage) {
     if (!remotePackage) {
         console.log("The application is up to date.");
     } else {
@@ -191,7 +191,7 @@ var onUpdate = function (remotePackage) {
     }
 };
 
-window.codePush.checkForUpdate(onUpdate, onError);
+window.codePush.checkForUpdate(onUpdateCheck, onError);
 ```
 
 ## codePush.getCurrentPackage
@@ -246,7 +246,7 @@ var onPackageDownloaded = function (localPackage) {
     localPackage.apply(onApplySuccess, onError, 10000);
 };
 
-var onUpdate = function (remotePackage) {
+var onUpdateCheck = function (remotePackage) {
     if (!remotePackage) {
         console.log("The application is up to date.");
     } else {
@@ -261,7 +261,7 @@ var onUpdate = function (remotePackage) {
     }
 };
 
-window.codePush.checkForUpdate(onUpdate, onError);
+window.codePush.checkForUpdate(onUpdateCheck, onError);
 
 //------------------------------------------------
 

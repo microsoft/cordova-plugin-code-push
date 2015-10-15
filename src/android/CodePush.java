@@ -546,7 +546,7 @@ public class CodePush extends CordovaPlugin {
     }
 
     /**
-     * Model class for the Code Push metadata stored alongside a package deployment.
+     * Model class for the CodePush metadata stored alongside a package deployment.
      */
     private static class CodePushPackageMetadata {
         public String deploymentKey;

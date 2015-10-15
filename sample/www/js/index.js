@@ -67,14 +67,14 @@ var app = {
 
         console.log('Received Event: ' + id);
     },
-    // Uses the Code Push service configured in config.xml to check for updates, prompt the user and install them.
+    // Uses the CodePush service configured in config.xml to check for updates, prompt the user and install them.
     checkAndInstallUpdates: function () {
         
-        // Check the Code Push server for updates.
+        // Check the CodePush server for updates.
         console.log("Checking for updates...");
         window.codePush.checkForUpdate(app.checkSuccess, app.getErrorHandler("Checking for update failed."));
     },
-    // Called after the Code Push server responded the checkForUpdate call
+    // Called after the CodePush server responded the checkForUpdate call
     checkSuccess: function (remotePackage) {
         if (!remotePackage) {
             // A null remotePackage means that the server successfully responded, but there is no update available.
@@ -124,7 +124,7 @@ var app = {
             navigator.notification.alert(
                 message,
                 null,
-                'Code Push',
+                'CodePush',
                 'OK');
         };
 

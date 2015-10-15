@@ -23,7 +23,7 @@ class RemotePackage extends Package implements IRemotePackage {
     public downloadUrl: string;
     
     /**
-     * Downloads the package update from the Code Push service.
+     * Downloads the package update from the CodePush service.
      * 
      * @param downloadSuccess Called with one parameter, the downloaded package information, once the download completed successfully.
      * @param downloadError Optional callback invoked in case of an error.

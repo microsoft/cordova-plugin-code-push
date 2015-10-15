@@ -7,7 +7,7 @@
 declare var cordova: Cordova;
 
 /**
- * File utilities for Code Push.
+ * File utilities for CodePush.
  */
 class FileUtil {
     public static directoryExists(rootUri: string, path: string, callback: Callback<boolean>): void {
