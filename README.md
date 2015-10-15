@@ -170,3 +170,45 @@ Calling this function is required if a rollbackTimeout parameter is passed to yo
 If automatic rollback was not used, calling this function is not required and will result in a noop.
 - __notifySucceeded__: Optional callback invoked if the plugin was successfully notified.
 - __notifyFailed__: Optional callback invoked in case of an error during notifying the plugin.
+
+### Example
+```javascript
+// App version 1 (current version)
+
+var onError = function (error) {
+    console.log("An error occurred. " + error);
+};
+
+var onApplySuccess = function () {
+    console.log("Apply succeeded. Reloading the application...");
+};
+
+var onPackageDownloaded = function (localPackage) {
+    // set the rollbackTimeout to 10s
+    localPackage.apply(onApplySuccess, onError, 10000);
+};
+
+var onUpdate = function (remotePackage) {
+    if (!remotePackage) {
+        console.log("The application is up to date.");
+    } else {
+        console.log("A CodePush update is available. Package hash: " + remotePackage.packageHash);
+        remotePackage.download(onPackageDownloaded, onError);
+    }
+};
+
+window.codePush.checkForUpdate(onUpdate, onError);
+
+//------------------------------------------------
+
+// App version 2 (updated version)
+
+var app = {
+    onDeviceReady: function () {
+        // If this call is not made in 10s after the updated versio of the application is loaded,
+        // the application will be reverted to the previous version
+        window.codePush.notifyApplicationReady();
+        // ...
+    }
+}
+```
