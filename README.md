@@ -15,6 +15,14 @@ Access to the plugin is through the ```window.codePush``` object. The object is 
 - Android
 - iOS
 
+## How does it work?
+
+A Cordova application's assets (HTML, javascript, CSS files and other resources) are traditionally loaded from the application installation location on the target device. After you submit an update to the store, the user downloads the update, and those assets will be replaced with the new assets.
+
+CodePush is here to simplify this process by allowing you to instantly update your application's assets without having to submit a new update to the store. We do this by packaging the application assets in a zip archive and sending it to the CodePush server. In the application, we install and persist the update. Then, since these are all web assets, the application will just reload from the updated package location. We store the update packages in the internal storage of the device.
+
+For an easy way to get started, please see our [sample](/sample application) and our [getting started guide](#getting-started).
+
 ## Compiling sources & contributing
 
 The JavaScript code in this plugin is compiled from TypeScript. Please see [this page](CONTRIBUTING.md) for more details on contributing and how to build the project.
