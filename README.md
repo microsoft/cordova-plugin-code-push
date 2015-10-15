@@ -82,7 +82,7 @@ Contains details about an update package that has been downloaded locally or alr
 - __isMandatory__: Flag indicating if the update is mandatory. (Boolean)
 - __packageHash__: The hash value of the package. (String)
 - __packageSize__: The size of the package, in bytes. (Number)
-- __failedApply__: Boolean version indicating if this update package was previously attempted and the update failed. (Boolean)
+- __failedApply__: Boolean version indicating if this update package was previously attempted and the update failed. (Boolean). If using the rollback feature, this field can protect against going into an infinite bad update/revert loop. For an example on how to use the rollbackTimeout parameter to protect against a bad update, see the [notifyApplicationReady() documentation](#codepushnotifyapplicationready).
 - __localPath__: The current, local path of the package. (String)
 - __isFirstRun__: Flag indicating if the current application run is the first one after the package was applied. (Boolean)
 
@@ -91,6 +91,34 @@ Contains details about an update package that has been downloaded locally or alr
 If the rollbackTimeout parameter is provided, the application will wait for a codePush.notifyApplicationReady() for the given number of milliseconds.
 If codePush.notifyApplicationReady() is called before the time period specified by rollbackTimeout, the apply operation is considered a success.
 Otherwise, the apply operation will be marked as failed, and the application is reverted to its previous version.
+
+  #### Example
+	```javascript
+	var onError = function (error) {
+	    console.log("An error occurred. " + error);
+	};
+	
+	var onApplySuccess = function () {
+	    console.log("Apply succeeded. Reloading the application...");
+	};
+	
+	var onPackageDownloaded = function (localPackage) {
+	    localPackage.apply(onApplySuccess, onError);
+	};
+	
+	var onUpdate = function (remotePackage) {
+	    if (!remotePackage) {
+	        console.log("The application is up to date.");
+	    } else {
+	        console.log("A CodePush update is available. Package hash: " + remotePackage.packageHash);
+	        remotePackage.download(onPackageDownloaded, onError);
+	    }
+	};
+	
+	window.codePush.checkForUpdate(onUpdate, onError);
+	```
+
+For an example on how to use the rollbackTimeout parameter to protect against a bad update, see the [notifyApplicationReady() documentation](#codepushnotifyapplicationready).
 
 ## RemotePackage
 Contains details about an update package that is available for download.
@@ -107,6 +135,28 @@ Contains details about an update package that is available for download.
 
 ### Methods
 - __download(downloadSuccess, downloadError)__: Downloads the package update from the Code Push service. The ```downloadSuccess``` callback is invoked with a ```LocalPackage``` argument, representing the downloaded package.
+  ### Example
+  ```javascript
+  	var onError = function (error) {
+    	    console.log("An error occurred. " + error);
+	};
+	
+	var onPackageDownloaded = function (localPackage) {
+	    console.log("Package downloaded at: " + localPackage.localPath);
+	    // you can now update your application to the downloaded version by calling localPackage.apply()
+	};
+	
+	var onUpdate = function (remotePackage) {
+	    if (!remotePackage) {
+	        console.log("The application is up to date.");
+	    } else {
+	        console.log("A CodePush update is available. Package hash: " + remotePackage.packageHash);
+	        remotePackage.download(onPackageDownloaded, onError);
+	    }
+	};
+	
+	window.codePush.checkForUpdate(onUpdate, onError);
+  ```
 - __abortDownload(abortSuccess, abortError)__: Aborts the current download session, if any.
 
 ## codePush.checkForUpdate
@@ -192,8 +242,14 @@ var onUpdate = function (remotePackage) {
     if (!remotePackage) {
         console.log("The application is up to date.");
     } else {
-        console.log("A CodePush update is available. Package hash: " + remotePackage.packageHash);
-        remotePackage.download(onPackageDownloaded, onError);
+        // The hash of each previously reverted package is stored for later use. 
+        // This way, we avoid going into an infinite bad update/revert loop.
+        if (!remotePackage.failedApply) {
+            console.log("A CodePush update is available. Package hash: " + remotePackage.packageHash);
+            remotePackage.download(onPackageDownloaded, onError);
+        } else {
+            console.log("The available update was attempted before and failed.");
+        }
     }
 };
 
