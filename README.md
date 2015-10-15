@@ -90,7 +90,7 @@ Contains details about an update package that has been downloaded locally or alr
 - __isMandatory__: Flag indicating if the update is mandatory. (Boolean)
 - __packageHash__: The hash value of the package. (String)
 - __packageSize__: The size of the package, in bytes. (Number)
-- __failedApply__: Boolean version indicating if this update package was previously attempted and the update failed. (Boolean). If using the rollback feature, this field can protect against going into an infinite bad update/revert loop. For an example on how to use the rollbackTimeout parameter to protect against a bad update, see the [notifyApplicationReady() documentation](#codepushnotifyapplicationready).
+- __failedApply__: Boolean flag indicating if this update package was previously attempted and the update failed. (Boolean). If using the rollback feature, this field can protect against going into an infinite bad update/revert loop. For an example on how to use the rollbackTimeout parameter to protect against a bad update, see the [notifyApplicationReady() documentation](#codepushnotifyapplicationready).
 - __localPath__: The current, local path of the package. (String)
 - __isFirstRun__: Flag indicating if the current application run is the first one after the package was applied. (Boolean)
 
@@ -138,7 +138,7 @@ Contains details about an update package that is available for download.
 - __isMandatory__: Flag indicating if the update is mandatory. (Boolean)
 - __packageHash__: The hash value of the package. (String)
 - __packageSize__: The size of the package, in bytes. (Number)
-- __failedApply__: Boolean version indicating if this update package was previously attempted and the update failed. (Boolean)
+- __failedApply__: Boolean flag indicating if this update package was previously attempted and the update failed. (Boolean)
 - __downloadUrl__: The URL at which the package is available for download. (String)
 
 ### Methods
