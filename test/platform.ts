@@ -5,7 +5,7 @@
 import path = require("path");
 
 /**
- * Defines a platform supported by Code Push.
+ * Defines a platform supported by CodePush.
  */
 export interface IPlatform {
     /**

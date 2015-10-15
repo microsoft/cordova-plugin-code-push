@@ -17,7 +17,7 @@ export class TestUtil {
     }
 
 	/**
-	 * Reads the mock Code Push server URL parameter passed to mocha.
+	 * Reads the mock CodePush server URL parameter passed to mocha.
 	 * The mock server runs on the local machine during tests. 
 	 */
     public static readMockServerName(): string {

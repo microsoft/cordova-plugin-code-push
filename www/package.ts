@@ -3,7 +3,7 @@
 "use strict";
 
 /**
- * Base class for Code Push packages.
+ * Base class for CodePush packages.
  */
 class Package implements IPackage {
     deploymentKey: string;

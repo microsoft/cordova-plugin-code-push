@@ -1,4 +1,4 @@
-Microsoft Code Push Plugin for Apache Cordova 
+Microsoft CodePush Plugin for Apache Cordova 
 
 Copyright (c) Microsoft Corporation
 

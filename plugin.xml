@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
     <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-code-push" version="1.0.0-beta">
         <name>CodePush</name>
-        <description>Code Push Plugin for Apache Cordova</description>
+        <description>CodePush Plugin for Apache Cordova</description>
         <license>MIT</license>
         <keywords>cordova,code,push</keywords>
         <repo>https://github.com/Microsoft/cordova-plugin-code-push.git</repo>
