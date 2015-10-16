@@ -1,4 +1,4 @@
-// Type definitions for Apache Cordova Code Push plugin.
+// Type definitions for Apache Cordova CodePush plugin.
 // Project: https://github.com/Microsoft/cordova-plugin-code-push
 // 
 // Copyright (c) Microsoft Corporation
@@ -52,7 +52,7 @@ interface IRemotePackage extends IPackage {
     downloadUrl: string;
     
     /**
-     * Downloads the package update from the Code Push service.
+     * Downloads the package update from the CodePush service.
      * 
      * @param downloadSuccess Called with one parameter, the downloaded package information, once the download completed successfully.
      * @param downloadError Optional callback invoked in case of an error.
@@ -163,7 +163,7 @@ interface CodePushCordovaPlugin {
     getCurrentPackage(packageSuccess: SuccessCallback<ILocalPackage>, packageError?: ErrorCallback): void;
 
     /**
-     * Checks with the Code Push server if an update package is available for download.
+     * Checks with the CodePush server if an update package is available for download.
      *
      * @param querySuccess Callback invoked in case of a successful response from the server.
      *                     The callback takes one RemotePackage parameter. A non-null package is a valid update.

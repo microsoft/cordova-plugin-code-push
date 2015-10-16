@@ -29,4 +29,31 @@ Follow these steps to build a new version of the plugin:
 	```
 	This will compile the sources and place them in the ```bin``` folder. Any compilation errors will be displayed in the console.
 
+### Test
 
+The plugin has end to end tests for Android and iOS. Depending on your development machine OS, you can run some or all the tests.
+
+OS            | Supported tests
+------------- | -------------
+OS X          | Android, iOS
+Windows       | Android
+
+
+##### iOS
+
+To run the iOS tests:
+```
+gulp test-ios
+```
+
+Since our mock testing server is not https enabled, we don't currently support iOS 9 simulators for running tests. To use a custom simulator during tests and not the default one Cordova uses, use the following command:
+```
+mocha ./bin/test --mockserver http://127.0.0.1:3000 --platform ios --target <YOUR_SIMULATOR_NAME>
+```
+
+##### Android
+
+To run the Android tests, make sure you have your Android emulator running on the machine, and run:
+```
+gulp test-android
+```

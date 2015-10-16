@@ -34,10 +34,10 @@ var app = {
     // function, we must explicitly call 'app.receivedEvent(...);'
     onDeviceReady: function () {
         // Migrate data from older versions
-        codePush.getCurrentPackage(function (currentPackage) {
+        window.codePush.getCurrentPackage(function (currentPackage) {
             // getCurrentPackage returns null if no update was installed (app store version)
             if (currentPackage && currentPackage.isFirstRun) {
-                // First run after an update, migrate date
+                // First run after an update, migrate data
                 if (currentPackage.appVersion === "1.0.0") {
                     // migrate data from store version to version 1.0.0
                 } else if (currentPackage.appVersion === "2.0.0") {
@@ -67,14 +67,14 @@ var app = {
 
         console.log('Received Event: ' + id);
     },
-    // Uses the Code Push service configured in config.xml to check for updates, prompt the user and install them.
+    // Uses the CodePush service configured in config.xml to check for updates, prompt the user and install them.
     checkAndInstallUpdates: function () {
         
-        // Check the Code Push server for updates.
+        // Check the CodePush server for updates.
         console.log("Checking for updates...");
-        codePush.checkForUpdate(app.checkSuccess, app.getErrorHandler("Checking for update failed."));
+        window.codePush.checkForUpdate(app.checkSuccess, app.getErrorHandler("Checking for update failed."));
     },
-    // Called after the Code Push server responded the checkForUpdate call
+    // Called after the CodePush server responded the checkForUpdate call
     checkSuccess: function (remotePackage) {
         if (!remotePackage) {
             // A null remotePackage means that the server successfully responded, but there is no update available.
@@ -124,7 +124,7 @@ var app = {
             navigator.notification.alert(
                 message,
                 null,
-                'Code Push',
+                'CodePush',
                 'OK');
         };
 

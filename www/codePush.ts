@@ -15,7 +15,7 @@ import NativeAppInfo = require("./nativeAppInfo");
 import Sdk = require("./sdk");
 
 /**
- * This is the entry point to Cordova Code Push SDK.
+ * This is the entry point to Cordova CodePush SDK.
  * It provides the following features to the app developer:
  * - polling the server for new versions of the app
  * - notifying the plugin that the application loaded successfully after an update
@@ -45,7 +45,7 @@ class CodePush implements CodePushCordovaPlugin {
     }
 
     /**
-     * Checks with the Code Push server if an update package is available for download.
+     * Checks with the CodePush server if an update package is available for download.
      *
      * @param querySuccess Callback invoked in case of a successful response from the server.
      *                     The callback takes one RemotePackage parameter. A non-null package is a valid update.

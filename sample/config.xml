@@ -2,7 +2,7 @@
     <widget id="io.cordova.hellocodepush" version="1.0.0-beta" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
         <name>HelloCodePush</name>
         <description>
-            A sample Apache Cordova application that uses the Code Push service.
+            A sample Apache Cordova application that uses the CodePush service.
         </description>
 
         <!-- The contents of the main page can change between Code-Push updates, but not the name. -->
@@ -25,14 +25,14 @@
 
         <platform name="android">
             <allow-intent href="market:*" />
-            <!-- Code Push deployment key for the Android platform. -->
+            <!-- CodePush deployment key for the Android platform. -->
             <preference name="CodePushDeploymentKey" value="TODO_ADD_ANDROID_DEPLOYMENT_KEY" />
         </platform>
 
         <platform name="ios">
             <allow-intent href="itms:*" />
             <allow-intent href="itms-apps:*" />
-            <!-- Code Push deployment key for the iOS platform. -->
+            <!-- CodePush deployment key for the iOS platform. -->
             <preference name="CodePushDeploymentKey" value="TODO_ADD_IOS_DEPLOYMENT_KEY" />
         </platform>
     </widget>

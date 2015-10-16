@@ -7,14 +7,14 @@ import NativeAppInfo = require("./nativeAppInfo");
 import HttpRequester = require("./httpRequester");
 
 /**
- * Interacts with the Code Push Acquisition SDK.
+ * Interacts with the CodePush Acquisition SDK.
  */
 class Sdk {
 
     private static Instance: AcquisitionManager;
     
     /**
-     * Reads the Code Push configuration and creates an AcquisitionManager instance using it.
+     * Reads the CodePush configuration and creates an AcquisitionManager instance using it.
      */
     public static getAcquisitionManager(callback: Callback<AcquisitionManager>): void {
         if (Sdk.Instance) {
@@ -23,7 +23,7 @@ class Sdk {
             NativeAppInfo.getServerURL((serverError: Error, serverURL: string) => {
                 NativeAppInfo.getDeploymentKey((depolymentKeyError: Error, deploymentKey: string) => {
                     if (!serverURL || !deploymentKey) {
-                        callback(new Error("Could not get the Code Push configuration. Please check your config.xml file."), null);
+                        callback(new Error("Could not get the CodePush configuration. Please check your config.xml file."), null);
                     } else {
                         var configuration: Configuration = { deploymentKey: deploymentKey, serverUrl: serverURL, ignoreAppVersion: false };
                         Sdk.Instance = new AcquisitionManager(new HttpRequester(), configuration);
@@ -35,7 +35,7 @@ class Sdk {
     }
 
     /**
-     * Reports the update status to the Code Push server.
+     * Reports the update status to the CodePush server.
      */
     public static reportStatus(status: string, callback?: Callback<void>) {
         try {
