@@ -20,7 +20,6 @@ var projectManager = tm.ProjectManager;
 var testUtil = tu.TestUtil;
 
 var templatePath = path.join(__dirname, "../../test/template");
-var acquisitionPluginPath = path.join(__dirname, "../../test/cordova-plugin-code-push-acquisition");
 var thisPluginPath = path.join(__dirname, "../..");
 var testRunDirectory = path.join(os.tmpdir(), "cordova-plugin-code-push", "test-run");
 var updatesDirectory = path.join(os.tmpdir(), "cordova-plugin-code-push", "updates");
@@ -32,6 +31,7 @@ const AndroidKey = "mock-android-deployment-key";
 const IOSKey = "mock-ios-deployment-key";
 const TestAppName = "TestCodePush";
 const TestNamespace = "com.microsoft.codepush.test";
+const AcquisitionSDKPluginName = "code-push";
 
 const ScenarioCheckForUpdatePath = "js/scenarioCheckForUpdate.js";
 const ScenarioDownloadUpdate = "js/scenarioDownloadUpdate.js";
@@ -84,7 +84,7 @@ function setupScenario(scenarioPath: string): Q.Promise<void> {
 
     return projectManager.setupTemplate(testRunDirectory, templatePath, serverUrl, AndroidKey, IOSKey, TestAppName, TestNamespace, scenarioPath)
         .then<void>(() => { return projectManager.addPlatform(testRunDirectory, targetPlatform); })
-        .then<void>(() => { return projectManager.addPlugin(testRunDirectory, acquisitionPluginPath); })
+        .then<void>(() => { return projectManager.addPlugin(testRunDirectory, AcquisitionSDKPluginName); })
         .then<void>(() => { return projectManager.addPlugin(testRunDirectory, thisPluginPath); })
         .then<void>(() => { return projectManager.buildPlatform(testRunDirectory, targetPlatform); });
 }
@@ -107,7 +107,7 @@ function setupUpdateProject(scenarioPath: string, version: string): Q.Promise<vo
     console.log("Creating an update at location: " + updatesDirectory);
     return projectManager.setupTemplate(updatesDirectory, templatePath, serverUrl, AndroidKey, IOSKey, TestAppName, TestNamespace, scenarioPath, version)
         .then<void>(() => { return projectManager.addPlatform(updatesDirectory, targetPlatform); })
-        .then<void>(() => { return projectManager.addPlugin(updatesDirectory, acquisitionPluginPath); })
+        .then<void>(() => { return projectManager.addPlugin(testRunDirectory, AcquisitionSDKPluginName); })
         .then<void>(() => { return projectManager.addPlugin(updatesDirectory, thisPluginPath); })
         .then<void>(() => { return projectManager.buildPlatform(updatesDirectory, targetPlatform); });
 };
