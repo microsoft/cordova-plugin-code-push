@@ -167,7 +167,7 @@ interface CodePushCordovaPlugin {
      *
      * @param querySuccess Callback invoked in case of a successful response from the server.
      *                     The callback takes one RemotePackage parameter. A non-null package is a valid update.
-     *                     A null package means the application is up to date.
+     *                     A null package means the application is up to date for the current native application version.
      * @param queryError Optional callback invoked in case of an error.
      */
     checkForUpdate(querySuccess: SuccessCallback<IRemotePackage>, queryError?: ErrorCallback): void;
