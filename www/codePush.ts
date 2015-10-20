@@ -54,30 +54,41 @@ class CodePush implements CodePushCordovaPlugin {
      */
     public checkForUpdate(querySuccess: SuccessCallback<RemotePackage>, queryError?: ErrorCallback): void {
         try {
-            var callback: Callback<RemotePackage> = (error: Error, remotePackage: IRemotePackage) => {
+            var callback: Callback<RemotePackage | NativeUpdateNotification> = (error: Error, remotePackageOrUpdateNotification: IRemotePackage | NativeUpdateNotification) => {
                 if (error) {
                     CodePushUtil.invokeErrorCallback(error, queryError);
                 }
                 else {
-                    if (remotePackage) {
-                        NativeAppInfo.isFailedUpdate(remotePackage.packageHash, (applyFailed: boolean) => {
-                            var result: RemotePackage = new RemotePackage();
-                            result.appVersion = remotePackage.appVersion;
-                            result.deploymentKey = remotePackage.deploymentKey;
-                            result.description = remotePackage.description;
-                            result.downloadUrl = remotePackage.downloadUrl;
-                            result.isMandatory = remotePackage.isMandatory;
-                            result.label = remotePackage.label;
-                            result.packageHash = remotePackage.packageHash;
-                            result.packageSize = remotePackage.packageSize;
-                            result.failedApply = applyFailed;
-                            CodePushUtil.logMessage("An update is available. " + JSON.stringify(result));
-                            querySuccess(result);
-                        });
+                    var appUpToDate = () => {
+                        CodePushUtil.logMessage("The application is up to date.");
+                        querySuccess && querySuccess(null);
+                    };
+
+                    if (remotePackageOrUpdateNotification) {
+                        if ((<NativeUpdateNotification>remotePackageOrUpdateNotification).updateAppVersion) {
+                            /* There is an update available for a different version. In the current version of the plugin, we treat that as no update. */
+                            appUpToDate();
+                        } else {
+                            /* There is an update available for the current version. */
+                            var remotePackage: RemotePackage = <RemotePackage>remotePackageOrUpdateNotification;
+                            NativeAppInfo.isFailedUpdate(remotePackage.packageHash, (applyFailed: boolean) => {
+                                var result: RemotePackage = new RemotePackage();
+                                result.appVersion = remotePackage.appVersion;
+                                result.deploymentKey = remotePackage.deploymentKey;
+                                result.description = remotePackage.description;
+                                result.downloadUrl = remotePackage.downloadUrl;
+                                result.isMandatory = remotePackage.isMandatory;
+                                result.label = remotePackage.label;
+                                result.packageHash = remotePackage.packageHash;
+                                result.packageSize = remotePackage.packageSize;
+                                result.failedApply = applyFailed;
+                                CodePushUtil.logMessage("An update is available. " + JSON.stringify(result));
+                                querySuccess && querySuccess(result);
+                            });
+                        }
                     }
                     else {
-                        CodePushUtil.logMessage("The application is up to date.");
-                        querySuccess(null);
+                        appUpToDate();
                     }
                 }
             };
