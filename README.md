@@ -71,11 +71,11 @@ You can create an update by simply zipping and deploying your platform's www fol
 
   - For Android:
   ```
-  code-push deploy <appName> path_to_your_app/platforms/android/assets/www <minAppVersion> --deploymentName <AndroidDeploymentName>
+  code-push release <appName> path_to_your_app/platforms/android/assets/www <appStoreVersion> --deploymentName <AndroidDeploymentName>
   ```
   - For iOS:
   ```
-  code-push deploy <appName> path_to_your_app/platforms/ios/www <minAppVersion> --deploymentName <iOSDeploymentName>
+  code-push release <appName> path_to_your_app/platforms/ios/www <appStoreVersion> --deploymentName <iOSDeploymentName>
   ```
 
 The service should now return an update when calling ```codePush.checkForUpdate```.
