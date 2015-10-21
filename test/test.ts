@@ -89,6 +89,22 @@ function setupScenario(scenarioPath: string): Q.Promise<void> {
         .then<void>(() => { return projectManager.buildPlatform(testRunDirectory, targetPlatform); });
 }
 
+function createDefaultResponse(): su.CheckForUpdateResponseMock {
+    var defaultReponse = new su.CheckForUpdateResponseMock();
+
+    defaultReponse.downloadURL = "";
+    defaultReponse.description = "";
+    defaultReponse.isAvailable = false;
+    defaultReponse.isMandatory = false;
+    defaultReponse.appVersion = "";
+    defaultReponse.packageHash = "";
+    defaultReponse.label = "";
+    defaultReponse.packageSize = 0;
+    defaultReponse.updateAppVersion = false;
+
+    return defaultReponse;
+}
+
 function createMockResponse(): su.CheckForUpdateResponseMock {
     var updateReponse = new su.CheckForUpdateResponseMock();
     updateReponse.isAvailable = true;
@@ -150,10 +166,31 @@ describe("window.codePush", function() {
         });
 
         it("should handle no update scenario", function(done) {
-            var noUpdateReponse = new su.CheckForUpdateResponseMock();
+            var noUpdateReponse = createDefaultResponse();
             noUpdateReponse.isAvailable = false;
+            noUpdateReponse.appVersion = "0.0.1";
 
             mockResponse = { updateInfo: noUpdateReponse };
+
+            testMessageCallback = (requestBody: any) => {
+                try {
+                    assert.equal(su.TestMessage.CHECK_UP_TO_DATE, requestBody.message);
+                    done();
+                } catch (e) {
+                    done(e);
+                }
+            };
+
+            console.log("Running project...");
+            projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+        });
+
+        it("should return no update in updateAppVersion scenario", function(done) {
+            var updateAppVersionReponse = createDefaultResponse();
+            updateAppVersionReponse.updateAppVersion = true;
+            updateAppVersionReponse.appVersion = "2.0.0";
+
+            mockResponse = { updateInfo: updateAppVersionReponse };
 
             testMessageCallback = (requestBody: any) => {
                 try {

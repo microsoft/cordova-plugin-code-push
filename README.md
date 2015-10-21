@@ -173,8 +173,8 @@ Queries the CodePush server for updates.
 codePush.checkForUpdate(onUpdateCheck, onError);
 ```
 - __onUpdateCheck__ Callback invoked in case of a successful response from the server.
-                          The callback takes one ```RemotePackage``` parameter. A non-null package is a valid update.
-                         A null package means the application is up to date.
+                         The callback takes one ```RemotePackage``` parameter. A non-null package is a valid update.
+                         A null package means the application is up to date for the current native application version.
 - __onError__ Optional callback invoked in case of an error. The callback takes one error parameter, containing the details of the error.
 
 ### Example

@@ -29,30 +29,39 @@ var CodePush = (function () {
     };
     CodePush.prototype.checkForUpdate = function (querySuccess, queryError) {
         try {
-            var callback = function (error, remotePackage) {
+            var callback = function (error, remotePackageOrUpdateNotification) {
                 if (error) {
                     CodePushUtil.invokeErrorCallback(error, queryError);
                 }
                 else {
-                    if (remotePackage) {
-                        NativeAppInfo.isFailedUpdate(remotePackage.packageHash, function (applyFailed) {
-                            var result = new RemotePackage();
-                            result.appVersion = remotePackage.appVersion;
-                            result.deploymentKey = remotePackage.deploymentKey;
-                            result.description = remotePackage.description;
-                            result.downloadUrl = remotePackage.downloadUrl;
-                            result.isMandatory = remotePackage.isMandatory;
-                            result.label = remotePackage.label;
-                            result.packageHash = remotePackage.packageHash;
-                            result.packageSize = remotePackage.packageSize;
-                            result.failedApply = applyFailed;
-                            CodePushUtil.logMessage("An update is available. " + JSON.stringify(result));
-                            querySuccess(result);
-                        });
+                    var appUpToDate = function () {
+                        CodePushUtil.logMessage("The application is up to date.");
+                        querySuccess && querySuccess(null);
+                    };
+                    if (remotePackageOrUpdateNotification) {
+                        if (remotePackageOrUpdateNotification.updateAppVersion) {
+                            appUpToDate();
+                        }
+                        else {
+                            var remotePackage = remotePackageOrUpdateNotification;
+                            NativeAppInfo.isFailedUpdate(remotePackage.packageHash, function (applyFailed) {
+                                var result = new RemotePackage();
+                                result.appVersion = remotePackage.appVersion;
+                                result.deploymentKey = remotePackage.deploymentKey;
+                                result.description = remotePackage.description;
+                                result.downloadUrl = remotePackage.downloadUrl;
+                                result.isMandatory = remotePackage.isMandatory;
+                                result.label = remotePackage.label;
+                                result.packageHash = remotePackage.packageHash;
+                                result.packageSize = remotePackage.packageSize;
+                                result.failedApply = applyFailed;
+                                CodePushUtil.logMessage("An update is available. " + JSON.stringify(result));
+                                querySuccess && querySuccess(result);
+                            });
+                        }
                     }
                     else {
-                        CodePushUtil.logMessage("The application is up to date.");
-                        querySuccess(null);
+                        appUpToDate();
                     }
                 }
             };
