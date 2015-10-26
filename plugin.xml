@@ -10,6 +10,7 @@
         <dependency id="cordova-plugin-file-transfer" version=">=1.3.0" />
         <dependency id="cordova-plugin-file" version=">=3.0.0" />
         <dependency id="cordova-plugin-zip" version=">=3.0.0" />
+        <dependency id="cordova-plugin-dialogs" version=">=1.1.1" />
 
         <js-module src="bin/www/codePush.js" name="codePush">
             <clobbers target="codePush" />
@@ -21,6 +22,10 @@
 
         <js-module src="bin/www/remotePackage.js" name="remotePackage">
             <clobbers target="RemotePackage" />
+        </js-module>
+
+        <js-module src="bin/www/syncStatus.js" name="syncStatus">
+            <clobbers target="SyncStatus" />
         </js-module>
 
         <js-module src="bin/www/codePushUtil.js" name="codePushUtil">

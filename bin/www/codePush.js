@@ -12,12 +12,14 @@
 /// <reference path="../typings/fileSystem.d.ts" />
 /// <reference path="../typings/fileTransfer.d.ts" />
 /// <reference path="../typings/cordova.d.ts" />
+/// <reference path="../typings/dialogs.d.ts" />
 "use strict";
 var LocalPackage = require("./localPackage");
 var RemotePackage = require("./remotePackage");
 var CodePushUtil = require("./codePushUtil");
 var NativeAppInfo = require("./nativeAppInfo");
 var Sdk = require("./sdk");
+var SyncStatus = require("./syncStatus");
 var CodePush = (function () {
     function CodePush() {
     }
@@ -81,6 +83,76 @@ var CodePush = (function () {
         catch (e) {
             CodePushUtil.invokeErrorCallback(new Error("An error ocurred while querying for updates." + CodePushUtil.getErrorMessage(e)), queryError);
         }
+    };
+    CodePush.prototype.sync = function (syncCallback, syncOptions) {
+        if (!syncOptions) {
+            syncOptions = this.getDefaultSyncOptions();
+        }
+        if (syncOptions.mandatoryUpdateMessage) {
+            syncOptions.mandatoryUpdateContinueButtonLabel = syncOptions.mandatoryUpdateContinueButtonLabel || this.getDefaultSyncOptions().mandatoryUpdateContinueButtonLabel;
+            syncOptions.dialogTitle = syncOptions.dialogTitle || this.getDefaultSyncOptions().dialogTitle;
+        }
+        if (syncOptions.optionalUpdateMessage) {
+            syncOptions.optionalUpdateConfirmButtonLabel = syncOptions.optionalUpdateConfirmButtonLabel || this.getDefaultSyncOptions().optionalUpdateConfirmButtonLabel;
+            syncOptions.optionalUpdateCancelButtonLabel = syncOptions.optionalUpdateCancelButtonLabel || this.getDefaultSyncOptions().optionalUpdateCancelButtonLabel;
+            syncOptions.dialogTitle = syncOptions.dialogTitle || this.getDefaultSyncOptions().dialogTitle;
+        }
+        window.codePush.notifyApplicationReady();
+        var onError = function (error) {
+            CodePushUtil.logError("An error ocurred during sync.", error);
+            syncCallback && syncCallback(SyncStatus.ERROR);
+        };
+        var onApplySuccess = function () {
+            syncCallback && syncCallback(SyncStatus.APPLY_SUCCESS);
+        };
+        var onDownloadSuccess = function (localPackage) {
+            localPackage.apply(onApplySuccess, onError, syncOptions.rollbackTimeout);
+        };
+        var downloadAndInstallUpdate = function (remotePackage) {
+            remotePackage.download(onDownloadSuccess, onError);
+        };
+        var onUpdate = function (remotePackage) {
+            if (!remotePackage) {
+                syncCallback && syncCallback(SyncStatus.UP_TO_DATE);
+            }
+            else {
+                if (remotePackage.isMandatory && syncOptions.mandatoryUpdateMessage) {
+                    navigator.notification.alert(syncOptions.mandatoryUpdateMessage, function () { downloadAndInstallUpdate(remotePackage); }, syncOptions.dialogTitle, syncOptions.mandatoryUpdateContinueButtonLabel);
+                }
+                else if (!remotePackage.isMandatory && syncOptions && syncOptions.optionalUpdateMessage) {
+                    var optionalUpdateCallback = function (buttonIndex) {
+                        switch (buttonIndex) {
+                            case 1:
+                                downloadAndInstallUpdate(remotePackage);
+                                break;
+                            case 2:
+                            default:
+                                syncCallback && syncCallback(SyncStatus.USER_DECLINED);
+                                break;
+                        }
+                    };
+                    navigator.notification.confirm(syncOptions.optionalUpdateMessage, optionalUpdateCallback, syncOptions.dialogTitle, [syncOptions.optionalUpdateConfirmButtonLabel, syncOptions.optionalUpdateCancelButtonLabel]);
+                }
+                else {
+                    downloadAndInstallUpdate(remotePackage);
+                }
+            }
+        };
+        window.codePush.checkForUpdate(onUpdate, onError);
+    };
+    CodePush.prototype.getDefaultSyncOptions = function () {
+        if (!CodePush.DefaultSyncOptions) {
+            CodePush.DefaultSyncOptions = {
+                dialogTitle: "Update",
+                mandatoryUpdateMessage: "You will be updated to the latest version.",
+                mandatoryUpdateContinueButtonLabel: "Continue",
+                optionalUpdateMessage: "An update is available. Would you like to install it?",
+                optionalUpdateConfirmButtonLabel: "Install",
+                optionalUpdateCancelButtonLabel: "Cancel",
+                rollbackTimeout: 0
+            };
+        }
+        return CodePush.DefaultSyncOptions;
     };
     return CodePush;
 })();
