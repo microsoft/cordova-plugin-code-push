@@ -194,7 +194,7 @@ interface CodePushCordovaPlugin {
      *         - If the update is not mandatory and the confirmMessage is set in options, the user will be asked if they want to update to the latest version.
      *           If they decline, the syncCallback will be invoked with SyncStatus.USER_DECLINED. 
      *         - Otherwise, the update package will be downloaded and applied with no user interaction.
-     * - If no update is available on the server, the syncCallback will be invoked with the SyncStatus.UP_TO_DATE.
+     * - If no update is available on the server, or if a previously rolled back update is available and the ignoreFailedUpdates is set to true, the syncCallback will be invoked with the SyncStatus.UP_TO_DATE.
      * - If an error ocurrs during checking for update, downloading or applying it, the syncCallback will be invoked with the SyncStatus.ERROR.
      * 
      * @param syncCallback Optional callback to be called with the status of the sync operation.
@@ -243,6 +243,11 @@ interface SyncOptions {
     rollbackTimeout?: number;
     
     /**
+     * Optional boolean flag. If set, previous updates which were rolled back will be ignored.
+     */
+    ignoreFailedUpdates?: boolean;
+    
+    /**
      * If a mandatory update is available and this option is set, the message will be displayed to the user in an alert dialog before downloading and installing the update.
      * The user will not be able to cancel the operation, since the update is mandatory.
      */
@@ -273,7 +278,7 @@ interface SyncOptions {
     /**
      * The label of the continue button in case of a mandatory update.
      */
-    mandatoryUpdateContinueButtonLabel?:string
+    mandatoryUpdateContinueButtonLabel?: string
 }
 
 /**

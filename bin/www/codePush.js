@@ -112,7 +112,7 @@ var CodePush = (function () {
             remotePackage.download(onDownloadSuccess, onError);
         };
         var onUpdate = function (remotePackage) {
-            if (!remotePackage) {
+            if (!remotePackage || (remotePackage.failedApply && syncOptions.ignoreFailedUpdates)) {
                 syncCallback && syncCallback(SyncStatus.UP_TO_DATE);
             }
             else {
@@ -149,7 +149,8 @@ var CodePush = (function () {
                 optionalUpdateMessage: "An update is available. Would you like to install it?",
                 optionalUpdateConfirmButtonLabel: "Install",
                 optionalUpdateCancelButtonLabel: "Cancel",
-                rollbackTimeout: 0
+                rollbackTimeout: 0,
+                ignoreFailedUpdates: true
             };
         }
         return CodePush.DefaultSyncOptions;

@@ -25,6 +25,11 @@ import SyncStatus = require("./syncStatus");
  */
 class CodePush implements CodePushCordovaPlugin {
     /**
+     * The default options for the sync command.
+     */
+    private static DefaultSyncOptions: SyncOptions;
+    
+    /**
       * Notifies the plugin that the update operation succeeded and that the application is ready.
       * Calling this function is required if a rollbackTimeout parameter is used for your LocalPackage.apply() call.
       * If apply() is used without a rollbackTimeout, calling this function is a noop.
@@ -169,7 +174,7 @@ class CodePush implements CodePushCordovaPlugin {
         };
 
         var onUpdate = (remotePackage: RemotePackage) => {
-            if (!remotePackage) {
+            if (!remotePackage || (remotePackage.failedApply && syncOptions.ignoreFailedUpdates)) {
                 syncCallback && syncCallback(SyncStatus.UP_TO_DATE);
             } else {
                 if (remotePackage.isMandatory && syncOptions.mandatoryUpdateMessage) {
@@ -202,8 +207,6 @@ class CodePush implements CodePushCordovaPlugin {
         window.codePush.checkForUpdate(onUpdate, onError);
     }
 
-    private static DefaultSyncOptions: SyncOptions;
-
     /**
      * Returns the default options for the CodePush sync operation.
      * If the options are not defined yet, the static DefaultSyncOptions member will be instantiated.
@@ -217,7 +220,8 @@ class CodePush implements CodePushCordovaPlugin {
                 optionalUpdateMessage: "An update is available. Would you like to install it?",
                 optionalUpdateConfirmButtonLabel: "Install",
                 optionalUpdateCancelButtonLabel: "Cancel",
-                rollbackTimeout: 0
+                rollbackTimeout: 0,
+                ignoreFailedUpdates: true
             };
         }
 
