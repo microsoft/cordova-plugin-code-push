@@ -269,7 +269,7 @@ window.codePush.checkForUpdate(onUpdateCheck, onError);
 
 var app = {
     onDeviceReady: function () {
-        // If this call is not made in 10s after the updated versio of the application is loaded,
+        // If this call is not made in 10s after the updated version of the application is loaded,
         // the application will be reverted to the previous version
         window.codePush.notifyApplicationReady();
         // ...
