@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
-    <widget id="io.cordova.hellocodepush" version="1.0.1-beta" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
-        <name>HelloCodePush</name>
+    <widget id="io.cordova.hellocodepush.advanced" version="1.0.1-beta" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+        <name>CodePushAdvanced</name>
         <description>
             A sample Apache Cordova application that uses the CodePush service.
         </description>
