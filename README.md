@@ -36,7 +36,7 @@ The JavaScript code in this plugin is compiled from TypeScript. Please see [this
 ## Objects
 - __[LocalPackage](#localpackage)__: Contains information about a locally installed package.
 - __[RemotePackage](#remotepackage)__: Contains information about an update package available for download.
-- __[SyncStatus](#syncStatus)__: Defines the possible result statuses of the [sync](#codepushsync) operation.
+- __[SyncStatus](#syncstatus)__: Defines the possible result statuses of the [sync](#codepushsync) operation.
 
 ## Getting started
 - Add the plugin to your application.
