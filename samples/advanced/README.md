@@ -4,4 +4,4 @@ This is a sample application demonstrating a more advanced way you could integra
 
 When the application loads, on the `deviceready` event, we poll the CodePush server for an update. If an update is available, we prompt the user to install it. If the user approves it, the update is installed and the application is reloaded.
 
-For more information on how to get started see our [Getting Started](https://github.com/Microsoft/cordova-plugin-code-push#getting-started) section.
+For more information on how to get started see our [Getting Started](/README.md#getting-started) section.
