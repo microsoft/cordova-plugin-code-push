@@ -281,7 +281,7 @@ interface SyncOptions {
     mandatoryContinueButtonLabel?: string;
 
     /**
-     * Flag indicating if the update description provided by the CodePush server should be displayed
+     * Flag indicating if the update description provided by the CodePush server should be displayed in the dialog box appended to the update message.
      */
     appendReleaseDescription?: boolean;
 
@@ -289,8 +289,6 @@ interface SyncOptions {
      * Optional prefix to add to the release description.
      */
     descriptionPrefix?: string;
-
-
 }
 
 /**

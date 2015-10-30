@@ -81,7 +81,7 @@ var CodePush = (function () {
             });
         }
         catch (e) {
-            CodePushUtil.invokeErrorCallback(new Error("An error ocurred while querying for updates." + CodePushUtil.getErrorMessage(e)), queryError);
+            CodePushUtil.invokeErrorCallback(new Error("An error occurred while querying for updates." + CodePushUtil.getErrorMessage(e)), queryError);
         }
     };
     CodePush.prototype.sync = function (syncCallback, syncOptions) {
@@ -105,7 +105,7 @@ var CodePush = (function () {
         }
         window.codePush.notifyApplicationReady();
         var onError = function (error) {
-            CodePushUtil.logError("An error ocurred during sync.", error);
+            CodePushUtil.logError("An error occurred during sync.", error);
             syncCallback && syncCallback(SyncStatus.ERROR);
         };
         var onApplySuccess = function () {
