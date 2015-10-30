@@ -537,30 +537,12 @@ describe("window.codePush", function() {
             mockResponse = { updateInfo: getMockResponse(true) };
         
             /* create an update */
-            setupUpdateProject(UpdateNotifyApplicationReady, "Update 1 (good update)")
-                .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
-                .then<void>((updatePath: string) => {
-                    var deferred = Q.defer<void>();
-                    mockUpdatePackagePath = updatePath;
-                    testMessageCallback = verifyMessages([new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_APPLY_SUCCESS]), su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS, su.TestMessage.APPLICATION_NOT_REVERTED], deferred);
-                    console.log("Running project...");
-                    projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
-                    return deferred.promise;
-                })
-                .done(done, done);
-        });
-
-        it("sync should call notifyApplicationReady()", function(done) {
-
-            mockResponse = { updateInfo: getMockResponse(false) };
-        
-            /* create an update */
             setupUpdateProject(UpdateSync, "Update 1 (good update)")
                 .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
                 .then<void>((updatePath: string) => {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
-                    testMessageCallback = verifyMessages([new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_APPLY_SUCCESS]), su.TestMessage.APPLICATION_NOT_REVERTED], deferred);
+                    testMessageCallback = verifyMessages([new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_APPLY_SUCCESS]), su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.APPLICATION_NOT_REVERTED], deferred);
                     console.log("Running project...");
                     projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
                     return deferred.promise;

@@ -20,7 +20,7 @@ enum SyncStatus {
     /**
      * An optional update is available, but the user declined to install it. The update was not downloaded.
      */
-    USER_DECLINED,
+    UPDATE_IGNORED,
     
     /**
      * An error happened during the sync operation. This might be an error while communicating with the server, downloading or unziping the update.

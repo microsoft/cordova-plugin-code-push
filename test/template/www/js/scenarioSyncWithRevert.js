@@ -21,8 +21,7 @@ var app = {
             {
                 mandatoryUpdateMessage: undefined,
                 optionalUpdateMessage: undefined,
-                rollbackTimeout: 3000,
-                ignoreFailedUpdates: true
+                rollbackTimeout: 3000
             });
     },
     sendTestMessage: function (message, args) {

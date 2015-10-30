@@ -89,13 +89,19 @@ var CodePush = (function () {
             syncOptions = this.getDefaultSyncOptions();
         }
         if (syncOptions.mandatoryUpdateMessage) {
-            syncOptions.mandatoryUpdateContinueButtonLabel = syncOptions.mandatoryUpdateContinueButtonLabel || this.getDefaultSyncOptions().mandatoryUpdateContinueButtonLabel;
-            syncOptions.dialogTitle = syncOptions.dialogTitle || this.getDefaultSyncOptions().dialogTitle;
+            syncOptions.mandatoryContinueButtonLabel = syncOptions.mandatoryContinueButtonLabel || this.getDefaultSyncOptions().mandatoryContinueButtonLabel;
+            syncOptions.updateTitle = syncOptions.updateTitle || this.getDefaultSyncOptions().updateTitle;
         }
         if (syncOptions.optionalUpdateMessage) {
-            syncOptions.optionalUpdateConfirmButtonLabel = syncOptions.optionalUpdateConfirmButtonLabel || this.getDefaultSyncOptions().optionalUpdateConfirmButtonLabel;
-            syncOptions.optionalUpdateCancelButtonLabel = syncOptions.optionalUpdateCancelButtonLabel || this.getDefaultSyncOptions().optionalUpdateCancelButtonLabel;
-            syncOptions.dialogTitle = syncOptions.dialogTitle || this.getDefaultSyncOptions().dialogTitle;
+            syncOptions.optionalInstallButtonLabel = syncOptions.optionalInstallButtonLabel || this.getDefaultSyncOptions().optionalInstallButtonLabel;
+            syncOptions.optionalIgnoreButtonLabel = syncOptions.optionalIgnoreButtonLabel || this.getDefaultSyncOptions().optionalIgnoreButtonLabel;
+            syncOptions.updateTitle = syncOptions.updateTitle || this.getDefaultSyncOptions().updateTitle;
+        }
+        if (typeof syncOptions.ignoreFailedUpdates !== typeof true) {
+            syncOptions.ignoreFailedUpdates = true;
+        }
+        if (syncOptions.appendReleaseDescription && !syncOptions.descriptionPrefix) {
+            syncOptions.descriptionPrefix = this.getDefaultSyncOptions().descriptionPrefix;
         }
         window.codePush.notifyApplicationReady();
         var onError = function (error) {
@@ -117,9 +123,10 @@ var CodePush = (function () {
             }
             else {
                 if (remotePackage.isMandatory && syncOptions.mandatoryUpdateMessage) {
-                    navigator.notification.alert(syncOptions.mandatoryUpdateMessage, function () { downloadAndInstallUpdate(remotePackage); }, syncOptions.dialogTitle, syncOptions.mandatoryUpdateContinueButtonLabel);
+                    var message = syncOptions.appendReleaseDescription ? syncOptions.mandatoryUpdateMessage + syncOptions.descriptionPrefix + remotePackage.description : syncOptions.mandatoryUpdateMessage;
+                    navigator.notification.alert(message, function () { downloadAndInstallUpdate(remotePackage); }, syncOptions.updateTitle, syncOptions.mandatoryContinueButtonLabel);
                 }
-                else if (!remotePackage.isMandatory && syncOptions && syncOptions.optionalUpdateMessage) {
+                else if (!remotePackage.isMandatory && syncOptions.optionalUpdateMessage) {
                     var optionalUpdateCallback = function (buttonIndex) {
                         switch (buttonIndex) {
                             case 1:
@@ -127,11 +134,12 @@ var CodePush = (function () {
                                 break;
                             case 2:
                             default:
-                                syncCallback && syncCallback(SyncStatus.USER_DECLINED);
+                                syncCallback && syncCallback(SyncStatus.UPDATE_IGNORED);
                                 break;
                         }
                     };
-                    navigator.notification.confirm(syncOptions.optionalUpdateMessage, optionalUpdateCallback, syncOptions.dialogTitle, [syncOptions.optionalUpdateConfirmButtonLabel, syncOptions.optionalUpdateCancelButtonLabel]);
+                    var message = syncOptions.appendReleaseDescription ? syncOptions.optionalUpdateMessage + syncOptions.descriptionPrefix + remotePackage.description : syncOptions.optionalUpdateMessage;
+                    navigator.notification.confirm(message, optionalUpdateCallback, syncOptions.updateTitle, [syncOptions.optionalInstallButtonLabel, syncOptions.optionalIgnoreButtonLabel]);
                 }
                 else {
                     downloadAndInstallUpdate(remotePackage);
@@ -143,14 +151,16 @@ var CodePush = (function () {
     CodePush.prototype.getDefaultSyncOptions = function () {
         if (!CodePush.DefaultSyncOptions) {
             CodePush.DefaultSyncOptions = {
-                dialogTitle: "Update",
+                updateTitle: "Update",
                 mandatoryUpdateMessage: "You will be updated to the latest version.",
-                mandatoryUpdateContinueButtonLabel: "Continue",
+                mandatoryContinueButtonLabel: "Continue",
                 optionalUpdateMessage: "An update is available. Would you like to install it?",
-                optionalUpdateConfirmButtonLabel: "Install",
-                optionalUpdateCancelButtonLabel: "Cancel",
+                optionalInstallButtonLabel: "Install",
+                optionalIgnoreButtonLabel: "Ignore",
                 rollbackTimeout: 0,
-                ignoreFailedUpdates: true
+                ignoreFailedUpdates: true,
+                appendReleaseDescription: false,
+                descriptionPrefix: " Description: "
             };
         }
         return CodePush.DefaultSyncOptions;

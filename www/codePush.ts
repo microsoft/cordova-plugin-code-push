@@ -126,7 +126,7 @@ class CodePush implements CodePushCordovaPlugin {
      *         - If the update is mandatory and the alertMessage is set in options, the user will be informed that the application will be updated to the latest version.
      *           The update package will then be downloaded and applied. 
      *         - If the update is not mandatory and the confirmMessage is set in options, the user will be asked if they want to update to the latest version.
-     *           If they decline, the syncCallback will be invoked with SyncStatus.USER_DECLINED. 
+     *           If they decline, the syncCallback will be invoked with SyncStatus.UPDATE_IGNORED. 
      *         - Otherwise, the update package will be downloaded and applied with no user interaction.
      * - If no update is available on the server, the syncCallback will be invoked with the SyncStatus.UP_TO_DATE.
      * - If an error ocurrs during checking for update, downloading or applying it, the syncCallback will be invoked with the SyncStatus.ERROR.
@@ -145,13 +145,20 @@ class CodePush implements CodePushCordovaPlugin {
 
         /* Some options were specified */
         if (syncOptions.mandatoryUpdateMessage) {
-            syncOptions.mandatoryUpdateContinueButtonLabel = syncOptions.mandatoryUpdateContinueButtonLabel || this.getDefaultSyncOptions().mandatoryUpdateContinueButtonLabel;
-            syncOptions.dialogTitle = syncOptions.dialogTitle || this.getDefaultSyncOptions().dialogTitle;
+            syncOptions.mandatoryContinueButtonLabel = syncOptions.mandatoryContinueButtonLabel || this.getDefaultSyncOptions().mandatoryContinueButtonLabel;
+            syncOptions.updateTitle = syncOptions.updateTitle || this.getDefaultSyncOptions().updateTitle;
         }
         if (syncOptions.optionalUpdateMessage) {
-            syncOptions.optionalUpdateConfirmButtonLabel = syncOptions.optionalUpdateConfirmButtonLabel || this.getDefaultSyncOptions().optionalUpdateConfirmButtonLabel;
-            syncOptions.optionalUpdateCancelButtonLabel = syncOptions.optionalUpdateCancelButtonLabel || this.getDefaultSyncOptions().optionalUpdateCancelButtonLabel;
-            syncOptions.dialogTitle = syncOptions.dialogTitle || this.getDefaultSyncOptions().dialogTitle;
+            syncOptions.optionalInstallButtonLabel = syncOptions.optionalInstallButtonLabel || this.getDefaultSyncOptions().optionalInstallButtonLabel;
+            syncOptions.optionalIgnoreButtonLabel = syncOptions.optionalIgnoreButtonLabel || this.getDefaultSyncOptions().optionalIgnoreButtonLabel;
+            syncOptions.updateTitle = syncOptions.updateTitle || this.getDefaultSyncOptions().updateTitle;
+        }
+        if (typeof syncOptions.ignoreFailedUpdates !== typeof true) {
+            /* Ignoring failed updates by default. */
+            syncOptions.ignoreFailedUpdates = true;
+        }
+        if (syncOptions.appendReleaseDescription && !syncOptions.descriptionPrefix) {
+            syncOptions.descriptionPrefix = this.getDefaultSyncOptions().descriptionPrefix;
         }
 
         window.codePush.notifyApplicationReady();
@@ -179,8 +186,9 @@ class CodePush implements CodePushCordovaPlugin {
             } else {
                 if (remotePackage.isMandatory && syncOptions.mandatoryUpdateMessage) {
                     /* Alert user */
-                    navigator.notification.alert(syncOptions.mandatoryUpdateMessage, () => { downloadAndInstallUpdate(remotePackage); }, syncOptions.dialogTitle, syncOptions.mandatoryUpdateContinueButtonLabel);
-                } else if (!remotePackage.isMandatory && syncOptions && syncOptions.optionalUpdateMessage) {
+                    var message = syncOptions.appendReleaseDescription ? syncOptions.mandatoryUpdateMessage + syncOptions.descriptionPrefix + remotePackage.description : syncOptions.mandatoryUpdateMessage;
+                    navigator.notification.alert(message, () => { downloadAndInstallUpdate(remotePackage); }, syncOptions.updateTitle, syncOptions.mandatoryContinueButtonLabel);
+                } else if (!remotePackage.isMandatory && syncOptions.optionalUpdateMessage) {
                     /* Confirm update with user */
                     var optionalUpdateCallback = (buttonIndex: number) => {
                         switch (buttonIndex) {
@@ -191,12 +199,13 @@ class CodePush implements CodePushCordovaPlugin {
                             case 2:
                             default:
                                 /* Cancel */
-                                syncCallback && syncCallback(SyncStatus.USER_DECLINED);
+                                syncCallback && syncCallback(SyncStatus.UPDATE_IGNORED);
                                 break;
                         }
                     };
 
-                    navigator.notification.confirm(syncOptions.optionalUpdateMessage, optionalUpdateCallback, syncOptions.dialogTitle, [syncOptions.optionalUpdateConfirmButtonLabel, syncOptions.optionalUpdateCancelButtonLabel]);
+                    var message = syncOptions.appendReleaseDescription ? syncOptions.optionalUpdateMessage + syncOptions.descriptionPrefix + remotePackage.description : syncOptions.optionalUpdateMessage;
+                    navigator.notification.confirm(message, optionalUpdateCallback, syncOptions.updateTitle, [syncOptions.optionalInstallButtonLabel, syncOptions.optionalIgnoreButtonLabel]);
                 } else {
                     /* No user interaction */
                     downloadAndInstallUpdate(remotePackage);
@@ -214,14 +223,16 @@ class CodePush implements CodePushCordovaPlugin {
     private getDefaultSyncOptions(): SyncOptions {
         if (!CodePush.DefaultSyncOptions) {
             CodePush.DefaultSyncOptions = {
-                dialogTitle: "Update",
+                updateTitle: "Update",
                 mandatoryUpdateMessage: "You will be updated to the latest version.",
-                mandatoryUpdateContinueButtonLabel: "Continue",
+                mandatoryContinueButtonLabel: "Continue",
                 optionalUpdateMessage: "An update is available. Would you like to install it?",
-                optionalUpdateConfirmButtonLabel: "Install",
-                optionalUpdateCancelButtonLabel: "Cancel",
+                optionalInstallButtonLabel: "Install",
+                optionalIgnoreButtonLabel: "Ignore",
                 rollbackTimeout: 0,
-                ignoreFailedUpdates: true
+                ignoreFailedUpdates: true,
+                appendReleaseDescription: false,
+                descriptionPrefix: " Description: "
             };
         }
 

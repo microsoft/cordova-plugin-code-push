@@ -35,7 +35,7 @@ export class TestMessage {
 
     public static SYNC_UP_TO_DATE = 0;
     public static SYNC_APPLY_SUCCESS = 1;
-    public static SYNC_USER_DECLINED = 2;
+    public static SYNC_UPDATE_IGNORED = 2;
     public static SYNC_ERROR = 3;
 }
 

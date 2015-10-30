@@ -21,7 +21,7 @@ A Cordova application's assets (HTML, JavaScript, CSS files and other resources)
 
 CodePush is here to simplify this process by allowing you to instantly update your application's assets without having to submit a new update to the store. We do this by packaging the application assets in a zip archive and sending it to the CodePush server. In the application, we install and persist the update. Then, since these are all web assets, the application will just reload from the updated package location. We store the update packages in the internal storage of the device.
 
-For an easy way to get started, please see our [sample application](/sample) and our [getting started guide](#getting-started).
+For an easy way to get started, please see our [sample applications](/samples) and our [getting started guide](#getting-started).
 
 ## Compiling sources & contributing
 
@@ -31,10 +31,12 @@ The JavaScript code in this plugin is compiled from TypeScript. Please see [this
 - __[checkForUpdate](#codepushcheckforupdate)__: Checks the server for update packages.
 - __[notifyApplicationReady](#codepushnotifyapplicationready)__: Notifies the plugin that the update operation succeeded.
 - __[getCurrentPackage](#codepushgetcurrentpackage)__: Gets information about the currently applied package.
+- __[sync](#codepushsync)__: Convenience function for installing updates in one call.
 
 ## Objects
 - __[LocalPackage](#localpackage)__: Contains information about a locally installed package.
 - __[RemotePackage](#remotepackage)__: Contains information about an update package available for download.
+- __[SyncStatus](#syncStatus)__: Defines the possible result statuses of the [sync](#codepushsync) operation.
 
 ## Getting started
 - Add the plugin to your application.
@@ -57,7 +59,7 @@ The JavaScript code in this plugin is compiled from TypeScript. Please see [this
   ```xml
   <meta http-equiv="Content-Security-Policy" content="default-src https://codepush.azurewebsites.net/ 'self' ... ">
    ```
-- You are now ready to use the plugin in the application code. See the sample app for an example and the methods description for more details.
+- You are now ready to use the plugin in the application code. See the [sample applications](/samples) for a examples and the methods description for more details.
 
 ## Create an application update package
 You can create an update by simply zipping and deploying your platform's www folder. The [CodePush CLI](https://github.com/Microsoft/code-push/tree/master/cli) has a ```deploy``` command for this.
@@ -167,6 +169,14 @@ Contains details about an update package that is available for download.
   ```
 - __abortDownload(abortSuccess, abortError)__: Aborts the current download session, if any.
 
+## SyncStatus
+Defines the possible result statuses of the [sync](#codepushsync) operation.
+### Properties
+- __UP_TO_DATE__: The application is up to date. (number)
+- __APPLY_SUCCESS__: An update is available, it has been downloaded, unzipped and copied to the deployment folder. After the completion of the callback invoked with SyncStatus.APPLY_SUCCESS, the application will be reloaded with the updated code and resources.
+- __UPDATE_IGNORED__: An optional update is available, but the user declined to install it. The update was not downloaded.
+- __ERROR__: An error happened during the sync operation. This might be an error while communicating with the server, downloading or unziping the update. The console logs should contain more information about what happened. No update has been applied in this case. 
+
 ## codePush.checkForUpdate
 Queries the CodePush server for updates.
 ```javascript
@@ -274,5 +284,48 @@ var app = {
         window.codePush.notifyApplicationReady();
         // ...
     }
+}
+```
+
+## codePush.sync
+```javascript
+codePush.sync(syncCallback, syncOptions);
+```
+Convenience method for installing updates in one method call.
+This method is provided for simplicity, and its behavior can be replicated by using window.codePush.checkForUpdate(), RemotePackage's download() and LocalPackage's apply() methods.
+The algorithm of this method is the following:
+      - Checks for an update on the CodePush server.
+      - If an update is available
+              - If the update is mandatory and the alertMessage is set in options, the user will be informed that the application will be updated to the latest version.
+                The update package will then be downloaded and applied. 
+              - If the update is not mandatory and the confirmMessage is set in options, the user will be asked if they want to update to the latest version.
+                If they decline, the syncCallback will be invoked with SyncStatus.UPDATE_IGNORED. 
+              - Otherwise, the update package will be downloaded and applied with no user interaction.
+      - If no update is available on the server, the syncCallback will be invoked with the SyncStatus.UP_TO_DATE.
+      - If an error ocurrs during checking for update, downloading or applying it, the syncCallback will be invoked with the SyncStatus.ERROR.
+
+- __syncCallback__: Optional callback to be called with the status of the sync operation. The callback will be called only once, and the possible statuses are defined by the SyncStatus enum.
+- __syncOptions__: Optional SyncOptions parameter configuring the behavior of the sync operation.
+
+### Example
+```javascript
+window.codePush.sync(function (syncStatus) {
+    switch (syncStatus) {
+        case SyncStatus.APPLY_SUCCESS:
+            console.log("The update was applied successfully. This is the last callback before the application is reloaded with the updated content.");
+            /* Don't continue app initialization, the application will refresh after this return. */
+            return;
+        case SyncStatus.UP_TO_DATE:
+            app.displayMessage("The application is up to date.");
+            break;
+        case SyncStatus.UPDATE_IGNORED:
+            app.displayMessage("The user decided not to install the optional update.");
+            break;
+        case SyncStatus.ERROR:
+            app.displayMessage("An error ocurred while checking for updates");
+            break;
+    }
+    
+    // continue application initialization
 }
 ```

@@ -192,7 +192,7 @@ interface CodePushCordovaPlugin {
      *         - If the update is mandatory and the alertMessage is set in options, the user will be informed that the application will be updated to the latest version.
      *           The update package will then be downloaded and applied. 
      *         - If the update is not mandatory and the confirmMessage is set in options, the user will be asked if they want to update to the latest version.
-     *           If they decline, the syncCallback will be invoked with SyncStatus.USER_DECLINED. 
+     *           If they decline, the syncCallback will be invoked with SyncStatus.UPDATE_IGNORED. 
      *         - Otherwise, the update package will be downloaded and applied with no user interaction.
      * - If no update is available on the server, or if a previously rolled back update is available and the ignoreFailedUpdates is set to true, the syncCallback will be invoked with the SyncStatus.UP_TO_DATE.
      * - If an error ocurrs during checking for update, downloading or applying it, the syncCallback will be invoked with the SyncStatus.ERROR.
@@ -223,7 +223,7 @@ declare enum SyncStatus {
     /**
      * An optional update is available, but the user declined to install it. The update was not downloaded.
      */
-    USER_DECLINED,
+    UPDATE_IGNORED,
     
     /**
      * An error happened during the sync operation. This might be an error while communicating with the server, downloading or unziping the update.
@@ -263,22 +263,34 @@ interface SyncOptions {
      * The title of the dialog box used for interacting with the user in case of a mandatory or optional update.
      * This title will only be used if at least one of mandatoryUpdateMessage or optionalUpdateMessage options are set.
      */
-    dialogTitle?: string;
+    updateTitle?: string;
 
     /**
      * The label of the confirmation button in case of an optional update.
      */
-    optionalUpdateConfirmButtonLabel?: string;
+    optionalInstallButtonLabel?: string;
     
     /**
      * The label of the cancel button in case of an optional update.
      */
-    optionalUpdateCancelButtonLabel?: string;
+    optionalIgnoreButtonLabel?: string;
     
     /**
      * The label of the continue button in case of a mandatory update.
      */
-    mandatoryUpdateContinueButtonLabel?: string
+    mandatoryContinueButtonLabel?: string;
+
+    /**
+     * Flag indicating if the update description provided by the CodePush server should be displayed
+     */
+    appendReleaseDescription?: boolean;
+
+    /**
+     * Optional prefix to add to the release description.
+     */
+    descriptionPrefix?: string;
+
+
 }
 
 /**

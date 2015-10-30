@@ -13,6 +13,7 @@ var app = {
     receivedDeviceReady: function () {
         document.getElementById("deviceready").innerText = "Device is ready (scenario - update sync)";
         console.log('Received Event: deviceready');
+        app.sendTestMessage("DEVICE_READY_AFTER_UPDATE");
         /* invoke sync with UI options such that the update will not be installed */
         window.codePush.sync(function (status) {
             app.sendTestMessage("SYNC_STATUS", [status]);

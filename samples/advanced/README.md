@@ -1,6 +1,6 @@
-# Cordova CodePush Sample App 
+# Cordova CodePush Sample App - Advanced
 
-This is a sample application demonstrating one way you could integrate CodePush in your Cordova application. All the CodePush specific code is found in [index.js](/sample/www/js/index.js). The CodePush configuration is found in [config.xml](/sample/config.xml).
+This is a sample application demonstrating a more advanced way you could integrate CodePush in your Cordova application. All the CodePush specific code is found in [index.js](/sample/www/js/index.js). The CodePush configuration is found in [config.xml](/sample/config.xml).
 
 When the application loads, on the `deviceready` event, we poll the CodePush server for an update. If an update is available, we prompt the user to install it. If the user approves it, the update is installed and the application is reloaded.
 
