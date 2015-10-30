@@ -112,7 +112,7 @@ class CodePush implements CodePushCordovaPlugin {
                 }
             });
         } catch (e) {
-            CodePushUtil.invokeErrorCallback(new Error("An error ocurred while querying for updates." + CodePushUtil.getErrorMessage(e)), queryError);
+            CodePushUtil.invokeErrorCallback(new Error("An error occurred while querying for updates." + CodePushUtil.getErrorMessage(e)), queryError);
         }
     }
     
@@ -129,7 +129,7 @@ class CodePush implements CodePushCordovaPlugin {
      *           If they decline, the syncCallback will be invoked with SyncStatus.UPDATE_IGNORED. 
      *         - Otherwise, the update package will be downloaded and applied with no user interaction.
      * - If no update is available on the server, the syncCallback will be invoked with the SyncStatus.UP_TO_DATE.
-     * - If an error ocurrs during checking for update, downloading or applying it, the syncCallback will be invoked with the SyncStatus.ERROR.
+     * - If an error occurs during checking for update, downloading or applying it, the syncCallback will be invoked with the SyncStatus.ERROR.
      * 
      * @param syncCallback Optional callback to be called with the status of the sync operation.
      *                     The callback will be called only once, and the possible statuses are defined by the SyncStatus enum. 
@@ -164,7 +164,7 @@ class CodePush implements CodePushCordovaPlugin {
         window.codePush.notifyApplicationReady();
 
         var onError = (error: Error) => {
-            CodePushUtil.logError("An error ocurred during sync.", error);
+            CodePushUtil.logError("An error occurred during sync.", error);
             syncCallback && syncCallback(SyncStatus.ERROR);
         };
 
