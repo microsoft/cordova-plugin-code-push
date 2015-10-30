@@ -307,16 +307,16 @@ The algorithm of this method is the following:
 
 ### SyncOptions
 Interface defining several options for customizing the [sync](#codepushsync) operation behavior. Options span from disabling the user interaction or modifying it to enabling rollback in case of a bad update.
-- __mandatoryUpdateMessage__: 
-- ____: 
-- ____: 
-- ____: 
-- ____: 
-- ____: 
-- ____: 
-- ____: 
-- ____: 
-- ____: 
+- __mandatoryUpdateMessage__:  If a mandatory update is available and this option is set, the message will be displayed to the user in an alert dialog before downloading and installing the update. The user will not be able to cancel the operation, since the update is mandatory. (string)
+- __optionalUpdateMessage__: If an optional update is available and this option is set, the message will be displayed to the user in a confirmation dialog. If the user confirms the update, it will be downloaded and installed. Otherwise, the update update is not downloaded. (string)
+- __updateTitle__: The title of the dialog box used for interacting with the user in case of a mandatory or optional update. This title will only be used if at least one of mandatoryUpdateMessage or optionalUpdateMessage options are set. (string)
+- __optionalInstallButtonLabel__: The label of the confirmation button in case of an optional update. (string)
+- __optionalIgnoreButtonLabel__: The label of the cancel button in case of an optional update. (string)
+- __mandatoryContinueButtonLabel__: The label of the continue button in case of a mandatory update. (string)
+- __appendReleaseDescription__: Flag indicating if the update description provided by the CodePush server should be displayed in the dialog box appended to the update message. Defaults to false. (boolean)
+- __descriptionPrefix__: Optional prefix to add to the release description. (string)
+- __rollbackTimeout__: Optional time interval, in milliseconds, to wait for a [notifyApplicationReady()](#codepushnotifyapplicationready) call before marking the apply as failed and reverting to the previous version. Sync calls [notifyApplicationReady()](#codepushnotifyapplicationready) internally, so if you use sync() in your updated version of the application, there is no need to call [notifyApplicationReady()](#codepushnotifyapplicationready) again. By default, this behavior is disabled - the parameter defaults to 0. (number)
+- __ignoreFailedUpdates__: Optional boolean flag. If set, updates available on the server for which and update was attempted and rolled back will be ignored. Defaults to true. (boolean)
 
 ### Example
 ```javascript
