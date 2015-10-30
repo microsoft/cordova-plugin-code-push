@@ -294,15 +294,13 @@ codePush.sync(syncCallback, syncOptions);
 Convenience method for installing updates in one method call.
 This method is provided for simplicity, and its behavior can be replicated by using window.codePush.checkForUpdate(), RemotePackage's download() and LocalPackage's apply() methods.
 The algorithm of this method is the following:
-      - Checks for an update on the CodePush server.
-      - If an update is available
-              - If the update is mandatory and the alertMessage is set in options, the user will be informed that the application will be updated to the latest version.
-                The update package will then be downloaded and applied. 
-              - If the update is not mandatory and the confirmMessage is set in options, the user will be asked if they want to update to the latest version.
-                If they decline, the syncCallback will be invoked with SyncStatus.UPDATE_IGNORED. 
-              - Otherwise, the update package will be downloaded and applied with no user interaction.
-      - If no update is available on the server, the syncCallback will be invoked with the SyncStatus.UP_TO_DATE.
-      - If an error ocurrs during checking for update, downloading or applying it, the syncCallback will be invoked with the SyncStatus.ERROR.
+- Check for an update on the CodePush server.
+  - If an update is available
+    - If the update is mandatory and the alertMessage is set in options, the user will be informed that the application will be updated to the latest version. The update package will then be downloaded and applied. 
+    - If the update is not mandatory and the confirmMessage is set in options, the user will be asked if they want to update to the latest version. If they decline, the syncCallback will be invoked with SyncStatus.UPDATE_IGNORED status.
+    - Otherwise, the update package will be downloaded and applied with no user interaction.
+- If no update is available on the server, the syncCallback will be invoked with the SyncStatus.UP_TO_DATE status.
+- If an error ocurrs during checking for update, downloading or applying it, the syncCallback will be invoked with the SyncStatus.ERROR status.
 
 - __syncCallback__: Optional callback to be called with the status of the sync operation. The callback will be called only once, and the possible statuses are defined by the SyncStatus enum.
 - __syncOptions__: Optional SyncOptions parameter configuring the behavior of the sync operation.
