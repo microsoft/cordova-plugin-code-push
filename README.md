@@ -315,11 +315,14 @@ Interface defining several options for customizing the [sync](#codepushsync) ope
 - __mandatoryContinueButtonLabel__: The label of the continue button in case of a mandatory update. (string)
 - __appendReleaseDescription__: Flag indicating if the update description provided by the CodePush server should be displayed in the dialog box appended to the update message. Defaults to false. (boolean)
 - __descriptionPrefix__: Optional prefix to add to the release description. (string)
-- __rollbackTimeout__: Optional time interval, in milliseconds, to wait for a [notifyApplicationReady()](#codepushnotifyapplicationready) call before marking the apply as failed and reverting to the previous version. Sync calls [notifyApplicationReady()](#codepushnotifyapplicationready) internally, so if you use sync() in your updated version of the application, there is no need to call [notifyApplicationReady()](#codepushnotifyapplicationready) again. By default, this behavior is disabled - the parameter defaults to 0. (number)
+- __rollbackTimeout__: Optional time interval, in milliseconds, to wait for a [notifyApplicationReady()](#codepushnotifyapplicationready) call before marking the apply as failed and reverting to the previous version. Sync calls [notifyApplicationReady()](#codepushnotifyapplicationready) internally, so if you use sync() in your updated version of the application, there is no need to call [notifyApplicationReady()](#codepushnotifyapplicationready) again. By default, the rollback functionality is disabled - the parameter defaults to 0. (number)
 - __ignoreFailedUpdates__: Optional boolean flag. If set, updates available on the server for which and update was attempted and rolled back will be ignored. Defaults to true. (boolean)
 
 ### Example
 ```javascript
+
+// Using default sync options: user interaction is enabled
+
 window.codePush.sync(function (syncStatus) {
     switch (syncStatus) {
         case SyncStatus.APPLY_SUCCESS:
@@ -338,5 +341,42 @@ window.codePush.sync(function (syncStatus) {
     }
     
     // continue application initialization
-}
+    
+});
+
+//------------------------------------------------
+
+// Using custom sync options
+
+var syncOptions = {
+    mandatoryUpdateMessage: "You will be updated to the latest version of the application.",
+    mandatoryContinueButtonLabel: "Continue",
+    optionalUpdateMessage: "There is an update available. Do you want to install it?",
+    optionalIgnoreButtonLabel: "Maybe later",
+    optionalInstallButtonLabel: "Yes",
+    appendReleaseDescription: true,
+    descriptionPrefix: "Release notes: "
+};
+
+window.codePush.sync(function (syncStatus) {
+    switch (syncStatus) {
+        case SyncStatus.APPLY_SUCCESS:
+            console.log("The update was applied successfully. This is the last callback before the application is reloaded with the updated content.");
+            /* Don't continue app initialization, the application will refresh after this return. */
+            return;
+        case SyncStatus.UP_TO_DATE:
+            app.displayMessage("The application is up to date.");
+            break;
+        case SyncStatus.UPDATE_IGNORED:
+            app.displayMessage("The user decided not to install the optional update.");
+            break;
+        case SyncStatus.ERROR:
+            app.displayMessage("An error ocurred while checking for updates");
+            break;
+    }
+    
+    // continue application initialization
+    
+}, syncOptions);
+
 ```
