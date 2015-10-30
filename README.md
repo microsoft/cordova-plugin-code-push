@@ -173,9 +173,9 @@ Contains details about an update package that is available for download.
 Defines the possible result statuses of the [sync](#codepushsync) operation.
 ### Properties
 - __UP_TO_DATE__: The application is up to date. (number)
-- __APPLY_SUCCESS__: An update is available, it has been downloaded, unzipped and copied to the deployment folder. After the completion of the callback invoked with SyncStatus.APPLY_SUCCESS, the application will be reloaded with the updated code and resources.
-- __UPDATE_IGNORED__: An optional update is available, but the user declined to install it. The update was not downloaded.
-- __ERROR__: An error happened during the sync operation. This might be an error while communicating with the server, downloading or unziping the update. The console logs should contain more information about what happened. No update has been applied in this case. 
+- __APPLY_SUCCESS__: An update is available, it has been downloaded, unzipped and copied to the deployment folder. After the completion of the callback invoked with SyncStatus.APPLY_SUCCESS, the application will be reloaded with the updated code and resources. (number)
+- __UPDATE_IGNORED__: An optional update is available, but the user declined to install it. The update was not downloaded. (number)
+- __ERROR__: An error happened during the sync operation. This might be an error while communicating with the server, downloading or unziping the update. The console logs should contain more information about what happened. No update has been applied in this case. (number)
 
 ## codePush.checkForUpdate
 Queries the CodePush server for updates.
@@ -304,6 +304,19 @@ The algorithm of this method is the following:
 
 - __syncCallback__: Optional callback to be called with the status of the sync operation. The callback will be called only once, and the possible statuses are defined by the SyncStatus enum.
 - __syncOptions__: Optional SyncOptions parameter configuring the behavior of the sync operation.
+
+### SyncOptions
+Interface defining several options for customizing the [sync](#codepushsync) operation behavior. Options span from disabling the user interaction or modifying it to enabling rollback in case of a bad update.
+- __mandatoryUpdateMessage__: 
+- ____: 
+- ____: 
+- ____: 
+- ____: 
+- ____: 
+- ____: 
+- ____: 
+- ____: 
+- ____: 
 
 ### Example
 ```javascript
