@@ -304,7 +304,7 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
 }
 
 - (BOOL)isFailedHash:(NSString*)packageHash {
-    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
     NSMutableArray* failedUpdates = [preferences objectForKey:FailedUpdatesKey];
     return (nil != failedUpdates && [failedUpdates containsObject:packageHash]);
 }
@@ -314,6 +314,10 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
     NSMutableArray* failedUpdates = [preferences objectForKey:FailedUpdatesKey];
     if (nil == failedUpdates) {
         failedUpdates = [[NSMutableArray alloc] init];
+    } else {
+        // The NSUserDefaults sytem always returns immutable
+        // objects, regardless if you stored something mutable.
+        failedUpdates = [failedUpdates mutableCopy];
     }
     
     [failedUpdates addObject:packageHash];
