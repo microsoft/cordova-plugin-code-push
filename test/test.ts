@@ -400,6 +400,16 @@ describe("window.codePush", function() {
                     projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
                     return deferred.promise;
                 })
+                .then<void>(() => {
+                    /* create a second failed update */
+                    console.log("Creating a second failed update.");
+                    var deferred = Q.defer<void>();
+                    mockResponse = { updateInfo: getMockResponse(true) };
+                    testMessageCallback = verifyMessages([su.TestMessage.APPLY_SUCCESS, su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.UPDATE_FAILED_PREVIOUSLY], deferred);
+                    console.log("Running project...");
+                    projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+                    return deferred.promise;
+                })
                 .done(done, done);
         });
 
