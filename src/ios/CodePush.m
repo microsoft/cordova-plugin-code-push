@@ -304,14 +304,14 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
 }
 
 - (BOOL)isFailedHash:(NSString*)packageHash {
-    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
     NSMutableArray* failedUpdates = [preferences objectForKey:FailedUpdatesKey];
     return (nil != failedUpdates && [failedUpdates containsObject:packageHash]);
 }
 
 - (void)saveFailedUpdate:(NSString *)packageHash {
     NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
-    NSMutableArray* failedUpdates = [preferences objectForKey:FailedUpdatesKey];
+    NSMutableArray* failedUpdates = [[preferences objectForKey:FailedUpdatesKey] mutableCopy];
     if (nil == failedUpdates) {
         failedUpdates = [[NSMutableArray alloc] init];
     }
