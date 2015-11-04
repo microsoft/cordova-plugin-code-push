@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
     <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-code-push" version="1.1.0-beta">
         <name>CodePush</name>
-        <description>This plugins allows you to push code updates to your apps, instantly, using the CodePush service</description>
+        <description>This plugin allows you to push code updates to your apps, instantly, using the CodePush service</description>
         <license>MIT</license>
         <keywords>cordova,code,push</keywords>
         <repo>https://github.com/Microsoft/cordova-plugin-code-push.git</repo>
