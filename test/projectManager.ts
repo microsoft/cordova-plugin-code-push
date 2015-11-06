@@ -118,6 +118,13 @@ export class ProjectManager {
     public static buildPlatform(projectFolder: string, targetPlatform: platform.IPlatform): Q.Promise<void> {
         return ProjectManager.execAndLogChildProcess("cordova build " + targetPlatform.getCordovaName(), { cwd: projectFolder });
     }
+    
+    /**
+     * Prepares a specific platform of a Cordova project. 
+     */
+    public static preparePlatform(projectFolder: string, targetPlatform: platform.IPlatform): Q.Promise<void> {
+        return ProjectManager.execAndLogChildProcess("cordova prepare " + targetPlatform.getCordovaName(), { cwd: projectFolder });
+    }
 
     /**
      * Runs a project to a given target / platform.
