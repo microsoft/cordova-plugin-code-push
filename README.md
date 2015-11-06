@@ -64,11 +64,13 @@ The JavaScript code in this plugin is compiled from TypeScript. Please see [this
 ## Create an application update package
 You can create an update by simply zipping and deploying your platform's www folder. The [CodePush CLI](https://github.com/Microsoft/code-push/tree/master/cli) has a ```deploy``` command for this.
 
-1. Build your application
+1. Prepare your application
 
   ```
-  cordova build
+  cordova prepare
   ```
+  We are not deploying binaries in updates, so `prepare` is enough for this step. The `cordova build` command works as well for this step, since it calls `cordova prepare` behind the scenes.
+  
 2. Deploy update using the [CodePush CLI](https://github.com/Microsoft/code-push/tree/master/cli)
 
   - For Android:

@@ -139,7 +139,7 @@ function setupUpdateProject(scenarioPath: string, version: string): Q.Promise<vo
         .then<void>(() => { return projectManager.addPlatform(updatesDirectory, targetPlatform); })
         .then<void>(() => { return projectManager.addPlugin(testRunDirectory, AcquisitionSDKPluginName); })
         .then<void>(() => { return projectManager.addPlugin(updatesDirectory, thisPluginPath); })
-        .then<void>(() => { return projectManager.buildPlatform(updatesDirectory, targetPlatform); });
+        .then<void>(() => { return projectManager.preparePlatform(updatesDirectory, targetPlatform); });
 };
 
 function verifyMessages(expectedMessages: (string | su.AppMessage)[], deferred: Q.Deferred<void>): (requestBody: any) => void {
