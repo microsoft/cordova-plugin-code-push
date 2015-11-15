@@ -39,6 +39,7 @@ public class CodePush extends CordovaPlugin {
     private CordovaWebView mainWebView;
     private boolean pluginDestroyed = false;
     private boolean didUpdate = false;
+    private boolean didStartApp = false;
     private static boolean ApplySucceeded = false;
     private static boolean ShouldClearHistoryOnLoad = false;
 
@@ -520,7 +521,11 @@ public class CodePush extends CordovaPlugin {
      */
     @Override
     public void onStart() {
-        handleAppStart();
+        if(! didStartApp){
+            /* Only call handle app start the first time this event happens. */
+            didStartApp = true;
+            handleAppStart();
+        }
     }
 
     /**
