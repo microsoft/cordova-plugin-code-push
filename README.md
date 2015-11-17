@@ -305,7 +305,7 @@ The algorithm of this method is the following:
 - If an error ocurrs during checking for update, downloading or applying it, the syncCallback will be invoked with the SyncStatus.ERROR status.
 
 - __syncCallback__: Optional callback to be called with the status of the sync operation. The callback will be called only once, and the possible statuses are defined by the SyncStatus enum.
-- __syncOptions__: Optional SyncOptions parameter configuring the behavior of the sync operation.
+- __syncOptions__: Optional SyncOptions parameter configuring the behavior of the sync operation. If this is not passed, then the default options will be used. If it is passed, any options not specified will *not* be set to their default values. As a result of this, passing this object and not specifying any options would result in some popup dialogs simply not showing up.
 
 ### SyncOptions
 Interface defining several options for customizing the [sync](#codepushsync) operation behavior. Options span from disabling the user interaction or modifying it to enabling rollback in case of a bad update.
