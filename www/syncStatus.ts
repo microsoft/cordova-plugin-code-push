@@ -13,9 +13,9 @@ enum SyncStatus {
     
     /**
      * An update is available, it has been downloaded, unzipped and copied to the deployment folder.
-     * After the completion of the callback invoked with SyncStatus.APPLY_SUCCESS, the application will be reloaded with the updated code and resources.
+     * After the completion of the callback invoked with SyncStatus.UPDATE_INSTALLED, the application will be reloaded with the updated code and resources.
      */
-    APPLY_SUCCESS,
+    UPDATE_INSTALLED,
     
     /**
      * An optional update is available, but the user declined to install it. The update was not downloaded.

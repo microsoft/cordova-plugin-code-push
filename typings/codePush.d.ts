@@ -56,8 +56,9 @@ interface IRemotePackage extends IPackage {
      * 
      * @param downloadSuccess Called with one parameter, the downloaded package information, once the download completed successfully.
      * @param downloadError Optional callback invoked in case of an error.
+     * @param downloadProgress Optional callback invoked during the download process. It is called several times with one DownloadProgress parameter.
      */
-    download(downloadSuccess: SuccessCallback<ILocalPackage>, downloadError?: ErrorCallback): void;
+    download(downloadSuccess: SuccessCallback<ILocalPackage>, downloadError?: ErrorCallback, downloadProgress?: SuccessCallback<DownloadProgress>): void;
     
     /**
      * Aborts the current download session, previously started with download().
@@ -216,9 +217,9 @@ declare enum SyncStatus {
     
     /**
      * An update is available, it has been downloaded, unzipped and copied to the deployment folder.
-     * After the completion of the callback invoked with SyncStatus.APPLY_SUCCESS, the application will be reloaded with the updated code and resources.
+     * After the completion of the callback invoked with SyncStatus.UPDATE_INSTALLED, the application will be reloaded with the updated code and resources.
      */
-    APPLY_SUCCESS,
+    UPDATE_INSTALLED,
     
     /**
      * An optional update is available, but the user declined to install it. The update was not downloaded.
@@ -296,4 +297,12 @@ interface SyncOptions {
  */
 interface IDiffManifest {
     deletedFiles: string[];
+}
+
+/**
+ * Defines the format of the DownloadProgress object, used to send periodical update notifications on the progress of the update download.
+ */
+interface DownloadProgress {
+    totalBytes: number;
+    receivedBytes: number;
 }

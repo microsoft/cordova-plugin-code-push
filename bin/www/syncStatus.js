@@ -13,7 +13,7 @@
 var SyncStatus;
 (function (SyncStatus) {
     SyncStatus[SyncStatus["UP_TO_DATE"] = 0] = "UP_TO_DATE";
-    SyncStatus[SyncStatus["APPLY_SUCCESS"] = 1] = "APPLY_SUCCESS";
+    SyncStatus[SyncStatus["UPDATE_INSTALLED"] = 1] = "UPDATE_INSTALLED";
     SyncStatus[SyncStatus["UPDATE_IGNORED"] = 2] = "UPDATE_IGNORED";
     SyncStatus[SyncStatus["ERROR"] = 3] = "ERROR";
 })(SyncStatus || (SyncStatus = {}));

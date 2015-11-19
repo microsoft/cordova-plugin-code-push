@@ -50,7 +50,7 @@ var app = {
     },
     applySuccess: function () {
         console.log("Apply success.");
-        app.sendTestMessage("APPLY_SUCCESS");
+        app.sendTestMessage("UPDATE_INSTALLED");
     },
     applyError: function (error) {
         console.log("Apply error.");

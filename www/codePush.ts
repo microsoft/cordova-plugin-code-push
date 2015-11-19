@@ -169,7 +169,7 @@ class CodePush implements CodePushCordovaPlugin {
         };
 
         var onApplySuccess = () => {
-            syncCallback && syncCallback(SyncStatus.APPLY_SUCCESS);
+            syncCallback && syncCallback(SyncStatus.UPDATE_INSTALLED);
         };
 
         var onDownloadSuccess = (localPackage: ILocalPackage) => {

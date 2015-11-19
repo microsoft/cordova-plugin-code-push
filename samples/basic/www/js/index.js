@@ -37,7 +37,7 @@ var app = {
            For customizing the sync behavior, see SyncOptions in the CodePush documentation. */
         window.codePush.sync(function (syncStatus) {
             switch (syncStatus) {
-                case SyncStatus.APPLY_SUCCESS:
+                case SyncStatus.UPDATE_INSTALLED:
                     console.log("The update was applied successfully. This is the last callback before the application is reloaded with the updated content.");
                     /* Don't continue app initialization, the application will refresh after this return. */
                     return;

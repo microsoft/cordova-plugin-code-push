@@ -109,7 +109,7 @@ var CodePush = (function () {
             syncCallback && syncCallback(SyncStatus.ERROR);
         };
         var onApplySuccess = function () {
-            syncCallback && syncCallback(SyncStatus.APPLY_SUCCESS);
+            syncCallback && syncCallback(SyncStatus.UPDATE_INSTALLED);
         };
         var onDownloadSuccess = function (localPackage) {
             localPackage.apply(onApplySuccess, onError, syncOptions.rollbackTimeout);

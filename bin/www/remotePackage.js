@@ -25,7 +25,7 @@ var RemotePackage = (function (_super) {
     function RemotePackage() {
         _super.apply(this, arguments);
     }
-    RemotePackage.prototype.download = function (successCallback, errorCallback) {
+    RemotePackage.prototype.download = function (successCallback, errorCallback, downloadProgress) {
         var _this = this;
         try {
             CodePushUtil.logMessage("Downloading update package ...");
@@ -58,6 +58,12 @@ var RemotePackage = (function (_super) {
                 var downloadError = function (error) {
                     _this.currentFileTransfer = null;
                     CodePushUtil.invokeErrorCallback(new Error(error.body), errorCallback);
+                };
+                this.currentFileTransfer.onprogress = function (progressEvent) {
+                    if (downloadProgress) {
+                        var dp = { receivedBytes: progressEvent.loaded, totalBytes: progressEvent.total };
+                        downloadProgress(dp);
+                    }
                 };
                 this.currentFileTransfer.download(this.downloadUrl, cordova.file.dataDirectory + LocalPackage.DownloadDir + "/" + LocalPackage.PackageUpdateFileName, downloadSuccess, downloadError, true);
             }

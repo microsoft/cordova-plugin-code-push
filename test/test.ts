@@ -366,7 +366,7 @@ describe("window.codePush", function() {
                 .then<void>((updatePath: string) => {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
-                    testMessageCallback = verifyMessages([su.TestMessage.APPLY_SUCCESS, su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
+                    testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED, su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                     console.log("Running project...");
                     projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
                     return deferred.promise;
@@ -395,7 +395,7 @@ describe("window.codePush", function() {
                 .then<void>((updatePath: string) => {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
-                    testMessageCallback = verifyMessages([su.TestMessage.APPLY_SUCCESS, su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.UPDATE_FAILED_PREVIOUSLY], deferred);
+                    testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED, su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.UPDATE_FAILED_PREVIOUSLY], deferred);
                     console.log("Running project...");
                     projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
                     return deferred.promise;
@@ -405,7 +405,7 @@ describe("window.codePush", function() {
                     console.log("Creating a second failed update.");
                     var deferred = Q.defer<void>();
                     mockResponse = { updateInfo: getMockResponse(true) };
-                    testMessageCallback = verifyMessages([su.TestMessage.APPLY_SUCCESS, su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.UPDATE_FAILED_PREVIOUSLY], deferred);
+                    testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED, su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.UPDATE_FAILED_PREVIOUSLY], deferred);
                     console.log("Running project...");
                     projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
                     return deferred.promise;
@@ -423,7 +423,7 @@ describe("window.codePush", function() {
                 .then<void>((updatePath: string) => {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
-                    testMessageCallback = verifyMessages([su.TestMessage.APPLY_SUCCESS, su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS, su.TestMessage.APPLICATION_NOT_REVERTED], deferred);
+                    testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED, su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS, su.TestMessage.APPLICATION_NOT_REVERTED], deferred);
                     console.log("Running project...");
                     projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
                     return deferred.promise;
@@ -505,7 +505,7 @@ describe("window.codePush", function() {
                 .then<void>((updatePath: string) => {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
-                    testMessageCallback = verifyMessages([new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_APPLY_SUCCESS]), su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
+                    testMessageCallback = verifyMessages([new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED]), su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                     console.log("Running project...");
                     projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
                     return deferred.promise;
@@ -534,7 +534,7 @@ describe("window.codePush", function() {
                 .then<void>((updatePath: string) => {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
-                    testMessageCallback = verifyMessages([new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_APPLY_SUCCESS]), su.TestMessage.DEVICE_READY_AFTER_UPDATE, new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UP_TO_DATE])], deferred);
+                    testMessageCallback = verifyMessages([new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED]), su.TestMessage.DEVICE_READY_AFTER_UPDATE, new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UP_TO_DATE])], deferred);
                     console.log("Running project...");
                     projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
                     return deferred.promise;
@@ -552,7 +552,7 @@ describe("window.codePush", function() {
                 .then<void>((updatePath: string) => {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
-                    testMessageCallback = verifyMessages([new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_APPLY_SUCCESS]), su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.APPLICATION_NOT_REVERTED], deferred);
+                    testMessageCallback = verifyMessages([new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED]), su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.APPLICATION_NOT_REVERTED], deferred);
                     console.log("Running project...");
                     projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
                     return deferred.promise;

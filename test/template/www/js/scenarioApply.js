@@ -44,8 +44,8 @@ var app = {
         app.sendTestMessage("DOWNLOAD_ERROR");
     },
     applySuccess: function () {
-        console.log("Apply success.");
-        app.sendTestMessage("APPLY_SUCCESS");
+        console.log("Update installed.");
+        app.sendTestMessage("UPDATE_INSTALLED");
     },
     applyError: function (error) {
         console.log("Apply error.");

@@ -175,7 +175,7 @@ Contains details about an update package that is available for download.
 Defines the possible result statuses of the [sync](#codepushsync) operation.
 ### Properties
 - __UP_TO_DATE__: The application is up to date. (number)
-- __APPLY_SUCCESS__: An update is available, it has been downloaded, unzipped and copied to the deployment folder. After the completion of the callback invoked with SyncStatus.APPLY_SUCCESS, the application will be reloaded with the updated code and resources. (number)
+- __UPDATE_INSTALLED__: An update is available, it has been downloaded, unzipped and copied to the deployment folder. After the completion of the callback invoked with SyncStatus.UPDATE_INSTALLED, the application will be reloaded with the updated code and resources. (number)
 - __UPDATE_IGNORED__: An optional update is available, but the user declined to install it. The update was not downloaded. (number)
 - __ERROR__: An error happened during the sync operation. This might be an error while communicating with the server, downloading or unziping the update. The console logs should contain more information about what happened. No update has been applied in this case. (number)
 
@@ -327,7 +327,7 @@ Interface defining several options for customizing the [sync](#codepushsync) ope
 
 window.codePush.sync(function (syncStatus) {
     switch (syncStatus) {
-        case SyncStatus.APPLY_SUCCESS:
+        case SyncStatus.UPDATE_INSTALLED:
             console.log("The update was applied successfully. This is the last callback before the application is reloaded with the updated content.");
             /* Don't continue app initialization, the application will refresh after this return. */
             return;
@@ -362,7 +362,7 @@ var syncOptions = {
 
 window.codePush.sync(function (syncStatus) {
     switch (syncStatus) {
-        case SyncStatus.APPLY_SUCCESS:
+        case SyncStatus.UPDATE_INSTALLED:
             console.log("The update was applied successfully. This is the last callback before the application is reloaded with the updated content.");
             /* Don't continue app initialization, the application will refresh after this return. */
             return;
