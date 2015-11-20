@@ -6,8 +6,8 @@
 - (void)getDeploymentKey:(CDVInvokedUrlCommand*)command;
 - (void)getNativeBuildTime:(CDVInvokedUrlCommand*)command;
 - (void)getAppVersion:(CDVInvokedUrlCommand*)command;
-- (void)apply:(CDVInvokedUrlCommand *)command;
-- (void)preApply:(CDVInvokedUrlCommand *)command;
+- (void)install:(CDVInvokedUrlCommand *)command;
+- (void)preInstall:(CDVInvokedUrlCommand *)command;
 - (void)isFailedUpdate:(CDVInvokedUrlCommand *)command;
 - (void)isFirstRun:(CDVInvokedUrlCommand *)command;
 - (void)updateSuccess:(CDVInvokedUrlCommand *)command;

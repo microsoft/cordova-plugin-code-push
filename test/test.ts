@@ -35,8 +35,8 @@ const AcquisitionSDKPluginName = "code-push";
 
 const ScenarioCheckForUpdatePath = "js/scenarioCheckForUpdate.js";
 const ScenarioDownloadUpdate = "js/scenarioDownloadUpdate.js";
-const ScenarioApply = "js/scenarioApply.js";
-const ScenarioApplyWithRevert = "js/scenarioApplyWithRevert.js";
+const ScenarioInstall = "js/scenarioInstall.js";
+const ScenarioInstallWithRevert = "js/scenarioInstallWithRevert.js";
 const ScenarioSync = "js/scenarioSync.js";
 const ScenarioSyncWithRevert = "js/scenarioSyncWithRevert.js";
 
@@ -320,14 +320,14 @@ describe("window.codePush", function() {
         });
     });
 
-    describe("#localPackage.apply", function() {
+    describe("#localPackage.install", function() {
 
         after(() => {
             cleanupScenario();
         });
 
         before(() => {
-            return setupScenario(ScenarioApply);
+            return setupScenario(ScenarioInstall);
         });
 
         var getMockResponse = (): su.CheckForUpdateResponseMock => {
@@ -345,7 +345,7 @@ describe("window.codePush", function() {
 
             testMessageCallback = (requestBody: any) => {
                 try {
-                    assert.equal(su.TestMessage.APPLY_ERROR, requestBody.message);
+                    assert.equal(su.TestMessage.INSTALL_ERROR, requestBody.message);
                     done();
                 } catch (e) {
                     done(e);
@@ -356,7 +356,7 @@ describe("window.codePush", function() {
             projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
         });
 
-        it("should handle apply", function(done) {
+        it("should handle install", function(done) {
 
             mockResponse = { updateInfo: getMockResponse() };
 
@@ -375,14 +375,14 @@ describe("window.codePush", function() {
         });
     });
 
-    describe("#localPackage.apply (with revert)", function() {
+    describe("#localPackage.install (with revert)", function() {
 
         after(() => {
             cleanupScenario();
         });
 
         before(() => {
-            return setupScenario(ScenarioApplyWithRevert);
+            return setupScenario(ScenarioInstallWithRevert);
         });
 
         it("should handle revert", function(done) {
@@ -496,7 +496,7 @@ describe("window.codePush", function() {
             projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
         });
 
-        it("sync should apply when update available", function(done) {
+        it("sync should install when update available", function(done) {
             mockResponse = { updateInfo: getMockResponse(false) };
 
             /* create an update */

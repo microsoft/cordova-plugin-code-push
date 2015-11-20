@@ -40,7 +40,7 @@ public class CodePush extends CordovaPlugin {
     private boolean pluginDestroyed = false;
     private boolean didUpdate = false;
     private boolean didStartApp = false;
-    private static boolean ApplySucceeded = false;
+    private static boolean InstallSucceeded = false;
     private static boolean ShouldClearHistoryOnLoad = false;
 
 
@@ -62,12 +62,12 @@ public class CodePush extends CordovaPlugin {
             return execGetNativeBuildTime(callbackContext);
         } else if ("getAppVersion".equals(action)) {
             return execGetAppVersion(callbackContext);
-        } else if ("preApply".equals(action)) {
-            return execPreApply(args, callbackContext);
-        } else if ("apply".equals(action)) {
-            return execApply(args, callbackContext);
+        } else if ("preInstall".equals(action)) {
+            return execPreInstall(args, callbackContext);
+        } else if ("install".equals(action)) {
+            return execInstall(args, callbackContext);
         } else if ("updateSuccess".equals(action)) {
-            this.ApplySucceeded = true;
+            this.InstallSucceeded = true;
             callbackContext.success();
             return true;
         } else if ("isFailedUpdate".equals(action)) {
@@ -109,7 +109,7 @@ public class CodePush extends CordovaPlugin {
         return true;
     }
 
-    private boolean execApply(CordovaArgs args, CallbackContext callbackContext) {
+    private boolean execInstall(CordovaArgs args, CallbackContext callbackContext) {
         try {
             final String startLocation = args.getString(0);
             final int updateSuccessTimeoutInMillis = args.optInt(1);
@@ -124,7 +124,7 @@ public class CodePush extends CordovaPlugin {
 
                 if (updateSuccessTimeoutInMillis > 0) {
                 /* start countdown for success */
-                    CodePush.ApplySucceeded = false;
+                    CodePush.InstallSucceeded = false;
                     final CountDownTimer successTimer = new CountDownTimer(updateSuccessTimeoutInMillis, updateSuccessTimeoutInMillis) {
                         @Override
                         public void onTick(long millisUntilFinished) {
@@ -149,7 +149,7 @@ public class CodePush extends CordovaPlugin {
         return true;
     }
 
-    private boolean execPreApply(CordovaArgs args, CallbackContext callbackContext) {
+    private boolean execPreInstall(CordovaArgs args, CallbackContext callbackContext) {
     /* check if package is valid */
         try {
             final String startLocation = args.getString(0);
@@ -188,7 +188,7 @@ public class CodePush extends CordovaPlugin {
     }
 
     private void onSuccessTimerFinish() {
-        if (!CodePush.ApplySucceeded) {
+        if (!CodePush.InstallSucceeded) {
             /* revert application to the previous version */
             this.revertToPreviousVersion();
             String url;

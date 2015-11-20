@@ -28,11 +28,16 @@ class CodePush implements CodePushCordovaPlugin {
      * The default options for the sync command.
      */
     private static DefaultSyncOptions: SyncOptions;
+    /**
+     * The default UI for the update dialog, in case it is enabled.
+     * Please note that the update dialog is disabled by default. 
+     */
+    private static DefaultUpdateDialogOptions: UpdateDialogOptions;
     
     /**
       * Notifies the plugin that the update operation succeeded and that the application is ready.
-      * Calling this function is required if a rollbackTimeout parameter is used for your LocalPackage.apply() call.
-      * If apply() is used without a rollbackTimeout, calling this function is a noop.
+      * Calling this function is required if a rollbackTimeout parameter is used for your LocalPackage.install() call.
+      * If install() is used without a rollbackTimeout, calling this function is a noop.
       * 
       * @param notifySucceeded Optional callback invoked if the plugin was successfully notified.
       * @param notifyFailed Optional callback invoked in case of an error during notifying the plugin.
@@ -78,7 +83,7 @@ class CodePush implements CodePushCordovaPlugin {
                         } else {
                             /* There is an update available for the current version. */
                             var remotePackage: RemotePackage = <RemotePackage>remotePackageOrUpdateNotification;
-                            NativeAppInfo.isFailedUpdate(remotePackage.packageHash, (applyFailed: boolean) => {
+                            NativeAppInfo.isFailedUpdate(remotePackage.packageHash, (installFailed: boolean) => {
                                 var result: RemotePackage = new RemotePackage();
                                 result.appVersion = remotePackage.appVersion;
                                 result.deploymentKey = remotePackage.deploymentKey;
@@ -88,7 +93,7 @@ class CodePush implements CodePushCordovaPlugin {
                                 result.label = remotePackage.label;
                                 result.packageHash = remotePackage.packageHash;
                                 result.packageSize = remotePackage.packageSize;
-                                result.failedApply = applyFailed;
+                                result.failedInstall = installFailed;
                                 CodePushUtil.logMessage("An update is available. " + JSON.stringify(result));
                                 querySuccess && querySuccess(result);
                             });
@@ -118,7 +123,7 @@ class CodePush implements CodePushCordovaPlugin {
     
     /**
      * Convenience method for installing updates in one method call.
-     * This method is provided for simplicity, and its behavior can be replicated by using window.codePush.checkForUpdate(), RemotePackage's download() and LocalPackage's apply() methods.
+     * This method is provided for simplicity, and its behavior can be replicated by using window.codePush.checkForUpdate(), RemotePackage's download() and LocalPackage's install() methods.
      *  
      * The algorithm of this method is the following:
      * - Checks for an update on the CodePush server.
@@ -129,7 +134,7 @@ class CodePush implements CodePushCordovaPlugin {
      *           If they decline, the syncCallback will be invoked with SyncStatus.UPDATE_IGNORED. 
      *         - Otherwise, the update package will be downloaded and applied with no user interaction.
      * - If no update is available on the server, the syncCallback will be invoked with the SyncStatus.UP_TO_DATE.
-     * - If an error occurs during checking for update, downloading or applying it, the syncCallback will be invoked with the SyncStatus.ERROR.
+     * - If an error occurs during checking for update, downloading or installing it, the syncCallback will be invoked with the SyncStatus.ERROR.
      * 
      * @param syncCallback Optional callback to be called with the status of the sync operation.
      *                     The callback will be called only once, and the possible statuses are defined by the SyncStatus enum. 
@@ -141,24 +146,31 @@ class CodePush implements CodePushCordovaPlugin {
         /* No options were specified, use default */
         if (!syncOptions) {
             syncOptions = this.getDefaultSyncOptions();
-        }
+        } else {
+            /* Some options were specified */
+            /* Handle dialog options */
+            var defaultDialogOptions = this.getDefaultUpdateDialogOptions();
+            if (syncOptions.updateDialog) {
+                if (typeof syncOptions.updateDialog !== typeof ({})) {
+                    /* updateDialog set to truey condition, use default options */
+                    syncOptions.updateDialog = defaultDialogOptions;
+                } else {
+                    /* some options were specified, merge with default */
+                    for (let key in defaultDialogOptions) {
+                        if ((<any>syncOptions.updateDialog)[key] === undefined || (<any>syncOptions.updateDialog)[key] === null) {
+                            (<any>syncOptions.updateDialog)[key] = (<any>defaultDialogOptions)[key];
+                        }
+                    }
+                }
+            }
 
-        /* Some options were specified */
-        if (syncOptions.mandatoryUpdateMessage) {
-            syncOptions.mandatoryContinueButtonLabel = syncOptions.mandatoryContinueButtonLabel || this.getDefaultSyncOptions().mandatoryContinueButtonLabel;
-            syncOptions.updateTitle = syncOptions.updateTitle || this.getDefaultSyncOptions().updateTitle;
-        }
-        if (syncOptions.optionalUpdateMessage) {
-            syncOptions.optionalInstallButtonLabel = syncOptions.optionalInstallButtonLabel || this.getDefaultSyncOptions().optionalInstallButtonLabel;
-            syncOptions.optionalIgnoreButtonLabel = syncOptions.optionalIgnoreButtonLabel || this.getDefaultSyncOptions().optionalIgnoreButtonLabel;
-            syncOptions.updateTitle = syncOptions.updateTitle || this.getDefaultSyncOptions().updateTitle;
-        }
-        if (typeof syncOptions.ignoreFailedUpdates !== typeof true) {
-            /* Ignoring failed updates by default. */
-            syncOptions.ignoreFailedUpdates = true;
-        }
-        if (syncOptions.appendReleaseDescription && !syncOptions.descriptionPrefix) {
-            syncOptions.descriptionPrefix = this.getDefaultSyncOptions().descriptionPrefix;
+            /* Handle other options. Dialog options will not be overwritten. */
+            var defaultOptions = this.getDefaultSyncOptions();
+            for (let key in defaultOptions) {
+                if ((<any>syncOptions)[key] === undefined || (<any>syncOptions)[key] === null) {
+                    (<any>syncOptions)[key] = (<any>defaultOptions)[key];
+                }
+            }
         }
 
         window.codePush.notifyApplicationReady();
@@ -168,12 +180,12 @@ class CodePush implements CodePushCordovaPlugin {
             syncCallback && syncCallback(SyncStatus.ERROR);
         };
 
-        var onApplySuccess = () => {
+        var onInstallSuccess = () => {
             syncCallback && syncCallback(SyncStatus.UPDATE_INSTALLED);
         };
 
         var onDownloadSuccess = (localPackage: ILocalPackage) => {
-            localPackage.apply(onApplySuccess, onError, syncOptions.rollbackTimeout);
+            localPackage.install(onInstallSuccess, onError, syncOptions.rollbackTimeout);
         };
 
         var downloadAndInstallUpdate = (remotePackage: RemotePackage) => {
@@ -181,14 +193,17 @@ class CodePush implements CodePushCordovaPlugin {
         };
 
         var onUpdate = (remotePackage: RemotePackage) => {
-            if (!remotePackage || (remotePackage.failedApply && syncOptions.ignoreFailedUpdates)) {
+            if (!remotePackage || (remotePackage.failedInstall && syncOptions.ignoreFailedUpdates)) {
                 syncCallback && syncCallback(SyncStatus.UP_TO_DATE);
             } else {
-                if (remotePackage.isMandatory && syncOptions.mandatoryUpdateMessage) {
+                var dlgOpts: UpdateDialogOptions = <UpdateDialogOptions>syncOptions.updateDialog;
+                if (remotePackage.isMandatory && syncOptions.updateDialog) {
                     /* Alert user */
-                    var message = syncOptions.appendReleaseDescription ? syncOptions.mandatoryUpdateMessage + syncOptions.descriptionPrefix + remotePackage.description : syncOptions.mandatoryUpdateMessage;
-                    navigator.notification.alert(message, () => { downloadAndInstallUpdate(remotePackage); }, syncOptions.updateTitle, syncOptions.mandatoryContinueButtonLabel);
-                } else if (!remotePackage.isMandatory && syncOptions.optionalUpdateMessage) {
+                    var message = dlgOpts.appendReleaseDescription ?
+                        dlgOpts.mandatoryUpdateMessage + dlgOpts.descriptionPrefix + remotePackage.description
+                        : dlgOpts.mandatoryUpdateMessage;
+                    navigator.notification.alert(message, () => { downloadAndInstallUpdate(remotePackage); }, dlgOpts.updateTitle, dlgOpts.mandatoryContinueButtonLabel);
+                } else if (!remotePackage.isMandatory && syncOptions.updateDialog) {
                     /* Confirm update with user */
                     var optionalUpdateCallback = (buttonIndex: number) => {
                         switch (buttonIndex) {
@@ -204,8 +219,10 @@ class CodePush implements CodePushCordovaPlugin {
                         }
                     };
 
-                    var message = syncOptions.appendReleaseDescription ? syncOptions.optionalUpdateMessage + syncOptions.descriptionPrefix + remotePackage.description : syncOptions.optionalUpdateMessage;
-                    navigator.notification.confirm(message, optionalUpdateCallback, syncOptions.updateTitle, [syncOptions.optionalInstallButtonLabel, syncOptions.optionalIgnoreButtonLabel]);
+                    var message = dlgOpts.appendReleaseDescription ?
+                        dlgOpts.optionalUpdateMessage + dlgOpts.descriptionPrefix + remotePackage.description
+                        : dlgOpts.optionalUpdateMessage;
+                    navigator.notification.confirm(message, optionalUpdateCallback, dlgOpts.updateTitle, [dlgOpts.optionalInstallButtonLabel, dlgOpts.optionalIgnoreButtonLabel]);
                 } else {
                     /* No user interaction */
                     downloadAndInstallUpdate(remotePackage);
@@ -223,20 +240,35 @@ class CodePush implements CodePushCordovaPlugin {
     private getDefaultSyncOptions(): SyncOptions {
         if (!CodePush.DefaultSyncOptions) {
             CodePush.DefaultSyncOptions = {
+                rollbackTimeout: 0,
+                ignoreFailedUpdates: true,
+                installMode: InstallMode.ON_NEXT_RESTART,
+                updateDialog: false
+            };
+        }
+
+        return CodePush.DefaultSyncOptions;
+    }
+    
+    /**
+     * Returns the default options for the update dialog.
+     * Please note that the dialog is disabled by default.
+     */
+    private getDefaultUpdateDialogOptions(): UpdateDialogOptions {
+        if (!CodePush.DefaultUpdateDialogOptions) {
+            CodePush.DefaultUpdateDialogOptions = {
                 updateTitle: "Update",
                 mandatoryUpdateMessage: "You will be updated to the latest version.",
                 mandatoryContinueButtonLabel: "Continue",
                 optionalUpdateMessage: "An update is available. Would you like to install it?",
                 optionalInstallButtonLabel: "Install",
                 optionalIgnoreButtonLabel: "Ignore",
-                rollbackTimeout: 0,
-                ignoreFailedUpdates: true,
                 appendReleaseDescription: false,
                 descriptionPrefix: " Description: "
             };
         }
 
-        return CodePush.DefaultSyncOptions;
+        return CodePush.DefaultUpdateDialogOptions;
     }
 
 }

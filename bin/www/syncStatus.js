@@ -16,5 +16,15 @@ var SyncStatus;
     SyncStatus[SyncStatus["UPDATE_INSTALLED"] = 1] = "UPDATE_INSTALLED";
     SyncStatus[SyncStatus["UPDATE_IGNORED"] = 2] = "UPDATE_IGNORED";
     SyncStatus[SyncStatus["ERROR"] = 3] = "ERROR";
+    SyncStatus[SyncStatus["CHECKING_FOR_UPDATE"] = 4] = "CHECKING_FOR_UPDATE";
+    SyncStatus[SyncStatus["AWAITING_USER_ACTION"] = 5] = "AWAITING_USER_ACTION";
+    SyncStatus[SyncStatus["DOWNLOADING_PACKAGE"] = 6] = "DOWNLOADING_PACKAGE";
+    SyncStatus[SyncStatus["INSTALLING_UPDATE"] = 7] = "INSTALLING_UPDATE";
 })(SyncStatus || (SyncStatus = {}));
+var InstallMode;
+(function (InstallMode) {
+    InstallMode[InstallMode["IMMEDIATE"] = 0] = "IMMEDIATE";
+    InstallMode[InstallMode["ON_NEXT_RESTART"] = 1] = "ON_NEXT_RESTART";
+    InstallMode[InstallMode["ON_NEXT_RESUME"] = 2] = "ON_NEXT_RESUME";
+})(InstallMode || (InstallMode = {}));
 module.exports = SyncStatus;

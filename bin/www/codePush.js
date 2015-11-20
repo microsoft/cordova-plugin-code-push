@@ -46,7 +46,7 @@ var CodePush = (function () {
                         }
                         else {
                             var remotePackage = remotePackageOrUpdateNotification;
-                            NativeAppInfo.isFailedUpdate(remotePackage.packageHash, function (applyFailed) {
+                            NativeAppInfo.isFailedUpdate(remotePackage.packageHash, function (installFailed) {
                                 var result = new RemotePackage();
                                 result.appVersion = remotePackage.appVersion;
                                 result.deploymentKey = remotePackage.deploymentKey;
@@ -56,7 +56,7 @@ var CodePush = (function () {
                                 result.label = remotePackage.label;
                                 result.packageHash = remotePackage.packageHash;
                                 result.packageSize = remotePackage.packageSize;
-                                result.failedApply = applyFailed;
+                                result.failedInstall = installFailed;
                                 CodePushUtil.logMessage("An update is available. " + JSON.stringify(result));
                                 querySuccess && querySuccess(result);
                             });
@@ -88,45 +88,54 @@ var CodePush = (function () {
         if (!syncOptions) {
             syncOptions = this.getDefaultSyncOptions();
         }
-        if (syncOptions.mandatoryUpdateMessage) {
-            syncOptions.mandatoryContinueButtonLabel = syncOptions.mandatoryContinueButtonLabel || this.getDefaultSyncOptions().mandatoryContinueButtonLabel;
-            syncOptions.updateTitle = syncOptions.updateTitle || this.getDefaultSyncOptions().updateTitle;
-        }
-        if (syncOptions.optionalUpdateMessage) {
-            syncOptions.optionalInstallButtonLabel = syncOptions.optionalInstallButtonLabel || this.getDefaultSyncOptions().optionalInstallButtonLabel;
-            syncOptions.optionalIgnoreButtonLabel = syncOptions.optionalIgnoreButtonLabel || this.getDefaultSyncOptions().optionalIgnoreButtonLabel;
-            syncOptions.updateTitle = syncOptions.updateTitle || this.getDefaultSyncOptions().updateTitle;
-        }
-        if (typeof syncOptions.ignoreFailedUpdates !== typeof true) {
-            syncOptions.ignoreFailedUpdates = true;
-        }
-        if (syncOptions.appendReleaseDescription && !syncOptions.descriptionPrefix) {
-            syncOptions.descriptionPrefix = this.getDefaultSyncOptions().descriptionPrefix;
+        else {
+            var defaultDialogOptions = this.getDefaultUpdateDialogOptions();
+            if (syncOptions.updateDialog) {
+                if (typeof syncOptions.updateDialog !== typeof ({})) {
+                    syncOptions.updateDialog = defaultDialogOptions;
+                }
+                else {
+                    for (var key in defaultDialogOptions) {
+                        if (syncOptions.updateDialog[key] === undefined || syncOptions.updateDialog[key] === null) {
+                            syncOptions.updateDialog[key] = defaultDialogOptions[key];
+                        }
+                    }
+                }
+            }
+            var defaultOptions = this.getDefaultSyncOptions();
+            for (var key in defaultOptions) {
+                if (syncOptions[key] === undefined || syncOptions[key] === null) {
+                    syncOptions[key] = defaultOptions[key];
+                }
+            }
         }
         window.codePush.notifyApplicationReady();
         var onError = function (error) {
             CodePushUtil.logError("An error occurred during sync.", error);
             syncCallback && syncCallback(SyncStatus.ERROR);
         };
-        var onApplySuccess = function () {
+        var onInstallSuccess = function () {
             syncCallback && syncCallback(SyncStatus.UPDATE_INSTALLED);
         };
         var onDownloadSuccess = function (localPackage) {
-            localPackage.apply(onApplySuccess, onError, syncOptions.rollbackTimeout);
+            localPackage.install(onInstallSuccess, onError, syncOptions.rollbackTimeout);
         };
         var downloadAndInstallUpdate = function (remotePackage) {
             remotePackage.download(onDownloadSuccess, onError);
         };
         var onUpdate = function (remotePackage) {
-            if (!remotePackage || (remotePackage.failedApply && syncOptions.ignoreFailedUpdates)) {
+            if (!remotePackage || (remotePackage.failedInstall && syncOptions.ignoreFailedUpdates)) {
                 syncCallback && syncCallback(SyncStatus.UP_TO_DATE);
             }
             else {
-                if (remotePackage.isMandatory && syncOptions.mandatoryUpdateMessage) {
-                    var message = syncOptions.appendReleaseDescription ? syncOptions.mandatoryUpdateMessage + syncOptions.descriptionPrefix + remotePackage.description : syncOptions.mandatoryUpdateMessage;
-                    navigator.notification.alert(message, function () { downloadAndInstallUpdate(remotePackage); }, syncOptions.updateTitle, syncOptions.mandatoryContinueButtonLabel);
+                var dlgOpts = syncOptions.updateDialog;
+                if (remotePackage.isMandatory && syncOptions.updateDialog) {
+                    var message = dlgOpts.appendReleaseDescription ?
+                        dlgOpts.mandatoryUpdateMessage + dlgOpts.descriptionPrefix + remotePackage.description
+                        : dlgOpts.mandatoryUpdateMessage;
+                    navigator.notification.alert(message, function () { downloadAndInstallUpdate(remotePackage); }, dlgOpts.updateTitle, dlgOpts.mandatoryContinueButtonLabel);
                 }
-                else if (!remotePackage.isMandatory && syncOptions.optionalUpdateMessage) {
+                else if (!remotePackage.isMandatory && syncOptions.updateDialog) {
                     var optionalUpdateCallback = function (buttonIndex) {
                         switch (buttonIndex) {
                             case 1:
@@ -138,8 +147,10 @@ var CodePush = (function () {
                                 break;
                         }
                     };
-                    var message = syncOptions.appendReleaseDescription ? syncOptions.optionalUpdateMessage + syncOptions.descriptionPrefix + remotePackage.description : syncOptions.optionalUpdateMessage;
-                    navigator.notification.confirm(message, optionalUpdateCallback, syncOptions.updateTitle, [syncOptions.optionalInstallButtonLabel, syncOptions.optionalIgnoreButtonLabel]);
+                    var message = dlgOpts.appendReleaseDescription ?
+                        dlgOpts.optionalUpdateMessage + dlgOpts.descriptionPrefix + remotePackage.description
+                        : dlgOpts.optionalUpdateMessage;
+                    navigator.notification.confirm(message, optionalUpdateCallback, dlgOpts.updateTitle, [dlgOpts.optionalInstallButtonLabel, dlgOpts.optionalIgnoreButtonLabel]);
                 }
                 else {
                     downloadAndInstallUpdate(remotePackage);
@@ -151,19 +162,28 @@ var CodePush = (function () {
     CodePush.prototype.getDefaultSyncOptions = function () {
         if (!CodePush.DefaultSyncOptions) {
             CodePush.DefaultSyncOptions = {
+                rollbackTimeout: 0,
+                ignoreFailedUpdates: true,
+                installMode: InstallMode.ON_NEXT_RESTART,
+                updateDialog: false
+            };
+        }
+        return CodePush.DefaultSyncOptions;
+    };
+    CodePush.prototype.getDefaultUpdateDialogOptions = function () {
+        if (!CodePush.DefaultUpdateDialogOptions) {
+            CodePush.DefaultUpdateDialogOptions = {
                 updateTitle: "Update",
                 mandatoryUpdateMessage: "You will be updated to the latest version.",
                 mandatoryContinueButtonLabel: "Continue",
                 optionalUpdateMessage: "An update is available. Would you like to install it?",
                 optionalInstallButtonLabel: "Install",
                 optionalIgnoreButtonLabel: "Ignore",
-                rollbackTimeout: 0,
-                ignoreFailedUpdates: true,
                 appendReleaseDescription: false,
                 descriptionPrefix: " Description: "
             };
         }
-        return CodePush.DefaultSyncOptions;
+        return CodePush.DefaultUpdateDialogOptions;
     };
     return CodePush;
 })();

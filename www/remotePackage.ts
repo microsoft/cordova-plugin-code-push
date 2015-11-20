@@ -42,7 +42,7 @@ class RemotePackage extends Package implements IRemotePackage {
 
                     fileEntry.file((file: File) => {
 
-                        NativeAppInfo.isFailedUpdate(this.packageHash, (applyFailed: boolean) => {
+                        NativeAppInfo.isFailedUpdate(this.packageHash, (installFailed: boolean) => {
                             var localPackage = new LocalPackage();
                             localPackage.deploymentKey = this.deploymentKey;
                             localPackage.description = this.description;
@@ -51,7 +51,7 @@ class RemotePackage extends Package implements IRemotePackage {
                             localPackage.isMandatory = this.isMandatory;
                             localPackage.packageHash = this.packageHash;
                             localPackage.isFirstRun = false;
-                            localPackage.failedApply = applyFailed;
+                            localPackage.failedInstall = installFailed;
                             localPackage.localPath = fileEntry.toInternalURL();
 
                             CodePushUtil.logMessage("Package download success: " + JSON.stringify(localPackage));

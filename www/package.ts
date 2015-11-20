@@ -13,7 +13,7 @@ class Package implements IPackage {
     isMandatory: boolean;
     packageHash: string;
     packageSize: number;
-    failedApply: boolean;
+    failedInstall: boolean;
 }
 
 export = Package;

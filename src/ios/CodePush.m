@@ -33,7 +33,7 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
-- (void)apply:(CDVInvokedUrlCommand *)command {
+- (void)install:(CDVInvokedUrlCommand *)command {
     CDVPluginResult* pluginResult = nil;
     
     NSString* location = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
@@ -58,14 +58,14 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
         }
         else {
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"An error happened during package apply."];
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"An error happened during package install."];
         }
     }
     
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
-- (void)preApply:(CDVInvokedUrlCommand *)command {
+- (void)preInstall:(CDVInvokedUrlCommand *)command {
     CDVPluginResult* pluginResult = nil;
     
     NSString* location = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];

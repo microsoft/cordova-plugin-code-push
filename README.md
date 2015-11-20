@@ -94,15 +94,15 @@ Contains details about an update package that has been downloaded locally or alr
 - __isMandatory__: Flag indicating if the update is mandatory. (Boolean)
 - __packageHash__: The hash value of the package. (String)
 - __packageSize__: The size of the package, in bytes. (Number)
-- __failedApply__: Boolean flag indicating if this update package was previously attempted and the update failed. (Boolean). If using the rollback feature, this field can protect against going into an infinite bad update/revert loop. For an example on how to use the rollbackTimeout parameter to protect against a bad update, see the [notifyApplicationReady() documentation](#codepushnotifyapplicationready).
+- __failedInstall__: Boolean flag indicating if this update package was previously attempted and the update failed. (Boolean). If using the rollback feature, this field can protect against going into an infinite bad update/revert loop. For an example on how to use the rollbackTimeout parameter to protect against a bad update, see the [notifyApplicationReady() documentation](#codepushnotifyapplicationready).
 - __localPath__: The current, local path of the package. (String)
 - __isFirstRun__: Flag indicating if the current application run is the first one after the package was applied. (Boolean)
 
 ### Methods
-- __apply(applySuccess, applyError, rollbackTimeout)__: Applies this package to the application. The application will be reloaded with this package and on every application launch this package will be loaded.
+- __install(installSuccess, installError, rollbackTimeout)__: Applies this package to the application. The application will be reloaded with this package and on every application launch this package will be loaded.
 If the rollbackTimeout parameter is provided, the application will wait for a `codePush.notifyApplicationReady()` for the given number of milliseconds.
-If `codePush.notifyApplicationReady()` is called before the time period specified by `rollbackTimeout`, the apply operation is considered a success.
-Otherwise, the apply operation will be marked as failed, and the application is reverted to its previous version.
+If `codePush.notifyApplicationReady()` is called before the time period specified by `rollbackTimeout`, the install operation is considered a success.
+Otherwise, the install operation will be marked as failed, and the application is reverted to its previous version.
 
   #### Example
 	```javascript
@@ -110,12 +110,12 @@ Otherwise, the apply operation will be marked as failed, and the application is 
 	    console.log("An error occurred. " + error);
 	};
 	
-	var onApplySuccess = function () {
-	    console.log("Apply succeeded. Reloading the application...");
+	var onInstallSuccess = function () {
+	    console.log("Install succeeded. Reloading the application...");
 	};
 	
 	var onPackageDownloaded = function (localPackage) {
-	    localPackage.apply(onApplySuccess, onError);
+	    localPackage.install(onInstallSuccess, onError);
 	};
 	
 	var onUpdateCheck = function (remotePackage) {
@@ -142,7 +142,7 @@ Contains details about an update package that is available for download.
 - __isMandatory__: Flag indicating if the update is mandatory. (Boolean)
 - __packageHash__: The hash value of the package. (String)
 - __packageSize__: The size of the package, in bytes. (Number)
-- __failedApply__: Boolean flag indicating if this update package was previously attempted and the update failed. (Boolean)
+- __failedInstall__: Boolean flag indicating if this update package was previously attempted and the update failed. (Boolean)
 - __downloadUrl__: The URL at which the package is available for download. (String)
 
 ### Methods
@@ -155,7 +155,7 @@ Contains details about an update package that is available for download.
 	
 	var onPackageDownloaded = function (localPackage) {
 	    console.log("Package downloaded at: " + localPackage.localPath);
-	    // you can now update your application to the downloaded version by calling localPackage.apply()
+	    // you can now update your application to the downloaded version by calling localPackage.install()
 	};
 	
 	var onUpdateCheck = function (remotePackage) {
@@ -236,7 +236,7 @@ window.codePush.getCurrentPackage(onPackageSuccess, onError);
 codePush.notifyApplicationReady(notifySucceeded, notifyFailed);
 ```
 Notifies the plugin that the update operation succeeded.
-Calling this function is required if a rollbackTimeout parameter is passed to your ```LocalPackage.apply``` call.
+Calling this function is required if a rollbackTimeout parameter is passed to your ```LocalPackage.install``` call.
 If automatic rollback was not used, calling this function is not required and will result in a noop.
 - __notifySucceeded__: Optional callback invoked if the plugin was successfully notified.
 - __notifyFailed__: Optional callback invoked in case of an error during notifying the plugin.
@@ -249,13 +249,13 @@ var onError = function (error) {
     console.log("An error occurred. " + error);
 };
 
-var onApplySuccess = function () {
-    console.log("Apply succeeded. Reloading the application...");
+var onInstallSuccess = function () {
+    console.log("Installation succeeded. Reloading the application...");
 };
 
 var onPackageDownloaded = function (localPackage) {
     // set the rollbackTimeout to 10s
-    localPackage.apply(onApplySuccess, onError, 10000);
+    localPackage.install(onInstallSuccess, onError, 10000);
 };
 
 var onUpdateCheck = function (remotePackage) {
@@ -264,7 +264,7 @@ var onUpdateCheck = function (remotePackage) {
     } else {
         // The hash of each previously reverted package is stored for later use. 
         // This way, we avoid going into an infinite bad update/revert loop.
-        if (!remotePackage.failedApply) {
+        if (!remotePackage.failedInstall) {
             console.log("A CodePush update is available. Package hash: " + remotePackage.packageHash);
             remotePackage.download(onPackageDownloaded, onError);
         } else {
@@ -294,7 +294,7 @@ var app = {
 codePush.sync(syncCallback, syncOptions);
 ```
 Convenience method for installing updates in one method call.
-This method is provided for simplicity, and its behavior can be replicated by using window.codePush.checkForUpdate(), RemotePackage's download() and LocalPackage's apply() methods.
+This method is provided for simplicity, and its behavior can be replicated by using window.codePush.checkForUpdate(), RemotePackage's download() and LocalPackage's install() methods.
 The algorithm of this method is the following:
 - Check for an update on the CodePush server.
   - If an update is available
@@ -302,7 +302,7 @@ The algorithm of this method is the following:
     - If the update is not mandatory and the confirmMessage is set in options, the user will be asked if they want to update to the latest version. If they decline, the syncCallback will be invoked with SyncStatus.UPDATE_IGNORED status.
     - Otherwise, the update package will be downloaded and applied with no user interaction.
 - If no update is available on the server, the syncCallback will be invoked with the SyncStatus.UP_TO_DATE status.
-- If an error ocurrs during checking for update, downloading or applying it, the syncCallback will be invoked with the SyncStatus.ERROR status.
+- If an error ocurrs during checking for update, downloading or installing it, the syncCallback will be invoked with the SyncStatus.ERROR status.
 
 - __syncCallback__: Optional callback to be called with the status of the sync operation. The callback will be called only once, and the possible statuses are defined by the SyncStatus enum.
 - __syncOptions__: Optional SyncOptions parameter configuring the behavior of the sync operation.
@@ -317,7 +317,7 @@ Interface defining several options for customizing the [sync](#codepushsync) ope
 - __mandatoryContinueButtonLabel__: The label of the continue button in case of a mandatory update. (string)
 - __appendReleaseDescription__: Flag indicating if the update description provided by the CodePush server should be displayed in the dialog box appended to the update message. Defaults to false. (boolean)
 - __descriptionPrefix__: Optional prefix to add to the release description. (string)
-- __rollbackTimeout__: Optional time interval, in milliseconds, to wait for a [notifyApplicationReady()](#codepushnotifyapplicationready) call before marking the apply as failed and reverting to the previous version. Sync calls [notifyApplicationReady()](#codepushnotifyapplicationready) internally, so if you use sync() in your updated version of the application, there is no need to call [notifyApplicationReady()](#codepushnotifyapplicationready) again. By default, the rollback functionality is disabled - the parameter defaults to 0. (number)
+- __rollbackTimeout__: Optional time interval, in milliseconds, to wait for a [notifyApplicationReady()](#codepushnotifyapplicationready) call before marking the install as failed and reverting to the previous version. Sync calls [notifyApplicationReady()](#codepushnotifyapplicationready) internally, so if you use sync() in your updated version of the application, there is no need to call [notifyApplicationReady()](#codepushnotifyapplicationready) again. By default, the rollback functionality is disabled - the parameter defaults to 0. (number)
 - __ignoreFailedUpdates__: Optional boolean flag. If set, updates available on the server for which and update was attempted and rolled back will be ignored. Defaults to true. (boolean)
 
 ### Example

@@ -12,7 +12,7 @@ var app = {
     },
     // Update DOM on a Received Event
     receivedDeviceReady: function () {
-        document.getElementById("deviceready").innerText = "Device is ready (scenario - apply)";
+        document.getElementById("deviceready").innerText = "Device is ready (scenario - install)";
         console.log('Received Event: deviceready');
     },
     checkForUpdates: function () {
@@ -37,19 +37,19 @@ var app = {
     },
     downloadSuccess: function (localPackage) {
         console.log("Download succeeded.");
-        localPackage.apply(app.applySuccess, app.applyError);
+        localPackage.install(app.installSuccess, app.installError);
     },
     downloadError: function (error) {
         console.log("Download error.");
         app.sendTestMessage("DOWNLOAD_ERROR");
     },
-    applySuccess: function () {
+    installSuccess: function () {
         console.log("Update installed.");
         app.sendTestMessage("UPDATE_INSTALLED");
     },
-    applyError: function (error) {
-        console.log("Apply error.");
-        app.sendTestMessage("APPLY_ERROR");
+    installError: function (error) {
+        console.log("Install error.");
+        app.sendTestMessage("INSTALL_ERROR");
     },
     sendTestMessage: function (message, args) {
         var xhr = new XMLHttpRequest();

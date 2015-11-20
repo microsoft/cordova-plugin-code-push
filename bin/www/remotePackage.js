@@ -37,7 +37,7 @@ var RemotePackage = (function (_super) {
                 var downloadSuccess = function (fileEntry) {
                     _this.currentFileTransfer = null;
                     fileEntry.file(function (file) {
-                        NativeAppInfo.isFailedUpdate(_this.packageHash, function (applyFailed) {
+                        NativeAppInfo.isFailedUpdate(_this.packageHash, function (installFailed) {
                             var localPackage = new LocalPackage();
                             localPackage.deploymentKey = _this.deploymentKey;
                             localPackage.description = _this.description;
@@ -46,7 +46,7 @@ var RemotePackage = (function (_super) {
                             localPackage.isMandatory = _this.isMandatory;
                             localPackage.packageHash = _this.packageHash;
                             localPackage.isFirstRun = false;
-                            localPackage.failedApply = applyFailed;
+                            localPackage.failedInstall = installFailed;
                             localPackage.localPath = fileEntry.toInternalURL();
                             CodePushUtil.logMessage("Package download success: " + JSON.stringify(localPackage));
                             successCallback && successCallback(localPackage);

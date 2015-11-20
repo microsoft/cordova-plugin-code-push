@@ -12,7 +12,7 @@ var app = {
     },
     // Update DOM on a Received Event
     receivedDeviceReady: function () {
-        document.getElementById("deviceready").innerText = "Device is ready (scenario - applyWithRevert)";
+        document.getElementById("deviceready").innerText = "Device is ready (scenario - installWithRevert)";
         console.log('Received Event: deviceready');
     },
     checkForUpdates: function () {
@@ -26,7 +26,7 @@ var app = {
             app.sendTestMessage("CHECK_UP_TO_DATE");
         }
         else {
-            if (remotePackage.failedApply) {
+            if (remotePackage.failedInstall) {
                 app.sendTestMessage("UPDATE_FAILED_PREVIOUSLY");
             } else {
                 console.log("There is an update available. Remote package:" + JSON.stringify(remotePackage));
@@ -42,19 +42,19 @@ var app = {
     downloadSuccess: function (localPackage) {
         console.log("Download succeeded.");
         /* Wait for 5s before we revert the application if notifyApplicationReady is not invoked. */
-        localPackage.apply(app.applySuccess, app.applyError, 5000);
+        localPackage.install(app.installSuccess, app.installError, 5000);
     },
     downloadError: function (error) {
         console.log("Download error.");
         app.sendTestMessage("DOWNLOAD_ERROR");
     },
-    applySuccess: function () {
-        console.log("Apply success.");
+    installSuccess: function () {
+        console.log("Install success.");
         app.sendTestMessage("UPDATE_INSTALLED");
     },
-    applyError: function (error) {
-        console.log("Apply error.");
-        app.sendTestMessage("APPLY_ERROR");
+    installError: function (error) {
+        console.log("Install error.");
+        app.sendTestMessage("INSTALL_ERROR");
     },
     sendTestMessage: function (message, args) {
         var xhr = new XMLHttpRequest();
