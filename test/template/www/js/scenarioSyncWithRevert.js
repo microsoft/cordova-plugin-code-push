@@ -19,8 +19,6 @@ var app = {
                 app.sendTestMessage("SYNC_STATUS", [status]);
             },
             {
-                mandatoryUpdateMessage: undefined,
-                optionalUpdateMessage: undefined,
                 rollbackTimeout: 3000
             });
     },

@@ -27,6 +27,10 @@
         <js-module src="bin/www/syncStatus.js" name="syncStatus">
             <clobbers target="SyncStatus" />
         </js-module>
+        
+        <js-module src="bin/www/installMode.js" name="installMode">
+            <clobbers target="InstallMode" />
+        </js-module>
 
         <js-module src="bin/www/codePushUtil.js" name="codePushUtil">
             <runs/>

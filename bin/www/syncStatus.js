@@ -21,10 +21,4 @@ var SyncStatus;
     SyncStatus[SyncStatus["DOWNLOADING_PACKAGE"] = 6] = "DOWNLOADING_PACKAGE";
     SyncStatus[SyncStatus["INSTALLING_UPDATE"] = 7] = "INSTALLING_UPDATE";
 })(SyncStatus || (SyncStatus = {}));
-var InstallMode;
-(function (InstallMode) {
-    InstallMode[InstallMode["IMMEDIATE"] = 0] = "IMMEDIATE";
-    InstallMode[InstallMode["ON_NEXT_RESTART"] = 1] = "ON_NEXT_RESTART";
-    InstallMode[InstallMode["ON_NEXT_RESUME"] = 2] = "ON_NEXT_RESUME";
-})(InstallMode || (InstallMode = {}));
 module.exports = SyncStatus;
