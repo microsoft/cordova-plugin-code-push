@@ -25,30 +25,24 @@ var LocalPackage = (function (_super) {
     function LocalPackage() {
         _super.apply(this, arguments);
     }
-    LocalPackage.prototype.install = function (installSuccess, errorCallbackOrRollbackTimeout, rollbackTimeout) {
+    LocalPackage.prototype.install = function (installSuccess, errorCallback, installOptions) {
         var _this = this;
         try {
             CodePushUtil.logMessage("Installing update package ...");
-            var timeout = 0;
-            var installError;
-            if (typeof rollbackTimeout === "number") {
-                timeout = rollbackTimeout;
+            if (!installOptions) {
+                installOptions = LocalPackage.getDefaultInstallOptions();
             }
-            else if (!rollbackTimeout && typeof errorCallbackOrRollbackTimeout === "number") {
-                timeout = errorCallbackOrRollbackTimeout;
+            else {
+                CodePushUtil.copyUnassignedMembers(LocalPackage.getDefaultInstallOptions(), installOptions);
             }
-            installError = function (error) {
-                var errorCallback;
-                if (typeof errorCallbackOrRollbackTimeout === "function") {
-                    errorCallback = errorCallbackOrRollbackTimeout;
-                }
+            var installError = function (error) {
                 CodePushUtil.invokeErrorCallback(error, errorCallback);
                 Sdk.reportStatus(AcquisitionStatus.DeploymentFailed);
             };
             var newPackageLocation = LocalPackage.VersionsDir + "/" + this.packageHash;
             var donePackageFileCopy = function (deployDir) {
                 _this.localPath = deployDir.fullPath;
-                _this.finishInstall(deployDir, timeout, installSuccess, installError);
+                _this.finishInstall(deployDir, installOptions, installSuccess, installError);
             };
             var newPackageUnzipped = function (unzipError) {
                 if (unzipError) {
@@ -85,16 +79,7 @@ var LocalPackage = (function (_super) {
             installError && installError(new Error("An error ocurred while installing the package. " + CodePushUtil.getErrorMessage(e)));
         }
     };
-    LocalPackage.prototype.cleanOldPackage = function (oldPackage, cleanPackageCallback) {
-        if (oldPackage && oldPackage.localPath) {
-            FileUtil.deleteDirectory(oldPackage.localPath, cleanPackageCallback);
-        }
-        else {
-            cleanPackageCallback(new Error("The package could not be found."), null);
-        }
-    };
-    ;
-    LocalPackage.prototype.finishInstall = function (deployDir, timeout, installSuccess, installError) {
+    LocalPackage.prototype.finishInstall = function (deployDir, installOptions, installSuccess, installError) {
         var _this = this;
         LocalPackage.getCurrentOrDefaultPackage(function (oldPackage) {
             LocalPackage.backupPackageInformationFile(function (backupError) {
@@ -104,28 +89,14 @@ var LocalPackage = (function (_super) {
                         installError && installError(writeMetadataError);
                     }
                     else {
-                        var silentCleanup = function (cleanCallback) {
-                            FileUtil.deleteDirectory(LocalPackage.DownloadDir, function (e1) {
-                                _this.cleanOldPackage(oldPackage, function (e2) {
-                                    cleanCallback(e1 || e2, null);
-                                });
-                            });
-                        };
                         var invokeSuccessAndInstall = function () {
                             CodePushUtil.logMessage("Install succeeded.");
                             installSuccess && installSuccess();
-                            cordova.exec(function () { }, function () { }, "CodePush", "install", [deployDir.fullPath, timeout.toString()]);
+                            cordova.exec(function () { }, function () { }, "CodePush", "install", [deployDir.fullPath, installOptions.rollbackTimeout.toString(), installOptions.installMode.toString()]);
                         };
                         var preInstallSuccess = function () {
                             Sdk.reportStatus(AcquisitionStatus.DeploymentSucceeded);
-                            if (timeout > 0) {
-                                invokeSuccessAndInstall();
-                            }
-                            else {
-                                silentCleanup(function (cleanupError) {
-                                    invokeSuccessAndInstall();
-                                });
-                            }
+                            invokeSuccessAndInstall();
                         };
                         var preInstallFailure = function (preInstallError) {
                             CodePushUtil.logError("Preinstall failure.", preInstallError);
@@ -350,6 +321,15 @@ var LocalPackage = (function (_super) {
     };
     LocalPackage.getPackageInfoOrNull = function (packageFile, packageSuccess, packageError) {
         LocalPackage.getPackage(packageFile, packageSuccess, packageSuccess.bind(null, null));
+    };
+    LocalPackage.getDefaultInstallOptions = function () {
+        if (!LocalPackage.DefaultInstallOptions) {
+            LocalPackage.DefaultInstallOptions = {
+                rollbackTimeout: 0,
+                installMode: InstallMode.ON_NEXT_RESTART,
+            };
+        }
+        return LocalPackage.DefaultInstallOptions;
     };
     LocalPackage.RootDir = "codepush";
     LocalPackage.DownloadDir = LocalPackage.RootDir + "/download";

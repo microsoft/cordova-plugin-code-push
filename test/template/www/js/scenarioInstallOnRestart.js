@@ -12,7 +12,7 @@ var app = {
     },
     // Update DOM on a Received Event
     receivedDeviceReady: function () {
-        document.getElementById("deviceready").innerText = "Device is ready (scenario - install immediately)";
+        document.getElementById("deviceready").innerText = "Device is ready (scenario - install on next restart)";
         console.log('Received Event: deviceready');
     },
     checkForUpdates: function () {
@@ -37,7 +37,7 @@ var app = {
     },
     downloadSuccess: function (localPackage) {
         console.log("Download succeeded.");
-        localPackage.install(app.installSuccess, app.installError, { installMode: InstallMode.IMMEDIATE });
+        localPackage.install(app.installSuccess, app.installError, { installMode: InstallMode.ON_NEXT_RESTART });
     },
     downloadError: function (error) {
         console.log("Download error.");

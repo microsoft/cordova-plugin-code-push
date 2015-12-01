@@ -86,16 +86,16 @@ interface ILocalPackage extends IPackage {
     isFirstRun: boolean;
     
     /**
-    * Installs this package to the application. The application will be reloaded with this package and on every application launch this package will be loaded.
-    * If the rollbackTimeout parameter is provided, the application will wait for a navigator.codePush.notifyApplicationReady() for the given number of milliseconds.
-    * If navigator.codePush.notifyApplicationReady() is called before the time period specified by rollbackTimeout, the install operation is considered a success.
-    * Otherwise, the install operation will be marked as failed, and the application is reverted to its previous version.
-    * 
-    * @param installSuccess Callback invoked if the install operation succeeded. 
-    * @param installError Optional callback inovoked in case of an error.
-    * @param rollbackTimeout Optional time interval, in milliseconds, to wait for a notifyApplicationReady() call before marking the install as failed and reverting to the previous version.
-    */
-    install(installSuccess: SuccessCallback<void>, installError?: ErrorCallback, rollbackTimeout?: number): void;
+     * Applies this package to the application. The application will be reloaded with this package and on every application launch this package will be loaded.
+     * If the rollbackTimeout parameter is provided, the application will wait for a navigator.codePush.notifyApplicationReady() for the given number of milliseconds.
+     * If navigator.codePush.notifyApplicationReady() is called before the time period specified by rollbackTimeout, the install operation is considered a success.
+     * Otherwise, the install operation will be marked as failed, and the application is reverted to its previous version.
+     * 
+     * @param installSuccess Callback invoked if the install operation succeeded. 
+     * @param installError Optional callback inovoked in case of an error.
+     * @param installOptions Optional parameter used for customizing the installation behavior. 
+     */
+    install(installSuccess: SuccessCallback<void>, errorCallback?: ErrorCallback, installOptions?: InstallOptions): void;
 }
 
 /**
@@ -274,9 +274,9 @@ declare enum InstallMode {
 }
 
 /**
- * Defines the sync operation options.
+ * Defines the install operation options.
  */
-interface SyncOptions {
+interface InstallOptions {
     /**
      * Optional time interval, in milliseconds, to wait for a notifyApplicationReady() call before marking the install as failed and reverting to the previous version.
      * This is the rollbackTimeout parameter used for LocalPackage's install() method call. Defaults to zero, which disables rollback.
@@ -284,14 +284,19 @@ interface SyncOptions {
     rollbackTimeout?: number;
     
     /**
+     * Used to specity the InstallMode used for the install operation. This is optional and defaults to InstallMode.ON_NEXT_RESTART.
+     */
+    installMode?: InstallMode;
+}
+
+/**
+ * Defines the sync operation options.
+ */
+interface SyncOptions extends InstallOptions {
+    /**
      * Optional boolean flag. If set, previous updates which were rolled back will be ignored. Defaults to true.
      */
     ignoreFailedUpdates?: boolean;
-    
-    /**
-     * Used to specity the InstallMode used for the sync operation. This is optional and defaults to InstallMode.ON_NEXT_RESTART.
-     */
-    installMode?: InstallMode;
     
     /**
      * Used to enable, disable or customize the user interaction during sync.

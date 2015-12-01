@@ -36,13 +36,13 @@ var app = {
         }
     },
     checkError: function (error) {
-        console.log("An error ocurred while checking for errors.");
+        console.log("An error ocurred while checking for updates.");
         app.sendTestMessage("CHECK_ERROR");
     },
     downloadSuccess: function (localPackage) {
         console.log("Download succeeded.");
         /* Wait for 5s before we revert the application if notifyApplicationReady is not invoked. */
-        localPackage.install(app.installSuccess, app.installError, 5000);
+        localPackage.install(app.installSuccess, app.installError, { installMode: InstallMode.IMMEDIATE, rollbackTimeout: 5000 });
     },
     downloadError: function (error) {
         console.log("Download error.");

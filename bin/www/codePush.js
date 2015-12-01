@@ -95,19 +95,11 @@ var CodePush = (function () {
                     syncOptions.updateDialog = defaultDialogOptions;
                 }
                 else {
-                    for (var key in defaultDialogOptions) {
-                        if (syncOptions.updateDialog[key] === undefined || syncOptions.updateDialog[key] === null) {
-                            syncOptions.updateDialog[key] = defaultDialogOptions[key];
-                        }
-                    }
+                    CodePushUtil.copyUnassignedMembers(defaultDialogOptions, syncOptions.updateDialog);
                 }
             }
             var defaultOptions = this.getDefaultSyncOptions();
-            for (var key in defaultOptions) {
-                if (syncOptions[key] === undefined || syncOptions[key] === null) {
-                    syncOptions[key] = defaultOptions[key];
-                }
-            }
+            CodePushUtil.copyUnassignedMembers(defaultOptions, syncOptions);
         }
         window.codePush.notifyApplicationReady();
         var onError = function (error) {
@@ -118,7 +110,7 @@ var CodePush = (function () {
             syncCallback && syncCallback(SyncStatus.UPDATE_INSTALLED);
         };
         var onDownloadSuccess = function (localPackage) {
-            localPackage.install(onInstallSuccess, onError, syncOptions.rollbackTimeout);
+            localPackage.install(onInstallSuccess, onError, syncOptions);
         };
         var downloadAndInstallUpdate = function (remotePackage) {
             remotePackage.download(onDownloadSuccess, onError);

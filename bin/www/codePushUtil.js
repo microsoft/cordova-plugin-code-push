@@ -13,6 +13,13 @@
 var CodePushUtil = (function () {
     function CodePushUtil() {
     }
+    CodePushUtil.copyUnassignedMembers = function (fromParameter, toParameter) {
+        for (var key in fromParameter) {
+            if (toParameter[key] === undefined || toParameter[key] === null) {
+                toParameter[key] = fromParameter[key];
+            }
+        }
+    };
     CodePushUtil.getNodeStyleCallbackFor = function (successCallback, errorCallback) {
         return function (error, result) {
             if (error) {

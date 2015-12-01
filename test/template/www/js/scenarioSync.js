@@ -16,7 +16,7 @@ var app = {
         /* invoke sync with no UI options */
         window.codePush.sync(function (status) {
             app.sendTestMessage("SYNC_STATUS", [status]);
-        });
+        }, { installMode: InstallMode.IMMEDIATE });
     },
     sendTestMessage: function (message, args) {
         var xhr = new XMLHttpRequest();

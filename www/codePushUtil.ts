@@ -13,6 +13,17 @@ class CodePushUtil {
      * Tag used for logging to the console.
      */
     private static TAG: string = "[CodePush]";
+
+    /**
+     * Performs a copy of all members of fromParameter to toParameter, with the condition that they are unassigned or null in toParameter.
+     */
+    public static copyUnassignedMembers(fromParameter: any, toParameter: any) {
+        for (let key in fromParameter) {
+            if ((<any>toParameter)[key] === undefined || (<any>toParameter)[key] === null) {
+                (<any>toParameter)[key] = (<any>fromParameter)[key];
+            }
+        }
+    }
     
 	/**
      * Given two Cordova style callbacks for success and error, this function returns a node.js

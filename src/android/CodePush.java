@@ -1,12 +1,7 @@
 package com.microsoft.cordova;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.CountDownTimer;
-import android.util.Log;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.ConfigXmlParser;
@@ -15,38 +10,30 @@ import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CordovaWebView;
 import org.json.JSONException;
-import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
+/**
+ * Native Android CodePush Cordova Plugin.
+ */
 public class CodePush extends CordovaPlugin {
 
-    public static final String CODEPUSH_OLD_PACKAGE_PATH = "/codepush/oldPackage.json";
-    public static final String CODEPUSH_CURRENT_PACKAGE_PATH = "/codepush/currentPackage.json";
-    public static final String RESOURCES_BUNDLE = "resources.arsc";
     private static final String WWW_ASSET_PATH_PREFIX = "file:///android_asset/www/";
-    private static final String FAILED_UPDATES_PREFERENCE = "FAILED_UPDATES";
-    private static final String FAILED_UPDATES_KEY = "FAILED_UPDATES_KEY";
+    public static final String RESOURCES_BUNDLE = "resources.arsc";
 
     private CordovaWebView mainWebView;
+    private CodePushPackageManager codePushPackageManager;
     private boolean pluginDestroyed = false;
     private boolean didUpdate = false;
     private boolean didStartApp = false;
     private static boolean InstallSucceeded = false;
     private static boolean ShouldClearHistoryOnLoad = false;
 
-
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
+        codePushPackageManager = new CodePushPackageManager(cordova.getActivity());
         mainWebView = webView;
     }
 
@@ -67,7 +54,7 @@ public class CodePush extends CordovaPlugin {
         } else if ("install".equals(action)) {
             return execInstall(args, callbackContext);
         } else if ("updateSuccess".equals(action)) {
-            this.InstallSucceeded = true;
+            CodePush.InstallSucceeded = true;
             callbackContext.success();
             return true;
         } else if ("isFailedUpdate".equals(action)) {
@@ -84,7 +71,7 @@ public class CodePush extends CordovaPlugin {
         try {
             boolean isFirstRun = false;
             String packageHash = args.getString(0);
-            CodePushPackageMetadata currentPackageMetadata = getCurrentPackageMetadata();
+            CodePushPackageMetadata currentPackageMetadata = codePushPackageManager.getCurrentPackageMetadata();
             if (null != currentPackageMetadata) {
                 /* This is the first run for a package if we just updated, and the current package hash matches the one provided. */
                 isFirstRun = (null != packageHash
@@ -101,7 +88,7 @@ public class CodePush extends CordovaPlugin {
     private boolean execIsFailedUpdate(CordovaArgs args, CallbackContext callbackContext) {
         try {
             final String packageHash = args.getString(0);
-            boolean isFailedUpdate = this.isFailedUpdate(packageHash);
+            boolean isFailedUpdate = this.codePushPackageManager.isFailedUpdate(packageHash);
             callbackContext.success(isFailedUpdate ? 1 : 0);
         } catch (JSONException e) {
             callbackContext.error("Could not read the package hash: " + e.getMessage());
@@ -113,30 +100,18 @@ public class CodePush extends CordovaPlugin {
         try {
             final String startLocation = args.getString(0);
             final int updateSuccessTimeoutInMillis = args.optInt(1);
+            final InstallMode installMode = InstallMode.fromValue(args.optInt(2));
 
             File startPage = this.getStartPageForPackage(startLocation);
             if (startPage != null) {
                 /* start page file exists */
                 /* navigate to the start page */
-                this.navigateToFile(startPage);
-                /* this flag will clear when reloading the plugin or after a didUpdate call from the JS layer */
-                this.didUpdate = true;
-
-                if (updateSuccessTimeoutInMillis > 0) {
-                /* start countdown for success */
-                    CodePush.InstallSucceeded = false;
-                    final CountDownTimer successTimer = new CountDownTimer(updateSuccessTimeoutInMillis, updateSuccessTimeoutInMillis) {
-                        @Override
-                        public void onTick(long millisUntilFinished) {
-                        /* empty - we are not interested in progress updates */
-                        }
-
-                        @Override
-                        public void onFinish() {
-                            onSuccessTimerFinish();
-                        }
-                    };
-                    successTimer.start();
+                if (InstallMode.IMMEDIATE.equals(installMode)) {
+                    this.navigateToFile(startPage);
+                    markUpdateAndStartTimer(updateSuccessTimeoutInMillis);
+                } else {
+                    InstallOptions pendingInstall = new InstallOptions(updateSuccessTimeoutInMillis, installMode);
+                    this.codePushPackageManager.savePendingInstall(pendingInstall);
                 }
 
                 callbackContext.success();
@@ -147,6 +122,34 @@ public class CodePush extends CordovaPlugin {
             callbackContext.error("Cound not read webview URL: " + e.getMessage());
         }
         return true;
+    }
+
+    private void markUpdateAndStartTimer(int updateSuccessTimeoutInMillis) {
+    /* this flag will clear when reloading the plugin */
+        this.didUpdate = true;
+
+        if (updateSuccessTimeoutInMillis > 0) {
+            startRollbackTimeout(updateSuccessTimeoutInMillis);
+        } else {
+            cleanOldPackageSilently();
+        }
+    }
+
+    private void startRollbackTimeout(final int updateSuccessTimeoutInMillis) {
+    /* start countdown for success */
+        CodePush.InstallSucceeded = false;
+        final CountDownTimer successTimer = new CountDownTimer(updateSuccessTimeoutInMillis, updateSuccessTimeoutInMillis) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                /* empty - no need for progress updates */
+            }
+
+            @Override
+            public void onFinish() {
+                onSuccessTimerFinish();
+            }
+        };
+        successTimer.start();
     }
 
     private boolean execPreInstall(CordovaArgs args, CallbackContext callbackContext) {
@@ -168,7 +171,7 @@ public class CodePush extends CordovaPlugin {
 
     private boolean execGetAppVersion(CallbackContext callbackContext) {
         try {
-            String appVersionName = this.getAppVersionName();
+            String appVersionName = Utilities.getAppVersionName(this.cordova.getActivity());
             callbackContext.success(appVersionName);
         } catch (PackageManager.NameNotFoundException e) {
             callbackContext.error("Cannot get application version.");
@@ -177,7 +180,7 @@ public class CodePush extends CordovaPlugin {
     }
 
     private boolean execGetNativeBuildTime(CallbackContext callbackContext) {
-        long millis = this.getApkEntryBuildTime(RESOURCES_BUNDLE);
+        long millis = Utilities.getApkEntryBuildTime(RESOURCES_BUNDLE, this.cordova.getActivity());
         if (millis == -1) {
             callbackContext.error("Could not get the application buildstamp.");
         } else {
@@ -190,10 +193,10 @@ public class CodePush extends CordovaPlugin {
     private void onSuccessTimerFinish() {
         if (!CodePush.InstallSucceeded) {
             /* revert application to the previous version */
-            this.revertToPreviousVersion();
+            this.codePushPackageManager.revertToPreviousVersion();
             String url;
             try {
-                CodePushPackageMetadata currentPackageMetadata = this.getCurrentPackageMetadata();
+                CodePushPackageMetadata currentPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
                 url = this.getStartPageURLForPackage(currentPackageMetadata.localPath);
             } catch (Exception e) {
                 url = this.getConfigLaunchUrl();
@@ -211,12 +214,16 @@ public class CodePush extends CordovaPlugin {
             }
         } else {
             /* success updating - delete the old package */
-            try {
-                this.cleanOldPackage();
-            } catch (Exception e) {
-                    /* silently fail if there was an error during cleanup */
-                this.logException(e);
-            }
+            cleanOldPackageSilently();
+        }
+    }
+
+    private void cleanOldPackageSilently() {
+        try {
+            this.codePushPackageManager.cleanOldPackage();
+        } catch (Exception e) {
+            /* silently fail if there was an error during cleanup */
+            Utilities.logException(e);
         }
     }
 
@@ -229,90 +236,13 @@ public class CodePush extends CordovaPlugin {
         }
     }
 
-    private String getAppVersionName() throws PackageManager.NameNotFoundException {
-        Context context = cordova.getActivity();
-        String currentPackageName = context.getPackageName();
-        PackageInfo packageInfo = context.getPackageManager().getPackageInfo(currentPackageName, 0);
-        return packageInfo.versionName;
-    }
-
-    private long getApkEntryBuildTime(String entryName) {
-        ZipFile applicationFile;
-        long result = -1;
-
-        try {
-            Context context = this.cordova.getActivity();
-            ApplicationInfo ai = context.getPackageManager().getApplicationInfo(context.getPackageName(), 0);
-            applicationFile = new ZipFile(ai.sourceDir);
-            ZipEntry classesDexEntry = applicationFile.getEntry(entryName);
-            result = classesDexEntry.getTime();
-            applicationFile.close();
-        } catch (Exception e) {
-            /* empty, will return -1 */
-        }
-
-        return result;
-    }
-
-    private void revertToPreviousVersion() {
-        /* delete the failed update package */
-        CodePushPackageMetadata failedUpdateMetadata = this.getCurrentPackageMetadata();
-        if (failedUpdateMetadata != null && failedUpdateMetadata.packageHash != null) {
-            this.saveFailedUpdate(failedUpdateMetadata.packageHash);
-        }
-        File failedUpdateDir = new File(this.cordova.getActivity().getFilesDir() + failedUpdateMetadata.localPath);
-        if (failedUpdateDir.exists()) {
-            this.deleteEntryRecursively(failedUpdateDir);
-        }
-
-        /* replace the current file with the old one */
-        File currentFile = new File(this.cordova.getActivity().getFilesDir() + CodePush.CODEPUSH_CURRENT_PACKAGE_PATH);
-        File oldFile = new File(this.cordova.getActivity().getFilesDir() + CodePush.CODEPUSH_OLD_PACKAGE_PATH);
-
-        if (currentFile.exists()) {
-            currentFile.delete();
-        }
-
-        if (oldFile.exists()) {
-            oldFile.renameTo(currentFile);
-        }
-    }
-
-    private void cleanDeployments() {
-        File file = new File(this.cordova.getActivity().getFilesDir() + "/codepush");
-        if (file.exists()) {
-            this.deleteEntryRecursively(file);
-        }
-    }
-
-    private void cleanOldPackage() throws IOException, JSONException {
-        CodePushPackageMetadata oldPackageMetadata = this.getOldPackageMetadata();
-        if (oldPackageMetadata != null) {
-            File file = new File(this.cordova.getActivity().getFilesDir() + oldPackageMetadata.localPath);
-            if (file.exists()) {
-                this.deleteEntryRecursively(file);
-            }
-        }
-    }
-
-    private void deleteEntryRecursively(File entry) {
-        if (entry.isDirectory()) {
-            /* delete contents first */
-            for (File child : entry.listFiles()) {
-                this.deleteEntryRecursively(child);
-            }
-        }
-
-        entry.delete();
-    }
-
     private void handleAppStart() {
         try {
             /* check if we have a deployed package already */
-            CodePushPackageMetadata deployedPackageMetadata = getCurrentPackageMetadata();
+            CodePushPackageMetadata deployedPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
             if (deployedPackageMetadata != null) {
                 String deployedPackageTimeStamp = deployedPackageMetadata.nativeBuildTime;
-                long nativeBuildTime = this.getApkEntryBuildTime(RESOURCES_BUNDLE);
+                long nativeBuildTime = Utilities.getApkEntryBuildTime(RESOURCES_BUNDLE, this.cordova.getActivity());
                 if (nativeBuildTime != -1) {
                     String currentAppTimeStamp = String.valueOf(nativeBuildTime);
                     if ((deployedPackageTimeStamp != null) && (currentAppTimeStamp != null)) {
@@ -327,8 +257,8 @@ public class CodePush extends CordovaPlugin {
                             }
                         } else {
                             /* application updated in the store or via local deployment */
-                            this.cleanDeployments();
-                            this.clearFailedUpdates();
+                            this.codePushPackageManager.cleanDeployments();
+                            this.codePushPackageManager.clearFailedUpdates();
                         }
                     }
                 }
@@ -389,122 +319,6 @@ public class CodePush extends CordovaPlugin {
         return parser.getLaunchUrl();
     }
 
-    private CodePushPackageMetadata getOldPackageMetadata() {
-        String currentPackageFilePath = this.cordova.getActivity().getFilesDir() + CODEPUSH_OLD_PACKAGE_PATH;
-        return getPackageMetadata(currentPackageFilePath);
-    }
-
-    private CodePushPackageMetadata getCurrentPackageMetadata() {
-        String currentPackageFilePath = this.cordova.getActivity().getFilesDir() + CODEPUSH_CURRENT_PACKAGE_PATH;
-        return getPackageMetadata(currentPackageFilePath);
-    }
-
-    private CodePushPackageMetadata getPackageMetadata(String filePath) {
-        CodePushPackageMetadata result = null;
-
-        try {
-            File file = new File(filePath);
-            if (file.exists()) {
-                String content = readFileContents(file);
-                result = new CodePushPackageMetadata();
-                JSONObject jsonObject = new JSONObject(content);
-
-                if (jsonObject.has(CodePushPackageMetadata.JsonField.DeploymentKey)) {
-                    result.deploymentKey = jsonObject.getString(CodePushPackageMetadata.JsonField.DeploymentKey);
-                }
-
-                if (jsonObject.has(CodePushPackageMetadata.JsonField.Description)) {
-                    result.packageDescription = jsonObject.getString(CodePushPackageMetadata.JsonField.Description);
-                }
-
-                if (jsonObject.has(CodePushPackageMetadata.JsonField.Label)) {
-                    result.label = jsonObject.getString(CodePushPackageMetadata.JsonField.Label);
-                }
-
-                if (jsonObject.has(CodePushPackageMetadata.JsonField.AppVersion)) {
-                    result.appVersion = jsonObject.getString(CodePushPackageMetadata.JsonField.AppVersion);
-                }
-
-                if (jsonObject.has(CodePushPackageMetadata.JsonField.IsMandatory)) {
-                    result.isMandatory = jsonObject.getBoolean(CodePushPackageMetadata.JsonField.IsMandatory);
-                }
-
-                if (jsonObject.has(CodePushPackageMetadata.JsonField.PackageHash)) {
-                    result.packageHash = jsonObject.getString(CodePushPackageMetadata.JsonField.PackageHash);
-                }
-
-                if (jsonObject.has(CodePushPackageMetadata.JsonField.PackageSize)) {
-                    result.packageSize = jsonObject.getLong(CodePushPackageMetadata.JsonField.PackageSize);
-                }
-
-                if (jsonObject.has(CodePushPackageMetadata.JsonField.NativeBuildTime)) {
-                    result.nativeBuildTime = jsonObject.getString(CodePushPackageMetadata.JsonField.NativeBuildTime);
-                }
-
-                if (jsonObject.has(CodePushPackageMetadata.JsonField.LocalPath)) {
-                    result.localPath = jsonObject.getString(CodePushPackageMetadata.JsonField.LocalPath);
-                }
-            }
-        } catch (Exception e) {
-            logException(e);
-        }
-
-        return result;
-    }
-
-    private String readFileContents(File file) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        BufferedReader br = null;
-        try {
-            br = new BufferedReader(new FileReader(file));
-            String currentLine;
-
-            while ((currentLine = br.readLine()) != null) {
-                sb.append(currentLine);
-                sb.append('\n');
-            }
-        } finally {
-            if (br != null) {
-                br.close();
-            }
-        }
-
-        return sb.toString();
-    }
-
-    private void logException(Throwable e) {
-        Log.e(CodePush.class.getName(), "An error ocurred. " + e.getMessage(), e);
-    }
-
-    private void saveFailedUpdate(String hashCode) {
-        SharedPreferences preferences = cordova.getActivity().getSharedPreferences(CodePush.FAILED_UPDATES_PREFERENCE, Context.MODE_PRIVATE);
-        Set<String> failedUpdatesSet = preferences.getStringSet(CodePush.FAILED_UPDATES_KEY, null);
-        if (failedUpdatesSet == null) {
-            failedUpdatesSet = new HashSet<String>();
-        }
-
-        failedUpdatesSet.add(hashCode);
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putStringSet(CodePush.FAILED_UPDATES_KEY, failedUpdatesSet);
-        editor.commit();
-    }
-
-    private boolean isFailedUpdate(String hashCode) {
-        if (hashCode == null) {
-            return false;
-        }
-
-        SharedPreferences preferences = cordova.getActivity().getSharedPreferences(CodePush.FAILED_UPDATES_PREFERENCE, Context.MODE_PRIVATE);
-        Set<String> failedUpdatesSet = preferences.getStringSet(CodePush.FAILED_UPDATES_KEY, null);
-        return (failedUpdatesSet != null && failedUpdatesSet.contains(hashCode));
-    }
-
-    private void clearFailedUpdates() {
-        SharedPreferences preferences = cordova.getActivity().getSharedPreferences(CodePush.FAILED_UPDATES_PREFERENCE, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.clear();
-        editor.commit();
-    }
 
     /**
      * Called when the activity will start interacting with the user.
@@ -521,10 +335,24 @@ public class CodePush extends CordovaPlugin {
      */
     @Override
     public void onStart() {
-        if(! didStartApp){
-            /* Only call handle app start the first time this event happens. */
+        InstallOptions pendingInstall = this.codePushPackageManager.getPendingInstall();
+        if (!didStartApp) {
+            /* The application was just started. */
             didStartApp = true;
             handleAppStart();
+            /* Handle ON_NEXT_RESUME and ON_NEXT_RESTART pending installations */
+            if (pendingInstall != null && (InstallMode.ON_NEXT_RESUME.equals(pendingInstall.installMode) || InstallMode.ON_NEXT_RESTART.equals(pendingInstall.installMode))) {
+                this.markUpdateAndStartTimer(pendingInstall.rollbackTimeout);
+                this.codePushPackageManager.clearPendingInstall();
+            }
+        } else {
+            /* The application was resumed from the background. */
+            /* Handle ON_NEXT_RESUME pending installations. */
+            if ((pendingInstall != null) && (InstallMode.ON_NEXT_RESUME.equals(pendingInstall.installMode))) {
+                handleAppStart();
+                this.markUpdateAndStartTimer(pendingInstall.rollbackTimeout);
+                this.codePushPackageManager.clearPendingInstall();
+            }
         }
     }
 
@@ -548,32 +376,5 @@ public class CodePush extends CordovaPlugin {
         }
 
         return null;
-    }
-
-    /**
-     * Model class for the CodePush metadata stored alongside a package deployment.
-     */
-    private static class CodePushPackageMetadata {
-        public String deploymentKey;
-        public String packageDescription;
-        public String label;
-        public String appVersion;
-        public boolean isMandatory;
-        public String packageHash;
-        public long packageSize;
-        public String nativeBuildTime;
-        public String localPath;
-
-        final static class JsonField {
-            public static final String DeploymentKey = "deploymentKey";
-            public static final String Description = "description";
-            public static final String Label = "label";
-            public static final String AppVersion = "appVersion";
-            public static final String IsMandatory = "isMandatory";
-            public static final String PackageHash = "packageHash";
-            public static final String PackageSize = "packageSize";
-            public static final String NativeBuildTime = "nativeBuildTime";
-            public static final String LocalPath = "localPath";
-        }
     }
 }

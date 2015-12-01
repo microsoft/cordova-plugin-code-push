@@ -156,21 +156,13 @@ class CodePush implements CodePushCordovaPlugin {
                     syncOptions.updateDialog = defaultDialogOptions;
                 } else {
                     /* some options were specified, merge with default */
-                    for (let key in defaultDialogOptions) {
-                        if ((<any>syncOptions.updateDialog)[key] === undefined || (<any>syncOptions.updateDialog)[key] === null) {
-                            (<any>syncOptions.updateDialog)[key] = (<any>defaultDialogOptions)[key];
-                        }
-                    }
+                    CodePushUtil.copyUnassignedMembers(defaultDialogOptions, syncOptions.updateDialog);
                 }
             }
 
             /* Handle other options. Dialog options will not be overwritten. */
             var defaultOptions = this.getDefaultSyncOptions();
-            for (let key in defaultOptions) {
-                if ((<any>syncOptions)[key] === undefined || (<any>syncOptions)[key] === null) {
-                    (<any>syncOptions)[key] = (<any>defaultOptions)[key];
-                }
-            }
+            CodePushUtil.copyUnassignedMembers(defaultOptions, syncOptions);
         }
 
         window.codePush.notifyApplicationReady();
@@ -185,7 +177,7 @@ class CodePush implements CodePushCordovaPlugin {
         };
 
         var onDownloadSuccess = (localPackage: ILocalPackage) => {
-            localPackage.install(onInstallSuccess, onError, syncOptions.rollbackTimeout);
+            localPackage.install(onInstallSuccess, onError, syncOptions);
         };
 
         var downloadAndInstallUpdate = (remotePackage: RemotePackage) => {

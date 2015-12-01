@@ -12,7 +12,7 @@ var app = {
     },
     // Update DOM on a Received Event
     receivedDeviceReady: function () {
-        document.getElementById("deviceready").innerText = "Device is ready (scenario - install immediately)";
+        document.getElementById("deviceready").innerText = "Device is ready (scenario - install on next resume)";
         console.log('Received Event: deviceready');
     },
     checkForUpdates: function () {
@@ -26,9 +26,13 @@ var app = {
             app.sendTestMessage("CHECK_UP_TO_DATE");
         }
         else {
-            console.log("There is an update available. Remote package:" + JSON.stringify(remotePackage));
-            console.log("Downloading package...");
-            remotePackage.download(app.downloadSuccess, app.downloadError);
+            if (remotePackage.failedInstall) {
+                app.sendTestMessage("UPDATE_FAILED_PREVIOUSLY");
+            } else {
+                console.log("There is an update available. Remote package:" + JSON.stringify(remotePackage));
+                console.log("Downloading package...");
+                remotePackage.download(app.downloadSuccess, app.downloadError);
+            }
         }
     },
     checkError: function (error) {
@@ -37,7 +41,7 @@ var app = {
     },
     downloadSuccess: function (localPackage) {
         console.log("Download succeeded.");
-        localPackage.install(app.installSuccess, app.installError, { installMode: InstallMode.IMMEDIATE });
+        localPackage.install(app.installSuccess, app.installError, { installMode: InstallMode.ON_NEXT_RESUME, rollbackTimeout: 5000 });
     },
     downloadError: function (error) {
         console.log("Download error.");

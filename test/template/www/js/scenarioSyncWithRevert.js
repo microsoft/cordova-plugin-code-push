@@ -19,6 +19,7 @@ var app = {
                 app.sendTestMessage("SYNC_STATUS", [status]);
             },
             {
+                installMode: InstallMode.IMMEDIATE,
                 rollbackTimeout: 3000
             });
     },
