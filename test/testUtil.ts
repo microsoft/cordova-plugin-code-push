@@ -3,6 +3,9 @@
 
 "use strict";
 
+import child_process = require("child_process");
+import Q = require("q");
+
 export class TestUtil {
 
     public static MOCK_SERVER_OPTION_NAME: string = "--mockserver";
@@ -47,5 +50,42 @@ export class TestUtil {
         }
 
         return optionValue;
+    }
+    
+    /**
+     * Executes a child process returns its output as a string.
+     */
+    public static getProcessOutput(command: string, options?: child_process.IExecOptions, logOutput: boolean = false): Q.Promise<string> {
+        var deferred = Q.defer<string>();
+        var result = "";
+
+        options = options || {};
+        options.maxBuffer = 1024 * 500;
+
+        if (logOutput) {
+            console.log("Running command: " + command);
+        }
+
+        child_process.exec(command, options, (error: Error, stdout: Buffer, stderr: Buffer) => {
+
+            result += stdout;
+
+            if (logOutput) {
+                stdout && console.log(stdout);
+            }
+
+            if (stderr) {
+                console.error("" + stderr);
+            }
+
+            if (error) {
+                console.error("" + error);
+                deferred.reject(error);
+            } else {
+                deferred.resolve(result);
+            }
+        });
+
+        return deferred.promise;
     }
 }

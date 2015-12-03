@@ -259,6 +259,7 @@ public class CodePush extends CordovaPlugin {
                             /* application updated in the store or via local deployment */
                             this.codePushPackageManager.cleanDeployments();
                             this.codePushPackageManager.clearFailedUpdates();
+                            this.codePushPackageManager.clearPendingInstall();
                         }
                     }
                 }
@@ -319,7 +320,6 @@ public class CodePush extends CordovaPlugin {
         return parser.getLaunchUrl();
     }
 
-
     /**
      * Called when the activity will start interacting with the user.
      *
@@ -335,12 +335,12 @@ public class CodePush extends CordovaPlugin {
      */
     @Override
     public void onStart() {
-        InstallOptions pendingInstall = this.codePushPackageManager.getPendingInstall();
         if (!didStartApp) {
             /* The application was just started. */
             didStartApp = true;
             handleAppStart();
             /* Handle ON_NEXT_RESUME and ON_NEXT_RESTART pending installations */
+            InstallOptions pendingInstall = this.codePushPackageManager.getPendingInstall();
             if (pendingInstall != null && (InstallMode.ON_NEXT_RESUME.equals(pendingInstall.installMode) || InstallMode.ON_NEXT_RESTART.equals(pendingInstall.installMode))) {
                 this.markUpdateAndStartTimer(pendingInstall.rollbackTimeout);
                 this.codePushPackageManager.clearPendingInstall();
@@ -348,6 +348,7 @@ public class CodePush extends CordovaPlugin {
         } else {
             /* The application was resumed from the background. */
             /* Handle ON_NEXT_RESUME pending installations. */
+            InstallOptions pendingInstall = this.codePushPackageManager.getPendingInstall();
             if ((pendingInstall != null) && (InstallMode.ON_NEXT_RESUME.equals(pendingInstall.installMode))) {
                 handleAppStart();
                 this.markUpdateAndStartTimer(pendingInstall.rollbackTimeout);

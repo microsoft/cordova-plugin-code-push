@@ -436,7 +436,7 @@ describe("window.codePush", function() {
         });
     });
 
-    describe("#localPackage.installOnNextResume", function() {
+    describe("#localPackage.installOnNextResume.norevert", function() {
 
         after(() => {
             cleanupScenario();
@@ -471,7 +471,14 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                     console.log("Running project...");
-                    projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+                    var emulatorManager = targetPlatform.getOptionalEmulatorManager();
+                    if (emulatorManager) {
+                        emulatorManager.endRunningApplication(TestNamespace)
+                            .then(() => emulatorManager.launchInstalledApplication(TestNamespace));
+                    } else {
+                        projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+                    }
+
                     return deferred.promise;
                 })
                 .done(done, done);
@@ -507,7 +514,13 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.UPDATE_FAILED_PREVIOUSLY], deferred);
                     console.log("Running project...");
-                    projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+                    var emulatorManager = targetPlatform.getOptionalEmulatorManager();
+                    if (emulatorManager) {
+                        emulatorManager.endRunningApplication(TestNamespace)
+                            .then(() => emulatorManager.launchInstalledApplication(TestNamespace));
+                    } else {
+                        projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+                    }
                     return deferred.promise;
                 })
                 .done(done, done);
@@ -533,7 +546,13 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS, su.TestMessage.APPLICATION_NOT_REVERTED], deferred);
                     console.log("Running project...");
-                    projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+                    var emulatorManager = targetPlatform.getOptionalEmulatorManager();
+                    if (emulatorManager) {
+                        emulatorManager.endRunningApplication(TestNamespace)
+                            .then(() => emulatorManager.launchInstalledApplication(TestNamespace));
+                    } else {
+                        projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+                    }
                     return deferred.promise;
                 })
                 .done(done, done);
@@ -550,15 +569,9 @@ describe("window.codePush", function() {
             return setupScenario(ScenarioInstallOnRestart);
         });
 
-        var getMockResponse = (): su.CheckForUpdateResponseMock => {
-            var updateReponse = createMockResponse();
-            updateReponse.downloadURL = serverUrl + "/download";
-            return updateReponse;
-        };
-
         it("should handle install (on resume)", function(done) {
 
-            mockResponse = { updateInfo: getMockResponse() };
+            mockResponse = { updateInfo: getMockResponse(true) };
 
             setupUpdateProject(UpdateDeviceReady, "Update 1")
                 .then<string>(() => { return projectManager.createUpdateArchive(updatesDirectory, targetPlatform); })
@@ -575,7 +588,13 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                     console.log("Running project...");
-                    projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+                    var emulatorManager = targetPlatform.getOptionalEmulatorManager();
+                    if (emulatorManager) {
+                        emulatorManager.endRunningApplication(TestNamespace)
+                            .then(() => emulatorManager.launchInstalledApplication(TestNamespace));
+                    } else {
+                        projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+                    }
                     return deferred.promise;
                 })
                 .done(done, done);
@@ -611,7 +630,13 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.UPDATE_FAILED_PREVIOUSLY], deferred);
                     console.log("Running project...");
-                    projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+                    var emulatorManager = targetPlatform.getOptionalEmulatorManager();
+                    if (emulatorManager) {
+                        emulatorManager.endRunningApplication(TestNamespace)
+                            .then(() => emulatorManager.launchInstalledApplication(TestNamespace));
+                    } else {
+                        projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+                    }
                     return deferred.promise;
                 })
                 .done(done, done);
@@ -637,7 +662,13 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS, su.TestMessage.APPLICATION_NOT_REVERTED], deferred);
                     console.log("Running project...");
-                    projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+                    var emulatorManager = targetPlatform.getOptionalEmulatorManager();
+                    if (emulatorManager) {
+                        emulatorManager.endRunningApplication(TestNamespace)
+                            .then(() => emulatorManager.launchInstalledApplication(TestNamespace));
+                    } else {
+                        projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+                    }
                     return deferred.promise;
                 })
                 .done(done, done);

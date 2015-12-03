@@ -75,6 +75,15 @@
         <platform name="ios">
             <header-file src="src/ios/CodePush.h" />
             <source-file src="src/ios/CodePush.m" />
+            <header-file src="src/ios/CodePushPackageMetadata.h" />
+            <source-file src="src/ios/CodePushPackageMetadata.m" />
+            <header-file src="src/ios/CodePushPackageManager.h" />
+            <source-file src="src/ios/CodePushPackageManager.m" />
+            <header-file src="src/ios/Utilities.h" />
+            <source-file src="src/ios/Utilities.m" />
+            <header-file src="src/ios/InstallOptions.h" />
+            <source-file src="src/ios/InstallOptions.m" />
+            <header-file src="src/ios/InstallMode.h" />
             <config-file target="config.xml" parent="/*">
                 <feature name="CodePush">
                     <param name="ios-package" value="CodePush" />

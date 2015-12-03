@@ -126,7 +126,7 @@ gulp.task("default", function (callback) {
 
 gulp.task("test-ios", function (callback) {
     var command = "mocha";
-    var args = ["./bin/test", "--mockserver", "http://127.0.0.1:3000", "--platform", "ios", "--target", "iPhone-4s"];
+    var args = ["./bin/test", "--mockserver", "http://127.0.0.1:3000", "--platform", "ios"];
     executeCommand(command, args, callback);
 });
 
