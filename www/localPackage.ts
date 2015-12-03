@@ -107,14 +107,6 @@ class LocalPackage extends Package implements ILocalPackage {
         }
     }
 
-    // private cleanOldPackage(oldPackage: LocalPackage, cleanPackageCallback: Callback<void>): void {
-    //     if (oldPackage && oldPackage.localPath) {
-    //         FileUtil.deleteDirectory(oldPackage.localPath, cleanPackageCallback);
-    //     } else {
-    //         cleanPackageCallback(new Error("The package could not be found."), null);
-    //     }
-    // };
-
     private finishInstall(deployDir: DirectoryEntry, installOptions: InstallOptions, installSuccess: SuccessCallback<void>, installError: ErrorCallback): void {
         LocalPackage.getCurrentOrDefaultPackage((oldPackage: LocalPackage) => {
             LocalPackage.backupPackageInformationFile((backupError: Error) => {
@@ -124,14 +116,6 @@ class LocalPackage extends Package implements ILocalPackage {
                     if (writeMetadataError) {
                         installError && installError(writeMetadataError);
                     } else {
-                        // var silentCleanup = (cleanCallback: Callback<void>) => {
-                        //     FileUtil.deleteDirectory(LocalPackage.DownloadDir, (e1: Error) => {
-                        //         this.cleanOldPackage(oldPackage, (e2: Error) => {
-                        //             cleanCallback(e1 || e2, null);
-                        //         });
-                        //     });
-                        // };
-
                         var invokeSuccessAndInstall = () => {
                             CodePushUtil.logMessage("Install succeeded.");
                             installSuccess && installSuccess();
@@ -141,15 +125,8 @@ class LocalPackage extends Package implements ILocalPackage {
 
                         var preInstallSuccess = () => {
                             Sdk.reportStatus(AcquisitionStatus.DeploymentSucceeded);
-                            // if (installOptions.rollbackTimeout > 0) {
                             /* package will be cleaned up after success, on the native side */
                             invokeSuccessAndInstall();
-                            // } else {
-                            //     /* clean up the package, then invoke install */
-                            //     silentCleanup((cleanupError: Error) => {
-                            //         invokeSuccessAndInstall();
-                            //     });
-                            // }
                         };
 
                         var preInstallFailure = (preInstallError?: any) => {

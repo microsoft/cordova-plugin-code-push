@@ -27,13 +27,13 @@ var serverUrl = testUtil.readMockServerName();
 var targetEmulator = testUtil.readTargetEmulator();
 var targetPlatform: platform.IPlatform = platform.PlatformResolver.resolvePlatform(testUtil.readTargetPlatform());
 
-const AndroidKey = "mock-android-deployment-key";
-const IOSKey = "mock-ios-deployment-key";
+
 const TestAppName = "TestCodePush";
 const TestNamespace = "com.microsoft.codepush.test";
 const AcquisitionSDKPluginName = "code-push";
 
 const ScenarioCheckForUpdatePath = "js/scenarioCheckForUpdate.js";
+const ScenarioCheckForUpdateCustomKey = "js/scenarioCheckForUpdateCustomKey.js";
 const ScenarioDownloadUpdate = "js/scenarioDownloadUpdate.js";
 const ScenarioInstall = "js/scenarioInstall.js";
 const ScenarioInstallOnNextResume = "js/scenarioInstallOnResume.js";
@@ -52,6 +52,7 @@ var app: any;
 var server: any;
 var mockResponse: any;
 var testMessageCallback: (requestBody: any) => void;
+var updateCheckCallback: (requestBody: any) => void;
 var mockUpdatePackagePath: string;
 
 function cleanupScenario() {
@@ -72,8 +73,10 @@ function setupScenario(scenarioPath: string): Q.Promise<void> {
     app.use(bodyparser.urlencoded({ extended: true }));
 
     app.get("/updateCheck", function(req: any, res: any) {
+        updateCheckCallback && updateCheckCallback(req);
         res.send(mockResponse);
         console.log("Update check called from the app.");
+        console.log("Request: " + req);
     });
 
     app.get("/download", function(req: any, res: any) {
@@ -84,12 +87,16 @@ function setupScenario(scenarioPath: string): Q.Promise<void> {
         console.log("Application reported a test message.");
         console.log("Body: " + JSON.stringify(req.body));
         res.sendStatus(200);
-        testMessageCallback(req.body);
+        testMessageCallback && testMessageCallback(req.body);
     });
 
     server = app.listen(3000);
 
-    return projectManager.setupTemplate(testRunDirectory, templatePath, serverUrl, AndroidKey, IOSKey, TestAppName, TestNamespace, scenarioPath)
+    return projectManager.setupTemplate(
+        testRunDirectory, templatePath, serverUrl,
+        platform.Android.getInstance().getDefaultDeploymentKey(),
+        platform.IOS.getInstance().getDefaultDeploymentKey(),
+        TestAppName, TestNamespace, scenarioPath)
         .then<void>(() => { return projectManager.addPlatform(testRunDirectory, targetPlatform); })
         .then<void>(() => { return projectManager.addPlugin(testRunDirectory, AcquisitionSDKPluginName); })
         .then<void>(() => { return projectManager.addPlugin(testRunDirectory, thisPluginPath); })
@@ -139,7 +146,10 @@ var getMockResponse = (randomHash: boolean): su.CheckForUpdateResponseMock => {
 
 function setupUpdateProject(scenarioPath: string, version: string): Q.Promise<void> {
     console.log("Creating an update at location: " + updatesDirectory);
-    return projectManager.setupTemplate(updatesDirectory, templatePath, serverUrl, AndroidKey, IOSKey, TestAppName, TestNamespace, scenarioPath, version)
+    return projectManager.setupTemplate(updatesDirectory, templatePath, serverUrl,
+        platform.Android.getInstance().getDefaultDeploymentKey(),
+        platform.IOS.getInstance().getDefaultDeploymentKey(),
+        TestAppName, TestNamespace, scenarioPath, version)
         .then<void>(() => { return projectManager.addPlatform(updatesDirectory, targetPlatform); })
         .then<void>(() => { return projectManager.addPlugin(testRunDirectory, AcquisitionSDKPluginName); })
         .then<void>(() => { return projectManager.addPlugin(updatesDirectory, thisPluginPath); })
@@ -176,6 +186,7 @@ describe("window.codePush", function() {
         console.log("Cleaning up!");
         mockResponse = undefined;
         testMessageCallback = undefined;
+        updateCheckCallback = undefined;
     });
 
     describe("#window.codePush.checkForUpdate", function() {
@@ -242,7 +253,17 @@ describe("window.codePush", function() {
                     assert.equal(remotePackage.label, updateReponse.label);
                     assert.equal(remotePackage.packageHash, updateReponse.packageHash);
                     assert.equal(remotePackage.packageSize, updateReponse.packageSize);
+                    assert.equal(remotePackage.deploymentKey, targetPlatform.getDefaultDeploymentKey());
                     done();
+                } catch (e) {
+                    done(e);
+                }
+            };
+
+            updateCheckCallback = (request: any) => {
+                try {
+                    assert.notEqual(null, request);
+                    assert.equal(request.query.deploymentKey, targetPlatform.getDefaultDeploymentKey());
                 } catch (e) {
                     done(e);
                 }
@@ -268,6 +289,36 @@ describe("window.codePush", function() {
             projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
         });
     });
+
+    describe("#window.codePush.checkForUpdate.customKey", function() {
+
+        before(() => {
+            return setupScenario(ScenarioCheckForUpdateCustomKey);
+        });
+
+        after(() => {
+            cleanupScenario();
+        });
+
+        it("should handle update scenario", function(done) {
+            var updateReponse = createMockResponse();
+            mockResponse = { updateInfo: updateReponse };
+
+            updateCheckCallback = (request: any) => {
+                try {
+                    assert.notEqual(null, request);
+                    assert.equal(request.query.deploymentKey, "CUSTOM-DEPLOYMENT-KEY");
+                    done();
+                } catch (e) {
+                    done(e);
+                }
+            };
+
+            console.log("Running project...");
+            projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+        });
+    });
+
 
     describe("#remotePackage.download", function() {
 

@@ -11,23 +11,35 @@ import HttpRequester = require("./httpRequester");
  */
 class Sdk {
 
-    private static Instance: AcquisitionManager;
+    private static DefaultAcquisitionManager: AcquisitionManager;
+    private static DefaultConfiguration: Configuration;
     
     /**
      * Reads the CodePush configuration and creates an AcquisitionManager instance using it.
      */
-    public static getAcquisitionManager(callback: Callback<AcquisitionManager>): void {
-        if (Sdk.Instance) {
-            callback(null, Sdk.Instance);
+    public static getAcquisitionManager(callback: Callback<AcquisitionManager>, userDeploymentKey?: string): void {
+
+        var resolveManager = (defaultInstance: AcquisitionManager): void => {
+            if (userDeploymentKey) {
+                var customConfiguration: Configuration = { deploymentKey: userDeploymentKey, serverUrl: Sdk.DefaultConfiguration.serverUrl, ignoreAppVersion: Sdk.DefaultConfiguration.ignoreAppVersion };
+                var customAcquisitionManager: AcquisitionManager = new AcquisitionManager(new HttpRequester(), customConfiguration);
+                callback(null, customAcquisitionManager);
+            } else {
+                callback(null, Sdk.DefaultAcquisitionManager);
+            }
+        };
+
+        if (Sdk.DefaultAcquisitionManager) {
+            resolveManager(Sdk.DefaultAcquisitionManager);
         } else {
             NativeAppInfo.getServerURL((serverError: Error, serverURL: string) => {
                 NativeAppInfo.getDeploymentKey((depolymentKeyError: Error, deploymentKey: string) => {
                     if (!serverURL || !deploymentKey) {
                         callback(new Error("Could not get the CodePush configuration. Please check your config.xml file."), null);
                     } else {
-                        var configuration: Configuration = { deploymentKey: deploymentKey, serverUrl: serverURL, ignoreAppVersion: false };
-                        Sdk.Instance = new AcquisitionManager(new HttpRequester(), configuration);
-                        callback(null, Sdk.Instance);
+                        Sdk.DefaultConfiguration = { deploymentKey: deploymentKey, serverUrl: serverURL, ignoreAppVersion: false };
+                        Sdk.DefaultAcquisitionManager = new AcquisitionManager(new HttpRequester(), Sdk.DefaultConfiguration);
+                        resolveManager(Sdk.DefaultAcquisitionManager);
                     }
                 });
             });

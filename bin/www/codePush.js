@@ -29,7 +29,7 @@ var CodePush = (function () {
     CodePush.prototype.getCurrentPackage = function (packageSuccess, packageError) {
         return LocalPackage.getPackageInfoOrNull(LocalPackage.PackageInfoFile, packageSuccess, packageError);
     };
-    CodePush.prototype.checkForUpdate = function (querySuccess, queryError) {
+    CodePush.prototype.checkForUpdate = function (querySuccess, queryError, deploymentKey) {
         try {
             var callback = function (error, remotePackageOrUpdateNotification) {
                 if (error) {
@@ -78,7 +78,7 @@ var CodePush = (function () {
                         CodePushUtil.invokeErrorCallback(error, queryError);
                     });
                 }
-            });
+            }, deploymentKey);
         }
         catch (e) {
             CodePushUtil.invokeErrorCallback(new Error("An error occurred while querying for updates." + CodePushUtil.getErrorMessage(e)), queryError);
@@ -149,7 +149,7 @@ var CodePush = (function () {
                 }
             }
         };
-        window.codePush.checkForUpdate(onUpdate, onError);
+        window.codePush.checkForUpdate(onUpdate, onError, syncOptions.deploymentKey);
     };
     CodePush.prototype.getDefaultSyncOptions = function () {
         if (!CodePush.DefaultSyncOptions) {
@@ -157,7 +157,8 @@ var CodePush = (function () {
                 rollbackTimeout: 0,
                 ignoreFailedUpdates: true,
                 installMode: InstallMode.ON_NEXT_RESTART,
-                updateDialog: false
+                updateDialog: false,
+                deploymentKey: undefined
             };
         }
         return CodePush.DefaultSyncOptions;

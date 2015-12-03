@@ -16,6 +16,16 @@ export class CheckForUpdateResponseMock {
 }
 
 /**
+ * The model class of the codePush.checkForUpdate() request to the server.
+ */
+export class UpdateCheckRequestMock {
+    deploymentKey: string;
+    appVersion: string;
+    packageHash: string;
+    isCompanion: boolean;
+}
+
+/**
  * Contains all the messages sent from the application to the mock server during tests.
  */
 export class TestMessage {

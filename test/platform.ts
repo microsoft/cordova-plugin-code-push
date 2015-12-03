@@ -25,6 +25,11 @@ export interface IPlatform {
      * This challenges the tests since we rely on the app timestamp in our logic for finding out if the application was updated through the app store.
      */
     getOptionalEmulatorManager(): IEmulatorManager;
+    
+    /**
+     * Gets the default deployment key.
+     */
+    getDefaultDeploymentKey(): string;
 }
 
 /**
@@ -69,6 +74,10 @@ export class Android implements IPlatform {
         All interaction with the emulator is done using the Cordova CLI. */
         return null;
     }
+
+    public getDefaultDeploymentKey(): string {
+        return "mock-android-deployment-key";
+    }
 }
 
 /**
@@ -100,6 +109,10 @@ export class IOS implements IPlatform {
 
     public getOptionalEmulatorManager(): IEmulatorManager {
         return this.emulatorManager;
+    }
+
+    public getDefaultDeploymentKey(): string {
+        return "mock-ios-deployment-key";
     }
 }
 

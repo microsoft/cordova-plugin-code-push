@@ -63,8 +63,9 @@ class CodePush implements CodePushCordovaPlugin {
      *                     The callback takes one RemotePackage parameter. A non-null package is a valid update.
      *                     A null package means the application is up to date for the current native application version.
      * @param queryError Optional callback invoked in case of an error.
+     * @param deploymentKey Optional deployment key that overrides the config.xml setting.
      */
-    public checkForUpdate(querySuccess: SuccessCallback<RemotePackage>, queryError?: ErrorCallback): void {
+    public checkForUpdate(querySuccess: SuccessCallback<RemotePackage>, queryError?: ErrorCallback, deploymentKey?: string): void {
         try {
             var callback: Callback<RemotePackage | NativeUpdateNotification> = (error: Error, remotePackageOrUpdateNotification: IRemotePackage | NativeUpdateNotification) => {
                 if (error) {
@@ -115,7 +116,7 @@ class CodePush implements CodePushCordovaPlugin {
                         CodePushUtil.invokeErrorCallback(error, queryError);
                     });
                 }
-            });
+            }, deploymentKey);
         } catch (e) {
             CodePushUtil.invokeErrorCallback(new Error("An error occurred while querying for updates." + CodePushUtil.getErrorMessage(e)), queryError);
         }
@@ -222,7 +223,7 @@ class CodePush implements CodePushCordovaPlugin {
             }
         };
 
-        window.codePush.checkForUpdate(onUpdate, onError);
+        window.codePush.checkForUpdate(onUpdate, onError, syncOptions.deploymentKey);
     }
 
     /**
@@ -235,7 +236,8 @@ class CodePush implements CodePushCordovaPlugin {
                 rollbackTimeout: 0,
                 ignoreFailedUpdates: true,
                 installMode: InstallMode.ON_NEXT_RESTART,
-                updateDialog: false
+                updateDialog: false,
+                deploymentKey: undefined
             };
         }
 
