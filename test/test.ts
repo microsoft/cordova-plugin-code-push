@@ -739,33 +739,35 @@ describe("window.codePush", function() {
             var noUpdateReponse = createDefaultResponse();
             noUpdateReponse.isAvailable = false;
             noUpdateReponse.appVersion = "0.0.1";
-
             mockResponse = { updateInfo: noUpdateReponse };
 
-            testMessageCallback = (requestBody: any) => {
-                try {
-                    assert(su.areEqual(requestBody, new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UP_TO_DATE])));
-                    done();
-                } catch (e) {
-                    done(e);
-                }
-            };
-
-            console.log("Running project...");
-            projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+            Q({})
+                .then<void>(p => {
+                    var deferred = Q.defer<void>();
+                    testMessageCallback = verifyMessages([new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_CHECKING_FOR_UPDATE]),
+                        new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UP_TO_DATE])],
+                        deferred);
+                    console.log("Running project...");
+                    projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+                    return deferred.promise;
+                })
+                .done(done, done);
         });
 
         it("should handle error during check for update scenario", function(done) {
             mockResponse = "invalid {{ json";
 
-            testMessageCallback = (requestBody: any) => {
-                try {
-                    assert(su.areEqual(requestBody, new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_ERROR])));
-                    done();
-                } catch (e) {
-                    done(e);
-                }
-            };
+            Q({})
+                .then<void>(p => {
+                    var deferred = Q.defer<void>();
+                    testMessageCallback = verifyMessages([new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_CHECKING_FOR_UPDATE]),
+                        new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_ERROR])],
+                        deferred);
+                    console.log("Running project...");
+                    projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+                    return deferred.promise;
+                })
+                .done(done, done);
 
             console.log("Running project...");
             projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
@@ -776,14 +778,18 @@ describe("window.codePush", function() {
             invalidUrlResponse.downloadURL = path.join(templatePath, "invalid_path.zip");
             mockResponse = { updateInfo: invalidUrlResponse };
 
-            testMessageCallback = (requestBody: any) => {
-                try {
-                    assert(su.areEqual(requestBody, new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_ERROR])));
-                    done();
-                } catch (e) {
-                    done(e);
-                }
-            };
+            Q({})
+                .then<void>(p => {
+                    var deferred = Q.defer<void>();
+                    testMessageCallback = verifyMessages([new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_CHECKING_FOR_UPDATE]),
+                        new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_DOWNLOADING_PACKAGE]),
+                        new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_ERROR])],
+                        deferred);
+                    console.log("Running project...");
+                    projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+                    return deferred.promise;
+                })
+                .done(done, done);
 
             console.log("Running project...");
             projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
@@ -798,7 +804,12 @@ describe("window.codePush", function() {
                 .then<void>((updatePath: string) => {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
-                    testMessageCallback = verifyMessages([new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED]), su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
+                    testMessageCallback = verifyMessages([
+                        new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_CHECKING_FOR_UPDATE]),
+                        new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_DOWNLOADING_PACKAGE]),
+                        new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_INSTALLING_UPDATE]),
+                        new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED]),
+                        su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                     console.log("Running project...");
                     projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
                     return deferred.promise;
@@ -828,8 +839,12 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([
+                        new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_CHECKING_FOR_UPDATE]),
+                        new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_DOWNLOADING_PACKAGE]),
+                        new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_INSTALLING_UPDATE]),
                         new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED]),
                         su.TestMessage.DEVICE_READY_AFTER_UPDATE,
+                        new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_CHECKING_FOR_UPDATE]),
                         new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UP_TO_DATE])], deferred);
                     console.log("Running project...");
                     projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
@@ -849,8 +864,13 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([
+                        new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_CHECKING_FOR_UPDATE]),
+                        new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_DOWNLOADING_PACKAGE]),
+                        new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_INSTALLING_UPDATE]),
                         new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED]),
                         su.TestMessage.DEVICE_READY_AFTER_UPDATE,
+                        new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_CHECKING_FOR_UPDATE]),
+                        new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_AWAITING_USER_ACTION]),
                         su.TestMessage.APPLICATION_NOT_REVERTED], deferred);
                     console.log("Running project...");
                     projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
