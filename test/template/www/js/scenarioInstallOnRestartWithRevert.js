@@ -12,7 +12,7 @@ var app = {
     },
     // Update DOM on a Received Event
     receivedDeviceReady: function () {
-        document.getElementById("deviceready").innerText = "Device is ready (scenario - check for update)";
+        document.getElementById("deviceready").innerText = "Device is ready (scenario - install on next restart)";
         console.log('Received Event: deviceready');
     },
     checkForUpdates: function () {
@@ -26,13 +26,34 @@ var app = {
             app.sendTestMessage("CHECK_UP_TO_DATE");
         }
         else {
-            console.log("There is an update available. Remote package:" + JSON.stringify(remotePackage));
-            app.sendTestMessage("CHECK_UPDATE_AVAILABLE", [remotePackage]);
+            if (remotePackage.failedInstall) {
+                app.sendTestMessage("UPDATE_FAILED_PREVIOUSLY");
+            } else {
+                console.log("There is an update available. Remote package:" + JSON.stringify(remotePackage));
+                console.log("Downloading package...");
+                remotePackage.download(app.downloadSuccess, app.downloadError);
+            }
         }
     },
     checkError: function (error) {
         console.log("An error occured while checking for updates.");
         app.sendTestMessage("CHECK_ERROR");
+    },
+    downloadSuccess: function (localPackage) {
+        console.log("Download succeeded.");
+        localPackage.install(app.installSuccess, app.installError, { installMode: InstallMode.ON_NEXT_RESTART, rollbackTimeout: 5000 });
+    },
+    downloadError: function (error) {
+        console.log("Download error.");
+        app.sendTestMessage("DOWNLOAD_ERROR");
+    },
+    installSuccess: function () {
+        console.log("Update installed.");
+        app.sendTestMessage("UPDATE_INSTALLED");
+    },
+    installError: function (error) {
+        console.log("Install error.");
+        app.sendTestMessage("INSTALL_ERROR");
     },
     sendTestMessage: function (message, args) {
         var xhr = new XMLHttpRequest();

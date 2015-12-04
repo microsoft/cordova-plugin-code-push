@@ -51,7 +51,7 @@ var app = {
             // Wait for 5s after the application started and check for updates.
             setTimeout(app.checkAndInstallUpdates, 5000);
             
-            // Notify the plugin that update succeeded. This is only required when using LocalPackage.apply with a rollbackTimeout parameter.
+            // Notify the plugin that update succeeded. This is only required when using LocalPackage.install with a rollbackTimeout parameter.
             // codePush.notifyApplicationReady();
 
         }, app.getErrorHandler("Error while retrieving the current package."));
@@ -98,7 +98,7 @@ var app = {
                 }
             }
 
-            // Ask the user if they want to download and apply the update
+            // Ask the user if they want to download and install the update
             navigator.notification.confirm(
                 'An update is available. Would you like to download and install it?',
                 onConfirm,
@@ -110,12 +110,12 @@ var app = {
     onDownloadSuccess: function (localPackage) {
         console.log("Local package downloaded. Local package: " + localPackage.localPath);
 
-        var applyCallback = function () {
-            console.log("Apply succeeded");
+        var installCallback = function () {
+            console.log("Install succeeded");
         };
 
-        console.log("Applying package...");
-        localPackage.apply(applyCallback, app.getErrorHandler("Apply failed."));
+        console.log("Installing package...");
+        localPackage.install(installCallback, app.getErrorHandler("Installation failed."), { installMode: InstallMode.IMMEDIATE });
     },
     // Returns an error handler that logs the error to the console and displays a notification containing the error message.
     getErrorHandler: function (message) {

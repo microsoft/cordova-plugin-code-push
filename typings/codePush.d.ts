@@ -39,7 +39,7 @@ interface IPackage {
     isMandatory: boolean;
     packageHash: string;
     packageSize: number;
-    failedApply: boolean;
+    failedInstall: boolean;
 }
 
 /**
@@ -56,8 +56,9 @@ interface IRemotePackage extends IPackage {
      * 
      * @param downloadSuccess Called with one parameter, the downloaded package information, once the download completed successfully.
      * @param downloadError Optional callback invoked in case of an error.
+     * @param downloadProgress Optional callback invoked during the download process. It is called several times with one DownloadProgress parameter.
      */
-    download(downloadSuccess: SuccessCallback<ILocalPackage>, downloadError?: ErrorCallback): void;
+    download(downloadSuccess: SuccessCallback<ILocalPackage>, downloadError?: ErrorCallback, downloadProgress?: SuccessCallback<DownloadProgress>): void;
     
     /**
      * Aborts the current download session, previously started with download().
@@ -85,16 +86,16 @@ interface ILocalPackage extends IPackage {
     isFirstRun: boolean;
     
     /**
-    * Applies this package to the application. The application will be reloaded with this package and on every application launch this package will be loaded.
-    * If the rollbackTimeout parameter is provided, the application will wait for a navigator.codePush.notifyApplicationReady() for the given number of milliseconds.
-    * If navigator.codePush.notifyApplicationReady() is called before the time period specified by rollbackTimeout, the apply operation is considered a success.
-    * Otherwise, the apply operation will be marked as failed, and the application is reverted to its previous version.
-    * 
-    * @param applySuccess Callback invoked if the apply operation succeeded. 
-    * @param applyError Optional callback inovoked in case of an error.
-    * @param rollbackTimeout Optional time interval, in milliseconds, to wait for a notifyApplicationReady() call before marking the apply as failed and reverting to the previous version.
-    */
-    apply(applySuccess: SuccessCallback<void>, applyError?: ErrorCallback, rollbackTimeout?: number): void;
+     * Applies this package to the application. The application will be reloaded with this package and on every application launch this package will be loaded.
+     * If the rollbackTimeout parameter is provided, the application will wait for a navigator.codePush.notifyApplicationReady() for the given number of milliseconds.
+     * If navigator.codePush.notifyApplicationReady() is called before the time period specified by rollbackTimeout, the install operation is considered a success.
+     * Otherwise, the install operation will be marked as failed, and the application is reverted to its previous version.
+     * 
+     * @param installSuccess Callback invoked if the install operation succeeded. 
+     * @param installError Optional callback inovoked in case of an error.
+     * @param installOptions Optional parameter used for customizing the installation behavior. 
+     */
+    install(installSuccess: SuccessCallback<void>, errorCallback?: ErrorCallback, installOptions?: InstallOptions): void;
 }
 
 /**
@@ -169,13 +170,14 @@ interface CodePushCordovaPlugin {
      *                     The callback takes one RemotePackage parameter. A non-null package is a valid update.
      *                     A null package means the application is up to date for the current native application version.
      * @param queryError Optional callback invoked in case of an error.
+     * @param deploymentKey Optional deployment key that overrides the config.xml setting.
      */
-    checkForUpdate(querySuccess: SuccessCallback<IRemotePackage>, queryError?: ErrorCallback): void;
+    checkForUpdate(querySuccess: SuccessCallback<IRemotePackage>, queryError?: ErrorCallback, deploymentKey?: string): void;
     
     /**
      * Notifies the plugin that the update operation succeeded and that the application is ready.
-     * Calling this function is required if a rollbackTimeout parameter is used for your LocalPackage.apply() call.
-     * If apply() is used without a rollbackTimeout, calling this function is a noop.
+     * Calling this function is required if a rollbackTimeout parameter is used for your LocalPackage.install() call.
+     * If install() is used without a rollbackTimeout, calling this function is a noop.
      * 
      * @param notifySucceeded Optional callback invoked if the plugin was successfully notified.
      * @param notifyFailed Optional callback invoked in case of an error during notifying the plugin.
@@ -184,7 +186,7 @@ interface CodePushCordovaPlugin {
 
     /**
      * Convenience method for installing updates in one method call.
-     * This method is provided for simplicity, and its behavior can be replicated by using window.codePush.checkForUpdate(), RemotePackage's download() and LocalPackage's apply() methods.
+     * This method is provided for simplicity, and its behavior can be replicated by using window.codePush.checkForUpdate(), RemotePackage's download() and LocalPackage's install() methods.
      *  
      * The algorithm of this method is the following:
      * - Checks for an update on the CodePush server.
@@ -195,14 +197,15 @@ interface CodePushCordovaPlugin {
      *           If they decline, the syncCallback will be invoked with SyncStatus.UPDATE_IGNORED. 
      *         - Otherwise, the update package will be downloaded and applied with no user interaction.
      * - If no update is available on the server, or if a previously rolled back update is available and the ignoreFailedUpdates is set to true, the syncCallback will be invoked with the SyncStatus.UP_TO_DATE.
-     * - If an error ocurrs during checking for update, downloading or applying it, the syncCallback will be invoked with the SyncStatus.ERROR.
+     * - If an error occurs during checking for update, downloading or installing it, the syncCallback will be invoked with the SyncStatus.ERROR.
      * 
      * @param syncCallback Optional callback to be called with the status of the sync operation.
      *                     The callback will be called only once, and the possible statuses are defined by the SyncStatus enum. 
      * @param syncOptions Optional SyncOptions parameter configuring the behavior of the sync operation.
+     * @param downloadProgress Optional callback invoked during the download process. It is called several times with one DownloadProgress parameter.
      * 
      */
-    sync(syncCallback?: SuccessCallback<SyncStatus>, syncOptions?: SyncOptions): void;
+    sync(syncCallback?: SuccessCallback<SyncStatus>, syncOptions?: SyncOptions, downloadProgress?: SuccessCallback<DownloadProgress>): void;
 }
 
 /**
@@ -216,9 +219,9 @@ declare enum SyncStatus {
     
     /**
      * An update is available, it has been downloaded, unzipped and copied to the deployment folder.
-     * After the completion of the callback invoked with SyncStatus.APPLY_SUCCESS, the application will be reloaded with the updated code and resources.
+     * After the completion of the callback invoked with SyncStatus.UPDATE_INSTALLED, the application will be reloaded with the updated code and resources.
      */
-    APPLY_SUCCESS,
+    UPDATE_INSTALLED,
     
     /**
      * An optional update is available, but the user declined to install it. The update was not downloaded.
@@ -229,24 +232,91 @@ declare enum SyncStatus {
      * An error happened during the sync operation. This might be an error while communicating with the server, downloading or unziping the update.
      * The console logs should contain more information about what happened. No update has been applied in this case.
      */
-    ERROR
+    ERROR,
+    
+    /**
+     * Intermediate status - the plugin is about to check for updates.
+     */
+    CHECKING_FOR_UPDATE,
+    
+    /**
+     * Intermediate status - a user dialog is about to be displayed. This status will be reported only if user interaction is enabled.
+     */
+    AWAITING_USER_ACTION,
+    
+    /**
+     * Intermediate status - the update package is about to be downloaded.
+     */
+    DOWNLOADING_PACKAGE,
+    
+    /**
+     * Intermediate status - the update package is about to be installed.
+     */
+    INSTALLING_UPDATE
+}
+
+/**
+ * Defines the available install modes for updates.
+ */
+declare enum InstallMode {
+    /**
+     * The update will be applied to the running application immediately. The application will be reloaded with the new content immediately.
+     */
+    IMMEDIATE,
+    
+    /**
+     * The update is downloaded but not installed immediately. The new content will be available the next time the application is started.
+     */
+    ON_NEXT_RESTART,
+    
+    /**
+     * The udpate is downloaded but not installed immediately. The new content will be available the next time the application is resumed or restarted, whichever event happends first.
+     */
+    ON_NEXT_RESUME
+}
+
+/**
+ * Defines the install operation options.
+ */
+interface InstallOptions {
+    /**
+     * Optional time interval, in milliseconds, to wait for a notifyApplicationReady() call before marking the install as failed and reverting to the previous version.
+     * This is the rollbackTimeout parameter used for LocalPackage's install() method call. Defaults to zero, which disables rollback.
+     */
+    rollbackTimeout?: number;
+    
+    /**
+     * Used to specity the InstallMode used for the install operation. This is optional and defaults to InstallMode.ON_NEXT_RESTART.
+     */
+    installMode?: InstallMode;
 }
 
 /**
  * Defines the sync operation options.
  */
-interface SyncOptions {
+interface SyncOptions extends InstallOptions {
     /**
-     * Optional time interval, in milliseconds, to wait for a notifyApplicationReady() call before marking the apply as failed and reverting to the previous version.
-     * This is the rollbackTimeout parameter used for LocalPackage's apply() method call.
-     */
-    rollbackTimeout?: number;
-    
-    /**
-     * Optional boolean flag. If set, previous updates which were rolled back will be ignored.
+     * Optional boolean flag. If set, previous updates which were rolled back will be ignored. Defaults to true.
      */
     ignoreFailedUpdates?: boolean;
     
+    /**
+     * Used to enable, disable or customize the user interaction during sync.
+     * If set to false, user interaction will be disabled. If set to true, the user will be alerted or asked to confirm new updates, based on whether the update is mandatory.
+     * To customize the user dialog, this option can be set to a custom UpdateDialogOptions instance.
+     */
+    updateDialog?: boolean | UpdateDialogOptions;
+    
+    /**
+     * Overrides the config.xml deployment key when checking for updates.
+     */
+    deploymentKey?: string;
+}
+
+/**
+ * Defines the configuration options for the alert or confirmation dialog
+ */
+interface UpdateDialogOptions {
     /**
      * If a mandatory update is available and this option is set, the message will be displayed to the user in an alert dialog before downloading and installing the update.
      * The user will not be able to cancel the operation, since the update is mandatory.
@@ -296,4 +366,12 @@ interface SyncOptions {
  */
 interface IDiffManifest {
     deletedFiles: string[];
+}
+
+/**
+ * Defines the format of the DownloadProgress object, used to send periodical update notifications on the progress of the update download.
+ */
+interface DownloadProgress {
+    totalBytes: number;
+    receivedBytes: number;
 }

@@ -17,7 +17,7 @@ var app = {
     },
     checkForUpdates: function () {
         console.log("Checking for updates...");
-        window.codePush.checkForUpdate(app.checkSuccess, app.checkError);
+        window.codePush.checkForUpdate(app.checkSuccess, app.checkError, "CUSTOM-DEPLOYMENT-KEY");
     },
     checkSuccess: function (remotePackage) {
         if (!remotePackage) {

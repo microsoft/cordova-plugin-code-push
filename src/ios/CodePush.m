@@ -1,29 +1,32 @@
 #import <Cordova/CDV.h>
 #import <Cordova/CDVConfigParser.h>
 #import "CodePush.h"
+#import "CodePushPackageMetadata.h"
+#import "CodePushPackageManager.h"
+#import "Utilities.h"
+#import "InstallOptions.h"
+#import "InstallMode.h"
 
 @implementation CodePush
 
 bool updateSuccess = false;
 bool didUpdate = false;
-NSString* const FailedUpdatesKey = @"FAILED_UPDATES";
-NSString* const OldPackageManifestName = @"oldPackage.json";
-NSString* const CurrentPackageManifestName = @"currentPackage.json";
+bool pendingInstall = false;
 
 - (void)onUpdateSuccessTimeout {
     if (!updateSuccess) {
-        [self revertToPreviousVersion];
-        CodePushPackageMetadata* currentMetadata = [self getCurrentPackageMetadata];
+        [CodePushPackageManager revertToPreviousVersion];
+        CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
         bool revertSuccess = (nil != currentMetadata && [self loadPackage:currentMetadata.localPath]);
         if (!revertSuccess) {
-            /* first update failed, go back to store version by reloading the controller */
-            [((CDVViewController *)self.viewController) viewDidLoad];
-            [((CDVViewController *)self.viewController) viewWillAppear:YES];
+            /* first update failed, go back to store version */
+            [self loadStoreVersion];
+            
         }
     }
     else {
         /* update success, delete the old package */
-        [self cleanOldPackage];
+        [CodePushPackageManager cleanOldPackage];
     }
 }
 
@@ -33,39 +36,62 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
-- (void)apply:(CDVInvokedUrlCommand *)command {
+- (void)install:(CDVInvokedUrlCommand *)command {
     CDVPluginResult* pluginResult = nil;
     
     NSString* location = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
-    if (nil == location) {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Cannot read the start URL."];
+    NSString* successTimeoutMillisString = [command argumentAtIndex:1 withDefault:nil andClass:[NSString class]];
+    NSString* installModeString = [command argumentAtIndex:2 withDefault:nil andClass:[NSString class]];
+    
+    InstallOptions* options = [[InstallOptions alloc] init];
+    [options setInstallMode:IMMEDIATE];
+    [options setRollbackTimeout:0];
+    
+    if (successTimeoutMillisString) {
+        [options setRollbackTimeout:[successTimeoutMillisString intValue]];
     }
-    else {
-        bool applied = [self loadPackage: location];
-        if (applied ) {
-            didUpdate = YES;
-            NSString* successTimeoutMillisString = [command argumentAtIndex:1 withDefault:nil andClass:[NSString class]];
-            if (successTimeoutMillisString) {
-                /* Start the revert timer */
-                int successTimeoutMillis = [successTimeoutMillisString intValue];
-                if (successTimeoutMillis > 0) {
-                    updateSuccess = NO;
-                    NSTimeInterval successTimeoutInterval = successTimeoutMillis / 1000;
-                    [NSTimer scheduledTimerWithTimeInterval:successTimeoutInterval target:self selector:@selector(onUpdateSuccessTimeout) userInfo:nil repeats:NO];
-                }
-            }
-            
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    
+    if (installModeString) {
+        [options setInstallMode:[installModeString intValue]];
+    }
+    
+    if ([options installMode] == IMMEDIATE) {
+        if (nil == location) {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Cannot read the start URL."];
         }
         else {
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"An error happened during package apply."];
+            bool applied = [self loadPackage: location];
+            if (applied) {
+                [self markUpdateAndStartTimer:[options rollbackTimeout]];
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+            }
+            else {
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"An error happened during package install."];
+            }
         }
+    }
+    else {
+        /* install on restart or on resume */
+        [CodePushPackageManager savePendingInstall:options];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     }
     
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
-- (void)preApply:(CDVInvokedUrlCommand *)command {
+- (void) markUpdateAndStartTimer:(NSInteger)updateSuccessTimeoutInMillis {
+    didUpdate = YES;
+    if (updateSuccessTimeoutInMillis > 0) {
+        updateSuccess = NO;
+        NSTimeInterval successTimeoutInterval = updateSuccessTimeoutInMillis / 1000;
+        [NSTimer scheduledTimerWithTimeInterval:successTimeoutInterval target:self selector:@selector(onUpdateSuccessTimeout) userInfo:nil repeats:NO];
+    }
+    else {
+        [CodePushPackageManager cleanOldPackage];
+    }
+}
+
+- (void)preInstall:(CDVInvokedUrlCommand *)command {
     CDVPluginResult* pluginResult = nil;
     
     NSString* location = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
@@ -95,7 +121,7 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
 
 
 - (void)getNativeBuildTime:(CDVInvokedUrlCommand *)command {
-    NSString* timeStamp = [self getApplicationTimestamp];
+    NSString* timeStamp = [Utilities getApplicationTimestamp];
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:timeStamp];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -113,12 +139,16 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
-- (void)pluginInitialize {
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)handleAppStart {
     // check if we have a deployed package
-    CodePushPackageMetadata* deployedPackageMetadata = [self getCurrentPackageMetadata];
+    CodePushPackageMetadata* deployedPackageMetadata = [CodePushPackageManager getCurrentPackageMetadata];
     if (deployedPackageMetadata) {
         NSString* deployedPackageNativeBuildTime = deployedPackageMetadata.nativeBuildTime;
-        NSString* applicationBuildTime = [self getApplicationTimestamp];
+        NSString* applicationBuildTime = [Utilities getApplicationTimestamp];
         
         if (deployedPackageNativeBuildTime != nil && applicationBuildTime != nil) {
             if ([deployedPackageNativeBuildTime isEqualToString: applicationBuildTime] ) {
@@ -129,91 +159,77 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
             }
             else {
                 // installed native version is different from package version => clean up deployed package and do not modify start page
-                [self cleanDeployments];
-                [self clearFailedUpdates];
+                [CodePushPackageManager cleanDeployments];
+                [CodePushPackageManager clearFailedUpdates];
+                [CodePushPackageManager clearPendingInstall];
             }
         }
     }
 }
 
--(void)revertToPreviousVersion {
-    /* clean the current package */
-    CodePushPackageMetadata* failedMetadata = [self getCurrentPackageMetadata];
-    if (nil != failedMetadata.packageHash) {
-        [self saveFailedUpdate:failedMetadata.packageHash];
-    }
-    [self cleanPackageDirectory:failedMetadata];
+- (void)pluginInitialize {
+    // register for "on resume" notifications
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillEnterForeground) name:UIApplicationWillEnterForegroundNotification object:nil];
     
-    /* replace the current metadata file with the old one */
-    NSString* libraryLocation = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-    NSArray* oldManifestArray = @[libraryLocation, @"NoCloud", @"codepush", OldPackageManifestName];
-    NSArray* currentManifestArray = @[libraryLocation, @"NoCloud", @"codepush", CurrentPackageManifestName];
-    
-    NSString* oldManifestLocation = [NSString pathWithComponents:oldManifestArray];
-    NSString* currentManifestLocation = [NSString pathWithComponents:currentManifestArray];
-    
-    if ([[NSFileManager defaultManager] fileExistsAtPath:currentManifestLocation]) {
-        [[NSFileManager defaultManager] removeItemAtPath:currentManifestLocation error:nil];
-    }
-    
-    /* move the old manifest to the curent location */
-    if ([[NSFileManager defaultManager] fileExistsAtPath:oldManifestLocation]) {
-        [[NSFileManager defaultManager] moveItemAtPath:oldManifestLocation toPath:currentManifestLocation error:nil];
-    }
-    
-    [self cleanDownloads];
-}
-
--(void)cleanOldPackage {
-    CodePushPackageMetadata* oldMetadata = [self getOldPackageMetadata];
-    
-    // delete the package folder
-    [self cleanPackageDirectory:oldMetadata];
-    
-    // delete the downloads folder
-    [self cleanDownloads];
-}
-
--(void)cleanDownloads {
-    NSString* libraryLocation = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-    NSArray* downloadFolderArray = @[libraryLocation, @"NoCloud", @"codepush", @"download"];
-    NSString* downloadFolderLocation = [NSString pathWithComponents:downloadFolderArray];
-    if ([[NSFileManager defaultManager] fileExistsAtPath: downloadFolderLocation]) {
-        [[NSFileManager defaultManager] removeItemAtPath:downloadFolderLocation error:nil];
+    [self handleAppStart];
+    InstallOptions* pendingInstall = [CodePushPackageManager getPendingInstall];
+    // handle both ON_NEXT_RESUME and ON_NEXT_RESTART - the application might have been killed after transitioning to the background
+    if (pendingInstall && (pendingInstall.installMode == ON_NEXT_RESTART || pendingInstall.installMode == ON_NEXT_RESUME)) {
+        [self markUpdateAndStartTimer:pendingInstall.rollbackTimeout];
+        [CodePushPackageManager clearPendingInstall];
     }
 }
 
--(void)cleanPackageDirectory:(CodePushPackageMetadata*)packageMetadata {
-    NSString* libraryLocation = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-    
-    if (nil != packageMetadata && nil != packageMetadata.localPath) {
-        // delete the package folder
-        NSArray* oldPackageDir = @[libraryLocation, @"NoCloud", packageMetadata.localPath];
-        NSString* oldPackageDirPath = [NSString pathWithComponents:oldPackageDir];
-        if ([[NSFileManager defaultManager] fileExistsAtPath: oldPackageDirPath]) {
-            [[NSFileManager defaultManager] removeItemAtPath:oldPackageDirPath error:nil];
+- (void)applicationWillEnterForeground {
+    InstallOptions* pendingInstall = [CodePushPackageManager getPendingInstall];
+    if (pendingInstall && pendingInstall.installMode == ON_NEXT_RESUME) {
+        CodePushPackageMetadata* deployedPackageMetadata = [CodePushPackageManager getCurrentPackageMetadata];
+        if (deployedPackageMetadata && deployedPackageMetadata.localPath) {
+            bool applied = [self loadPackage: deployedPackageMetadata.localPath];
+            if (applied) {
+                [self markUpdateAndStartTimer:pendingInstall.rollbackTimeout];
+                [CodePushPackageManager clearPendingInstall];
+            }
         }
-    }
-}
-
--(void)cleanDeployments {
-    // check if the file exists
-    NSString* libraryLocation = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-    NSArray* codePushDirectoryArray = @[libraryLocation, @"NoCloud", @"codepush" ];
-    NSString* codePushDirPath = [NSString pathWithComponents:codePushDirectoryArray];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:codePushDirPath]) {
-        [[NSFileManager defaultManager] removeItemAtPath:codePushDirPath error:nil];
     }
 }
 
 - (BOOL)loadPackage:(NSString*)packageLocation {
     NSURL* URL = [self getStartPageURLForLocalPackage:packageLocation];
     if (URL) {
-        [((CDVViewController *)self.viewController).webView loadRequest:[NSURLRequest requestWithURL:URL]];
+        [self loadURL:URL];
         return YES;
     }
     
     return NO;
+}
+
+- (void)loadURL:(NSURL*)url {
+    [((CDVViewController *)self.viewController).webView loadRequest:[NSURLRequest requestWithURL:url]];
+}
+
+- (void)loadStoreVersion {
+    NSString* mainBundlePath = [[NSBundle mainBundle] bundlePath];
+    NSString* configStartPage = [self getConfigLaunchUrl];
+    NSArray* realLocationArray = @[mainBundlePath, @"www", configStartPage];
+    NSString* mainPageLocation = [NSString pathWithComponents:realLocationArray];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:mainPageLocation]) {
+        NSURL* mainPagePath = [NSURL fileURLWithPath:mainPageLocation];
+        [self loadURL:mainPagePath];
+    }
+}
+
+- (NSString*)getConfigLaunchUrl
+{
+    CDVConfigParser* delegate = [[CDVConfigParser alloc] init];
+    NSString* configPath = [[NSBundle mainBundle] pathForResource:@"config" ofType:@"xml"];
+    NSURL* configUrl = [NSURL fileURLWithPath:configPath];
+    
+    NSXMLParser* configParser = [[NSXMLParser alloc] initWithContentsOfURL:configUrl];
+    [configParser setDelegate:((id < NSXMLParserDelegate >)delegate)];
+    [configParser parse];
+    
+    return delegate.startPage;
 }
 
 - (NSURL *)getStartPageURLForLocalPackage:(NSString*)packageLocation {
@@ -230,46 +246,11 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
     return nil;
 }
 
-- (NSString*)getConfigLaunchUrl
-{
-    CDVConfigParser* delegate = [[CDVConfigParser alloc] init];
-    NSString* configPath = [[NSBundle mainBundle] pathForResource:@"config" ofType:@"xml"];
-    NSURL* configUrl = [NSURL fileURLWithPath:configPath];
-    
-    NSXMLParser* configParser = [[NSXMLParser alloc] initWithContentsOfURL:configUrl];
-    [configParser setDelegate:((id < NSXMLParserDelegate >)delegate)];
-    [configParser parse];
-    
-    return delegate.startPage;
-}
-
 - (void)redirectStartPageToURL:(NSString*)packageLocation{
     NSURL* URL = [self getStartPageURLForLocalPackage:packageLocation];
     if (URL) {
         ((CDVViewController *)self.viewController).startPage = [URL absoluteString];
     }
-}
-
-- (NSString*)getApplicationTimestamp{
-    NSDate* applicationBuildTime = [self getApplicationBuildTime];
-    if (applicationBuildTime){
-        NSNumber* timestamp = [[NSNumber alloc] initWithDouble: floor([applicationBuildTime timeIntervalSince1970] * 1000)];
-        return [timestamp stringValue];
-    }
-    
-    return nil;
-}
-
-- (NSDate*)getApplicationBuildTime{
-    NSString *appPath = [[NSBundle mainBundle] bundlePath];
-    NSDictionary *executableAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:appPath error:nil];
-    return [executableAttributes objectForKey:@"NSFileModificationDate"];
-}
-
-- (void)getAppVersion:(CDVInvokedUrlCommand *)command {
-    NSString* version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:version];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
 - (void)isFailedUpdate:(CDVInvokedUrlCommand *)command {
@@ -279,7 +260,7 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Invalid package hash parameter."];
     }
     else {
-        BOOL failedHash = [self isFailedHash:packageHash];
+        BOOL failedHash = [CodePushPackageManager isFailedHash:packageHash];
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:failedHash ? 1 : 0];
     }
     
@@ -291,7 +272,7 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
     BOOL isFirstRun = NO;
     
     NSString* packageHash = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
-    CodePushPackageMetadata* currentPackageMetadata = [self getCurrentPackageMetadata];
+    CodePushPackageMetadata* currentPackageMetadata = [CodePushPackageManager getCurrentPackageMetadata];
     if (currentPackageMetadata) {
         isFirstRun = (nil != packageHash
                       && [packageHash length] > 0
@@ -303,79 +284,11 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
-- (BOOL)isFailedHash:(NSString*)packageHash {
-    NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
-    NSMutableArray* failedUpdates = [preferences objectForKey:FailedUpdatesKey];
-    return (nil != failedUpdates && [failedUpdates containsObject:packageHash]);
-}
-
-- (void)saveFailedUpdate:(NSString *)packageHash {
-    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
-    NSMutableArray* failedUpdates = [[preferences objectForKey:FailedUpdatesKey] mutableCopy];
-    if (nil == failedUpdates) {
-        failedUpdates = [[NSMutableArray alloc] init];
-    }
-    
-    [failedUpdates addObject:packageHash];
-    [preferences setObject:failedUpdates forKey:FailedUpdatesKey];
-    [preferences synchronize];
-}
-
-- (void)clearFailedUpdates {
-    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
-    [preferences removeObjectForKey:FailedUpdatesKey];
-}
-
-- (CodePushPackageMetadata*)parsePackageManifest:(NSString*)content {
-    if (content) {
-        NSData* manifestData = [content dataUsingEncoding:NSUTF8StringEncoding];
-        NSMutableDictionary *manifest = [NSJSONSerialization JSONObjectWithData:manifestData options:NSJSONReadingMutableContainers | NSJSONReadingMutableLeaves error:NULL];
-        
-        if (manifestData) {
-            CodePushPackageMetadata* packageMetadata = [[CodePushPackageMetadata alloc] init];
-            packageMetadata.deploymentKey = manifest[@"deploymentKey"];
-            packageMetadata.packageDescription = manifest[@"description"];
-            packageMetadata.label = manifest[@"label"];
-            packageMetadata.appVersion = manifest[@"appVersion"];
-            packageMetadata.isMandatory = manifest[@"isMandatory"];
-            packageMetadata.packageHash = manifest[@"packageHash"];
-            packageMetadata.packageSize = manifest[@"packageSize"];
-            packageMetadata.nativeBuildTime = manifest[@"nativeBuildTime"];
-            packageMetadata.localPath = manifest[@"localPath"];
-            return packageMetadata;
-        }
-    }
-    
-    return nil;
-}
-
-- (CodePushPackageMetadata*)getOldPackageMetadata {
-    return [self readPackageManifest:OldPackageManifestName];
-}
-
-- (CodePushPackageMetadata*)getCurrentPackageMetadata {
-    return [self readPackageManifest:CurrentPackageManifestName];
-}
-
-- (CodePushPackageMetadata*)readPackageManifest:(NSString*)manifestName {
-    // check if the file exists
-    NSString* libraryLocation = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-    NSArray* manifestLocationArray = @[libraryLocation, @"NoCloud", @"codepush", manifestName];
-    NSString* manifestLocation = [NSString pathWithComponents:manifestLocationArray];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:manifestLocation]) {
-        // read the package manifest
-        NSString* content = [NSString stringWithContentsOfFile:manifestLocation encoding:NSUTF8StringEncoding  error:NULL];
-        if (content != nil) {
-            // parse the content
-            return [self parsePackageManifest:content];
-        }
-    }
-    
-    return nil;
-    
+- (void)getAppVersion:(CDVInvokedUrlCommand *)command {
+    NSString* version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:version];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
 @end
 
-@implementation CodePushPackageMetadata
-@end

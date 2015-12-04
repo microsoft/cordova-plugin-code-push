@@ -16,6 +16,16 @@ export class CheckForUpdateResponseMock {
 }
 
 /**
+ * The model class of the codePush.checkForUpdate() request to the server.
+ */
+export class UpdateCheckRequestMock {
+    deploymentKey: string;
+    appVersion: string;
+    packageHash: string;
+    isCompanion: boolean;
+}
+
+/**
  * Contains all the messages sent from the application to the mock server during tests.
  */
 export class TestMessage {
@@ -24,8 +34,8 @@ export class TestMessage {
     public static CHECK_ERROR = "CHECK_ERROR";
     public static DOWNLOAD_SUCCEEDED = "DOWNLOAD_SUCCEEDED";
     public static DOWNLOAD_ERROR = "DOWNLOAD_ERROR";
-    public static APPLY_SUCCESS = "APPLY_SUCCESS";
-    public static APPLY_ERROR = "APPLY_ERROR";
+    public static UPDATE_INSTALLED = "UPDATE_INSTALLED";
+    public static INSTALL_ERROR = "INSTALL_ERROR";
     public static DEVICE_READY_AFTER_UPDATE = "DEVICE_READY_AFTER_UPDATE";
     public static UPDATE_FAILED_PREVIOUSLY = "UPDATE_FAILED_PREVIOUSLY";
     public static APPLICATION_NOT_REVERTED = "APPLICATION_NOT_REVERTED";
@@ -34,9 +44,13 @@ export class TestMessage {
     public static SYNC_STATUS = "SYNC_STATUS";
 
     public static SYNC_UP_TO_DATE = 0;
-    public static SYNC_APPLY_SUCCESS = 1;
+    public static SYNC_UPDATE_INSTALLED = 1;
     public static SYNC_UPDATE_IGNORED = 2;
     public static SYNC_ERROR = 3;
+    public static SYNC_CHECKING_FOR_UPDATE = 4;
+    public static SYNC_AWAITING_USER_ACTION = 5;
+    public static SYNC_DOWNLOADING_PACKAGE = 6;
+    public static SYNC_INSTALLING_UPDATE = 7;
 }
 
 /**

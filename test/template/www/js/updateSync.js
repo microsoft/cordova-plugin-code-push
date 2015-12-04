@@ -17,7 +17,7 @@ var app = {
         /* invoke sync with UI options such that the update will not be installed */
         window.codePush.sync(function (status) {
             app.sendTestMessage("SYNC_STATUS", [status]);
-        });
+        }, { installMode: InstallMode.IMMEDIATE, updateDialog: true });
         
         // Revert timeout is 5000. Wait for 6000 here to make sure the application was not reverted.
         setTimeout(function () {

@@ -27,6 +27,8 @@ class LocalPackage extends Package implements ILocalPackage {
     public static PackageInfoFile: string = "currentPackage.json";
     private static OldPackageInfoFile: string = "oldPackage.json";
     private static DiffManifestFile: string = "hotcodepush.json";
+
+    private static DefaultInstallOptions: InstallOptions;
     
     /**
      * The local storage path where this package is located.
@@ -39,34 +41,26 @@ class LocalPackage extends Package implements ILocalPackage {
     isFirstRun: boolean;
     
     /**
-    * Applies this package to the application. The application will be reloaded with this package and on every application launch this package will be loaded.
-    * If the rollbackTimeout parameter is provided, the application will wait for a navigator.codePush.notifyApplicationReady() for the given number of milliseconds.
-    * If navigator.codePush.notifyApplicationReady() is called before the time period specified by rollbackTimeout, the apply operation is considered a success.
-    * Otherwise, the apply operation will be marked as failed, and the application is reverted to its previous version.
-    * 
-    * @param applySuccess Callback invoked if the apply operation succeeded. 
-    * @param applyError Optional callback inovoked in case of an error.
-    * @param rollbackTimeout The time interval, in milliseconds, to wait for a notifyApplicationReady() call before marking the apply as failed and reverting to the previous version.
-    */
-    public apply(applySuccess: SuccessCallback<void>, errorCallbackOrRollbackTimeout?: ErrorCallback | number, rollbackTimeout?: number): void {
+     * Applies this package to the application. The application will be reloaded with this package and on every application launch this package will be loaded.
+     * If the rollbackTimeout parameter is provided, the application will wait for a navigator.codePush.notifyApplicationReady() for the given number of milliseconds.
+     * If navigator.codePush.notifyApplicationReady() is called before the time period specified by rollbackTimeout, the install operation is considered a success.
+     * Otherwise, the install operation will be marked as failed, and the application is reverted to its previous version.
+     * 
+     * @param installSuccess Callback invoked if the install operation succeeded. 
+     * @param installError Optional callback inovoked in case of an error.
+     * @param installOptions Optional parameter used for customizing the installation behavior. 
+     */
+    public install(installSuccess: SuccessCallback<void>, errorCallback?: ErrorCallback, installOptions?: InstallOptions) {
         try {
-            CodePushUtil.logMessage("Applying update package ...");
+            CodePushUtil.logMessage("Installing update package ...");
 
-            var timeout = 0;
-            var applyError: ErrorCallback;
-            
-            /* Handle parameters */
-            if (typeof rollbackTimeout === "number") {
-                timeout = rollbackTimeout;
-            } else if (!rollbackTimeout && typeof errorCallbackOrRollbackTimeout === "number") {
-                timeout = <number>errorCallbackOrRollbackTimeout;
+            if (!installOptions) {
+                installOptions = LocalPackage.getDefaultInstallOptions();
+            } else {
+                CodePushUtil.copyUnassignedMembers(LocalPackage.getDefaultInstallOptions(), installOptions);
             }
 
-            applyError = (error: Error): void => {
-                var errorCallback: ErrorCallback;
-                if (typeof errorCallbackOrRollbackTimeout === "function") {
-                    errorCallback = <ErrorCallback>errorCallbackOrRollbackTimeout;
-                }
+            var installError: ErrorCallback = (error: Error): void => {
                 CodePushUtil.invokeErrorCallback(error, errorCallback);
                 Sdk.reportStatus(AcquisitionStatus.DeploymentFailed);
             };
@@ -75,14 +69,14 @@ class LocalPackage extends Package implements ILocalPackage {
 
             var donePackageFileCopy = (deployDir: DirectoryEntry) => {
                 this.localPath = deployDir.fullPath;
-                this.finishApply(deployDir, timeout, applySuccess, applyError);
+                this.finishInstall(deployDir, installOptions, installSuccess, installError);
             };
 
             var newPackageUnzipped = (unzipError: any) => {
                 if (unzipError) {
-                    applyError && applyError(new Error("Could not unzip package. " + CodePushUtil.getErrorMessage(unzipError)));
+                    installError && installError(new Error("Could not unzip package. " + CodePushUtil.getErrorMessage(unzipError)));
                 } else {
-                    LocalPackage.handleDeployment(newPackageLocation, CodePushUtil.getNodeStyleCallbackFor<DirectoryEntry>(donePackageFileCopy, applyError));
+                    LocalPackage.handleDeployment(newPackageLocation, CodePushUtil.getNodeStyleCallbackFor<DirectoryEntry>(donePackageFileCopy, installError));
                 }
             };
 
@@ -90,7 +84,7 @@ class LocalPackage extends Package implements ILocalPackage {
                 var unzipPackage = () => {
                     FileUtil.getDataDirectory(LocalPackage.DownloadUnzipDir, true, (innerError: Error, unzipDir: DirectoryEntry) => {
                         if (innerError) {
-                            applyError && applyError(innerError);
+                            installError && installError(innerError);
                         } else {
                             zip.unzip(this.localPath, unzipDir.toInternalURL(), newPackageUnzipped);
                         }
@@ -102,73 +96,50 @@ class LocalPackage extends Package implements ILocalPackage {
                     directoryEntry.removeRecursively(() => {
                         unzipPackage();
                     }, (cleanupError: FileError) => {
-                        applyError && applyError(FileUtil.fileErrorToError(cleanupError));
+                        installError && installError(FileUtil.fileErrorToError(cleanupError));
                     });
                 } else {
                     unzipPackage();
                 }
             });
         } catch (e) {
-            applyError && applyError(new Error("An error ocurred while applying the package. " + CodePushUtil.getErrorMessage(e)));
+            installError && installError(new Error("An error occured while installing the package. " + CodePushUtil.getErrorMessage(e)));
         }
     }
 
-    private cleanOldPackage(oldPackage: LocalPackage, cleanPackageCallback: Callback<void>): void {
-        if (oldPackage && oldPackage.localPath) {
-            FileUtil.deleteDirectory(oldPackage.localPath, cleanPackageCallback);
-        } else {
-            cleanPackageCallback(new Error("The package could not be found."), null);
-        }
-    };
-
-    private finishApply(deployDir: DirectoryEntry, timeout: number, applySuccess: SuccessCallback<void>, applyError: ErrorCallback): void {
+    private finishInstall(deployDir: DirectoryEntry, installOptions: InstallOptions, installSuccess: SuccessCallback<void>, installError: ErrorCallback): void {
         LocalPackage.getCurrentOrDefaultPackage((oldPackage: LocalPackage) => {
             LocalPackage.backupPackageInformationFile((backupError: Error) => {
                 backupError && CodePushUtil.logMessage("First update: back up package information skipped. ");
                 /* continue on error, current package information is missing if this is the fist update */
                 this.writeNewPackageMetadata(deployDir, (writeMetadataError: Error) => {
                     if (writeMetadataError) {
-                        applyError && applyError(writeMetadataError);
+                        installError && installError(writeMetadataError);
                     } else {
-                        var silentCleanup = (cleanCallback: Callback<void>) => {
-                            FileUtil.deleteDirectory(LocalPackage.DownloadDir, (e1: Error) => {
-                                this.cleanOldPackage(oldPackage, (e2: Error) => {
-                                    cleanCallback(e1 || e2, null);
-                                });
-                            });
-                        };
-
-                        var invokeSuccessAndApply = () => {
-                            CodePushUtil.logMessage("Apply succeeded.");
-                            applySuccess && applySuccess();
+                        var invokeSuccessAndInstall = () => {
+                            CodePushUtil.logMessage("Install succeeded.");
+                            installSuccess && installSuccess();
                             /* no neeed for callbacks, the javascript context will reload */
-                            cordova.exec(() => { }, () => { }, "CodePush", "apply", [deployDir.fullPath, timeout.toString()]);
+                            cordova.exec(() => { }, () => { }, "CodePush", "install", [deployDir.fullPath, installOptions.rollbackTimeout.toString(), installOptions.installMode.toString()]);
                         };
 
-                        var preApplySuccess = () => {
+                        var preInstallSuccess = () => {
                             Sdk.reportStatus(AcquisitionStatus.DeploymentSucceeded);
-                            if (timeout > 0) {
-                                /* package will be cleaned up after success, on the native side */
-                                invokeSuccessAndApply();
-                            } else {
-                                /* clean up the package, then invoke apply */
-                                silentCleanup((cleanupError: Error) => {
-                                    invokeSuccessAndApply();
-                                });
-                            }
+                            /* package will be cleaned up after success, on the native side */
+                            invokeSuccessAndInstall();
                         };
 
-                        var preApplyFailure = (preApplyError?: any) => {
-                            CodePushUtil.logError("Preapply failure.", preApplyError);
-                            var error = new Error("An error has ocurred while applying the package. " + CodePushUtil.getErrorMessage(preApplyError));
-                            applyError && applyError(error);
+                        var preInstallFailure = (preInstallError?: any) => {
+                            CodePushUtil.logError("Preinstall failure.", preInstallError);
+                            var error = new Error("An error has occured while installing the package. " + CodePushUtil.getErrorMessage(preInstallError));
+                            installError && installError(error);
                         };
 
-                        cordova.exec(preApplySuccess, preApplyFailure, "CodePush", "preApply", [deployDir.fullPath]);
+                        cordova.exec(preInstallSuccess, preInstallFailure, "CodePush", "preInstall", [deployDir.fullPath]);
                     }
                 });
             });
-        }, applyError);
+        }, installError);
     }
 
     private static handleDeployment(newPackageLocation: string, deployCallback: Callback<DirectoryEntry>): void {
@@ -203,8 +174,8 @@ class LocalPackage extends Package implements ILocalPackage {
                     label: this.label,
                     packageHash: this.packageHash,
                     isFirstRun: false,
-                    failedApply: false,
-                    apply: undefined
+                    failedInstall: false,
+                    install: undefined
                 };
 
                 LocalPackage.writeCurrentPackageInformation(currentPackageMetadata, writeMetadataCallback);
@@ -377,14 +348,14 @@ class LocalPackage extends Package implements ILocalPackage {
         if (!metadata) {
             packageError && packageError(new Error("Invalid package metadata."));
         } else {
-            NativeAppInfo.isFailedUpdate(metadata.packageHash, (applyFailed: boolean) => {
+            NativeAppInfo.isFailedUpdate(metadata.packageHash, (installFailed: boolean) => {
                 NativeAppInfo.isFirstRun(metadata.packageHash, (isFirstRun: boolean) => {
                     var localPackage = new LocalPackage();
 
                     localPackage.appVersion = metadata.appVersion;
                     localPackage.deploymentKey = metadata.deploymentKey;
                     localPackage.description = metadata.description;
-                    localPackage.failedApply = applyFailed;
+                    localPackage.failedInstall = installFailed;
                     localPackage.isFirstRun = isFirstRun;
                     localPackage.label = metadata.label;
                     localPackage.localPath = metadata.localPath;
@@ -425,6 +396,21 @@ class LocalPackage extends Package implements ILocalPackage {
 
     public static getPackageInfoOrNull(packageFile: string, packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
         LocalPackage.getPackage(packageFile, packageSuccess, packageSuccess.bind(null, null));
+    }
+    
+    /**
+     * Returns the default options for the CodePush install operation.
+     * If the options are not defined yet, the static DefaultInstallOptions member will be instantiated.
+     */
+    private static getDefaultInstallOptions(): InstallOptions {
+        if (!LocalPackage.DefaultInstallOptions) {
+            LocalPackage.DefaultInstallOptions = {
+                rollbackTimeout: 0,
+                installMode: InstallMode.ON_NEXT_RESTART,
+            };
+        }
+
+        return LocalPackage.DefaultInstallOptions;
     }
 }
 

@@ -16,9 +16,19 @@ var HttpRequester = require("./httpRequester");
 var Sdk = (function () {
     function Sdk() {
     }
-    Sdk.getAcquisitionManager = function (callback) {
-        if (Sdk.Instance) {
-            callback(null, Sdk.Instance);
+    Sdk.getAcquisitionManager = function (callback, userDeploymentKey) {
+        var resolveManager = function (defaultInstance) {
+            if (userDeploymentKey) {
+                var customConfiguration = { deploymentKey: userDeploymentKey, serverUrl: Sdk.DefaultConfiguration.serverUrl, ignoreAppVersion: Sdk.DefaultConfiguration.ignoreAppVersion };
+                var customAcquisitionManager = new AcquisitionManager(new HttpRequester(), customConfiguration);
+                callback(null, customAcquisitionManager);
+            }
+            else {
+                callback(null, Sdk.DefaultAcquisitionManager);
+            }
+        };
+        if (Sdk.DefaultAcquisitionManager) {
+            resolveManager(Sdk.DefaultAcquisitionManager);
         }
         else {
             NativeAppInfo.getServerURL(function (serverError, serverURL) {
@@ -27,9 +37,9 @@ var Sdk = (function () {
                         callback(new Error("Could not get the CodePush configuration. Please check your config.xml file."), null);
                     }
                     else {
-                        var configuration = { deploymentKey: deploymentKey, serverUrl: serverURL, ignoreAppVersion: false };
-                        Sdk.Instance = new AcquisitionManager(new HttpRequester(), configuration);
-                        callback(null, Sdk.Instance);
+                        Sdk.DefaultConfiguration = { deploymentKey: deploymentKey, serverUrl: serverURL, ignoreAppVersion: false };
+                        Sdk.DefaultAcquisitionManager = new AcquisitionManager(new HttpRequester(), Sdk.DefaultConfiguration);
+                        resolveManager(Sdk.DefaultAcquisitionManager);
                     }
                 });
             });
@@ -47,7 +57,7 @@ var Sdk = (function () {
             });
         }
         catch (e) {
-            callback && callback(new Error("An error ocurred while reporting the status. " + e), null);
+            callback && callback(new Error("An error occured while reporting the status. " + e), null);
         }
     };
     return Sdk;

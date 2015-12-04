@@ -19,8 +19,7 @@ var app = {
                 app.sendTestMessage("SYNC_STATUS", [status]);
             },
             {
-                mandatoryUpdateMessage: undefined,
-                optionalUpdateMessage: undefined,
+                installMode: InstallMode.IMMEDIATE,
                 rollbackTimeout: 3000
             });
     },

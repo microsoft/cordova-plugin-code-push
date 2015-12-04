@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-    <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-code-push" version="1.1.0-beta">
+    <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-code-push" version="1.3.0-beta">
         <name>CodePush</name>
         <description>This plugin allows you to push code updates to your apps instantly using the CodePush service</description>
         <license>MIT</license>
@@ -26,6 +26,10 @@
 
         <js-module src="bin/www/syncStatus.js" name="syncStatus">
             <clobbers target="SyncStatus" />
+        </js-module>
+        
+        <js-module src="bin/www/installMode.js" name="installMode">
+            <clobbers target="InstallMode" />
         </js-module>
 
         <js-module src="bin/www/codePushUtil.js" name="codePushUtil">
@@ -54,6 +58,12 @@
 
         <platform name="android">
             <source-file src="src/android/CodePush.java" target-dir="src/com/microsoft/cordova" />
+            <source-file src="src/android/CodePushPackageManager.java" target-dir="src/com/microsoft/cordova" />
+            <source-file src="src/android/CodePushPackageMetadata.java" target-dir="src/com/microsoft/cordova" />
+            <source-file src="src/android/CodePushPreferences.java" target-dir="src/com/microsoft/cordova" />
+            <source-file src="src/android/InstallMode.java" target-dir="src/com/microsoft/cordova" />
+            <source-file src="src/android/InstallOptions.java" target-dir="src/com/microsoft/cordova" />
+            <source-file src="src/android/Utilities.java" target-dir="src/com/microsoft/cordova" />
             <config-file target="config.xml" parent="/*">
                 <feature name="CodePush">
                     <param name="android-package" value="com.microsoft.cordova.CodePush" />
@@ -65,6 +75,15 @@
         <platform name="ios">
             <header-file src="src/ios/CodePush.h" />
             <source-file src="src/ios/CodePush.m" />
+            <header-file src="src/ios/CodePushPackageMetadata.h" />
+            <source-file src="src/ios/CodePushPackageMetadata.m" />
+            <header-file src="src/ios/CodePushPackageManager.h" />
+            <source-file src="src/ios/CodePushPackageManager.m" />
+            <header-file src="src/ios/Utilities.h" />
+            <source-file src="src/ios/Utilities.m" />
+            <header-file src="src/ios/InstallOptions.h" />
+            <source-file src="src/ios/InstallOptions.m" />
+            <header-file src="src/ios/InstallMode.h" />
             <config-file target="config.xml" parent="/*">
                 <feature name="CodePush">
                     <param name="ios-package" value="CodePush" />

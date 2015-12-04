@@ -27,7 +27,8 @@ export class ProjectManager {
     public static SERVER_URL_PLACEHOLDER: string = "CODE_PUSH_SERVER_URL";
     public static INDEX_JS_PLACEHOLDER: string = "CODE_PUSH_INDEX_JS_PATH";
     public static CODE_PUSH_APP_VERSION_PLACEHOLDER: string = "CODE_PUSH_APP_VERSION";
-
+    public static CODE_PUSH_APP_ID_PLACEHOLDER: string = "CODE_PUSH_TEST_APPLICATION_ID";
+    
     public static DEFAULT_APP_VERSION: string = "Store version";
 
 	/**

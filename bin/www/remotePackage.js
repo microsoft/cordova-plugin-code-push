@@ -25,7 +25,7 @@ var RemotePackage = (function (_super) {
     function RemotePackage() {
         _super.apply(this, arguments);
     }
-    RemotePackage.prototype.download = function (successCallback, errorCallback) {
+    RemotePackage.prototype.download = function (successCallback, errorCallback, downloadProgress) {
         var _this = this;
         try {
             CodePushUtil.logMessage("Downloading update package ...");
@@ -37,7 +37,7 @@ var RemotePackage = (function (_super) {
                 var downloadSuccess = function (fileEntry) {
                     _this.currentFileTransfer = null;
                     fileEntry.file(function (file) {
-                        NativeAppInfo.isFailedUpdate(_this.packageHash, function (applyFailed) {
+                        NativeAppInfo.isFailedUpdate(_this.packageHash, function (installFailed) {
                             var localPackage = new LocalPackage();
                             localPackage.deploymentKey = _this.deploymentKey;
                             localPackage.description = _this.description;
@@ -46,7 +46,7 @@ var RemotePackage = (function (_super) {
                             localPackage.isMandatory = _this.isMandatory;
                             localPackage.packageHash = _this.packageHash;
                             localPackage.isFirstRun = false;
-                            localPackage.failedApply = applyFailed;
+                            localPackage.failedInstall = installFailed;
                             localPackage.localPath = fileEntry.toInternalURL();
                             CodePushUtil.logMessage("Package download success: " + JSON.stringify(localPackage));
                             successCallback && successCallback(localPackage);
@@ -59,11 +59,17 @@ var RemotePackage = (function (_super) {
                     _this.currentFileTransfer = null;
                     CodePushUtil.invokeErrorCallback(new Error(error.body), errorCallback);
                 };
+                this.currentFileTransfer.onprogress = function (progressEvent) {
+                    if (downloadProgress) {
+                        var dp = { receivedBytes: progressEvent.loaded, totalBytes: progressEvent.total };
+                        downloadProgress(dp);
+                    }
+                };
                 this.currentFileTransfer.download(this.downloadUrl, cordova.file.dataDirectory + LocalPackage.DownloadDir + "/" + LocalPackage.PackageUpdateFileName, downloadSuccess, downloadError, true);
             }
         }
         catch (e) {
-            CodePushUtil.invokeErrorCallback(new Error("An error ocurred while downloading the package. " + (e && e.message) ? e.message : ""), errorCallback);
+            CodePushUtil.invokeErrorCallback(new Error("An error occured while downloading the package. " + (e && e.message) ? e.message : ""), errorCallback);
         }
     };
     RemotePackage.prototype.abortDownload = function (abortSuccess, abortError) {

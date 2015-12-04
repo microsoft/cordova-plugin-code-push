@@ -3,6 +3,7 @@
 "use strict";
 
 import path = require("path");
+import tu = require("./testUtil");
 
 /**
  * Defines a platform supported by CodePush.
@@ -17,6 +18,33 @@ export interface IPlatform {
      * Gets the root of the platform www folder used for creating update packages.
      */
     getPlatformWwwPath(projectDirectory: string): string;
+    
+    /**
+     * Gets an optional IEmulatorManager for platforms for which "cordova run --nobuild" rebuilds the application for this platform anyway.
+     * IOS needs special handling here, since ios-sim touches the app every time and changes the app timestamp.
+     * This challenges the tests since we rely on the app timestamp in our logic for finding out if the application was updated through the app store.
+     */
+    getOptionalEmulatorManager(): IEmulatorManager;
+    
+    /**
+     * Gets the default deployment key.
+     */
+    getDefaultDeploymentKey(): string;
+}
+
+/**
+ * Manages the interaction with the emulator.
+ */
+export interface IEmulatorManager {
+    /**
+     * Ends a running application, given its Cordova app id.
+     */
+    endRunningApplication(appId: string): Q.Promise<void>;
+    
+    /**
+     * Launches an already installed application by app id.
+     */
+    launchInstalledApplication(appId: string): Q.Promise<void>;
 }
 
 /**
@@ -40,6 +68,16 @@ export class Android implements IPlatform {
     public getPlatformWwwPath(projectDirectory: string): string {
         return path.join(projectDirectory, "platforms/android/assets/www");
     }
+
+    public getOptionalEmulatorManager(): IEmulatorManager {
+        /* Android does not need a separate emulator manager.
+        All interaction with the emulator is done using the Cordova CLI. */
+        return null;
+    }
+
+    public getDefaultDeploymentKey(): string {
+        return "mock-android-deployment-key";
+    }
 }
 
 /**
@@ -47,10 +85,15 @@ export class Android implements IPlatform {
  */
 export class IOS implements IPlatform {
     private static instance: IOS;
+    private emulatorManager: IEmulatorManager;
+
+    constructor(emulatorManager: IEmulatorManager) {
+        this.emulatorManager = emulatorManager;
+    }
 
     public static getInstance(): IOS {
         if (!this.instance) {
-            this.instance = new IOS();
+            this.instance = new IOS(new IOSEmulatorManager());
         }
 
         return this.instance;
@@ -62,6 +105,47 @@ export class IOS implements IPlatform {
 
     public getPlatformWwwPath(projectDirectory: string): string {
         return path.join(projectDirectory, "platforms/ios/www");
+    }
+
+    public getOptionalEmulatorManager(): IEmulatorManager {
+        return this.emulatorManager;
+    }
+
+    public getDefaultDeploymentKey(): string {
+        return "mock-ios-deployment-key";
+    }
+}
+
+export class IOSEmulatorManager implements IEmulatorManager {
+    /**
+     * Ends a running application, given its Cordova app id.
+     */
+    public endRunningApplication(appId: string): Q.Promise<void> {
+        return tu.TestUtil.getProcessOutput("xcrun simctl spawn booted launchctl list", undefined, true)
+            .then<string>(processListOutput => {
+                var regex = new RegExp("(\\S+" + appId + "\\S+)");
+                var execResult: any[] = regex.exec(processListOutput);
+                if (execResult) {
+                    return execResult[0];
+                }
+                else {
+                    return Q.reject("Could not get the running application label.");
+                }
+            })
+            .then<string>(applicationLabel => {
+                return tu.TestUtil.getProcessOutput("xcrun simctl spawn booted launchctl stop " + applicationLabel, undefined, true);
+            })
+            .then<void>(output => {
+                console.log(output);
+            });
+    }
+    
+    /**
+     * Launches an already installed application by app id.
+     */
+    public launchInstalledApplication(appId: string): Q.Promise<void> {
+        return tu.TestUtil.getProcessOutput("xcrun simctl launch booted " + appId, undefined, true)
+            .then<void>(output => { console.log(output); });
     }
 }
 

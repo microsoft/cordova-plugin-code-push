@@ -27,8 +27,9 @@ class RemotePackage extends Package implements IRemotePackage {
      * 
      * @param downloadSuccess Called with one parameter, the downloaded package information, once the download completed successfully.
      * @param downloadError Optional callback invoked in case of an error.
+     * @param downloadProgress Optional callback invoked during the download process. It is called several times with one DownloadProgress parameter.
      */
-    public download(successCallback: SuccessCallback<LocalPackage>, errorCallback?: ErrorCallback): void {
+    public download(successCallback: SuccessCallback<LocalPackage>, errorCallback?: ErrorCallback, downloadProgress?: SuccessCallback<DownloadProgress>): void {
         try {
             CodePushUtil.logMessage("Downloading update package ...");
             if (!this.downloadUrl) {
@@ -41,7 +42,7 @@ class RemotePackage extends Package implements IRemotePackage {
 
                     fileEntry.file((file: File) => {
 
-                        NativeAppInfo.isFailedUpdate(this.packageHash, (applyFailed: boolean) => {
+                        NativeAppInfo.isFailedUpdate(this.packageHash, (installFailed: boolean) => {
                             var localPackage = new LocalPackage();
                             localPackage.deploymentKey = this.deploymentKey;
                             localPackage.description = this.description;
@@ -50,7 +51,7 @@ class RemotePackage extends Package implements IRemotePackage {
                             localPackage.isMandatory = this.isMandatory;
                             localPackage.packageHash = this.packageHash;
                             localPackage.isFirstRun = false;
-                            localPackage.failedApply = applyFailed;
+                            localPackage.failedInstall = installFailed;
                             localPackage.localPath = fileEntry.toInternalURL();
 
                             CodePushUtil.logMessage("Package download success: " + JSON.stringify(localPackage));
@@ -65,11 +66,18 @@ class RemotePackage extends Package implements IRemotePackage {
                     this.currentFileTransfer = null;
                     CodePushUtil.invokeErrorCallback(new Error(error.body), errorCallback);
                 };
+                
+                this.currentFileTransfer.onprogress = (progressEvent: ProgressEvent) => {
+                    if (downloadProgress) {
+                        var dp: DownloadProgress = { receivedBytes: progressEvent.loaded, totalBytes: progressEvent.total };
+                        downloadProgress(dp);
+                    }
+                };
 
                 this.currentFileTransfer.download(this.downloadUrl, cordova.file.dataDirectory + LocalPackage.DownloadDir + "/" + LocalPackage.PackageUpdateFileName, downloadSuccess, downloadError, true);
             }
         } catch (e) {
-            CodePushUtil.invokeErrorCallback(new Error("An error ocurred while downloading the package. " + (e && e.message) ? e.message : ""), errorCallback);
+            CodePushUtil.invokeErrorCallback(new Error("An error occured while downloading the package. " + (e && e.message) ? e.message : ""), errorCallback);
         }
     }
     
