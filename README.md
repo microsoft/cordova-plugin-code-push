@@ -106,6 +106,12 @@ If the installOptions.rollbackTimeout parameter is provided, the application wil
 If `codePush.notifyApplicationReady()` is called before the time period specified by `rollbackTimeout`, the install operation is considered a success.
 Otherwise, the install operation will be marked as failed, and the application is reverted to its previous version.
 
+### InstallOptions
+Interface defining several options for customizing install operation behavior.
+
+- __rollbackTimeout__: Optional time interval, in milliseconds, to wait for a [notifyApplicationReady()](#codepushnotifyapplicationready) call before marking the install as failed and reverting to the previous version. By default, the rollback functionality is disabled - the parameter defaults to 0. (number)
+- __installMode__: Used to specity the InstallMode used for the install operation. This is optional and defaults to InstallMode.ON_NEXT_RESTART.
+
   #### Example
 	```javascript
 	var onError = function (error) {
@@ -174,12 +180,16 @@ Contains details about an update package that is available for download.
 - __abortDownload(abortSuccess, abortError)__: Aborts the current download session, if any.
 
 ## SyncStatus
-Defines the possible result statuses of the [sync](#codepushsync) operation.
+Defines the possible statuses of the [sync](#codepushsync) operation. There are two categories of statuses: intermediate and result (final). The intermediate statuses represent progress statuses of the sync operation, and are not final. The result statuses represent final statuses of the sync operation. Every sync operation ends with only one result status, but can have zero or more intermediate statuses.
 ### Properties
-- __UP_TO_DATE__: The application is up to date. (number)
-- __UPDATE_INSTALLED__: An update is available, it has been downloaded, unzipped and copied to the deployment folder. After the completion of the callback invoked with SyncStatus.UPDATE_INSTALLED, the application will be reloaded with the updated code and resources. (number)
-- __UPDATE_IGNORED__: An optional update is available, but the user declined to install it. The update was not downloaded. (number)
-- __ERROR__: An error happened during the sync operation. This might be an error while communicating with the server, downloading or unziping the update. The console logs should contain more information about what happened. No update has been applied in this case. (number)
+- __UP_TO_DATE__: Result status - the application is up to date. (number)
+- __UPDATE_INSTALLED__: Result status - an update is available, it has been downloaded, unzipped and copied to the deployment folder. After the completion of the callback invoked with SyncStatus.UPDATE_INSTALLED, the application will be reloaded with the updated code and resources. (number)
+- __UPDATE_IGNORED__: Result status - an optional update is available, but the user declined to install it. The update was not downloaded. (number)
+- __ERROR__: Result status - an error happened during the sync operation. This might be an error while communicating with the server, downloading or unziping the update. The console logs should contain more information about what happened. No update has been applied in this case. (number)
+- __CHECKING_FOR_UPDATE__: Intermediate status - the plugin is about to check for updates.
+- __AWAITING_USER_ACTION__: Intermediate status - a user dialog is about to be displayed. This status will be reported only if user interaction is enabled.
+- __DOWNLOADING_PACKAGE__: Intermediate status - the update package is about to be downloaded.
+- __INSTALLING_UPDATE__: Intermediate status - the update package is about to be installed.
 
 ## codePush.checkForUpdate
 Queries the CodePush server for updates.
@@ -314,12 +324,14 @@ The algorithm of this method is the following:
 Interface defining several options for customizing the [sync](#codepushsync) operation behavior. Options span from disabling the user interaction or modifying it to enabling rollback in case of a bad update.
 
 - __rollbackTimeout__: Optional time interval, in milliseconds, to wait for a [notifyApplicationReady()](#codepushnotifyapplicationready) call before marking the install as failed and reverting to the previous version. Sync calls [notifyApplicationReady()](#codepushnotifyapplicationready) internally, so if you use sync() in your updated version of the application, there is no need to call [notifyApplicationReady()](#codepushnotifyapplicationready) again. By default, the rollback functionality is disabled - the parameter defaults to 0. (number)
+- __installMode__: Used to specity the InstallMode used for the install operation. This is optional and defaults to InstallMode.ON_NEXT_RESTART.
 - __ignoreFailedUpdates__: Optional boolean flag. If set, updates available on the server for which and update was attempted and rolled back will be ignored. Defaults to true. (boolean)
-- __updatedialog__; Option used to enable, disable or customize the user interaction during sync. If set to false, user interaction will be disabled. If set to true, the user will be alerted or asked to confirm new updates, based on whether the update is mandatory. To customize the user dialog, this option can be set to a custom UpdateDialogOptions instance.
+- __updatedialog__: Option used to enable, disable or customize the user interaction during sync. If set to false, user interaction will be disabled. If set to true, the user will be alerted or asked to confirm new updates, based on whether the update is mandatory. To customize the user dialog, this option can be set to a custom UpdateDialogOptions instance.
 
 
-### UpdateDialogOptions and ###InstallOptions
-Interface defining the configuration options for the alert or confirmation dialog
+### UpdateDialogOptions
+Interface defining the configuration options for the alert or confirmation dialog.
+
 - __mandatoryUpdateMessage__:  If a mandatory update is available and this option is set, the message will be displayed to the user in an alert dialog before downloading and installing the update. The user will not be able to cancel the operation, since the update is mandatory. (string)
 - __optionalUpdateMessage__: If an optional update is available and this option is set, the message will be displayed to the user in a confirmation dialog. If the user confirms the update, it will be downloaded and installed. Otherwise, the update update is not downloaded. (string)
 - __updateTitle__: The title of the dialog box used for interacting with the user in case of a mandatory or optional update. This title will only be used if at least one of mandatoryUpdateMessage or optionalUpdateMessage options are set. (string)
@@ -391,3 +403,11 @@ window.codePush.sync(function (syncStatus) {
 }, syncOptions);
 
 ```
+
+## InstallMode
+Defines the available install modes for update packages.
+
+### Properties
+- __IMMEDIATE__: The update will be applied to the running application immediately. The application will be reloaded with the new content immediately.
+- __ON_NEXT_RESTART__: The update is downloaded but not installed immediately. The new content will be available the next time the application is started.
+- __ON_NEXT_RESUME__: The udpate is downloaded but not installed immediately. The new content will be available the next time the application is resumed or restarted, whichever event happends first.
