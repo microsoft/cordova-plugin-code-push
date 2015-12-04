@@ -337,7 +337,7 @@ Interface defining several options for customizing the [sync](#codepushsync) ope
 - __installMode__: Used to specity the InstallMode used for the install operation. This is optional and defaults to InstallMode.ON_NEXT_RESTART.
 - __ignoreFailedUpdates__: Optional boolean flag. If set, updates available on the server for which and update was attempted and rolled back will be ignored. Defaults to true. (boolean)
 - __updatedialog__: Option used to enable, disable or customize the user interaction during sync. If set to false, user interaction will be disabled. If set to true, the user will be alerted or asked to confirm new updates, based on whether the update is mandatory. To customize the user dialog, this option can be set to a custom UpdateDialogOptions instance.
-
+- __deploymentKey__: Option used to override the config.xml deployment key when checking for updates.
 
 ### UpdateDialogOptions
 Interface defining the configuration options for the alert or confirmation dialog.

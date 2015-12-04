@@ -110,9 +110,11 @@ var CodePush = (function () {
             syncCallback && syncCallback(SyncStatus.UPDATE_INSTALLED);
         };
         var onDownloadSuccess = function (localPackage) {
+            syncCallback && syncCallback(SyncStatus.INSTALLING_UPDATE);
             localPackage.install(onInstallSuccess, onError, syncOptions);
         };
         var downloadAndInstallUpdate = function (remotePackage) {
+            syncCallback && syncCallback(SyncStatus.DOWNLOADING_PACKAGE);
             remotePackage.download(onDownloadSuccess, onError, downloadProgress);
         };
         var onUpdate = function (remotePackage) {
@@ -121,6 +123,9 @@ var CodePush = (function () {
             }
             else {
                 var dlgOpts = syncOptions.updateDialog;
+                if (dlgOpts) {
+                    syncCallback && syncCallback(SyncStatus.AWAITING_USER_ACTION);
+                }
                 if (remotePackage.isMandatory && syncOptions.updateDialog) {
                     var message = dlgOpts.appendReleaseDescription ?
                         dlgOpts.mandatoryUpdateMessage + dlgOpts.descriptionPrefix + remotePackage.description
@@ -149,6 +154,7 @@ var CodePush = (function () {
                 }
             }
         };
+        syncCallback && syncCallback(SyncStatus.CHECKING_FOR_UPDATE);
         window.codePush.checkForUpdate(onUpdate, onError, syncOptions.deploymentKey);
     };
     CodePush.prototype.getDefaultSyncOptions = function () {

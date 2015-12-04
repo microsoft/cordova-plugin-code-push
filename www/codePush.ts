@@ -179,10 +179,12 @@ class CodePush implements CodePushCordovaPlugin {
         };
 
         var onDownloadSuccess = (localPackage: ILocalPackage) => {
+            syncCallback && syncCallback(SyncStatus.INSTALLING_UPDATE);
             localPackage.install(onInstallSuccess, onError, syncOptions);
         };
 
         var downloadAndInstallUpdate = (remotePackage: RemotePackage) => {
+            syncCallback && syncCallback(SyncStatus.DOWNLOADING_PACKAGE);
             remotePackage.download(onDownloadSuccess, onError, downloadProgress);
         };
 
@@ -191,6 +193,9 @@ class CodePush implements CodePushCordovaPlugin {
                 syncCallback && syncCallback(SyncStatus.UP_TO_DATE);
             } else {
                 var dlgOpts: UpdateDialogOptions = <UpdateDialogOptions>syncOptions.updateDialog;
+                if (dlgOpts) {
+                    syncCallback && syncCallback(SyncStatus.AWAITING_USER_ACTION);
+                }
                 if (remotePackage.isMandatory && syncOptions.updateDialog) {
                     /* Alert user */
                     var message = dlgOpts.appendReleaseDescription ?
@@ -224,6 +229,7 @@ class CodePush implements CodePushCordovaPlugin {
             }
         };
 
+        syncCallback && syncCallback(SyncStatus.CHECKING_FOR_UPDATE);
         window.codePush.checkForUpdate(onUpdate, onError, syncOptions.deploymentKey);
     }
 

@@ -115,7 +115,7 @@ var app = {
         };
 
         console.log("Installing package...");
-        localPackage.install(installCallback, app.getErrorHandler("Installation failed."));
+        localPackage.install(installCallback, app.getErrorHandler("Installation failed."), { installMode: InstallMode.IMMEDIATE });
     },
     // Returns an error handler that logs the error to the console and displays a notification containing the error message.
     getErrorHandler: function (message) {
