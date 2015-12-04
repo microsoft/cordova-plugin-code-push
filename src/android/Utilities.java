@@ -72,6 +72,6 @@ public class Utilities {
     }
 
     public static void logException(Throwable e) {
-        Log.e(CodePush.class.getName(), "An error ocurred. " + e.getMessage(), e);
+        Log.e(CodePush.class.getName(), "An error occured. " + e.getMessage(), e);
     }
 }

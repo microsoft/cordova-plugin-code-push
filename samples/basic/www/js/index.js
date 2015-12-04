@@ -48,7 +48,7 @@ var app = {
                     app.displayMessage("The user decided not to install the optional update.");
                     break;
                 case SyncStatus.ERROR:
-                    app.displayMessage("An error ocurred while checking for updates");
+                    app.displayMessage("An error occured while checking for updates");
                     break;
             }
             

@@ -140,9 +140,10 @@ class CodePush implements CodePushCordovaPlugin {
      * @param syncCallback Optional callback to be called with the status of the sync operation.
      *                     The callback will be called only once, and the possible statuses are defined by the SyncStatus enum. 
      * @param syncOptions Optional SyncOptions parameter configuring the behavior of the sync operation.
+     * @param downloadProgress Optional callback invoked during the download process. It is called several times with one DownloadProgress parameter.
      * 
      */
-    public sync(syncCallback?: SuccessCallback<any>, syncOptions?: SyncOptions): void {
+    public sync(syncCallback?: SuccessCallback<any>, syncOptions?: SyncOptions, downloadProgress?: SuccessCallback<DownloadProgress>): void {
 
         /* No options were specified, use default */
         if (!syncOptions) {
@@ -182,7 +183,7 @@ class CodePush implements CodePushCordovaPlugin {
         };
 
         var downloadAndInstallUpdate = (remotePackage: RemotePackage) => {
-            remotePackage.download(onDownloadSuccess, onError);
+            remotePackage.download(onDownloadSuccess, onError, downloadProgress);
         };
 
         var onUpdate = (remotePackage: RemotePackage) => {

@@ -31,7 +31,7 @@ var app = {
         }
     },
     checkError: function (error) {
-        console.log("An error ocurred while checking for updates.");
+        console.log("An error occured while checking for updates.");
         app.sendTestMessage("CHECK_ERROR");
     },
     sendTestMessage: function (message, args) {

@@ -57,7 +57,7 @@ var Sdk = (function () {
             });
         }
         catch (e) {
-            callback && callback(new Error("An error ocurred while reporting the status. " + e), null);
+            callback && callback(new Error("An error occured while reporting the status. " + e), null);
         }
     };
     return Sdk;

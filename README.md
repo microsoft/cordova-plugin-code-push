@@ -155,6 +155,15 @@ Contains details about an update package that is available for download.
 
 ### Methods
 - __download(downloadSuccess, downloadError, downloadProgress)__: Downloads the package update from the CodePush service. The ```downloadSuccess``` callback is invoked with a ```LocalPackage``` argument, representing the downloaded package.
+The optional `downloadProgress` callback is invoked several times during the download progress with one `DownloadProgress` parameter.
+
+### DownloadProgress
+Defines the format of the DownloadProgress object, used to send periodical update notifications on the progress of the update download.
+
+#### Properties
+- __totalBytes__: The size of the downloading update package, in bytes.
+- __receivedBytes__: The number of bytes already downloaded.
+
   ### Example
   ```javascript
   	var onError = function (error) {
@@ -304,7 +313,7 @@ var app = {
 
 ## codePush.sync
 ```javascript
-codePush.sync(syncCallback, syncOptions);
+codePush.sync(syncCallback, syncOptions, downloadProgress);
 ```
 Convenience method for installing updates in one method call.
 This method is provided for simplicity, and its behavior can be replicated by using window.codePush.checkForUpdate(), RemotePackage's download() and LocalPackage's install() methods.
@@ -315,10 +324,11 @@ The algorithm of this method is the following:
     - If the update is not mandatory and the confirmMessage is set in options, the user will be asked if they want to update to the latest version. If they decline, the syncCallback will be invoked with SyncStatus.UPDATE_IGNORED status.
     - Otherwise, the update package will be downloaded and applied with no user interaction.
 - If no update is available on the server, the syncCallback will be invoked with the SyncStatus.UP_TO_DATE status.
-- If an error ocurrs during checking for update, downloading or installing it, the syncCallback will be invoked with the SyncStatus.ERROR status.
+- If an error occurs during checking for update, downloading or installing it, the syncCallback will be invoked with the SyncStatus.ERROR status.
 
 - __syncCallback__: Optional callback to be called with the status of the sync operation. The callback will be called only once, and the possible statuses are defined by the SyncStatus enum.
 - __syncOptions__: Optional SyncOptions parameter configuring the behavior of the sync operation.
+- __downloadProgress__: Optional callback invoked during the download process. It is called several times with one DownloadProgress parameter.
 
 ### SyncOptions
 Interface defining several options for customizing the [sync](#codepushsync) operation behavior. Options span from disabling the user interaction or modifying it to enabling rollback in case of a bad update.
@@ -359,7 +369,7 @@ window.codePush.sync(function (syncStatus) {
             app.displayMessage("The user decided not to install the optional update.");
             break;
         case SyncStatus.ERROR:
-            app.displayMessage("An error ocurred while checking for updates");
+            app.displayMessage("An error occured while checking for updates");
             break;
     }
     
@@ -394,7 +404,7 @@ window.codePush.sync(function (syncStatus) {
             app.displayMessage("The user decided not to install the optional update.");
             break;
         case SyncStatus.ERROR:
-            app.displayMessage("An error ocurred while checking for updates");
+            app.displayMessage("An error occured while checking for updates");
             break;
     }
     

@@ -27,7 +27,6 @@ var serverUrl = testUtil.readMockServerName();
 var targetEmulator = testUtil.readTargetEmulator();
 var targetPlatform: platform.IPlatform = platform.PlatformResolver.resolvePlatform(testUtil.readTargetPlatform());
 
-
 const TestAppName = "TestCodePush";
 const TestNamespace = "com.microsoft.codepush.test";
 const AcquisitionSDKPluginName = "code-push";
@@ -525,7 +524,7 @@ describe("window.codePush", function() {
                     var emulatorManager = targetPlatform.getOptionalEmulatorManager();
                     if (emulatorManager) {
                         emulatorManager.endRunningApplication(TestNamespace)
-                            .then(() => emulatorManager.launchInstalledApplication(TestNamespace));
+                            .then(() => emulatorManager.launchInstalledApplication(TestNamespace)).done();
                     } else {
                         projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
                     }
@@ -568,7 +567,7 @@ describe("window.codePush", function() {
                     var emulatorManager = targetPlatform.getOptionalEmulatorManager();
                     if (emulatorManager) {
                         emulatorManager.endRunningApplication(TestNamespace)
-                            .then(() => emulatorManager.launchInstalledApplication(TestNamespace));
+                            .then(() => emulatorManager.launchInstalledApplication(TestNamespace)).done();
                     } else {
                         projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
                     }
@@ -600,7 +599,7 @@ describe("window.codePush", function() {
                     var emulatorManager = targetPlatform.getOptionalEmulatorManager();
                     if (emulatorManager) {
                         emulatorManager.endRunningApplication(TestNamespace)
-                            .then(() => emulatorManager.launchInstalledApplication(TestNamespace));
+                            .then(() => emulatorManager.launchInstalledApplication(TestNamespace)).done();
                     } else {
                         projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
                     }
@@ -642,7 +641,7 @@ describe("window.codePush", function() {
                     var emulatorManager = targetPlatform.getOptionalEmulatorManager();
                     if (emulatorManager) {
                         emulatorManager.endRunningApplication(TestNamespace)
-                            .then(() => emulatorManager.launchInstalledApplication(TestNamespace));
+                            .then(() => emulatorManager.launchInstalledApplication(TestNamespace)).done();
                     } else {
                         projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
                     }
@@ -684,7 +683,7 @@ describe("window.codePush", function() {
                     var emulatorManager = targetPlatform.getOptionalEmulatorManager();
                     if (emulatorManager) {
                         emulatorManager.endRunningApplication(TestNamespace)
-                            .then(() => emulatorManager.launchInstalledApplication(TestNamespace));
+                            .then(() => emulatorManager.launchInstalledApplication(TestNamespace)).done();
                     } else {
                         projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
                     }
@@ -716,7 +715,7 @@ describe("window.codePush", function() {
                     var emulatorManager = targetPlatform.getOptionalEmulatorManager();
                     if (emulatorManager) {
                         emulatorManager.endRunningApplication(TestNamespace)
-                            .then(() => emulatorManager.launchInstalledApplication(TestNamespace));
+                            .then(() => emulatorManager.launchInstalledApplication(TestNamespace)).done();
                     } else {
                         projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
                     }

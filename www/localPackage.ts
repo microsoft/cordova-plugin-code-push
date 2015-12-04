@@ -103,7 +103,7 @@ class LocalPackage extends Package implements ILocalPackage {
                 }
             });
         } catch (e) {
-            installError && installError(new Error("An error ocurred while installing the package. " + CodePushUtil.getErrorMessage(e)));
+            installError && installError(new Error("An error occured while installing the package. " + CodePushUtil.getErrorMessage(e)));
         }
     }
 
@@ -131,7 +131,7 @@ class LocalPackage extends Package implements ILocalPackage {
 
                         var preInstallFailure = (preInstallError?: any) => {
                             CodePushUtil.logError("Preinstall failure.", preInstallError);
-                            var error = new Error("An error has ocurred while installing the package. " + CodePushUtil.getErrorMessage(preInstallError));
+                            var error = new Error("An error has occured while installing the package. " + CodePushUtil.getErrorMessage(preInstallError));
                             installError && installError(error);
                         };
 

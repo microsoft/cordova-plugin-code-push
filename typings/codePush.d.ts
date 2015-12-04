@@ -197,14 +197,15 @@ interface CodePushCordovaPlugin {
      *           If they decline, the syncCallback will be invoked with SyncStatus.UPDATE_IGNORED. 
      *         - Otherwise, the update package will be downloaded and applied with no user interaction.
      * - If no update is available on the server, or if a previously rolled back update is available and the ignoreFailedUpdates is set to true, the syncCallback will be invoked with the SyncStatus.UP_TO_DATE.
-     * - If an error ocurrs during checking for update, downloading or installing it, the syncCallback will be invoked with the SyncStatus.ERROR.
+     * - If an error occurs during checking for update, downloading or installing it, the syncCallback will be invoked with the SyncStatus.ERROR.
      * 
      * @param syncCallback Optional callback to be called with the status of the sync operation.
      *                     The callback will be called only once, and the possible statuses are defined by the SyncStatus enum. 
      * @param syncOptions Optional SyncOptions parameter configuring the behavior of the sync operation.
+     * @param downloadProgress Optional callback invoked during the download process. It is called several times with one DownloadProgress parameter.
      * 
      */
-    sync(syncCallback?: SuccessCallback<SyncStatus>, syncOptions?: SyncOptions): void;
+    sync(syncCallback?: SuccessCallback<SyncStatus>, syncOptions?: SyncOptions, downloadProgress?: SuccessCallback<DownloadProgress>): void;
 }
 
 /**
@@ -244,7 +245,7 @@ declare enum SyncStatus {
     AWAITING_USER_ACTION,
     
     /**
-     * Intermediate status - the update packages is about to be downloaded.
+     * Intermediate status - the update package is about to be downloaded.
      */
     DOWNLOADING_PACKAGE,
     

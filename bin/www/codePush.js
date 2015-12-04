@@ -84,7 +84,7 @@ var CodePush = (function () {
             CodePushUtil.invokeErrorCallback(new Error("An error occurred while querying for updates." + CodePushUtil.getErrorMessage(e)), queryError);
         }
     };
-    CodePush.prototype.sync = function (syncCallback, syncOptions) {
+    CodePush.prototype.sync = function (syncCallback, syncOptions, downloadProgress) {
         if (!syncOptions) {
             syncOptions = this.getDefaultSyncOptions();
         }
@@ -113,7 +113,7 @@ var CodePush = (function () {
             localPackage.install(onInstallSuccess, onError, syncOptions);
         };
         var downloadAndInstallUpdate = function (remotePackage) {
-            remotePackage.download(onDownloadSuccess, onError);
+            remotePackage.download(onDownloadSuccess, onError, downloadProgress);
         };
         var onUpdate = function (remotePackage) {
             if (!remotePackage || (remotePackage.failedInstall && syncOptions.ignoreFailedUpdates)) {
