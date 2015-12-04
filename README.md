@@ -330,7 +330,7 @@ The algorithm of this method is the following:
 - If no update is available on the server, the syncCallback will be invoked with the SyncStatus.UP_TO_DATE status.
 - If an error occurs during checking for update, downloading or installing it, the syncCallback will be invoked with the SyncStatus.ERROR status.
 
-- __syncCallback__: Optional callback to be called with the status of the sync operation. The callback will be called only once, and the possible statuses are defined by the SyncStatus enum.
+- __syncCallback__: Optional callback to be called with the status of the sync operation. The callback will be called multiple times. It will be called at least one time with an intermediate status, and only one time (the final call) with a result status. The possible statuses are defined by the SyncStatus enum.
 - __syncOptions__: Optional SyncOptions parameter configuring the behavior of the sync operation.
 - __downloadProgress__: Optional callback invoked during the download process. It is called several times with one DownloadProgress parameter.
 
