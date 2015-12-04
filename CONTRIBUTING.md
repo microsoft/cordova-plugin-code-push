@@ -46,11 +46,6 @@ To run the iOS tests:
 gulp test-ios
 ```
 
-Since our mock testing server is not https enabled, we don't currently support iOS 9 simulators for running tests. To use a custom simulator during tests and not the default one Cordova uses, use the following command:
-```
-mocha ./bin/test --mockserver http://127.0.0.1:3000 --platform ios --target <YOUR_SIMULATOR_NAME>
-```
-
 ##### Android
 
 To run the Android tests, make sure you have your Android emulator running on the machine, and run:
