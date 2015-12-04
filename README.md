@@ -110,7 +110,7 @@ Otherwise, the install operation will be marked as failed, and the application i
 Interface defining several options for customizing install operation behavior.
 
 - __rollbackTimeout__: Optional time interval, in milliseconds, to wait for a [notifyApplicationReady()](#codepushnotifyapplicationready) call before marking the install as failed and reverting to the previous version. By default, the rollback functionality is disabled - the parameter defaults to 0. (number)
-- __installMode__: Used to specity the InstallMode used for the install operation. This is optional and defaults to InstallMode.ON_NEXT_RESTART.
+- __installMode__: Used to specity the [InstallMode](#installmode) used for the install operation. This is optional and defaults to InstallMode.ON_NEXT_RESTART.
 
   #### Example
 	```javascript
@@ -334,7 +334,7 @@ The algorithm of this method is the following:
 Interface defining several options for customizing the [sync](#codepushsync) operation behavior. Options span from disabling the user interaction or modifying it to enabling rollback in case of a bad update.
 
 - __rollbackTimeout__: Optional time interval, in milliseconds, to wait for a [notifyApplicationReady()](#codepushnotifyapplicationready) call before marking the install as failed and reverting to the previous version. Sync calls [notifyApplicationReady()](#codepushnotifyapplicationready) internally, so if you use sync() in your updated version of the application, there is no need to call [notifyApplicationReady()](#codepushnotifyapplicationready) again. By default, the rollback functionality is disabled - the parameter defaults to 0. (number)
-- __installMode__: Used to specity the InstallMode used for the install operation. This is optional and defaults to InstallMode.ON_NEXT_RESTART.
+- __installMode__: Used to specity the [InstallMode](#installmode) used for the install operation. This is optional and defaults to InstallMode.ON_NEXT_RESTART.
 - __ignoreFailedUpdates__: Optional boolean flag. If set, updates available on the server for which and update was attempted and rolled back will be ignored. Defaults to true. (boolean)
 - __updatedialog__: Option used to enable, disable or customize the user interaction during sync. If set to false, user interaction will be disabled. If set to true, the user will be alerted or asked to confirm new updates, based on whether the update is mandatory. To customize the user dialog, this option can be set to a custom UpdateDialogOptions instance.
 - __deploymentKey__: Option used to override the config.xml deployment key when checking for updates.
