@@ -119,7 +119,7 @@ Interface defining several options for customizing install operation behavior.
 	};
 	
 	var onInstallSuccess = function () {
-	    console.log("Install succeeded. Reloading the application...");
+	    console.log("Install succeeded.");
 	};
 	
 	var onPackageDownloaded = function (localPackage) {
@@ -154,37 +154,41 @@ Contains details about an update package that is available for download.
 - __downloadUrl__: The URL at which the package is available for download. (String)
 
 ### Methods
-- __download(downloadSuccess, downloadError, downloadProgress)__: Downloads the package update from the CodePush service. The ```downloadSuccess``` callback is invoked with a ```LocalPackage``` argument, representing the downloaded package.
+- __download(downloadSuccess, downloadError, downloadProgress)__: Downloads the package update from the CodePush service. The ```downloadSuccess``` callback is invoked with a [LocalPackage](#localpackage) argument, representing the downloaded package.
 The optional `downloadProgress` callback is invoked several times during the download progress with one `DownloadProgress` parameter.
 
 ### DownloadProgress
 Defines the format of the DownloadProgress object, used to send periodical update notifications on the progress of the update download.
 
 #### Properties
-- __totalBytes__: The size of the downloading update package, in bytes.
-- __receivedBytes__: The number of bytes already downloaded.
+- __totalBytes__: The size of the downloading update package, in bytes. (Number)
+- __receivedBytes__: The number of bytes already downloaded. (Number)
 
   ### Example
   ```javascript
   	var onError = function (error) {
-    	    console.log("An error occurred. " + error);
-	};
-	
-	var onPackageDownloaded = function (localPackage) {
-	    console.log("Package downloaded at: " + localPackage.localPath);
-	    // you can now update your application to the downloaded version by calling localPackage.install()
-	};
-	
-	var onUpdateCheck = function (remotePackage) {
-	    if (!remotePackage) {
-	        console.log("The application is up to date.");
-	    } else {
-	        console.log("A CodePush update is available. Package hash: " + remotePackage.packageHash);
-	        remotePackage.download(onPackageDownloaded, onError);
-	    }
-	};
-	
-	window.codePush.checkForUpdate(onUpdateCheck, onError);
+            console.log("An error occurred. " + error);
+        };
+
+        var onPackageDownloaded = function (localPackage) {
+            console.log("Package downloaded at: " + localPackage.localPath);
+            // you can now update your application to the downloaded version by calling localPackage.install()
+        };
+
+        var onProgress = function (downloadProgress) {
+            console.log("Downloading " + downloadProgress.receivedBytes + " of " + downloadProgress.totalBytes + " bytes.");
+        };
+
+        var onUpdateCheck = function (remotePackage) {
+            if (!remotePackage) {
+                console.log("The application is up to date.");
+            } else {
+                console.log("A CodePush update is available. Package hash: " + remotePackage.packageHash);
+                remotePackage.download(onPackageDownloaded, onError, onProgress);
+            }
+        };
+
+        window.codePush.checkForUpdate(onUpdateCheck, onError);
   ```
 - __abortDownload(abortSuccess, abortError)__: Aborts the current download session, if any.
 
@@ -272,12 +276,12 @@ var onError = function (error) {
 };
 
 var onInstallSuccess = function () {
-    console.log("Installation succeeded. Reloading the application...");
+    console.log("Installation succeeded.");
 };
 
 var onPackageDownloaded = function (localPackage) {
     // set the rollbackTimeout to 10s
-    localPackage.install(onInstallSuccess, onError, 10000);
+    localPackage.install(onInstallSuccess, onError, { rollbackTimeout: 10000 });
 };
 
 var onUpdateCheck = function (remotePackage) {
@@ -354,63 +358,85 @@ Interface defining the configuration options for the alert or confirmation dialo
 ### Example
 ```javascript
 
-// Using default sync options: user interaction is enabled
+// Using default sync options: user interaction is disabled
 
-window.codePush.sync(function (syncStatus) {
-    switch (syncStatus) {
-        case SyncStatus.UPDATE_INSTALLED:
-            console.log("The update was applied successfully. This is the last callback before the application is reloaded with the updated content.");
-            /* Don't continue app initialization, the application will refresh after this return. */
-            return;
-        case SyncStatus.UP_TO_DATE:
-            app.displayMessage("The application is up to date.");
-            break;
-        case SyncStatus.UPDATE_IGNORED:
-            app.displayMessage("The user decided not to install the optional update.");
-            break;
-        case SyncStatus.ERROR:
-            app.displayMessage("An error occured while checking for updates");
-            break;
-    }
-    
-    // continue application initialization
-    
-});
+ /* Invoke sync with the custom options, which enables user interaction.
+           For customizing the sync behavior, see SyncOptions in the CodePush documentation. */
+window.codePush.sync(
+    function (syncStatus) {
+        switch (syncStatus) {
+            // Result (final) statuses
+            case SyncStatus.UPDATE_INSTALLED:
+                console.log("The update was installed successfully. For InstallMode.ON_NEXT_RESTART, the changes will be visible after application restart. ");
+                break;
+            case SyncStatus.UP_TO_DATE:
+                console.log("The application is up to date.");
+                break;
+            case SyncStatus.UPDATE_IGNORED:
+                console.log("The user decided not to install the optional update.");
+                break;
+            case SyncStatus.ERROR:
+                console.log("An error occured while checking for updates");
+                break;
+            
+            // Intermediate (non final) statuses
+            case SyncStatus.CHECKING_FOR_UPDATE:
+                console.log("Checking for update.");
+                break;
+            case SyncStatus.AWAITING_USER_ACTION:
+                console.log("Alerting user.");
+                break;
+            case SyncStatus.DOWNLOADING_PACKAGE:
+                console.log("Downloading package.");
+                break;
+            case SyncStatus.INSTALLING_UPDATE:
+                console.log("Installing update");
+                break;
+        }
+    });
 
 //------------------------------------------------
 
-// Using custom sync options
+// Using custom sync options - user interaction is enabled, custom install mode and download progress callback
 
-var syncOptions = {
-    mandatoryUpdateMessage: "You will be updated to the latest version of the application.",
-    mandatoryContinueButtonLabel: "Continue",
-    optionalUpdateMessage: "There is an update available. Do you want to install it?",
-    optionalIgnoreButtonLabel: "Maybe later",
-    optionalInstallButtonLabel: "Yes",
-    appendReleaseDescription: true,
-    descriptionPrefix: "Release notes: "
-};
-
-window.codePush.sync(function (syncStatus) {
-    switch (syncStatus) {
-        case SyncStatus.UPDATE_INSTALLED:
-            console.log("The update was applied successfully. This is the last callback before the application is reloaded with the updated content.");
-            /* Don't continue app initialization, the application will refresh after this return. */
-            return;
-        case SyncStatus.UP_TO_DATE:
-            app.displayMessage("The application is up to date.");
-            break;
-        case SyncStatus.UPDATE_IGNORED:
-            app.displayMessage("The user decided not to install the optional update.");
-            break;
-        case SyncStatus.ERROR:
-            app.displayMessage("An error occured while checking for updates");
-            break;
-    }
-    
-    // continue application initialization
-    
-}, syncOptions);
+window.codePush.sync(
+    function (syncStatus) {
+        switch (syncStatus) {
+            // Result (final) statuses
+            case SyncStatus.UPDATE_INSTALLED:
+                console.log("The update was installed successfully. For InstallMode.ON_NEXT_RESTART, the changes will be visible after application restart. ");
+                break;
+            case SyncStatus.UP_TO_DATE:
+                console.log("The application is up to date.");
+                break;
+            case SyncStatus.UPDATE_IGNORED:
+                console.log("The user decided not to install the optional update.");
+                break;
+            case SyncStatus.ERROR:
+                console.log("An error occured while checking for updates");
+                break;
+            
+            // Intermediate (non final) statuses
+            case SyncStatus.CHECKING_FOR_UPDATE:
+                console.log("Checking for update.");
+                break;
+            case SyncStatus.AWAITING_USER_ACTION:
+                console.log("Alerting user.");
+                break;
+            case SyncStatus.DOWNLOADING_PACKAGE:
+                console.log("Downloading package.");
+                break;
+            case SyncStatus.INSTALLING_UPDATE:
+                console.log("Installing update");
+                break;
+        }
+    },
+    {
+        updateDialog: true, installMode: InstallMode.ON_NEXT_RESUME
+    },
+    function (downloadProgress) {
+        console.log("Downloading " + downloadProgress.receivedBytes + " of " + downloadProgress.totalBytes + " bytes.");
+    });
 
 ```
 
