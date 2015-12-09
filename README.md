@@ -340,7 +340,7 @@ Interface defining several options for customizing the [sync](#codepushsync) ope
 - __rollbackTimeout__: Optional time interval, in milliseconds, to wait for a [notifyApplicationReady()](#codepushnotifyapplicationready) call before marking the install as failed and reverting to the previous version. Sync calls [notifyApplicationReady()](#codepushnotifyapplicationready) internally, so if you use sync() in your updated version of the application, there is no need to call [notifyApplicationReady()](#codepushnotifyapplicationready) again. By default, the rollback functionality is disabled - the parameter defaults to 0. (number)
 - __installMode__: Used to specity the [InstallMode](#installmode) used for the install operation. This is optional and defaults to InstallMode.ON_NEXT_RESTART.
 - __ignoreFailedUpdates__: Optional boolean flag. If set, updates available on the server for which and update was attempted and rolled back will be ignored. Defaults to true. (boolean)
-- __updatedialog__: Option used to enable, disable or customize the user interaction during sync. If set to false, user interaction will be disabled. If set to true, the user will be alerted or asked to confirm new updates, based on whether the update is mandatory. To customize the user dialog, this option can be set to a custom UpdateDialogOptions instance.
+- __updateDialog__: Option used to enable, disable or customize the user interaction during sync. If set to false, user interaction will be disabled. If set to true, the user will be alerted or asked to confirm new updates, based on whether the update is mandatory. To customize the user dialog, this option can be set to a custom UpdateDialogOptions instance.
 - __deploymentKey__: Option used to override the config.xml deployment key when checking for updates.
 
 ### UpdateDialogOptions
@@ -437,6 +437,61 @@ window.codePush.sync(
     function (downloadProgress) {
         console.log("Downloading " + downloadProgress.receivedBytes + " of " + downloadProgress.totalBytes + " bytes.");
     });
+
+
+//------------------------------------------------
+
+// Using custom sync options - custom update dialog
+
+var updateDialogOptions = {
+    updateTitle: "Update",
+    mandatoryUpdateMessage: "You will be updated to the latest version of the app.",
+    mandatoryContinueButtonLabel: "Continue",
+    optionalUpdateMessage: "Update available. Install?",
+    optionalIgnoreButtonLabel: "No",
+    optionalInstallButtonLabel: "Yes",
+};
+
+var syncOptions = {
+    installMode: InstallMode.ON_NEXT_RESTART,
+    updateDialog: updateDialogOptions
+};
+
+var syncStatusCallback = function (syncStatus) {
+    switch (syncStatus) {
+        // Result (final) statuses
+        case SyncStatus.UPDATE_INSTALLED:
+            app.displayMessage("The update was installed successfully. For InstallMode.ON_NEXT_RESTART, the changes will be visible after application restart. ");
+            break;
+        case SyncStatus.UP_TO_DATE:
+            app.displayMessage("The application is up to date.");
+            break;
+        case SyncStatus.UPDATE_IGNORED:
+            app.displayMessage("The user decided not to install the optional update.");
+            break;
+        case SyncStatus.ERROR:
+            app.displayMessage("An error occured while checking for updates");
+            break;
+            
+        // Intermediate (non final) statuses
+        case SyncStatus.CHECKING_FOR_UPDATE:
+            console.log("Checking for update.");
+            break;
+        case SyncStatus.AWAITING_USER_ACTION:
+            console.log("Alerting user.");
+            break;
+        case SyncStatus.DOWNLOADING_PACKAGE:
+            console.log("Downloading package.");
+            break;
+        case SyncStatus.INSTALLING_UPDATE:
+            console.log("Installing update");
+            break;
+    }
+};
+       
+/* Invoke sync with custom messages in the update dialog.
+   For customizing the sync behavior, see SyncOptions in the CodePush documentation. */
+window.codePush.sync(syncStatusCallback, syncOptions);
 
 ```
 
