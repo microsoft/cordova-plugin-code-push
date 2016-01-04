@@ -74,6 +74,8 @@ You can create an update by simply zipping and deploying your platform's www fol
   
 2. Deploy update using the [CodePush CLI](https://github.com/Microsoft/code-push/tree/master/cli)
 
+In this step, we will use the [CodePush CLI](https://github.com/Microsoft/code-push/tree/master/cli) to zip the platform specific `www` folder and to upload it to the service. Once the zip reaches the server, a diff against the previous released update is generated such that users upgrading from the previous version will only receive the changed files. Users upgrading from older versions will receive all the files in the `www` folder.
+
   - For Android:
   ```
   code-push release <appName> path_to_your_app/platforms/android/assets/www <appStoreVersion> --deploymentName <AndroidDeploymentName>
