@@ -54,13 +54,13 @@ The JavaScript code in this plugin is compiled from TypeScript. Please see [this
 - Allow access to the CodePush server:
   - In ```config.xml```, add 
   ```xml
-  <access origin="https://codepush.azurewebsites.net/ " />
+  <access origin="https://codepush.azurewebsites.net/" />
   ```
   - In your html pages where the plugin is used, add the server URL to your existing Content Security Policy (CSP) header:
   ```xml
   <meta http-equiv="Content-Security-Policy" content="default-src https://codepush.azurewebsites.net/ 'self' ... ">
    ```
-- You are now ready to use the plugin in the application code. See the [sample applications](/samples) for a examples and the methods description for more details.
+- You are now ready to use the plugin in the application code. See the [sample applications](/samples) for examples and the API documentation for more details.
 
 ## Create an application update package
 You can create an update by simply zipping and deploying your platform's www folder. The [CodePush CLI](https://github.com/Microsoft/code-push/tree/master/cli) has a ```deploy``` command for this.
