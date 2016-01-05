@@ -56,7 +56,7 @@ class NativeAppInfo {
     
     /**
      * Checks if a package update was previously attempted but failed for a given package hash.
-     * Every reverted update attempted with rollback protection is stored such that the application developer has the option to ignore
+     * Every reverted update is stored such that the application developer has the option to ignore
      * updates that previously failed. This way, an infinite update loop can be prevented in case of a bad update package.
      */
     public static isFailedUpdate(packageHash: string, checkCallback: SuccessCallback<boolean>): void {

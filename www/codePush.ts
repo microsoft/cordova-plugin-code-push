@@ -34,24 +34,24 @@ class CodePush implements CodePushCordovaPlugin {
      */
     private static DefaultUpdateDialogOptions: UpdateDialogOptions;
     
-    /**
-      * Notifies the plugin that the update operation succeeded and that the application is ready.
-      * Calling this function is required if a rollbackTimeout parameter is used for your LocalPackage.install() call.
-      * If install() is used without a rollbackTimeout, calling this function is a noop.
-      * 
-      * @param notifySucceeded Optional callback invoked if the plugin was successfully notified.
-      * @param notifyFailed Optional callback invoked in case of an error during notifying the plugin.
-      */
+    /**  
+     * Notifies the plugin that the update operation succeeded and that the application is ready.
+     * Calling this function is required on the first run after an update. On every subsequent application run, calling this function is a noop.
+     * If using sync API, calling this function is not required since sync calls it internally. 
+     * 
+     * @param notifySucceeded Optional callback invoked if the plugin was successfully notified.
+     * @param notifyFailed Optional callback invoked in case of an error during notifying the plugin.
+     */
     public notifyApplicationReady(notifySucceeded?: SuccessCallback<void>, notifyFailed?: ErrorCallback): void {
         cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updateSuccess", []);
     }
     
     /**
-    * Get the current package information.
-    * 
-    * @param packageSuccess Callback invoked with the currently deployed package information.
-    * @param packageError Optional callback invoked in case of an error.
-    */
+     * Get the current package information.
+     * 
+     * @param packageSuccess Callback invoked with the currently deployed package information.
+     * @param packageError Optional callback invoked in case of an error.
+     */
     public getCurrentPackage(packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
         return LocalPackage.getPackageInfoOrNull(LocalPackage.PackageInfoFile, packageSuccess, packageError);
     }
@@ -240,7 +240,6 @@ class CodePush implements CodePushCordovaPlugin {
     private getDefaultSyncOptions(): SyncOptions {
         if (!CodePush.DefaultSyncOptions) {
             CodePush.DefaultSyncOptions = {
-                rollbackTimeout: 0,
                 ignoreFailedUpdates: true,
                 installMode: InstallMode.ON_NEXT_RESTART,
                 updateDialog: false,

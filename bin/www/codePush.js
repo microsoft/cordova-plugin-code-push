@@ -160,7 +160,6 @@ var CodePush = (function () {
     CodePush.prototype.getDefaultSyncOptions = function () {
         if (!CodePush.DefaultSyncOptions) {
             CodePush.DefaultSyncOptions = {
-                rollbackTimeout: 0,
                 ignoreFailedUpdates: true,
                 installMode: InstallMode.ON_NEXT_RESTART,
                 updateDialog: false,

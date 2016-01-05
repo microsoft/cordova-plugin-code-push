@@ -51,8 +51,8 @@ var app = {
             // Wait for 5s after the application started and check for updates.
             setTimeout(app.checkAndInstallUpdates, 5000);
             
-            // Notify the plugin that update succeeded. This is only required when using LocalPackage.install with a rollbackTimeout parameter.
-            // codePush.notifyApplicationReady();
+            // Notify the plugin that update succeeded.
+            window.codePush.notifyApplicationReady();
 
         }, app.getErrorHandler("Error while retrieving the current package."));
     },

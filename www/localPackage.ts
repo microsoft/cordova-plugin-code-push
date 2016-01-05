@@ -42,9 +42,8 @@ class LocalPackage extends Package implements ILocalPackage {
     
     /**
      * Applies this package to the application. The application will be reloaded with this package and on every application launch this package will be loaded.
-     * If the rollbackTimeout parameter is provided, the application will wait for a navigator.codePush.notifyApplicationReady() for the given number of milliseconds.
-     * If navigator.codePush.notifyApplicationReady() is called before the time period specified by rollbackTimeout, the install operation is considered a success.
-     * Otherwise, the install operation will be marked as failed, and the application is reverted to its previous version.
+     * On the first run after the update, the application will wait for a codePush.notifyApplicationReady() call. Once this call is made, the install operation is considered a success.
+     * Otherwise, the install operation will be marked as failed, and the application is reverted to its previous version on the next run.
      * 
      * @param installSuccess Callback invoked if the install operation succeeded. 
      * @param installError Optional callback inovoked in case of an error.
@@ -120,7 +119,7 @@ class LocalPackage extends Package implements ILocalPackage {
                             CodePushUtil.logMessage("Install succeeded.");
                             installSuccess && installSuccess();
                             /* no neeed for callbacks, the javascript context will reload */
-                            cordova.exec(() => { }, () => { }, "CodePush", "install", [deployDir.fullPath, installOptions.rollbackTimeout.toString(), installOptions.installMode.toString()]);
+                            cordova.exec(() => { }, () => { }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString()]);
                         };
 
                         var preInstallSuccess = () => {
@@ -405,7 +404,6 @@ class LocalPackage extends Package implements ILocalPackage {
     private static getDefaultInstallOptions(): InstallOptions {
         if (!LocalPackage.DefaultInstallOptions) {
             LocalPackage.DefaultInstallOptions = {
-                rollbackTimeout: 0,
                 installMode: InstallMode.ON_NEXT_RESTART,
             };
         }

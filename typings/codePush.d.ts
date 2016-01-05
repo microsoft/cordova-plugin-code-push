@@ -87,9 +87,8 @@ interface ILocalPackage extends IPackage {
     
     /**
      * Applies this package to the application. The application will be reloaded with this package and on every application launch this package will be loaded.
-     * If the rollbackTimeout parameter is provided, the application will wait for a navigator.codePush.notifyApplicationReady() for the given number of milliseconds.
-     * If navigator.codePush.notifyApplicationReady() is called before the time period specified by rollbackTimeout, the install operation is considered a success.
-     * Otherwise, the install operation will be marked as failed, and the application is reverted to its previous version.
+     * On the first run after the update, the application will wait for a codePush.notifyApplicationReady() call. Once this call is made, the install operation is considered a success.
+     * Otherwise, the install operation will be marked as failed, and the application is reverted to its previous version on the next run.
      * 
      * @param installSuccess Callback invoked if the install operation succeeded. 
      * @param installError Optional callback inovoked in case of an error.
@@ -176,8 +175,8 @@ interface CodePushCordovaPlugin {
     
     /**
      * Notifies the plugin that the update operation succeeded and that the application is ready.
-     * Calling this function is required if a rollbackTimeout parameter is used for your LocalPackage.install() call.
-     * If install() is used without a rollbackTimeout, calling this function is a noop.
+     * Calling this function is required on the first run after an update. On every subsequent application run, calling this function is a noop.
+     * If using sync API, calling this function is not required since sync calls it internally. 
      * 
      * @param notifySucceeded Optional callback invoked if the plugin was successfully notified.
      * @param notifyFailed Optional callback invoked in case of an error during notifying the plugin.
@@ -279,12 +278,6 @@ declare enum InstallMode {
  * Defines the install operation options.
  */
 interface InstallOptions {
-    /**
-     * Optional time interval, in milliseconds, to wait for a notifyApplicationReady() call before marking the install as failed and reverting to the previous version.
-     * This is the rollbackTimeout parameter used for LocalPackage's install() method call. Defaults to zero, which disables rollback.
-     */
-    rollbackTimeout?: number;
-    
     /**
      * Used to specity the InstallMode used for the install operation. This is optional and defaults to InstallMode.ON_NEXT_RESTART.
      */
