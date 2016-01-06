@@ -58,7 +58,7 @@ The JavaScript code in this plugin is compiled from TypeScript. Please see [this
   ```
   - In your html pages where the plugin is used, add the server URL to your existing Content Security Policy (CSP) header:
   ```xml
-  <meta http-equiv="Content-Security-Policy" content="default-src https://codepush.azurewebsites.net/ 'self' ... ">
+  <meta http-equiv="Content-Security-Policy" content="default-src https://codepush.azurewebsites.net/ 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *">
    ```
 - You are now ready to use the plugin in the application code. See the [sample applications](/samples) for examples and the API documentation for more details.
 
