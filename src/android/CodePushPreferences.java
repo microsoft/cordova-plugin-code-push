@@ -15,7 +15,8 @@ public class CodePushPreferences {
     private static final String FAILED_UPDATES_KEY = "FAILED_UPDATES_KEY";
     private static final String PENDING_INSTALL_PREFERENCE = "PENDING_INSTALL";
     private static final String INSTALL_MODE_KEY = "INSTALL_MODE_KEY";
-    private static final String ROLLBACK_TIMEOUT_KEY = "ROLLBACK_TIMEOUT_KEY";
+    private static final String INSTALL_NOT_CONFIRMED_PREFERENCE = "INSTALL_NOT_CONFIRMED";
+    private static final String INSTALL_NOT_CONFIRMED_KEY = "INSTALL_NOT_CONFIRMED_KEY";
 
     private Context context;
 
@@ -54,7 +55,6 @@ public class CodePushPreferences {
         SharedPreferences preferences = context.getSharedPreferences(CodePushPreferences.PENDING_INSTALL_PREFERENCE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt(CodePushPreferences.INSTALL_MODE_KEY, installOptions.installMode.getValue());
-        editor.putInt(CodePushPreferences.ROLLBACK_TIMEOUT_KEY, installOptions.rollbackTimeout);
         editor.commit();
     }
 
@@ -67,13 +67,29 @@ public class CodePushPreferences {
 
         SharedPreferences preferences = context.getSharedPreferences(CodePushPreferences.PENDING_INSTALL_PREFERENCE, Context.MODE_PRIVATE);
         int installMode = preferences.getInt(CodePushPreferences.INSTALL_MODE_KEY, -1);
-        int rollbackTimeout = preferences.getInt(CodePushPreferences.ROLLBACK_TIMEOUT_KEY, -1);
 
-        if ((installMode != -1) && (rollbackTimeout != -1)) {
-            pendingInstall = new InstallOptions(rollbackTimeout, InstallMode.fromValue(installMode));
+        if (installMode != -1) {
+            pendingInstall = new InstallOptions(InstallMode.fromValue(installMode));
         }
 
         return pendingInstall;
+    }
+
+    public void saveNotConfirmedInstall() {
+        SharedPreferences preferences = context.getSharedPreferences(CodePushPreferences.INSTALL_NOT_CONFIRMED_PREFERENCE, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean(CodePushPreferences.INSTALL_NOT_CONFIRMED_KEY, true);
+        editor.commit();
+    }
+
+    public void clearNotConfirmedInstall() {
+        this.clearPreferences(CodePushPreferences.INSTALL_NOT_CONFIRMED_PREFERENCE);
+    }
+
+    public boolean isNotConfirmedInstall() {
+        SharedPreferences preferences = context.getSharedPreferences(CodePushPreferences.INSTALL_NOT_CONFIRMED_PREFERENCE, Context.MODE_PRIVATE);
+        boolean notConfirmedInstall = preferences.getBoolean(CodePushPreferences.INSTALL_NOT_CONFIRMED_KEY, false);
+        return notConfirmedInstall;
     }
 
     public void clearPreferences(String preferencesId) {

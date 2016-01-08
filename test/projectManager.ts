@@ -28,7 +28,7 @@ export class ProjectManager {
     public static INDEX_JS_PLACEHOLDER: string = "CODE_PUSH_INDEX_JS_PATH";
     public static CODE_PUSH_APP_VERSION_PLACEHOLDER: string = "CODE_PUSH_APP_VERSION";
     public static CODE_PUSH_APP_ID_PLACEHOLDER: string = "CODE_PUSH_TEST_APPLICATION_ID";
-    
+
     public static DEFAULT_APP_VERSION: string = "Store version";
 
 	/**
@@ -151,14 +151,27 @@ export class ProjectManager {
     }
 
     /**
+     * Stops and restarts an application specified by its namespace identifier.
+     */
+    public static restartApplication(targetPlatform: platform.IPlatform, namespace: string, testRunDirectory: string, targetEmulator: string): Q.Promise<void> {
+        var emulatorManager = targetPlatform.getOptionalEmulatorManager();
+        if (emulatorManager) {
+            return emulatorManager.endRunningApplication(namespace)
+                .then(() => emulatorManager.launchInstalledApplication(namespace));
+        } else {
+            return ProjectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+        }
+    }
+
+    /**
      * Executes a child process and logs its output to the console.
      */
     private static execAndLogChildProcess(command: string, options?: child_process.IExecOptions): Q.Promise<void> {
         var deferred = Q.defer<void>();
-        
+
         options = options || {};
         options.maxBuffer = 1024 * 500;
-           
+
         console.log("Running command: " + command);
         child_process.exec(command, options, (error: Error, stdout: Buffer, stderr: Buffer) => {
 
