@@ -12,5 +12,8 @@
 + (void)savePendingInstall:(InstallOptions *)installOptions;
 + (InstallOptions*)getPendingInstall;
 + (void)clearPendingInstall;
++ (void)saveNotConfirmedInstall;
++ (BOOL)isNotConfirmedInstall;
++ (void)clearNotConfirmedInstall;
 
 @end

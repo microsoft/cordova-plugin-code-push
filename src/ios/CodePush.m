@@ -9,19 +9,19 @@
 
 @implementation CodePush
 
-bool updateSuccess = false;
 bool didUpdate = false;
 bool pendingInstall = false;
 
-- (void)onUpdateSuccessTimeout {
-    if (!updateSuccess) {
+- (void)handleUnconfirmedInstall:(BOOL)navigate {
+    if ([CodePushPackageManager isNotConfirmedInstall]) {
         [CodePushPackageManager revertToPreviousVersion];
-        CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
-        bool revertSuccess = (nil != currentMetadata && [self loadPackage:currentMetadata.localPath]);
-        if (!revertSuccess) {
-            /* first update failed, go back to store version */
-            [self loadStoreVersion];
-            
+        if (navigate) {
+            CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
+            bool revertSuccess = (nil != currentMetadata && [self loadPackage:currentMetadata.localPath]);
+            if (!revertSuccess) {
+                /* first update failed, go back to store version */
+                [self loadStoreVersion];
+            }
         }
     }
     else {
@@ -31,7 +31,7 @@ bool pendingInstall = false;
 }
 
 - (void)updateSuccess:(CDVInvokedUrlCommand *)command {
-    updateSuccess = YES;
+    [CodePushPackageManager clearNotConfirmedInstall];
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -40,16 +40,10 @@ bool pendingInstall = false;
     CDVPluginResult* pluginResult = nil;
     
     NSString* location = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
-    NSString* successTimeoutMillisString = [command argumentAtIndex:1 withDefault:nil andClass:[NSString class]];
-    NSString* installModeString = [command argumentAtIndex:2 withDefault:nil andClass:[NSString class]];
+    NSString* installModeString = [command argumentAtIndex:1 withDefault:nil andClass:[NSString class]];
     
     InstallOptions* options = [[InstallOptions alloc] init];
     [options setInstallMode:IMMEDIATE];
-    [options setRollbackTimeout:0];
-    
-    if (successTimeoutMillisString) {
-        [options setRollbackTimeout:[successTimeoutMillisString intValue]];
-    }
     
     if (installModeString) {
         [options setInstallMode:[installModeString intValue]];
@@ -62,7 +56,7 @@ bool pendingInstall = false;
         else {
             bool applied = [self loadPackage: location];
             if (applied) {
-                [self markUpdateAndStartTimer:[options rollbackTimeout]];
+                [self markUpdate];
                 pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
             }
             else {
@@ -79,16 +73,9 @@ bool pendingInstall = false;
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
-- (void) markUpdateAndStartTimer:(NSInteger)updateSuccessTimeoutInMillis {
+- (void) markUpdate {
     didUpdate = YES;
-    if (updateSuccessTimeoutInMillis > 0) {
-        updateSuccess = NO;
-        NSTimeInterval successTimeoutInterval = updateSuccessTimeoutInMillis / 1000;
-        [NSTimer scheduledTimerWithTimeInterval:successTimeoutInterval target:self selector:@selector(onUpdateSuccessTimeout) userInfo:nil repeats:NO];
-    }
-    else {
-        [CodePushPackageManager cleanOldPackage];
-    }
+    [CodePushPackageManager saveNotConfirmedInstall];
 }
 
 - (void)preInstall:(CDVInvokedUrlCommand *)command {
@@ -170,12 +157,12 @@ bool pendingInstall = false;
 - (void)pluginInitialize {
     // register for "on resume" notifications
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillEnterForeground) name:UIApplicationWillEnterForegroundNotification object:nil];
-    
+    [self handleUnconfirmedInstall:NO];
     [self handleAppStart];
     InstallOptions* pendingInstall = [CodePushPackageManager getPendingInstall];
     // handle both ON_NEXT_RESUME and ON_NEXT_RESTART - the application might have been killed after transitioning to the background
     if (pendingInstall && (pendingInstall.installMode == ON_NEXT_RESTART || pendingInstall.installMode == ON_NEXT_RESUME)) {
-        [self markUpdateAndStartTimer:pendingInstall.rollbackTimeout];
+        [self markUpdate];
         [CodePushPackageManager clearPendingInstall];
     }
 }
@@ -187,7 +174,7 @@ bool pendingInstall = false;
         if (deployedPackageMetadata && deployedPackageMetadata.localPath) {
             bool applied = [self loadPackage: deployedPackageMetadata.localPath];
             if (applied) {
-                [self markUpdateAndStartTimer:pendingInstall.rollbackTimeout];
+                [self markUpdate];
                 [CodePushPackageManager clearPendingInstall];
             }
         }

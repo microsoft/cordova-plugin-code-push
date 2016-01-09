@@ -98,7 +98,7 @@ public class CodePush extends CordovaPlugin {
     private boolean execInstall(CordovaArgs args, CallbackContext callbackContext) {
         try {
             final String startLocation = args.getString(0);
-            final InstallMode installMode = InstallMode.fromValue(args.optInt(2));
+            final InstallMode installMode = InstallMode.fromValue(args.optInt(1));
 
             File startPage = this.getStartPageForPackage(startLocation);
             if (startPage != null) {

@@ -6,6 +6,7 @@
 
 NSString* const FailedUpdatesKey = @"FAILED_UPDATES";
 NSString* const PendingInstallKey = @"PENDING_INSTALL";
+NSString* const NotConfirmedInstallKey = @"NOT_CONFIRMED_INSTALL";
 NSString* const OldPackageManifestName = @"oldPackage.json";
 NSString* const CurrentPackageManifestName = @"currentPackage.json";
 
@@ -103,6 +104,23 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
 + (void)clearPendingInstall {
     NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
     [preferences removeObjectForKey:PendingInstallKey];
+}
+
++ (void)saveNotConfirmedInstall {
+    NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
+    [preferences setBool:YES forKey:NotConfirmedInstallKey];
+    [preferences synchronize];
+}
+
++ (BOOL)isNotConfirmedInstall {
+    NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
+    BOOL notConfirmedInstall = [preferences boolForKey:NotConfirmedInstallKey];
+    return notConfirmedInstall;
+}
+
++ (void)clearNotConfirmedInstall {
+    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
+    [preferences removeObjectForKey:NotConfirmedInstallKey];
 }
 
 + (CodePushPackageMetadata*)readPackageManifest:(NSString*)manifestName {
