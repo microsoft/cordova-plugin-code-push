@@ -54,6 +54,7 @@ public class CodePush extends CordovaPlugin {
             return execInstall(args, callbackContext);
         } else if ("updateSuccess".equals(action)) {
             this.codePushPackageManager.markUnconfirmedInstall(false);
+            this.cleanOldPackageSilently();
             callbackContext.success();
             return true;
         } else if ("isFailedUpdate".equals(action)) {
@@ -242,9 +243,6 @@ public class CodePush extends CordovaPlugin {
                     });
                 }
             }
-        } else {
-            /* success updating - delete the old package */
-            cleanOldPackageSilently();
         }
     }
 
@@ -317,11 +315,15 @@ public class CodePush extends CordovaPlugin {
         if (!didStartApp) {
             /* The application was just started. */
             didStartApp = true;
-            /* Revert to the previous version if the install is not confirmed. */
-            handleUnconfirmedInstall(false);
+            InstallOptions pendingInstall = this.codePushPackageManager.getPendingInstall();
+
+            /* Revert to the previous version if the install is not confirmed and no update is pending. */
+            if (pendingInstall == null) {
+                handleUnconfirmedInstall(false);
+            }
+
             handleAppStart();
             /* Handle ON_NEXT_RESUME and ON_NEXT_RESTART pending installations */
-            InstallOptions pendingInstall = this.codePushPackageManager.getPendingInstall();
             if (pendingInstall != null && (InstallMode.ON_NEXT_RESUME.equals(pendingInstall.installMode) || InstallMode.ON_NEXT_RESTART.equals(pendingInstall.installMode))) {
                 this.markUpdate();
                 this.codePushPackageManager.clearPendingInstall();
