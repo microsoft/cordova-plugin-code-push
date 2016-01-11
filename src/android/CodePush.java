@@ -220,8 +220,9 @@ public class CodePush extends CordovaPlugin {
     }
 
     private void handleUnconfirmedInstall(boolean navigate) {
-        if (codePushPackageManager.isNotConfirmedInstall()) {
+        if (this.codePushPackageManager.isNotConfirmedInstall()) {
             /* revert application to the previous version */
+            this.codePushPackageManager.markUnconfirmedInstall(false);
             this.codePushPackageManager.revertToPreviousVersion();
             if (navigate) {
                 String url;

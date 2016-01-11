@@ -14,6 +14,7 @@ bool pendingInstall = false;
 
 - (void)handleUnconfirmedInstall:(BOOL)navigate {
     if ([CodePushPackageManager isNotConfirmedInstall]) {
+        [CodePushPackageManager clearNotConfirmedInstall];
         [CodePushPackageManager revertToPreviousVersion];
         if (navigate) {
             CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
@@ -24,14 +25,11 @@ bool pendingInstall = false;
             }
         }
     }
-    else {
-        /* update success, delete the old package */
-        [CodePushPackageManager cleanOldPackage];
-    }
 }
 
 - (void)updateSuccess:(CDVInvokedUrlCommand *)command {
     [CodePushPackageManager clearNotConfirmedInstall];
+    [CodePushPackageManager cleanOldPackage];
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -149,6 +147,7 @@ bool pendingInstall = false;
                 [CodePushPackageManager cleanDeployments];
                 [CodePushPackageManager clearFailedUpdates];
                 [CodePushPackageManager clearPendingInstall];
+                [CodePushPackageManager clearNotConfirmedInstall];
             }
         }
     }
@@ -157,9 +156,12 @@ bool pendingInstall = false;
 - (void)pluginInitialize {
     // register for "on resume" notifications
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillEnterForeground) name:UIApplicationWillEnterForegroundNotification object:nil];
-    [self handleUnconfirmedInstall:NO];
-    [self handleAppStart];
     InstallOptions* pendingInstall = [CodePushPackageManager getPendingInstall];
+    if (!pendingInstall) {
+        [self handleUnconfirmedInstall:NO];
+    }
+    [self handleAppStart];
+    
     // handle both ON_NEXT_RESUME and ON_NEXT_RESTART - the application might have been killed after transitioning to the background
     if (pendingInstall && (pendingInstall.installMode == ON_NEXT_RESTART || pendingInstall.installMode == ON_NEXT_RESUME)) {
         [self markUpdate];
