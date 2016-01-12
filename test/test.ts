@@ -701,6 +701,7 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS, su.TestMessage.UPDATE_INSTALLED], deferred);
                     console.log("Running project...");
+                    mockResponse = { updateInfo: getMockResponse(true) };
                     setupUpdateProject(UpdateDeviceReady, "Update 2 (bad update)")
                         .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
                         .then(() => { return projectManager.restartApplication(targetPlatform, TestNamespace, testRunDirectory, targetEmulator); }).done();
@@ -719,6 +720,15 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageResponse = su.TestMessageResponse.SKIP_NOTIFY_APPLICATION_READY;
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.SKIPPED_NOTIFY_APPLICATION_READY], deferred);
+                    console.log("Running project...");
+                    projectManager.restartApplication(targetPlatform, TestNamespace, testRunDirectory, targetEmulator).done();
+                    return deferred.promise;
+                })
+                .then<void>(() => {
+                    /* run the application again */
+                    var deferred = Q.defer<void>();
+                    testMessageResponse = undefined;
+                    testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS, su.TestMessage.UPDATE_FAILED_PREVIOUSLY], deferred);
                     console.log("Running project...");
                     projectManager.restartApplication(targetPlatform, TestNamespace, testRunDirectory, targetEmulator).done();
                     return deferred.promise;
