@@ -40,6 +40,7 @@ export class TestMessage {
     public static UPDATE_FAILED_PREVIOUSLY = "UPDATE_FAILED_PREVIOUSLY";
     public static NOTIFY_APP_READY_SUCCESS = "NOTIFY_APP_READY_SUCCESS";
     public static NOTIFY_APP_READY_FAILURE = "NOTIFY_APP_READY_FAILURE";
+    public static SKIPPED_NOTIFY_APPLICATION_READY = "SKIPPED_NOTIFY_APPLICATION_READY";
     public static SYNC_STATUS = "SYNC_STATUS";
 
     public static SYNC_UP_TO_DATE = 0;
@@ -50,6 +51,13 @@ export class TestMessage {
     public static SYNC_AWAITING_USER_ACTION = 5;
     public static SYNC_DOWNLOADING_PACKAGE = 6;
     public static SYNC_INSTALLING_UPDATE = 7;
+}
+
+/**
+ * Contains all the messages sent from the mock server back to the application during tests.
+ */
+export class TestMessageResponse {
+    public static SKIP_NOTIFY_APPLICATION_READY = "SKIP_NOTIFY_APPLICATION_READY";
 }
 
 /**
