@@ -117,9 +117,14 @@ class LocalPackage extends Package implements ILocalPackage {
                     } else {
                         var invokeSuccessAndInstall = () => {
                             CodePushUtil.logMessage("Install succeeded.");
-                            installSuccess && installSuccess();
-                            /* no neeed for callbacks, the javascript context will reload */
-                            cordova.exec(() => { }, () => { }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString()]);
+                            if (installOptions.installMode === InstallMode.IMMEDIATE) {
+                                /* invoke success before navigating */
+                                installSuccess && installSuccess();
+                                /* no neeed for callbacks, the javascript context will reload */
+                                cordova.exec(() => { }, () => { }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString()]);
+                            } else {
+                                cordova.exec(() => { installSuccess && installSuccess(); }, () => { installError && installError(); }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString()]);
+                            }
                         };
 
                         var preInstallSuccess = () => {

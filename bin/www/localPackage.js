@@ -91,8 +91,13 @@ var LocalPackage = (function (_super) {
                     else {
                         var invokeSuccessAndInstall = function () {
                             CodePushUtil.logMessage("Install succeeded.");
-                            installSuccess && installSuccess();
-                            cordova.exec(function () { }, function () { }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString()]);
+                            if (installOptions.installMode === InstallMode.IMMEDIATE) {
+                                installSuccess && installSuccess();
+                                cordova.exec(function () { }, function () { }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString()]);
+                            }
+                            else {
+                                cordova.exec(function () { installSuccess && installSuccess(); }, function () { installError && installError(); }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString()]);
+                            }
                         };
                         var preInstallSuccess = function () {
                             Sdk.reportStatus(AcquisitionStatus.DeploymentSucceeded);

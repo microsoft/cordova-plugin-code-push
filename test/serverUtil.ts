@@ -42,6 +42,10 @@ export class TestMessage {
     public static NOTIFY_APP_READY_FAILURE = "NOTIFY_APP_READY_FAILURE";
     public static SKIPPED_NOTIFY_APPLICATION_READY = "SKIPPED_NOTIFY_APPLICATION_READY";
     public static SYNC_STATUS = "SYNC_STATUS";
+    public static RESTART_SUCCEEDED = "RESTART_SUCCEEDED";
+    public static RESTART_FAILED = "RESTART_FAILED";
+    public static PENDING_PACKAGE = "PENDING_PACKAGE";
+    public static CURRENT_PACKAGE = "CURRENT_PACKAGE";
 
     public static SYNC_UP_TO_DATE = 0;
     public static SYNC_UPDATE_INSTALLED = 1;

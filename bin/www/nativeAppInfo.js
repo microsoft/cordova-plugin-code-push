@@ -60,7 +60,7 @@ var NativeAppInfo = (function () {
         var fail = function () {
             callback(false);
         };
-        cordova.exec(win, fail, "CodePush", "isPendingUpdate");
+        cordova.exec(win, fail, "CodePush", "isPendingUpdate", []);
     };
     return NativeAppInfo;
 })();

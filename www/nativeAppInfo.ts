@@ -103,7 +103,7 @@ class NativeAppInfo {
             callback(false);
         };
 
-        cordova.exec(win, fail, "CodePush", "isPendingUpdate");
+        cordova.exec(win, fail, "CodePush", "isPendingUpdate", []);
     }
 }
 
