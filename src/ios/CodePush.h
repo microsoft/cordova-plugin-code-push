@@ -10,7 +10,9 @@
 - (void)preInstall:(CDVInvokedUrlCommand *)command;
 - (void)isFailedUpdate:(CDVInvokedUrlCommand *)command;
 - (void)isFirstRun:(CDVInvokedUrlCommand *)command;
+- (void)isPendingUpdate:(CDVInvokedUrlCommand *)command;
 - (void)updateSuccess:(CDVInvokedUrlCommand *)command;
+- (void)restartApplication:(CDVInvokedUrlCommand *)command;
 - (void)pluginInitialize;
 
 @end

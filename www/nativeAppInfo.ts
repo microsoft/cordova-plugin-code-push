@@ -90,6 +90,21 @@ class NativeAppInfo {
 
         cordova.exec(win, fail, "CodePush", "isFirstRun", [packageHash]);
     }
+    
+    /**
+     * Checks with the native side if there is a pending update.
+     */
+    public static isPendingUpdate(callback: SuccessCallback<boolean>): void {
+        var win = (firstRun?: number) => {
+            callback(!!firstRun);
+        };
+
+        var fail = () => {
+            callback(false);
+        };
+
+        cordova.exec(win, fail, "CodePush", "isPendingUpdate");
+    }
 }
 
 export = NativeAppInfo;

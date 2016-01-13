@@ -71,6 +71,28 @@ bool pendingInstall = false;
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
+- (void)restartApplication:(CDVInvokedUrlCommand *)command {
+    CDVPluginResult* pluginResult = nil;
+    CodePushPackageMetadata* deployedPackageMetadata = [CodePushPackageManager getCurrentPackageMetadata];
+    
+    if (deployedPackageMetadata && deployedPackageMetadata.localPath && [self getStartPageURLForLocalPackage:deployedPackageMetadata.localPath]) {
+        /* Callback before navigating */
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        
+        [self loadPackage: deployedPackageMetadata.localPath];
+        InstallOptions* pendingInstall = [CodePushPackageManager getPendingInstall];
+        if (pendingInstall) {
+            [self markUpdate];
+            [CodePushPackageManager clearPendingInstall];
+        }
+    }
+    else {
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"The application has no installed updates."];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }
+}
+
 - (void) markUpdate {
     didUpdate = YES;
     [CodePushPackageManager saveNotConfirmedInstall];
@@ -270,6 +292,14 @@ bool pendingInstall = false;
     }
     
     result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:isFirstRun ? 1 : 0];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
+- (void)isPendingUpdate:(CDVInvokedUrlCommand *)command {
+    CDVPluginResult* result;
+    
+    InstallOptions* pendingInstall = [CodePushPackageManager getPendingInstall];
+    result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:pendingInstall ? 1 : 0];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 

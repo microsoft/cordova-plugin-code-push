@@ -25,7 +25,7 @@ class LocalPackage extends Package implements ILocalPackage {
 
     public static PackageUpdateFileName: string = "update.zip";
     public static PackageInfoFile: string = "currentPackage.json";
-    private static OldPackageInfoFile: string = "oldPackage.json";
+    public static OldPackageInfoFile: string = "oldPackage.json";
     private static DiffManifestFile: string = "hotcodepush.json";
 
     private static DefaultInstallOptions: InstallOptions;

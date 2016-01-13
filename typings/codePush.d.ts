@@ -163,6 +163,12 @@ interface CodePushCordovaPlugin {
     getCurrentPackage(packageSuccess: SuccessCallback<ILocalPackage>, packageError?: ErrorCallback): void;
 
     /**
+     * Gets the pending package information, if any. A pending package is one that has been installed but the application still runs the old code.
+     * This happends only after a package has been installed using ON_NEXT_RESTART or ON_NEXT_RESUME mode, but the application was not restarted/resumed yet.
+     */
+    getPendingPackage(packageSuccess: SuccessCallback<ILocalPackage>, packageError?: ErrorCallback): void;
+
+    /**
      * Checks with the CodePush server if an update package is available for download.
      *
      * @param querySuccess Callback invoked in case of a successful response from the server.
@@ -182,6 +188,12 @@ interface CodePushCordovaPlugin {
      * @param notifyFailed Optional callback invoked in case of an error during notifying the plugin.
      */
     notifyApplicationReady(notifySucceeded?: SuccessCallback<void>, notifyFailed?: ErrorCallback): void;
+
+    /**
+     * Reloads the application. If there is a pending update package installed using ON_NEXT_RESTART or ON_NEXT_RESUME modes, the update
+     * will be immediately visible to the user. Otherwise, calling this function will simply reload the current version of the application.
+     */
+    restartApplication(installSuccess: SuccessCallback<void>, errorCallback?: ErrorCallback): void;
 
     /**
      * Convenience method for installing updates in one method call.

@@ -57,17 +57,20 @@ public class CodePush extends CordovaPlugin {
             this.cleanOldPackageSilently();
             callbackContext.success();
             return true;
+        } else if ("restartApplication".equals(action)) {
+            return execRestartApplication(args, callbackContext);
+        } else if ("isPendingUpdate".equals(action)) {
+            return execIsPendingUpdate(args, callbackContext);
         } else if ("isFailedUpdate".equals(action)) {
             return execIsFailedUpdate(args, callbackContext);
         } else if ("isFirstRun".equals(action)) {
-            execIsFirstRun(args, callbackContext);
-            return true;
+            return execIsFirstRun(args, callbackContext);
         } else {
             return false;
         }
     }
 
-    private void execIsFirstRun(CordovaArgs args, CallbackContext callbackContext) {
+    private boolean execIsFirstRun(CordovaArgs args, CallbackContext callbackContext) {
         try {
             boolean isFirstRun = false;
             String packageHash = args.getString(0);
@@ -83,6 +86,17 @@ public class CodePush extends CordovaPlugin {
         } catch (JSONException e) {
             callbackContext.error("Invalid package hash. " + e.getMessage());
         }
+        return true;
+    }
+
+    private boolean execIsPendingUpdate(CordovaArgs args, CallbackContext callbackContext) {
+        try {
+            InstallOptions pendingInstall = this.codePushPackageManager.getPendingInstall();
+            callbackContext.success((pendingInstall != null) ? 1 : 0);
+        } catch (Exception e) {
+            callbackContext.error("An error occurred. " + e.getMessage());
+        }
+        return true;
     }
 
     private boolean execIsFailedUpdate(CordovaArgs args, CallbackContext callbackContext) {
@@ -119,6 +133,23 @@ public class CodePush extends CordovaPlugin {
             }
         } catch (Exception e) {
             callbackContext.error("Cound not read webview URL: " + e.getMessage());
+        }
+        return true;
+    }
+
+    private boolean execRestartApplication(CordovaArgs args, CallbackContext callbackContext) {
+        try {
+            /* check if we have a deployed package already */
+            CodePushPackageMetadata deployedPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
+            if (deployedPackageMetadata != null) {
+                callbackContext.success();
+                didStartApp = false;
+                onStart();
+            } else {
+                callbackContext.error("The application has no installed updates.");
+            }
+        } catch (Exception e) {
+            callbackContext.error("An error occurred while restarting the application." + e.getMessage());
         }
         return true;
     }

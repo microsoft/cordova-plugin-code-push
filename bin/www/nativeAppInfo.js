@@ -53,6 +53,15 @@ var NativeAppInfo = (function () {
         };
         cordova.exec(win, fail, "CodePush", "isFirstRun", [packageHash]);
     };
+    NativeAppInfo.isPendingUpdate = function (callback) {
+        var win = function (firstRun) {
+            callback(!!firstRun);
+        };
+        var fail = function () {
+            callback(false);
+        };
+        cordova.exec(win, fail, "CodePush", "isPendingUpdate");
+    };
     return NativeAppInfo;
 })();
 module.exports = NativeAppInfo;

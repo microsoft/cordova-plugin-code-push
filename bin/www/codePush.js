@@ -26,8 +26,28 @@ var CodePush = (function () {
     CodePush.prototype.notifyApplicationReady = function (notifySucceeded, notifyFailed) {
         cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updateSuccess", []);
     };
+    CodePush.prototype.restartApplication = function (installSuccess, errorCallback) {
+        cordova.exec(installSuccess, errorCallback, "CodePush", "restartApplication", []);
+    };
     CodePush.prototype.getCurrentPackage = function (packageSuccess, packageError) {
-        return LocalPackage.getPackageInfoOrNull(LocalPackage.PackageInfoFile, packageSuccess, packageError);
+        NativeAppInfo.isPendingUpdate(function (pendingUpdate) {
+            if (pendingUpdate) {
+                LocalPackage.getPackageInfoOrNull(LocalPackage.OldPackageInfoFile, packageSuccess, packageError);
+            }
+            else {
+                LocalPackage.getPackageInfoOrNull(LocalPackage.PackageInfoFile, packageSuccess, packageError);
+            }
+        });
+    };
+    CodePush.prototype.getPendingPackage = function (packageSuccess, packageError) {
+        NativeAppInfo.isPendingUpdate(function (pendingUpdate) {
+            if (pendingUpdate) {
+                LocalPackage.getPackageInfoOrNull(LocalPackage.PackageInfoFile, packageSuccess, packageError);
+            }
+            else {
+                packageSuccess(null);
+            }
+        });
     };
     CodePush.prototype.checkForUpdate = function (querySuccess, queryError, deploymentKey) {
         try {

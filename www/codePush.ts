@@ -47,13 +47,41 @@ class CodePush implements CodePushCordovaPlugin {
     }
     
     /**
+     * Reloads the application. If there is a pending update package installed using ON_NEXT_RESTART or ON_NEXT_RESUME modes, the update
+     * will be immediately visible to the user. Otherwise, calling this function will simply reload the current version of the application.
+     */
+    public restartApplication(installSuccess: SuccessCallback<void>, errorCallback?: ErrorCallback): void {
+        cordova.exec(installSuccess, errorCallback, "CodePush", "restartApplication", []);
+    }
+    
+    /**
      * Get the current package information.
      * 
      * @param packageSuccess Callback invoked with the currently deployed package information.
      * @param packageError Optional callback invoked in case of an error.
      */
     public getCurrentPackage(packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
-        return LocalPackage.getPackageInfoOrNull(LocalPackage.PackageInfoFile, packageSuccess, packageError);
+        NativeAppInfo.isPendingUpdate((pendingUpdate: boolean) => {
+            if (pendingUpdate) {
+                LocalPackage.getPackageInfoOrNull(LocalPackage.OldPackageInfoFile, packageSuccess, packageError);
+            } else {
+                LocalPackage.getPackageInfoOrNull(LocalPackage.PackageInfoFile, packageSuccess, packageError);
+            }
+        });
+    }
+
+    /**
+     * Gets the pending package information, if any. A pending package is one that has been installed but the application still runs the old code.
+     * This happends only after a package has been installed using ON_NEXT_RESTART or ON_NEXT_RESUME mode, but the application was not restarted/resumed yet.
+     */
+    public getPendingPackage(packageSuccess: SuccessCallback<ILocalPackage>, packageError?: ErrorCallback): void {
+        NativeAppInfo.isPendingUpdate((pendingUpdate: boolean) => {
+            if (pendingUpdate) {
+                LocalPackage.getPackageInfoOrNull(LocalPackage.PackageInfoFile, packageSuccess, packageError);
+            } else {
+                packageSuccess(null);
+            }
+        });
     }
 
     /**
