@@ -10,6 +10,7 @@
 
 /// <reference path="../typings/codePush.d.ts" />
 /// <reference path="../typings/fileTransfer.d.ts" />
+/// <reference path="../typings/device.d.ts" />
 "use strict";
 var NativeAppInfo = require("./nativeAppInfo");
 var HttpRequester = require("./httpRequester");
@@ -19,7 +20,13 @@ var Sdk = (function () {
     Sdk.getAcquisitionManager = function (callback, userDeploymentKey) {
         var resolveManager = function (defaultInstance) {
             if (userDeploymentKey) {
-                var customConfiguration = { deploymentKey: userDeploymentKey, serverUrl: Sdk.DefaultConfiguration.serverUrl, ignoreAppVersion: Sdk.DefaultConfiguration.ignoreAppVersion };
+                var customConfiguration = {
+                    deploymentKey: userDeploymentKey,
+                    serverUrl: Sdk.DefaultConfiguration.serverUrl,
+                    ignoreAppVersion: Sdk.DefaultConfiguration.ignoreAppVersion,
+                    appVersion: Sdk.DefaultConfiguration.appVersion,
+                    clientUniqueId: Sdk.DefaultConfiguration.clientUniqueId
+                };
                 var customAcquisitionManager = new AcquisitionManager(new HttpRequester(), customConfiguration);
                 callback(null, customAcquisitionManager);
             }
@@ -33,26 +40,34 @@ var Sdk = (function () {
         else {
             NativeAppInfo.getServerURL(function (serverError, serverURL) {
                 NativeAppInfo.getDeploymentKey(function (depolymentKeyError, deploymentKey) {
-                    if (!serverURL || !deploymentKey) {
-                        callback(new Error("Could not get the CodePush configuration. Please check your config.xml file."), null);
-                    }
-                    else {
-                        Sdk.DefaultConfiguration = { deploymentKey: deploymentKey, serverUrl: serverURL, ignoreAppVersion: false };
-                        Sdk.DefaultAcquisitionManager = new AcquisitionManager(new HttpRequester(), Sdk.DefaultConfiguration);
-                        resolveManager(Sdk.DefaultAcquisitionManager);
-                    }
+                    NativeAppInfo.getApplicationVersion(function (appVersionError, appVersion) {
+                        if (!serverURL || !deploymentKey || !appVersion) {
+                            callback(new Error("Could not get the CodePush configuration. Please check your config.xml file."), null);
+                        }
+                        else {
+                            Sdk.DefaultConfiguration = {
+                                deploymentKey: deploymentKey,
+                                serverUrl: serverURL,
+                                ignoreAppVersion: false,
+                                appVersion: appVersion,
+                                clientUniqueId: device.uuid
+                            };
+                            Sdk.DefaultAcquisitionManager = new AcquisitionManager(new HttpRequester(), Sdk.DefaultConfiguration);
+                            resolveManager(Sdk.DefaultAcquisitionManager);
+                        }
+                    });
                 });
             });
         }
     };
-    Sdk.reportStatus = function (status, callback) {
+    Sdk.reportStatus = function (status, pkg, callback) {
         try {
             Sdk.getAcquisitionManager(function (error, acquisitionManager) {
                 if (error) {
                     callback && callback(error, null);
                 }
                 else {
-                    acquisitionManager.reportStatus(status, null, callback);
+                    acquisitionManager.reportStatusDeploy(pkg, status, callback);
                 }
             });
         }

@@ -136,9 +136,11 @@ interface SuccessCallback<T> { (result?: T): void; }
 interface ErrorCallback { (error?: Error): void; }
 
 interface Configuration {
-    serverUrl: string;
+    appVersion: string;
+    clientUniqueId: string;
     deploymentKey: string;
-    ignoreAppVersion?: boolean;
+    serverUrl: string;
+    ignoreAppVersion?: boolean
 }
 
 declare class AcquisitionStatus {
@@ -149,7 +151,7 @@ declare class AcquisitionStatus {
 declare class AcquisitionManager {
     constructor(httpRequester: Http.Requester, configuration: Configuration);
     public queryUpdateWithCurrentPackage(currentPackage: IPackage, callback?: Callback<IRemotePackage | NativeUpdateNotification>): void;
-    public reportStatus(status: string, message?: string, callback?: Callback<void>): void;
+    public reportStatusDeploy(pkg?: IPackage, status?: string, callback?: Callback<void>): void;
 }
 
 interface CodePushCordovaPlugin {
