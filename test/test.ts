@@ -758,7 +758,6 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([
-                        su.TestMessage.RESTART_FAILED,
                         new su.AppMessage(su.TestMessage.PENDING_PACKAGE, [null]),
                         new su.AppMessage(su.TestMessage.CURRENT_PACKAGE, [null]),
                         new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_CHECKING_FOR_UPDATE]),

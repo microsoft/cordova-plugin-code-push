@@ -19,15 +19,14 @@ import java.net.MalformedURLException;
  */
 public class CodePush extends CordovaPlugin {
 
-    private static final String WWW_ASSET_PATH_PREFIX = "file:///android_asset/www/";
     public static final String RESOURCES_BUNDLE = "resources.arsc";
-
+    private static final String WWW_ASSET_PATH_PREFIX = "file:///android_asset/www/";
+    private static boolean ShouldClearHistoryOnLoad = false;
     private CordovaWebView mainWebView;
     private CodePushPackageManager codePushPackageManager;
     private boolean pluginDestroyed = false;
     private boolean didUpdate = false;
     private boolean didStartApp = false;
-    private static boolean ShouldClearHistoryOnLoad = false;
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
@@ -146,7 +145,16 @@ public class CodePush extends CordovaPlugin {
                 didStartApp = false;
                 onStart();
             } else {
-                callbackContext.error("The application has no installed updates.");
+                final String configLaunchUrl = this.getConfigLaunchUrl();
+                if (!this.pluginDestroyed) {
+                    callbackContext.success();
+                    this.cordova.getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            navigateToURL(configLaunchUrl);
+                        }
+                    });
+                }
             }
         } catch (Exception e) {
             callbackContext.error("An error occurred while restarting the application." + e.getMessage());

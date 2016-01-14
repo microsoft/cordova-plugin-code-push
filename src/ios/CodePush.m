@@ -72,14 +72,12 @@ bool pendingInstall = false;
 }
 
 - (void)restartApplication:(CDVInvokedUrlCommand *)command {
-    CDVPluginResult* pluginResult = nil;
-    CodePushPackageMetadata* deployedPackageMetadata = [CodePushPackageManager getCurrentPackageMetadata];
+    /* Callback before navigating */
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     
+    CodePushPackageMetadata* deployedPackageMetadata = [CodePushPackageManager getCurrentPackageMetadata];
     if (deployedPackageMetadata && deployedPackageMetadata.localPath && [self getStartPageURLForLocalPackage:deployedPackageMetadata.localPath]) {
-        /* Callback before navigating */
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-        
         [self loadPackage: deployedPackageMetadata.localPath];
         InstallOptions* pendingInstall = [CodePushPackageManager getPendingInstall];
         if (pendingInstall) {
@@ -88,8 +86,7 @@ bool pendingInstall = false;
         }
     }
     else {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"The application has no installed updates."];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        [self loadStoreVersion];
     }
 }
 

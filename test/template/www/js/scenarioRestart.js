@@ -14,24 +14,21 @@ var app = {
         document.getElementById("deviceready").innerText = "Device is ready (scenario - restart)";
         console.log('Received Event: deviceready');
 
-        /* try to restart, expected failure at this point */
-        app.tryRestart(function () {
-            /* send the packages, expecting null pending package and null current package */
-            app.sendCurrentAndPendingPackage(function () {
-                window.codePush.sync(
-                    function (status) {
-                        app.sendTestMessage("SYNC_STATUS", [status]);
-                        if (status == SyncStatus.UPDATE_INSTALLED) {
-                            /* send packages, expending non-null pending and null current */
-                            app.sendCurrentAndPendingPackage(function () {
-                                app.tryRestart();
-                            });
-                        }
-                    },
-                    {
-                        installMode: InstallMode.ON_NEXT_RESTART
-                    });
-            });
+        /* send the packages, expecting null pending package and null current package */
+        app.sendCurrentAndPendingPackage(function () {
+            window.codePush.sync(
+                function (status) {
+                    app.sendTestMessage("SYNC_STATUS", [status]);
+                    if (status == SyncStatus.UPDATE_INSTALLED) {
+                        /* send packages, expending non-null pending and null current */
+                        app.sendCurrentAndPendingPackage(function () {
+                            app.tryRestart();
+                        });
+                    }
+                },
+                {
+                    installMode: InstallMode.ON_NEXT_RESTART
+                });
         });
     },
     /* tries to restart the application and sends the status to the mock server */
