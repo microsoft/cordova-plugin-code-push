@@ -64,7 +64,7 @@ class Sdk {
     /**
      * Reports the update status to the CodePush server.
      */
-    public static reportStatus(status: string, pkg: IPackage, callback?: Callback<void>) {
+    public static reportStatus(pkg?: IPackage, status?: string, callback?: Callback<void>) {
         try {
             Sdk.getAcquisitionManager((error: Error, acquisitionManager: AcquisitionManager) => {
                 if (error) {

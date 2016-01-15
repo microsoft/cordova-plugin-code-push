@@ -2,7 +2,6 @@
 
 @implementation InstallOptions
 
-NSString* const RollbackTimeoutKey = @"rollbackTimeout";
 NSString* const InstallModeKey = @"installMode";
 
 -(void)encodeWithCoder:(NSCoder*)encoder {

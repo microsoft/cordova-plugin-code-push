@@ -61,7 +61,7 @@ class LocalPackage extends Package implements ILocalPackage {
 
             var installError: ErrorCallback = (error: Error): void => {
                 CodePushUtil.invokeErrorCallback(error, errorCallback);
-                Sdk.reportStatus(AcquisitionStatus.DeploymentFailed, this);
+                Sdk.reportStatus(this, AcquisitionStatus.DeploymentFailed);
             };
 
             var newPackageLocation = LocalPackage.VersionsDir + "/" + this.packageHash;
@@ -128,7 +128,7 @@ class LocalPackage extends Package implements ILocalPackage {
                         };
 
                         var preInstallSuccess = () => {
-                            Sdk.reportStatus(AcquisitionStatus.DeploymentSucceeded, this);
+                            Sdk.reportStatus(this, AcquisitionStatus.DeploymentSucceeded);
                             /* package will be cleaned up after success, on the native side */
                             invokeSuccessAndInstall();
                         };

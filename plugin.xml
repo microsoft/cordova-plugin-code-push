@@ -64,6 +64,7 @@
             <source-file src="src/android/CodePushPreferences.java" target-dir="src/com/microsoft/cordova" />
             <source-file src="src/android/InstallMode.java" target-dir="src/com/microsoft/cordova" />
             <source-file src="src/android/InstallOptions.java" target-dir="src/com/microsoft/cordova" />
+            <source-file src="src/android/Reporting.java" target-dir="src/com/microsoft/cordova" />
             <source-file src="src/android/Utilities.java" target-dir="src/com/microsoft/cordova" />
             <config-file target="config.xml" parent="/*">
                 <feature name="CodePush">

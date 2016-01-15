@@ -60,7 +60,7 @@ var Sdk = (function () {
             });
         }
     };
-    Sdk.reportStatus = function (status, pkg, callback) {
+    Sdk.reportStatus = function (pkg, status, callback) {
         try {
             Sdk.getAcquisitionManager(function (error, acquisitionManager) {
                 if (error) {

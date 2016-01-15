@@ -55,6 +55,25 @@ class CodePush implements CodePushCordovaPlugin {
     }
     
     /**
+     * Initializes the reporting mechanism. It registers a callback on the native side which is called whenever a relevant event happens.
+     */
+    public initReporting(initSuccess?: SuccessCallback<void>, errorCallback?: ErrorCallback): void {
+        try {
+            var reportingCallback = (report?: any) => {
+                if (report) {
+                    CodePushUtil.logMessage("Events to report: " + JSON.stringify(report));
+                } else {
+                    CodePushUtil.logMessage("Reporting initialization succeeded");
+                    initSuccess && initSuccess();
+                }
+            };
+            cordova.exec(reportingCallback, errorCallback, "CodePush", "initReporting", []);
+        } catch (e) {
+            CodePushUtil.invokeErrorCallback(new Error("An error occurred while initializing reporting." + CodePushUtil.getErrorMessage(e)), errorCallback);
+        }
+    }
+    
+    /**
      * Get the current package information.
      * 
      * @param packageSuccess Callback invoked with the currently deployed package information.

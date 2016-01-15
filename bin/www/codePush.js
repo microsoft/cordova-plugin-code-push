@@ -29,6 +29,23 @@ var CodePush = (function () {
     CodePush.prototype.restartApplication = function (installSuccess, errorCallback) {
         cordova.exec(installSuccess, errorCallback, "CodePush", "restartApplication", []);
     };
+    CodePush.prototype.initReporting = function (initSuccess, errorCallback) {
+        try {
+            var reportingCallback = function (report) {
+                if (report) {
+                    CodePushUtil.logMessage("Events to report: " + JSON.stringify(report));
+                }
+                else {
+                    CodePushUtil.logMessage("Reporting initialization succeeded");
+                    initSuccess && initSuccess();
+                }
+            };
+            cordova.exec(reportingCallback, errorCallback, "CodePush", "initReporting", []);
+        }
+        catch (e) {
+            CodePushUtil.invokeErrorCallback(new Error("An error occurred while initializing reporting." + CodePushUtil.getErrorMessage(e)), errorCallback);
+        }
+    };
     CodePush.prototype.getCurrentPackage = function (packageSuccess, packageError) {
         NativeAppInfo.isPendingUpdate(function (pendingUpdate) {
             if (pendingUpdate) {

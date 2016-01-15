@@ -1,7 +1,6 @@
 package com.microsoft.cordova;
 
 import android.content.pm.PackageManager;
-import android.os.CountDownTimer;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.ConfigXmlParser;
@@ -9,6 +8,8 @@ import org.apache.cordova.CordovaArgs;
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CordovaWebView;
+import org.apache.cordova.PluginResult;
+import org.apache.cordova.engine.SystemWebChromeClient;
 import org.json.JSONException;
 
 import java.io.File;
@@ -52,10 +53,7 @@ public class CodePush extends CordovaPlugin {
         } else if ("install".equals(action)) {
             return execInstall(args, callbackContext);
         } else if ("updateSuccess".equals(action)) {
-            this.codePushPackageManager.markUnconfirmedInstall(false);
-            this.cleanOldPackageSilently();
-            callbackContext.success();
-            return true;
+            return execUpdateSuccess(callbackContext);
         } else if ("restartApplication".equals(action)) {
             return execRestartApplication(args, callbackContext);
         } else if ("isPendingUpdate".equals(action)) {
@@ -64,9 +62,31 @@ public class CodePush extends CordovaPlugin {
             return execIsFailedUpdate(args, callbackContext);
         } else if ("isFirstRun".equals(action)) {
             return execIsFirstRun(args, callbackContext);
+        } else if ("initReporting".equals(action)) {
+            return execInitReporting(args, callbackContext);
         } else {
             return false;
         }
+    }
+
+    private boolean execUpdateSuccess(CallbackContext callbackContext) {
+        this.codePushPackageManager.markUnconfirmedInstall(false);
+        this.cleanOldPackageSilently();
+        callbackContext.success();
+
+        /* save reporting status */
+        CodePushPackageMetadata currentMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
+        Reporting.saveStatus(Reporting.Status.UPDATE_CONFIRMED, currentMetadata.label, currentMetadata.appVersion);
+
+        return true;
+    }
+
+    private boolean execInitReporting(CordovaArgs args, CallbackContext callbackContext) {
+        Reporting.setReportingCallbackContext(callbackContext);
+        PluginResult result = new PluginResult(PluginResult.Status.OK);
+        result.setKeepCallback(true);
+        callbackContext.sendPluginResult(result);
+        return true;
     }
 
     private boolean execIsFirstRun(CordovaArgs args, CallbackContext callbackContext) {
@@ -249,6 +269,7 @@ public class CodePush extends CordovaPlugin {
                             this.codePushPackageManager.clearFailedUpdates();
                             this.codePushPackageManager.clearPendingInstall();
                             this.codePushPackageManager.markUnconfirmedInstall(false);
+                            Reporting.saveStatus(Reporting.Status.STORE_VERSION, null, null);
                         }
                     }
                 }
@@ -260,9 +281,15 @@ public class CodePush extends CordovaPlugin {
 
     private void handleUnconfirmedInstall(boolean navigate) {
         if (this.codePushPackageManager.isNotConfirmedInstall()) {
+            /* save status for later reporting */
+            CodePushPackageMetadata currentMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
+            Reporting.saveStatus(Reporting.Status.UPDATE_ROLLED_BACK, currentMetadata.label, currentMetadata.appVersion);
+
             /* revert application to the previous version */
             this.codePushPackageManager.markUnconfirmedInstall(false);
             this.codePushPackageManager.revertToPreviousVersion();
+
+            /* reload the previous version */
             if (navigate) {
                 String url;
                 try {
@@ -338,6 +365,16 @@ public class CodePush extends CordovaPlugin {
     }
 
     /**
+     * Called when the system is about to start resuming a previous activity.
+     *
+     * @param multitasking Flag indicating if multitasking is turned on for app
+     */
+    @Override
+    public void onPause(boolean multitasking) {
+        Reporting.reportStatuses();
+    }
+
+    /**
      * Called when the activity will start interacting with the user.
      *
      * @param multitasking Flag indicating if multitasking is turned on for app
@@ -397,6 +434,9 @@ public class CodePush extends CordovaPlugin {
                     this.mainWebView.clearHistory();
                 }
             }
+
+            /* register for reporting */
+            this.mainWebView.loadUrl("javascript:document.addEventListener('deviceready', function() {window.codePush.initReporting();}, false);");
         }
 
         return null;

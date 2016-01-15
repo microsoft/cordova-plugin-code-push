@@ -37,7 +37,7 @@ var LocalPackage = (function (_super) {
             }
             var installError = function (error) {
                 CodePushUtil.invokeErrorCallback(error, errorCallback);
-                Sdk.reportStatus(AcquisitionStatus.DeploymentFailed, _this);
+                Sdk.reportStatus(_this, AcquisitionStatus.DeploymentFailed);
             };
             var newPackageLocation = LocalPackage.VersionsDir + "/" + this.packageHash;
             var donePackageFileCopy = function (deployDir) {
@@ -100,7 +100,7 @@ var LocalPackage = (function (_super) {
                             }
                         };
                         var preInstallSuccess = function () {
-                            Sdk.reportStatus(AcquisitionStatus.DeploymentSucceeded, _this);
+                            Sdk.reportStatus(_this, AcquisitionStatus.DeploymentSucceeded);
                             invokeSuccessAndInstall();
                         };
                         var preInstallFailure = function (preInstallError) {
