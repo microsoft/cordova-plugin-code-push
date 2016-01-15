@@ -62,8 +62,6 @@ public class CodePush extends CordovaPlugin {
             return execIsFailedUpdate(args, callbackContext);
         } else if ("isFirstRun".equals(action)) {
             return execIsFirstRun(args, callbackContext);
-        } else if ("initReporting".equals(action)) {
-            return execInitReporting(args, callbackContext);
         } else {
             return false;
         }
@@ -78,14 +76,6 @@ public class CodePush extends CordovaPlugin {
         CodePushPackageMetadata currentMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
         Reporting.saveStatus(Reporting.Status.UPDATE_CONFIRMED, currentMetadata.label, currentMetadata.appVersion);
 
-        return true;
-    }
-
-    private boolean execInitReporting(CordovaArgs args, CallbackContext callbackContext) {
-        Reporting.setReportingCallbackContext(callbackContext);
-        PluginResult result = new PluginResult(PluginResult.Status.OK);
-        result.setKeepCallback(true);
-        callbackContext.sendPluginResult(result);
         return true;
     }
 
@@ -371,7 +361,7 @@ public class CodePush extends CordovaPlugin {
      */
     @Override
     public void onPause(boolean multitasking) {
-        Reporting.reportStatuses();
+        Reporting.reportStatuses(this.mainWebView);
     }
 
     /**
@@ -434,9 +424,6 @@ public class CodePush extends CordovaPlugin {
                     this.mainWebView.clearHistory();
                 }
             }
-
-            /* register for reporting */
-            this.mainWebView.loadUrl("javascript:document.addEventListener('deviceready', function() {window.codePush.initReporting();}, false);");
         }
 
         return null;

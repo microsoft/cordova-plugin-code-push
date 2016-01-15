@@ -1,17 +1,16 @@
 package com.microsoft.cordova;
 
-import org.apache.cordova.CallbackContext;
-import org.apache.cordova.PluginResult;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.apache.cordova.CordovaWebView;
+
+import java.util.ArrayList;
+import java.util.Locale;
 
 /**
  * Handles the native -> JS reporting mechanism.
  */
 public class Reporting {
 
-    private static CallbackContext reportingCallbackContext;
-    private static JSONArray pendingStatuses = new JSONArray();
+    private static ArrayList<PendingStatus> PendingStatuses = new ArrayList<PendingStatus>();
 
     /**
      * Defines application statuses we use in reporting events from the native to the JS layer.
@@ -36,10 +35,18 @@ public class Reporting {
     }
 
     /**
-     * Reporting callback context setter.
+     * Model class used to store reports that are pending delivery to the native side.
      */
-    public static void setReportingCallbackContext(CallbackContext reportingCallbackContext) {
-        Reporting.reportingCallbackContext = reportingCallbackContext;
+    public static class PendingStatus {
+        public PendingStatus(Status status, String label, String appVersion) {
+            this.status = status;
+            this.label = label;
+            this.appVersion = appVersion;
+        }
+
+        public Status status;
+        public String label;
+        public String appVersion;
     }
 
     /**
@@ -47,11 +54,8 @@ public class Reporting {
      */
     public static synchronized void saveStatus(Status status, String label, String appVersion) {
         try {
-            JSONObject object = new JSONObject();
-            object.put("status", status.getValue());
-            object.put("label", label);
-            object.put("appVersion", appVersion);
-            pendingStatuses.put(object);
+            PendingStatus pendingStatus = new PendingStatus(status, label, appVersion);
+            PendingStatuses.add(pendingStatus);
         } catch (Exception e) {
             Utilities.logException(e);
         }
@@ -60,21 +64,22 @@ public class Reporting {
     /**
      * Reports all the statuses back to the JS layer.
      */
-    public static synchronized void reportStatuses() {
+    public static synchronized void reportStatuses(CordovaWebView webView) {
         try {
-            if (pendingStatuses != null && pendingStatuses.length() > 0) {
-                if (null != reportingCallbackContext) {
-                    PluginResult result = new PluginResult(PluginResult.Status.OK, pendingStatuses);
-                    result.setKeepCallback(true);
-                    reportingCallbackContext.sendPluginResult(result);
-                }
-
-                // JSONArray.remove requires API level 19
-                // use re-instantiation instead of clearing the array
-                pendingStatuses = new JSONArray();
+            for (PendingStatus report : PendingStatuses) {
+                reportStatus(report, webView);
             }
+
+            Reporting.PendingStatuses.clear();
         } catch (Exception e) {
             Utilities.logException(e);
         }
+    }
+
+    private static void reportStatus(PendingStatus pendingStatus, CordovaWebView webView) {
+        /* report status to the JS layer */
+        /* JS function to call: window.codePush.reportStatus(status: number, label: String, appVersion: String) */
+        String script = String.format(Locale.US, "javascript:window.codePush.reportStatus(%d, '%s', '%s')", pendingStatus.status.getValue(), pendingStatus.label, pendingStatus.appVersion);
+        webView.loadUrl(script);
     }
 }

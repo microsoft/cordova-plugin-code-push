@@ -29,21 +29,31 @@ var CodePush = (function () {
     CodePush.prototype.restartApplication = function (installSuccess, errorCallback) {
         cordova.exec(installSuccess, errorCallback, "CodePush", "restartApplication", []);
     };
-    CodePush.prototype.initReporting = function (initSuccess, errorCallback) {
+    CodePush.prototype.reportStatus = function (status, label, appVersion) {
         try {
-            var reportingCallback = function (report) {
-                if (report) {
-                    CodePushUtil.logMessage("Events to report: " + JSON.stringify(report));
-                }
-                else {
-                    CodePushUtil.logMessage("Reporting initialization succeeded");
-                    initSuccess && initSuccess();
-                }
+            console.log("Reporting status: " + status + " " + label + " " + appVersion);
+            var createPackageForReporting = function (label, appVersion) {
+                return {
+                    label: label, appVersion: appVersion,
+                    deploymentKey: null, description: null,
+                    isMandatory: false, packageHash: null,
+                    packageSize: null, failedInstall: false
+                };
             };
-            cordova.exec(reportingCallback, errorCallback, "CodePush", "initReporting", []);
+            switch (status) {
+                case ReportStatus.STORE_VERSION:
+                    Sdk.reportStatus(null, AcquisitionStatus.DeploymentSucceeded);
+                    break;
+                case ReportStatus.UPDATE_CONFIRMED:
+                    Sdk.reportStatus(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentSucceeded);
+                    break;
+                case ReportStatus.UPDATE_ROLLED_BACK:
+                    Sdk.reportStatus(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentFailed);
+                    break;
+            }
         }
         catch (e) {
-            CodePushUtil.invokeErrorCallback(new Error("An error occurred while initializing reporting." + CodePushUtil.getErrorMessage(e)), errorCallback);
+            CodePushUtil.logError("An error occurred while reporting." + CodePushUtil.getErrorMessage(e));
         }
     };
     CodePush.prototype.getCurrentPackage = function (packageSuccess, packageError) {
@@ -222,5 +232,11 @@ var CodePush = (function () {
     };
     return CodePush;
 })();
+var ReportStatus;
+(function (ReportStatus) {
+    ReportStatus[ReportStatus["STORE_VERSION"] = 0] = "STORE_VERSION";
+    ReportStatus[ReportStatus["UPDATE_CONFIRMED"] = 1] = "UPDATE_CONFIRMED";
+    ReportStatus[ReportStatus["UPDATE_ROLLED_BACK"] = 2] = "UPDATE_ROLLED_BACK";
+})(ReportStatus || (ReportStatus = {}));
 var instance = new CodePush();
 module.exports = instance;

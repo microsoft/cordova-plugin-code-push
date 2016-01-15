@@ -55,21 +55,37 @@ class CodePush implements CodePushCordovaPlugin {
     }
     
     /**
-     * Initializes the reporting mechanism. It registers a callback on the native side which is called whenever a relevant event happens.
+     * Reports an application status back to the server.
+     * !!! This function is called from the native side, please make changes accordingly. !!!
      */
-    public initReporting(initSuccess?: SuccessCallback<void>, errorCallback?: ErrorCallback): void {
+    public reportStatus(status: number, label: string, appVersion: string) {
         try {
-            var reportingCallback = (report?: any) => {
-                if (report) {
-                    CodePushUtil.logMessage("Events to report: " + JSON.stringify(report));
-                } else {
-                    CodePushUtil.logMessage("Reporting initialization succeeded");
-                    initSuccess && initSuccess();
-                }
+            console.log("Reporting status: " + status + " " + label + " " + appVersion);
+
+            var createPackageForReporting = (label: string, appVersion: string): IPackage => {
+                return {
+                    /* The SDK only reports the label and appVersion.
+                       The rest of the properties are added for type safety. */
+                    label: label, appVersion: appVersion,
+                    deploymentKey: null, description: null,
+                    isMandatory: false, packageHash: null,
+                    packageSize: null, failedInstall: false
+                };
             };
-            cordova.exec(reportingCallback, errorCallback, "CodePush", "initReporting", []);
+
+            switch (status) {
+                case ReportStatus.STORE_VERSION:
+                    Sdk.reportStatus(null, AcquisitionStatus.DeploymentSucceeded);
+                    break;
+                case ReportStatus.UPDATE_CONFIRMED:
+                    Sdk.reportStatus(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentSucceeded);
+                    break;
+                case ReportStatus.UPDATE_ROLLED_BACK:
+                    Sdk.reportStatus(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentFailed);
+                    break;
+            }
         } catch (e) {
-            CodePushUtil.invokeErrorCallback(new Error("An error occurred while initializing reporting." + CodePushUtil.getErrorMessage(e)), errorCallback);
+            CodePushUtil.logError("An error occurred while reporting." + CodePushUtil.getErrorMessage(e));
         }
     }
     
@@ -319,6 +335,17 @@ class CodePush implements CodePushCordovaPlugin {
     }
 
 }
+
+/**
+ * Defines the application statuses reported from the native layer.
+ * !!! This enum is defined in native code as well, please make changes accordingly. !!!
+ */
+enum ReportStatus {
+    STORE_VERSION = 0,
+    UPDATE_CONFIRMED = 1,
+    UPDATE_ROLLED_BACK = 2
+}
+
 
 var instance = new CodePush();
 export = instance;
