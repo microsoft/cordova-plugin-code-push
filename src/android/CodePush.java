@@ -68,13 +68,15 @@ public class CodePush extends CordovaPlugin {
     }
 
     private boolean execUpdateSuccess(CallbackContext callbackContext) {
+        if (this.codePushPackageManager.isNotConfirmedInstall()) {
+            /* save reporting status */
+            CodePushPackageMetadata currentMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
+            Reporting.saveStatus(Reporting.Status.UPDATE_CONFIRMED, currentMetadata.label, currentMetadata.appVersion);
+        }
+
         this.codePushPackageManager.markUnconfirmedInstall(false);
         this.cleanOldPackageSilently();
         callbackContext.success();
-
-        /* save reporting status */
-        CodePushPackageMetadata currentMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
-        Reporting.saveStatus(Reporting.Status.UPDATE_CONFIRMED, currentMetadata.label, currentMetadata.appVersion);
 
         return true;
     }

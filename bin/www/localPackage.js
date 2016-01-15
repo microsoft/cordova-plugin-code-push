@@ -100,7 +100,6 @@ var LocalPackage = (function (_super) {
                             }
                         };
                         var preInstallSuccess = function () {
-                            Sdk.reportStatus(_this, AcquisitionStatus.DeploymentSucceeded);
                             invokeSuccessAndInstall();
                         };
                         var preInstallFailure = function (preInstallError) {

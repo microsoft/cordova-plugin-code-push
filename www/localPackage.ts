@@ -128,7 +128,6 @@ class LocalPackage extends Package implements ILocalPackage {
                         };
 
                         var preInstallSuccess = () => {
-                            Sdk.reportStatus(this, AcquisitionStatus.DeploymentSucceeded);
                             /* package will be cleaned up after success, on the native side */
                             invokeSuccessAndInstall();
                         };

@@ -86,6 +86,8 @@
             <header-file src="src/ios/InstallOptions.h" />
             <source-file src="src/ios/InstallOptions.m" />
             <header-file src="src/ios/InstallMode.h" />
+            <source-file src="src/ios/Reporting.m" />
+            <header-file src="src/ios/Reporting.h" />
             <config-file target="config.xml" parent="/*">
                 <feature name="CodePush">
                     <param name="ios-package" value="CodePush" />

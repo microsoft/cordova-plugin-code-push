@@ -6,6 +6,7 @@
 #import "Utilities.h"
 #import "InstallOptions.h"
 #import "InstallMode.h"
+#import "Reporting.h"
 
 @implementation CodePush
 
@@ -14,6 +15,10 @@ bool pendingInstall = false;
 
 - (void)handleUnconfirmedInstall:(BOOL)navigate {
     if ([CodePushPackageManager isNotConfirmedInstall]) {
+        /* save reporting status */
+        CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
+        [Reporting saveStatus:UPDATE_ROLLED_BACK withLabel:currentMetadata.label andVersion:currentMetadata.appVersion];
+        
         [CodePushPackageManager clearNotConfirmedInstall];
         [CodePushPackageManager revertToPreviousVersion];
         if (navigate) {
@@ -28,6 +33,12 @@ bool pendingInstall = false;
 }
 
 - (void)updateSuccess:(CDVInvokedUrlCommand *)command {
+    if ([CodePushPackageManager isNotConfirmedInstall]) {
+        /* save reporting status */
+        CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
+        [Reporting saveStatus:UPDATE_CONFIRMED withLabel:currentMetadata.label andVersion:currentMetadata.appVersion];
+    }
+    
     [CodePushPackageManager clearNotConfirmedInstall];
     [CodePushPackageManager cleanOldPackage];
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
@@ -167,14 +178,16 @@ bool pendingInstall = false;
                 [CodePushPackageManager clearFailedUpdates];
                 [CodePushPackageManager clearPendingInstall];
                 [CodePushPackageManager clearNotConfirmedInstall];
+                [Reporting saveStatus: STORE_VERSION withLabel:nil andVersion:nil];
             }
         }
     }
 }
 
 - (void)pluginInitialize {
-    // register for "on resume" notifications
+    // register for "on resume", "on pause" notifications
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillEnterForeground) name:UIApplicationWillEnterForegroundNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillResignActive) name:UIApplicationWillResignActiveNotification object:nil];
     InstallOptions* pendingInstall = [CodePushPackageManager getPendingInstall];
     if (!pendingInstall) {
         [self handleUnconfirmedInstall:NO];
@@ -200,6 +213,10 @@ bool pendingInstall = false;
             }
         }
     }
+}
+
+- (void)applicationWillResignActive {
+    [Reporting reportStatuses:((CDVViewController *)self.viewController).webView];
 }
 
 - (BOOL)loadPackage:(NSString*)packageLocation {
