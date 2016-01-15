@@ -97,11 +97,8 @@ class CodePush implements CodePushCordovaPlugin {
      */
     public getCurrentPackage(packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
         NativeAppInfo.isPendingUpdate((pendingUpdate: boolean) => {
-            if (pendingUpdate) {
-                LocalPackage.getPackageInfoOrNull(LocalPackage.OldPackageInfoFile, packageSuccess, packageError);
-            } else {
-                LocalPackage.getPackageInfoOrNull(LocalPackage.PackageInfoFile, packageSuccess, packageError);
-            }
+            var packageInfoFile = pendingUpdate ? LocalPackage.OldPackageInfoFile : LocalPackage.PackageInfoFile;
+            LocalPackage.getPackageInfoOrNull(packageInfoFile, packageSuccess, packageError);
         });
     }
 

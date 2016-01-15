@@ -74,7 +74,7 @@ public class CodePush extends CordovaPlugin {
             Reporting.saveStatus(Reporting.Status.UPDATE_CONFIRMED, currentMetadata.label, currentMetadata.appVersion);
         }
 
-        this.codePushPackageManager.markUnconfirmedInstall(false);
+        this.codePushPackageManager.clearNotConfirmedInstall();
         this.cleanOldPackageSilently();
         callbackContext.success();
 
@@ -177,7 +177,7 @@ public class CodePush extends CordovaPlugin {
     private void markUpdate() {
     /* this flag will clear when reloading the plugin */
         this.didUpdate = true;
-        this.codePushPackageManager.markUnconfirmedInstall(true);
+        this.codePushPackageManager.markUnconfirmedInstall();
     }
 
     private void cleanOldPackageSilently() {
@@ -260,7 +260,7 @@ public class CodePush extends CordovaPlugin {
                             this.codePushPackageManager.cleanDeployments();
                             this.codePushPackageManager.clearFailedUpdates();
                             this.codePushPackageManager.clearPendingInstall();
-                            this.codePushPackageManager.markUnconfirmedInstall(false);
+                            this.codePushPackageManager.clearNotConfirmedInstall();
                             Reporting.saveStatus(Reporting.Status.STORE_VERSION, null, null);
                         }
                     }
@@ -278,7 +278,7 @@ public class CodePush extends CordovaPlugin {
             Reporting.saveStatus(Reporting.Status.UPDATE_ROLLED_BACK, currentMetadata.label, currentMetadata.appVersion);
 
             /* revert application to the previous version */
-            this.codePushPackageManager.markUnconfirmedInstall(false);
+            this.codePushPackageManager.clearNotConfirmedInstall();
             this.codePushPackageManager.revertToPreviousVersion();
 
             /* reload the previous version */

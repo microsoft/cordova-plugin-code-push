@@ -58,12 +58,8 @@ var CodePush = (function () {
     };
     CodePush.prototype.getCurrentPackage = function (packageSuccess, packageError) {
         NativeAppInfo.isPendingUpdate(function (pendingUpdate) {
-            if (pendingUpdate) {
-                LocalPackage.getPackageInfoOrNull(LocalPackage.OldPackageInfoFile, packageSuccess, packageError);
-            }
-            else {
-                LocalPackage.getPackageInfoOrNull(LocalPackage.PackageInfoFile, packageSuccess, packageError);
-            }
+            var packageInfoFile = pendingUpdate ? LocalPackage.OldPackageInfoFile : LocalPackage.PackageInfoFile;
+            LocalPackage.getPackageInfoOrNull(packageInfoFile, packageSuccess, packageError);
         });
     };
     CodePush.prototype.getPendingPackage = function (packageSuccess, packageError) {

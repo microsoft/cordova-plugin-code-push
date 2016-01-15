@@ -87,7 +87,7 @@ function setupScenario(scenarioPath: string): Q.Promise<void> {
         console.log("Body: " + JSON.stringify(req.body));
 
         if (!testMessageResponse) {
-            console.log("Seding OK");
+            console.log("Sending OK");
             res.sendStatus(200);
         } else {
             console.log("Sending body: " + testMessageResponse);

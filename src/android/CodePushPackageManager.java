@@ -96,12 +96,12 @@ public class CodePushPackageManager {
         this.codePushPreferences.clearPendingInstall();
     }
 
-    public void markUnconfirmedInstall(boolean unconfirmed) {
-        if (unconfirmed) {
-            this.codePushPreferences.saveNotConfirmedInstall();
-        } else {
-            this.codePushPreferences.clearNotConfirmedInstall();
-        }
+    public void markUnconfirmedInstall() {
+        this.codePushPreferences.saveNotConfirmedInstall();
+    }
+
+    public void clearNotConfirmedInstall() {
+        this.codePushPreferences.clearNotConfirmedInstall();
     }
 
     public boolean isNotConfirmedInstall() {
