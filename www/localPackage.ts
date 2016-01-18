@@ -11,8 +11,8 @@ import CodePushUtil = require("./codePushUtil");
 import Sdk = require("./sdk");
 
 /**
- * Defines a local package. 
- * 
+ * Defines a local package.
+ *
  * !! THIS TYPE IS READ FROM NATIVE CODE AS WELL. ANY CHANGES TO THIS INTERFACE NEEDS TO BE UPDATED IN NATIVE CODE !!
  */
 class LocalPackage extends Package implements ILocalPackage {
@@ -29,32 +29,32 @@ class LocalPackage extends Package implements ILocalPackage {
     private static DiffManifestFile: string = "hotcodepush.json";
 
     private static DefaultInstallOptions: InstallOptions;
-    
+
     /**
      * The local storage path where this package is located.
      */
     localPath: string;
-    
+
     /**
      * Indicates if this is the current application run is the first one after the package was applied.
      */
     isFirstRun: boolean;
-    
+
     /**
      * Applies this package to the application. The application will be reloaded with this package and on every application launch this package will be loaded.
      * If the rollbackTimeout parameter is provided, the application will wait for a navigator.codePush.notifyApplicationReady() for the given number of milliseconds.
      * If navigator.codePush.notifyApplicationReady() is called before the time period specified by rollbackTimeout, the install operation is considered a success.
      * Otherwise, the install operation will be marked as failed, and the application is reverted to its previous version.
-     * 
-     * @param installSuccess Callback invoked if the install operation succeeded. 
+     *
+     * @param installSuccess Callback invoked if the install operation succeeded.
      * @param installError Optional callback inovoked in case of an error.
-     * @param installOptions Optional parameter used for customizing the installation behavior. 
+     * @param installOptions Optional parameter used for customizing the installation behavior.
      */
     public install(installSuccess: SuccessCallback<void>, errorCallback?: ErrorCallback, installOptions?: InstallOptions) {
         try {
             CodePushUtil.logMessage("Installing update package ...");
 
-            if (!installOptions) {
+            if (!installOptions || Object.keys(installOptions).length == 0) {
                 installOptions = LocalPackage.getDefaultInstallOptions();
             } else {
                 CodePushUtil.copyUnassignedMembers(LocalPackage.getDefaultInstallOptions(), installOptions);
@@ -230,7 +230,7 @@ class LocalPackage extends Package implements ILocalPackage {
         var handleError = (e: Error) => {
             diffCallback(e, null);
         };
-        
+
         /* copy old files */
         LocalPackage.copyCurrentPackage(newPackageLocation, (currentPackageError: Error) => {
             /* copy new files */
@@ -255,7 +255,7 @@ class LocalPackage extends Package implements ILocalPackage {
             });
         });
     }
-    
+
     /**
     * Writes the given local package information to the current package information file.
     * @param packageInfoMetadata The object to serialize.
@@ -265,7 +265,7 @@ class LocalPackage extends Package implements ILocalPackage {
         var content = JSON.stringify(packageInfoMetadata);
         FileUtil.writeStringToDataFile(content, LocalPackage.RootDir, LocalPackage.PackageInfoFile, true, callback);
     }
-    
+
 	/**
      * Backs up the current package information to the old package information file.
      * This file is used for recovery in case of an update going wrong.
@@ -303,20 +303,20 @@ class LocalPackage extends Package implements ILocalPackage {
 
         FileUtil.getDataFile(LocalPackage.RootDir, LocalPackage.PackageInfoFile, false, gotFile);
     }
-    
+
     /**
      * Get the previous package information.
-     * 
+     *
      * @param packageSuccess Callback invoked with the old package information.
      * @param packageError Optional callback invoked in case of an error.
      */
     public static getOldPackage(packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
         return LocalPackage.getPackage(LocalPackage.OldPackageInfoFile, packageSuccess, packageError);
     }
-    
+
     /**
      * Reads package information from a given file.
-     * 
+     *
      * @param packageFile The package file name.
      * @param packageSuccess Callback invoked with the package information.
      * @param packageError Optional callback invoked in case of an error.
@@ -397,7 +397,7 @@ class LocalPackage extends Package implements ILocalPackage {
     public static getPackageInfoOrNull(packageFile: string, packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
         LocalPackage.getPackage(packageFile, packageSuccess, packageSuccess.bind(null, null));
     }
-    
+
     /**
      * Returns the default options for the CodePush install operation.
      * If the options are not defined yet, the static DefaultInstallOptions member will be instantiated.
