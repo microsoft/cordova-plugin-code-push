@@ -29,7 +29,7 @@ var LocalPackage = (function (_super) {
         var _this = this;
         try {
             CodePushUtil.logMessage("Installing update package ...");
-            if (!installOptions) {
+            if (!installOptions || Object.keys(installOptions).length == 0) {
                 installOptions = LocalPackage.getDefaultInstallOptions();
             }
             else {
