@@ -36,6 +36,7 @@
     "gulp-typescript": "latest",
     "gulp-insert": "latest",
     "gulp-tslint": "latest",
+    "tslint": "latest",
     "del": "latest",
     "run-sequence": "latest",
     "q": "latest",
