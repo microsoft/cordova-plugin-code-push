@@ -221,7 +221,7 @@ bool pendingInstall = false;
 }
 
 - (void)applicationWillResignActive {
-    [Reporting reportStatuses:((CDVViewController *)self.viewController).webView];
+    [Reporting reportStatuses:((UIWebView*)((CDVViewController *)self.viewController).webView)];
 }
 
 - (BOOL)loadPackage:(NSString*)packageLocation {
@@ -235,7 +235,7 @@ bool pendingInstall = false;
 }
 
 - (void)loadURL:(NSURL*)url {
-    [((CDVViewController *)self.viewController).webView loadRequest:[NSURLRequest requestWithURL:url]];
+    [((UIWebView*)((CDVViewController *)self.viewController).webView) loadRequest:[NSURLRequest requestWithURL:url]];
 }
 
 - (void)loadStoreVersion {

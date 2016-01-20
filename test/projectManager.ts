@@ -139,8 +139,8 @@ export class ProjectManager {
     /**
      * Adds a platform to a Cordova project. 
      */
-    public static addPlatform(projectFolder: string, targetPlatform: platform.IPlatform): Q.Promise<void> {
-        return ProjectManager.execAndLogChildProcess("cordova platform add " + targetPlatform.getCordovaName(), { cwd: projectFolder });
+    public static addPlatform(projectFolder: string, targetPlatform: platform.IPlatform, version?: string): Q.Promise<void> {
+        return ProjectManager.execAndLogChildProcess("cordova platform add " + targetPlatform.getCordovaName() + (version ? "@" + version : ""), { cwd: projectFolder });
     }
 
 	/**
