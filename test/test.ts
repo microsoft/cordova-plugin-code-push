@@ -104,7 +104,7 @@ function setupScenario(scenarioPath: string): Q.Promise<void> {
         platform.Android.getInstance().getDefaultDeploymentKey(),
         platform.IOS.getInstance().getDefaultDeploymentKey(),
         TestAppName, TestNamespace, scenarioPath)
-        .then<void>(() => { return projectManager.addPlatform(testRunDirectory, targetPlatform, "latest"); })
+        .then<void>(() => { return projectManager.addPlatform(testRunDirectory, targetPlatform); })
         .then<void>(() => { return projectManager.addPlugin(testRunDirectory, AcquisitionSDKPluginName); })
         .then<void>(() => { return projectManager.addPlugin(testRunDirectory, thisPluginPath); })
         .then<void>(() => { return projectManager.buildPlatform(testRunDirectory, targetPlatform); });
@@ -157,7 +157,7 @@ function setupUpdateProject(scenarioPath: string, version: string): Q.Promise<vo
         platform.Android.getInstance().getDefaultDeploymentKey(),
         platform.IOS.getInstance().getDefaultDeploymentKey(),
         TestAppName, TestNamespace, scenarioPath, version)
-        .then<void>(() => { return projectManager.addPlatform(updatesDirectory, targetPlatform, "latest"); })
+        .then<void>(() => { return projectManager.addPlatform(updatesDirectory, targetPlatform); })
         .then<void>(() => { return projectManager.addPlugin(testRunDirectory, AcquisitionSDKPluginName); })
         .then<void>(() => { return projectManager.addPlugin(updatesDirectory, thisPluginPath); })
         .then<void>(() => { return projectManager.preparePlatform(updatesDirectory, targetPlatform); });
