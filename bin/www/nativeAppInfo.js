@@ -8,8 +8,6 @@
  *********************************************************************************************/ 
 
 
-/// <reference path="../typings/codePush.d.ts" />
-/// <reference path="../typings/cordova.d.ts" />
 "use strict";
 var DefaultServerUrl = "https://codepush.azurewebsites.net/";
 var NativeAppInfo = (function () {

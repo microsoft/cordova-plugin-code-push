@@ -7,6 +7,7 @@
 NSString* const FailedUpdatesKey = @"FAILED_UPDATES";
 NSString* const PendingInstallKey = @"PENDING_INSTALL";
 NSString* const NotConfirmedInstallKey = @"NOT_CONFIRMED_INSTALL";
+NSString* const IsFirstRunKey = @"FIRST_RUN";
 NSString* const OldPackageManifestName = @"oldPackage.json";
 NSString* const CurrentPackageManifestName = @"currentPackage.json";
 
@@ -106,19 +107,31 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
     [preferences removeObjectForKey:PendingInstallKey];
 }
 
-+ (void)saveNotConfirmedInstall {
++ (void)markFirstRunFlag {
+    NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
+    [preferences setBool:YES forKey:IsFirstRunKey];
+    [preferences synchronize];
+}
+
++ (BOOL)isFirstRun {
+    NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
+    BOOL firstRunFlagSet = [preferences boolForKey:IsFirstRunKey];
+    return !firstRunFlagSet;
+}
+
++ (void)markInstallNeedsConfirmation {
     NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
     [preferences setBool:YES forKey:NotConfirmedInstallKey];
     [preferences synchronize];
 }
 
-+ (BOOL)isNotConfirmedInstall {
++ (BOOL)installNeedsConfirmation {
     NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
     BOOL notConfirmedInstall = [preferences boolForKey:NotConfirmedInstallKey];
     return notConfirmedInstall;
 }
 
-+ (void)clearNotConfirmedInstall {
++ (void)clearInstallNeedsConfirmation {
     NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
     [preferences removeObjectForKey:NotConfirmedInstallKey];
 }

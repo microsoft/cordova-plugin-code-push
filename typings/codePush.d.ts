@@ -152,6 +152,7 @@ declare class AcquisitionManager {
     constructor(httpRequester: Http.Requester, configuration: Configuration);
     public queryUpdateWithCurrentPackage(currentPackage: IPackage, callback?: Callback<IRemotePackage | NativeUpdateNotification>): void;
     public reportStatusDeploy(pkg?: IPackage, status?: string, callback?: Callback<void>): void;
+    public reportStatusDownload(pkg: IPackage, callback?: Callback<void>): void;
 }
 
 interface CodePushCordovaPlugin {

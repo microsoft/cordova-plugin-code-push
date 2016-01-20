@@ -96,15 +96,23 @@ public class CodePushPackageManager {
         this.codePushPreferences.clearPendingInstall();
     }
 
-    public void markUnconfirmedInstall() {
-        this.codePushPreferences.saveNotConfirmedInstall();
+    public void markInstallNeedsConfirmation() {
+        this.codePushPreferences.markInstallNeedsConfirmation();
     }
 
-    public void clearNotConfirmedInstall() {
-        this.codePushPreferences.clearNotConfirmedInstall();
+    public void clearInstallNeedsConfirmation() {
+        this.codePushPreferences.clearInstallNeedsConfirmation();
     }
 
-    public boolean isNotConfirmedInstall() {
-        return this.codePushPreferences.isNotConfirmedInstall();
+    public boolean installNeedsConfirmation() {
+        return this.codePushPreferences.installNeedsConfirmation();
+    }
+
+    public boolean isFirstRun() {
+        return this.codePushPreferences.isFirstRun();
+    }
+
+    public void saveFirstRunFlag() {
+        this.codePushPreferences.saveFirstRunFlag();
     }
 }

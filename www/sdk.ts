@@ -62,9 +62,9 @@ class Sdk {
     }
 
     /**
-     * Reports the update status to the CodePush server.
+     * Reports the deployment status to the CodePush server.
      */
-    public static reportStatus(pkg?: IPackage, status?: string, callback?: Callback<void>) {
+    public static reportStatusDeploy(pkg?: IPackage, status?: string, deploymentKey?: string, callback?: Callback<void>) {
         try {
             Sdk.getAcquisitionManager((error: Error, acquisitionManager: AcquisitionManager) => {
                 if (error) {
@@ -73,9 +73,27 @@ class Sdk {
                 else {
                     acquisitionManager.reportStatusDeploy(pkg, status, callback);
                 }
-            });
+            }, deploymentKey);
         } catch (e) {
-            callback && callback(new Error("An error occured while reporting the status. " + e), null);
+            callback && callback(new Error("An error occured while reporting the deployment status. " + e), null);
+        }
+    }
+    
+    /**
+     * Reports the download status to the CodePush server.
+     */
+    public static reportStatusDownload(pkg: IPackage, deploymentKey?: string, callback?: Callback<void>) {
+        try {
+            Sdk.getAcquisitionManager((error: Error, acquisitionManager: AcquisitionManager) => {
+                if (error) {
+                    callback && callback(error, null);
+                }
+                else {
+                    acquisitionManager.reportStatusDownload(pkg, callback);
+                }
+            }, deploymentKey);
+        } catch (e) {
+            callback && callback(new Error("An error occured while reporting the download status. " + e), null);
         }
     }
 }

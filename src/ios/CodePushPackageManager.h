@@ -12,8 +12,10 @@
 + (void)savePendingInstall:(InstallOptions *)installOptions;
 + (InstallOptions*)getPendingInstall;
 + (void)clearPendingInstall;
-+ (void)saveNotConfirmedInstall;
-+ (BOOL)isNotConfirmedInstall;
-+ (void)clearNotConfirmedInstall;
++ (void)markInstallNeedsConfirmation;
++ (BOOL)installNeedsConfirmation;
++ (void)clearInstallNeedsConfirmation;
++ (void)markFirstRunFlag;
++ (BOOL)isFirstRun;
 
 @end

@@ -6,7 +6,7 @@ enum {
 typedef NSInteger ReportingStatus;
 
 @interface Reporting : NSObject
-+ (void)saveStatus:(ReportingStatus)status withLabel:(NSString*)label andVersion:(NSString*)version;
++ (void)saveStatus:(ReportingStatus)status withLabel:(NSString*)label version:(NSString*)version deploymentKey:(NSString*)deploymentKey;
 + (void)reportStatuses:(UIWebView*)webView;
 @end
 

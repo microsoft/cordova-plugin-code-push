@@ -61,7 +61,7 @@ class LocalPackage extends Package implements ILocalPackage {
 
             var installError: ErrorCallback = (error: Error): void => {
                 CodePushUtil.invokeErrorCallback(error, errorCallback);
-                Sdk.reportStatus(this, AcquisitionStatus.DeploymentFailed);
+                Sdk.reportStatusDeploy(this, AcquisitionStatus.DeploymentFailed);
             };
 
             var newPackageLocation = LocalPackage.VersionsDir + "/" + this.packageHash;

@@ -58,7 +58,7 @@ class CodePush implements CodePushCordovaPlugin {
      * Reports an application status back to the server.
      * !!! This function is called from the native side, please make changes accordingly. !!!
      */
-    public reportStatus(status: number, label: string, appVersion: string) {
+    public reportStatus(status: number, label: string, appVersion: string, deploymentKey: string) {
         try {
             console.log("Reporting status: " + status + " " + label + " " + appVersion);
 
@@ -67,7 +67,7 @@ class CodePush implements CodePushCordovaPlugin {
                     /* The SDK only reports the label and appVersion.
                        The rest of the properties are added for type safety. */
                     label: label, appVersion: appVersion,
-                    deploymentKey: null, description: null,
+                    deploymentKey: deploymentKey, description: null,
                     isMandatory: false, packageHash: null,
                     packageSize: null, failedInstall: false
                 };
@@ -75,13 +75,13 @@ class CodePush implements CodePushCordovaPlugin {
 
             switch (status) {
                 case ReportStatus.STORE_VERSION:
-                    Sdk.reportStatus(null, AcquisitionStatus.DeploymentSucceeded);
+                    Sdk.reportStatusDeploy(null, AcquisitionStatus.DeploymentSucceeded, deploymentKey);
                     break;
                 case ReportStatus.UPDATE_CONFIRMED:
-                    Sdk.reportStatus(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentSucceeded);
+                    Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentSucceeded, deploymentKey);
                     break;
                 case ReportStatus.UPDATE_ROLLED_BACK:
-                    Sdk.reportStatus(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentFailed);
+                    Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentFailed, deploymentKey);
                     break;
             }
         } catch (e) {

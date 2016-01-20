@@ -8,9 +8,6 @@
  *********************************************************************************************/ 
 
 
-/// <reference path="../typings/codePush.d.ts" />
-/// <reference path="../typings/fileTransfer.d.ts" />
-/// <reference path="../typings/device.d.ts" />
 "use strict";
 var NativeAppInfo = require("./nativeAppInfo");
 var HttpRequester = require("./httpRequester");
@@ -60,7 +57,7 @@ var Sdk = (function () {
             });
         }
     };
-    Sdk.reportStatus = function (pkg, status, callback) {
+    Sdk.reportStatusDeploy = function (pkg, status, deploymentKey, callback) {
         try {
             Sdk.getAcquisitionManager(function (error, acquisitionManager) {
                 if (error) {
@@ -69,10 +66,25 @@ var Sdk = (function () {
                 else {
                     acquisitionManager.reportStatusDeploy(pkg, status, callback);
                 }
-            });
+            }, deploymentKey);
         }
         catch (e) {
-            callback && callback(new Error("An error occured while reporting the status. " + e), null);
+            callback && callback(new Error("An error occured while reporting the deployment status. " + e), null);
+        }
+    };
+    Sdk.reportStatusDownload = function (pkg, deploymentKey, callback) {
+        try {
+            Sdk.getAcquisitionManager(function (error, acquisitionManager) {
+                if (error) {
+                    callback && callback(error, null);
+                }
+                else {
+                    acquisitionManager.reportStatusDownload(pkg, callback);
+                }
+            }, deploymentKey);
+        }
+        catch (e) {
+            callback && callback(new Error("An error occured while reporting the download status. " + e), null);
         }
     };
     return Sdk;

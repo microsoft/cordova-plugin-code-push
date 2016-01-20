@@ -14,12 +14,12 @@ bool didUpdate = false;
 bool pendingInstall = false;
 
 - (void)handleUnconfirmedInstall:(BOOL)navigate {
-    if ([CodePushPackageManager isNotConfirmedInstall]) {
+    if ([CodePushPackageManager installNeedsConfirmation]) {
         /* save reporting status */
         CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
-        [Reporting saveStatus:UPDATE_ROLLED_BACK withLabel:currentMetadata.label andVersion:currentMetadata.appVersion];
+        [Reporting saveStatus:UPDATE_ROLLED_BACK withLabel:currentMetadata.label version:currentMetadata.appVersion deploymentKey:currentMetadata.deploymentKey];
         
-        [CodePushPackageManager clearNotConfirmedInstall];
+        [CodePushPackageManager clearInstallNeedsConfirmation];
         [CodePushPackageManager revertToPreviousVersion];
         if (navigate) {
             CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
@@ -33,13 +33,18 @@ bool pendingInstall = false;
 }
 
 - (void)updateSuccess:(CDVInvokedUrlCommand *)command {
-    if ([CodePushPackageManager isNotConfirmedInstall]) {
-        /* save reporting status */
-        CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
-        [Reporting saveStatus:UPDATE_CONFIRMED withLabel:currentMetadata.label andVersion:currentMetadata.appVersion];
+    if ([CodePushPackageManager isFirstRun]) {
+        [CodePushPackageManager markFirstRunFlag];
+        [Reporting saveStatus:STORE_VERSION withLabel:nil version:nil deploymentKey:nil];
     }
     
-    [CodePushPackageManager clearNotConfirmedInstall];
+    if ([CodePushPackageManager installNeedsConfirmation]) {
+        /* save reporting status */
+        CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
+        [Reporting saveStatus:UPDATE_CONFIRMED withLabel:currentMetadata.label version:currentMetadata.appVersion deploymentKey:currentMetadata.deploymentKey];
+    }
+    
+    [CodePushPackageManager clearInstallNeedsConfirmation];
     [CodePushPackageManager cleanOldPackage];
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
@@ -103,7 +108,7 @@ bool pendingInstall = false;
 
 - (void) markUpdate {
     didUpdate = YES;
-    [CodePushPackageManager saveNotConfirmedInstall];
+    [CodePushPackageManager markInstallNeedsConfirmation];
 }
 
 - (void)preInstall:(CDVInvokedUrlCommand *)command {
@@ -177,8 +182,8 @@ bool pendingInstall = false;
                 [CodePushPackageManager cleanDeployments];
                 [CodePushPackageManager clearFailedUpdates];
                 [CodePushPackageManager clearPendingInstall];
-                [CodePushPackageManager clearNotConfirmedInstall];
-                [Reporting saveStatus: STORE_VERSION withLabel:nil andVersion:nil];
+                [CodePushPackageManager clearInstallNeedsConfirmation];
+                [Reporting saveStatus: STORE_VERSION withLabel:nil version:nil deploymentKey:nil];
             }
         }
     }

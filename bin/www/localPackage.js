@@ -8,7 +8,6 @@
  *********************************************************************************************/ 
 
 
-/// <reference path="../typings/codePush.d.ts" />
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -37,7 +36,7 @@ var LocalPackage = (function (_super) {
             }
             var installError = function (error) {
                 CodePushUtil.invokeErrorCallback(error, errorCallback);
-                Sdk.reportStatus(_this, AcquisitionStatus.DeploymentFailed);
+                Sdk.reportStatusDeploy(_this, AcquisitionStatus.DeploymentFailed);
             };
             var newPackageLocation = LocalPackage.VersionsDir + "/" + this.packageHash;
             var donePackageFileCopy = function (deployDir) {

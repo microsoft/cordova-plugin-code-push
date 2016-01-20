@@ -8,11 +8,6 @@
  *********************************************************************************************/ 
 
 
-/// <reference path="../typings/codePush.d.ts" />
-/// <reference path="../typings/fileSystem.d.ts" />
-/// <reference path="../typings/fileTransfer.d.ts" />
-/// <reference path="../typings/cordova.d.ts" />
-/// <reference path="../typings/dialogs.d.ts" />
 "use strict";
 var LocalPackage = require("./localPackage");
 var RemotePackage = require("./remotePackage");
@@ -29,26 +24,26 @@ var CodePush = (function () {
     CodePush.prototype.restartApplication = function (installSuccess, errorCallback) {
         cordova.exec(installSuccess, errorCallback, "CodePush", "restartApplication", []);
     };
-    CodePush.prototype.reportStatus = function (status, label, appVersion) {
+    CodePush.prototype.reportStatus = function (status, label, appVersion, deploymentKey) {
         try {
             console.log("Reporting status: " + status + " " + label + " " + appVersion);
             var createPackageForReporting = function (label, appVersion) {
                 return {
                     label: label, appVersion: appVersion,
-                    deploymentKey: null, description: null,
+                    deploymentKey: deploymentKey, description: null,
                     isMandatory: false, packageHash: null,
                     packageSize: null, failedInstall: false
                 };
             };
             switch (status) {
                 case ReportStatus.STORE_VERSION:
-                    Sdk.reportStatus(null, AcquisitionStatus.DeploymentSucceeded);
+                    Sdk.reportStatusDeploy(null, AcquisitionStatus.DeploymentSucceeded, deploymentKey);
                     break;
                 case ReportStatus.UPDATE_CONFIRMED:
-                    Sdk.reportStatus(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentSucceeded);
+                    Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentSucceeded, deploymentKey);
                     break;
                 case ReportStatus.UPDATE_ROLLED_BACK:
-                    Sdk.reportStatus(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentFailed);
+                    Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentFailed, deploymentKey);
                     break;
             }
         }

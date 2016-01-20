@@ -8,8 +8,6 @@
  *********************************************************************************************/ 
 
 
-/// <reference path="../typings/codePush.d.ts" />
-/// <reference path="../typings/fileTransfer.d.ts" />
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -20,6 +18,7 @@ var LocalPackage = require("./localPackage");
 var Package = require("./package");
 var NativeAppInfo = require("./nativeAppInfo");
 var CodePushUtil = require("./codePushUtil");
+var Sdk = require("./sdk");
 var RemotePackage = (function (_super) {
     __extends(RemotePackage, _super);
     function RemotePackage() {
@@ -50,6 +49,7 @@ var RemotePackage = (function (_super) {
                             localPackage.localPath = fileEntry.toInternalURL();
                             CodePushUtil.logMessage("Package download success: " + JSON.stringify(localPackage));
                             successCallback && successCallback(localPackage);
+                            Sdk.reportStatusDownload(localPackage, localPackage.deploymentKey);
                         });
                     }, function (fileError) {
                         CodePushUtil.invokeErrorCallback(new Error("Could not access local package. Error code: " + fileError.code), errorCallback);

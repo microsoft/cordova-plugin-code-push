@@ -8,8 +8,6 @@ import org.apache.cordova.CordovaArgs;
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CordovaWebView;
-import org.apache.cordova.PluginResult;
-import org.apache.cordova.engine.SystemWebChromeClient;
 import org.json.JSONException;
 
 import java.io.File;
@@ -68,13 +66,20 @@ public class CodePush extends CordovaPlugin {
     }
 
     private boolean execUpdateSuccess(CallbackContext callbackContext) {
-        if (this.codePushPackageManager.isNotConfirmedInstall()) {
-            /* save reporting status */
-            CodePushPackageMetadata currentMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
-            Reporting.saveStatus(Reporting.Status.UPDATE_CONFIRMED, currentMetadata.label, currentMetadata.appVersion);
+
+        if (this.codePushPackageManager.isFirstRun()) {
+            this.codePushPackageManager.saveFirstRunFlag();
+            /* save reporting status for first install */
+            Reporting.saveStatus(Reporting.Status.STORE_VERSION, null, null, null);
         }
 
-        this.codePushPackageManager.clearNotConfirmedInstall();
+        if (this.codePushPackageManager.installNeedsConfirmation()) {
+            /* save reporting status */
+            CodePushPackageMetadata currentMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
+            Reporting.saveStatus(Reporting.Status.UPDATE_CONFIRMED, currentMetadata.label, currentMetadata.appVersion, currentMetadata.deploymentKey);
+        }
+
+        this.codePushPackageManager.clearInstallNeedsConfirmation();
         this.cleanOldPackageSilently();
         callbackContext.success();
 
@@ -177,7 +182,7 @@ public class CodePush extends CordovaPlugin {
     private void markUpdate() {
     /* this flag will clear when reloading the plugin */
         this.didUpdate = true;
-        this.codePushPackageManager.markUnconfirmedInstall();
+        this.codePushPackageManager.markInstallNeedsConfirmation();
     }
 
     private void cleanOldPackageSilently() {
@@ -260,8 +265,8 @@ public class CodePush extends CordovaPlugin {
                             this.codePushPackageManager.cleanDeployments();
                             this.codePushPackageManager.clearFailedUpdates();
                             this.codePushPackageManager.clearPendingInstall();
-                            this.codePushPackageManager.clearNotConfirmedInstall();
-                            Reporting.saveStatus(Reporting.Status.STORE_VERSION, null, null);
+                            this.codePushPackageManager.clearInstallNeedsConfirmation();
+                            Reporting.saveStatus(Reporting.Status.STORE_VERSION, null, null, null);
                         }
                     }
                 }
@@ -272,13 +277,13 @@ public class CodePush extends CordovaPlugin {
     }
 
     private void handleUnconfirmedInstall(boolean navigate) {
-        if (this.codePushPackageManager.isNotConfirmedInstall()) {
+        if (this.codePushPackageManager.installNeedsConfirmation()) {
             /* save status for later reporting */
             CodePushPackageMetadata currentMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
-            Reporting.saveStatus(Reporting.Status.UPDATE_ROLLED_BACK, currentMetadata.label, currentMetadata.appVersion);
+            Reporting.saveStatus(Reporting.Status.UPDATE_ROLLED_BACK, currentMetadata.label, currentMetadata.appVersion, currentMetadata.deploymentKey);
 
             /* revert application to the previous version */
-            this.codePushPackageManager.clearNotConfirmedInstall();
+            this.codePushPackageManager.clearInstallNeedsConfirmation();
             this.codePushPackageManager.revertToPreviousVersion();
 
             /* reload the previous version */

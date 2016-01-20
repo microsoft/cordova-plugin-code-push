@@ -38,23 +38,25 @@ public class Reporting {
      * Model class used to store reports that are pending delivery to the native side.
      */
     public static class PendingStatus {
-        public PendingStatus(Status status, String label, String appVersion) {
+        public PendingStatus(Status status, String label, String appVersion, String deploymentKey) {
             this.status = status;
             this.label = label;
             this.appVersion = appVersion;
+            this.deploymentKey = deploymentKey;
         }
 
         public Status status;
         public String label;
         public String appVersion;
+        public String deploymentKey;
     }
 
     /**
      * Saves a new status to be reported.
      */
-    public static synchronized void saveStatus(Status status, String label, String appVersion) {
+    public static synchronized void saveStatus(Status status, String label, String appVersion, String deploymentKey) {
         try {
-            PendingStatus pendingStatus = new PendingStatus(status, label, appVersion);
+            PendingStatus pendingStatus = new PendingStatus(status, label, appVersion, deploymentKey);
             PendingStatuses.add(pendingStatus);
         } catch (Exception e) {
             Utilities.logException(e);
@@ -76,10 +78,25 @@ public class Reporting {
         }
     }
 
+    /**
+     * Invokes the window.codePush.reportStatus JS function for the given webView.
+     */
     private static void reportStatus(PendingStatus pendingStatus, CordovaWebView webView) {
         /* report status to the JS layer */
-        /* JS function to call: window.codePush.reportStatus(status: number, label: String, appVersion: String) */
-        String script = String.format(Locale.US, "javascript:window.codePush.reportStatus(%d, '%s', '%s')", pendingStatus.status.getValue(), pendingStatus.label, pendingStatus.appVersion);
+        String labelParameter = convertStringParameter(pendingStatus.label);
+        String appVersionParameter = convertStringParameter(pendingStatus.appVersion);
+        String deploymentKeyParameter = convertStringParameter(pendingStatus.deploymentKey);
+
+        /* JS function to call: window.codePush.reportStatus(status: number, label: String, appVersion: String, deploymentKey: String) */
+        String script = String.format(Locale.US, "javascript:window.codePush.reportStatus(%d, %s, %s, %s)", pendingStatus.status.getValue(), labelParameter, appVersionParameter, deploymentKeyParameter);
         webView.loadUrl(script);
+    }
+
+    private static String convertStringParameter(String input) {
+        if (null == input) {
+            return "undefined";
+        } else {
+            return "'" + input + "'";
+        }
     }
 }

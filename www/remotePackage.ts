@@ -9,6 +9,7 @@ import LocalPackage = require("./localPackage");
 import Package = require("./package");
 import NativeAppInfo = require("./nativeAppInfo");
 import CodePushUtil = require("./codePushUtil");
+import Sdk = require("./sdk");
 
 /**
  * Defines a remote package, which represents an update package available for download.
@@ -56,6 +57,7 @@ class RemotePackage extends Package implements IRemotePackage {
 
                             CodePushUtil.logMessage("Package download success: " + JSON.stringify(localPackage));
                             successCallback && successCallback(localPackage);
+                            Sdk.reportStatusDownload(localPackage, localPackage.deploymentKey);
                         });
                     }, (fileError: FileError) => {
                         CodePushUtil.invokeErrorCallback(new Error("Could not access local package. Error code: " + fileError.code), errorCallback);
@@ -66,7 +68,7 @@ class RemotePackage extends Package implements IRemotePackage {
                     this.currentFileTransfer = null;
                     CodePushUtil.invokeErrorCallback(new Error(error.body), errorCallback);
                 };
-                
+
                 this.currentFileTransfer.onprogress = (progressEvent: ProgressEvent) => {
                     if (downloadProgress) {
                         var dp: DownloadProgress = { receivedBytes: progressEvent.loaded, totalBytes: progressEvent.total };
