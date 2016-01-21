@@ -1,5 +1,6 @@
 /// <reference path="../typings/codePush.d.ts" />
 /// <reference path="../typings/fileTransfer.d.ts" />
+/// <reference path="../typings/device.d.ts" />
 
 "use strict";
 
@@ -17,12 +18,19 @@ class Sdk {
     /**
      * Reads the CodePush configuration and creates an AcquisitionManager instance using it.
      */
-    public static getAcquisitionManager(callback: Callback<AcquisitionManager>, userDeploymentKey?: string): void {
+    public static getAcquisitionManager(callback: Callback<AcquisitionManager>, userDeploymentKey?: string, contentType?: string): void {
 
         var resolveManager = (defaultInstance: AcquisitionManager): void => {
-            if (userDeploymentKey) {
-                var customConfiguration: Configuration = { deploymentKey: userDeploymentKey, serverUrl: Sdk.DefaultConfiguration.serverUrl, ignoreAppVersion: Sdk.DefaultConfiguration.ignoreAppVersion };
-                var customAcquisitionManager: AcquisitionManager = new AcquisitionManager(new HttpRequester(), customConfiguration);
+            if (userDeploymentKey || contentType) {
+                var customConfiguration: Configuration = {
+                    deploymentKey: (userDeploymentKey ? userDeploymentKey : Sdk.DefaultConfiguration.deploymentKey),
+                    serverUrl: Sdk.DefaultConfiguration.serverUrl,
+                    ignoreAppVersion: Sdk.DefaultConfiguration.ignoreAppVersion,
+                    appVersion: Sdk.DefaultConfiguration.appVersion,
+                    clientUniqueId: Sdk.DefaultConfiguration.clientUniqueId
+                };
+                var requester = new HttpRequester(contentType);
+                var customAcquisitionManager: AcquisitionManager = new AcquisitionManager(requester, customConfiguration);
                 callback(null, customAcquisitionManager);
             } else {
                 callback(null, Sdk.DefaultAcquisitionManager);
@@ -34,33 +42,59 @@ class Sdk {
         } else {
             NativeAppInfo.getServerURL((serverError: Error, serverURL: string) => {
                 NativeAppInfo.getDeploymentKey((depolymentKeyError: Error, deploymentKey: string) => {
-                    if (!serverURL || !deploymentKey) {
-                        callback(new Error("Could not get the CodePush configuration. Please check your config.xml file."), null);
-                    } else {
-                        Sdk.DefaultConfiguration = { deploymentKey: deploymentKey, serverUrl: serverURL, ignoreAppVersion: false };
-                        Sdk.DefaultAcquisitionManager = new AcquisitionManager(new HttpRequester(), Sdk.DefaultConfiguration);
-                        resolveManager(Sdk.DefaultAcquisitionManager);
-                    }
+                    NativeAppInfo.getApplicationVersion((appVersionError: Error, appVersion: string) => {
+                        if (!serverURL || !deploymentKey || !appVersion) {
+                            callback(new Error("Could not get the CodePush configuration. Please check your config.xml file."), null);
+                        } else {
+                            Sdk.DefaultConfiguration = {
+                                deploymentKey: deploymentKey,
+                                serverUrl: serverURL,
+                                ignoreAppVersion: false,
+                                appVersion: appVersion,
+                                clientUniqueId: device.uuid
+                            };
+                            Sdk.DefaultAcquisitionManager = new AcquisitionManager(new HttpRequester(), Sdk.DefaultConfiguration);
+                            resolveManager(Sdk.DefaultAcquisitionManager);
+                        }
+                    });
                 });
             });
         }
     }
 
     /**
-     * Reports the update status to the CodePush server.
+     * Reports the deployment status to the CodePush server.
      */
-    public static reportStatus(status: string, callback?: Callback<void>) {
+    public static reportStatusDeploy(pkg?: IPackage, status?: string, deploymentKey?: string, callback?: Callback<void>) {
         try {
             Sdk.getAcquisitionManager((error: Error, acquisitionManager: AcquisitionManager) => {
                 if (error) {
                     callback && callback(error, null);
                 }
                 else {
-                    acquisitionManager.reportStatus(status, null, callback);
+                    acquisitionManager.reportStatusDeploy(pkg, status, callback);
                 }
-            });
+            }, deploymentKey, "application/json");
         } catch (e) {
-            callback && callback(new Error("An error occured while reporting the status. " + e), null);
+            callback && callback(new Error("An error occured while reporting the deployment status. " + e), null);
+        }
+    }
+    
+    /**
+     * Reports the download status to the CodePush server.
+     */
+    public static reportStatusDownload(pkg: IPackage, deploymentKey?: string, callback?: Callback<void>) {
+        try {
+            Sdk.getAcquisitionManager((error: Error, acquisitionManager: AcquisitionManager) => {
+                if (error) {
+                    callback && callback(error, null);
+                }
+                else {
+                    acquisitionManager.reportStatusDownload(pkg, callback);
+                }
+            }, deploymentKey, "application/json");
+        } catch (e) {
+            callback && callback(new Error("An error occured while reporting the download status. " + e), null);
         }
     }
 }

@@ -8,9 +8,6 @@
  *********************************************************************************************/ 
 
 
-/// <reference path="../typings/codePush.d.ts" />
-/// <reference path="../typings/fileSystem.d.ts" />
-/// <reference path="../typings/cordova.d.ts" />
 "use strict";
 var FileUtil = (function () {
     function FileUtil() {

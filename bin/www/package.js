@@ -8,7 +8,6 @@
  *********************************************************************************************/ 
 
 
-/// <reference path="../typings/codePush.d.ts" />
 "use strict";
 var Package = (function () {
     function Package() {

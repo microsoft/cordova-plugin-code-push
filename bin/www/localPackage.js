@@ -8,7 +8,6 @@
  *********************************************************************************************/ 
 
 
-/// <reference path="../typings/codePush.d.ts" />
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -37,7 +36,7 @@ var LocalPackage = (function (_super) {
             }
             var installError = function (error) {
                 CodePushUtil.invokeErrorCallback(error, errorCallback);
-                Sdk.reportStatus(AcquisitionStatus.DeploymentFailed);
+                Sdk.reportStatusDeploy(_this, AcquisitionStatus.DeploymentFailed);
             };
             var newPackageLocation = LocalPackage.VersionsDir + "/" + this.packageHash;
             var donePackageFileCopy = function (deployDir) {
@@ -91,11 +90,15 @@ var LocalPackage = (function (_super) {
                     else {
                         var invokeSuccessAndInstall = function () {
                             CodePushUtil.logMessage("Install succeeded.");
-                            installSuccess && installSuccess();
-                            cordova.exec(function () { }, function () { }, "CodePush", "install", [deployDir.fullPath, installOptions.rollbackTimeout.toString(), installOptions.installMode.toString()]);
+                            if (installOptions.installMode === InstallMode.IMMEDIATE) {
+                                installSuccess && installSuccess();
+                                cordova.exec(function () { }, function () { }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString()]);
+                            }
+                            else {
+                                cordova.exec(function () { installSuccess && installSuccess(); }, function () { installError && installError(); }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString()]);
+                            }
                         };
                         var preInstallSuccess = function () {
-                            Sdk.reportStatus(AcquisitionStatus.DeploymentSucceeded);
                             invokeSuccessAndInstall();
                         };
                         var preInstallFailure = function (preInstallError) {
@@ -325,7 +328,6 @@ var LocalPackage = (function (_super) {
     LocalPackage.getDefaultInstallOptions = function () {
         if (!LocalPackage.DefaultInstallOptions) {
             LocalPackage.DefaultInstallOptions = {
-                rollbackTimeout: 0,
                 installMode: InstallMode.ON_NEXT_RESTART,
             };
         }

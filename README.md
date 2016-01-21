@@ -97,21 +97,19 @@ Contains details about an update package that has been downloaded locally or alr
 - __isMandatory__: Flag indicating if the update is mandatory. (Boolean)
 - __packageHash__: The hash value of the package. (String)
 - __packageSize__: The size of the package, in bytes. (Number)
-- __failedInstall__: Boolean flag indicating if this update package was previously attempted and the update failed. (Boolean). If using the rollback feature, this field can protect against going into an infinite bad update/revert loop. For an example on how to use the rollbackTimeout parameter to protect against a bad update, see the [notifyApplicationReady() documentation](#codepushnotifyapplicationready).
+- __failedInstall__: Boolean flag indicating if this update package was previously attempted and the update failed. (Boolean). For an example on how to protect against a bad update, see the [notifyApplicationReady() documentation](#codepushnotifyapplicationready).
 - __localPath__: The current, local path of the package. (String)
 - __isFirstRun__: Flag indicating if the current application run is the first one after the package was applied. (Boolean)
 
 ### Methods
 - __install(installSuccess, installError, installOptions)__: Installs this package to the application.
 The install behavior is dependent on the provided `installOptions`. By default, the update package is silently installed and the application is reloaded with the new content on the next application start.
-If the installOptions.rollbackTimeout parameter is provided, the application will wait for a `codePush.notifyApplicationReady()` for the given number of milliseconds.
-If `codePush.notifyApplicationReady()` is called before the time period specified by `rollbackTimeout`, the install operation is considered a success.
-Otherwise, the install operation will be marked as failed, and the application is reverted to its previous version.
+On the first run after the update, the application will wait for a `codePush.notifyApplicationReady()` call. Once this call is made, the install operation is considered a success.
+Otherwise, the install operation will be marked as failed, and the application is reverted to its previous version on the next run.
 
 ### InstallOptions
 Interface defining several options for customizing install operation behavior.
 
-- __rollbackTimeout__: Optional time interval, in milliseconds, to wait for a [notifyApplicationReady()](#codepushnotifyapplicationready) call before marking the install as failed and reverting to the previous version. By default, the rollback functionality is disabled - the parameter defaults to 0. (number)
 - __installMode__: Used to specity the [InstallMode](#installmode) used for the install operation. This is optional and defaults to InstallMode.ON_NEXT_RESTART.
 
   #### Example
@@ -140,7 +138,7 @@ Interface defining several options for customizing install operation behavior.
 	window.codePush.checkForUpdate(onUpdateCheck, onError);
 	```
 
-For an example on how to use the rollbackTimeout parameter to protect against a bad update, see the [notifyApplicationReady() documentation](#codepushnotifyapplicationready).
+For an example on how to protect against a bad update, see the [notifyApplicationReady() documentation](#codepushnotifyapplicationready).
 
 ## RemotePackage
 Contains details about an update package that is available for download.
@@ -263,9 +261,10 @@ window.codePush.getCurrentPackage(onPackageSuccess, onError);
 ```javascript
 codePush.notifyApplicationReady(notifySucceeded, notifyFailed);
 ```
-Notifies the plugin that the update operation succeeded.
-Calling this function is required if a installOptions.rollbackTimeout parameter is passed to your ```LocalPackage.install``` call.
-If automatic rollback was not used, calling this function is not required and will result in a noop.
+Notifies the plugin that the update operation succeeded and that the application is ready.
+Calling this function is required on the first run after an update. On every subsequent application run, calling this function is a noop.
+If using the sync API, calling this function is not required since sync calls it internally. 
+
 - __notifySucceeded__: Optional callback invoked if the plugin was successfully notified.
 - __notifyFailed__: Optional callback invoked in case of an error during notifying the plugin.
 
@@ -282,8 +281,7 @@ var onInstallSuccess = function () {
 };
 
 var onPackageDownloaded = function (localPackage) {
-    // set the rollbackTimeout to 10s
-    localPackage.install(onInstallSuccess, onError, { rollbackTimeout: 10000 });
+    localPackage.install(onInstallSuccess, onError);
 };
 
 var onUpdateCheck = function (remotePackage) {
@@ -337,9 +335,8 @@ The algorithm of this method is the following:
 - __downloadProgress__: Optional callback invoked during the download process. It is called several times with one DownloadProgress parameter.
 
 ### SyncOptions
-Interface defining several options for customizing the [sync](#codepushsync) operation behavior. Options span from disabling the user interaction or modifying it to enabling rollback in case of a bad update.
+Interface defining several options for customizing the [sync](#codepushsync) operation behavior.
 
-- __rollbackTimeout__: Optional time interval, in milliseconds, to wait for a [notifyApplicationReady()](#codepushnotifyapplicationready) call before marking the install as failed and reverting to the previous version. Sync calls [notifyApplicationReady()](#codepushnotifyapplicationready) internally, so if you use sync() in your updated version of the application, there is no need to call [notifyApplicationReady()](#codepushnotifyapplicationready) again. By default, the rollback functionality is disabled - the parameter defaults to 0. (number)
 - __installMode__: Used to specity the [InstallMode](#installmode) used for the install operation. This is optional and defaults to InstallMode.ON_NEXT_RESTART.
 - __ignoreFailedUpdates__: Optional boolean flag. If set, updates available on the server for which and update was attempted and rolled back will be ignored. Defaults to true. (boolean)
 - __updateDialog__: Option used to enable, disable or customize the user interaction during sync. If set to false, user interaction will be disabled. If set to true, the user will be alerted or asked to confirm new updates, based on whether the update is mandatory. To customize the user dialog, this option can be set to a custom UpdateDialogOptions instance.

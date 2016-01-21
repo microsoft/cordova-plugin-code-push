@@ -38,10 +38,14 @@ export class TestMessage {
     public static INSTALL_ERROR = "INSTALL_ERROR";
     public static DEVICE_READY_AFTER_UPDATE = "DEVICE_READY_AFTER_UPDATE";
     public static UPDATE_FAILED_PREVIOUSLY = "UPDATE_FAILED_PREVIOUSLY";
-    public static APPLICATION_NOT_REVERTED = "APPLICATION_NOT_REVERTED";
     public static NOTIFY_APP_READY_SUCCESS = "NOTIFY_APP_READY_SUCCESS";
     public static NOTIFY_APP_READY_FAILURE = "NOTIFY_APP_READY_FAILURE";
+    public static SKIPPED_NOTIFY_APPLICATION_READY = "SKIPPED_NOTIFY_APPLICATION_READY";
     public static SYNC_STATUS = "SYNC_STATUS";
+    public static RESTART_SUCCEEDED = "RESTART_SUCCEEDED";
+    public static RESTART_FAILED = "RESTART_FAILED";
+    public static PENDING_PACKAGE = "PENDING_PACKAGE";
+    public static CURRENT_PACKAGE = "CURRENT_PACKAGE";
 
     public static SYNC_UP_TO_DATE = 0;
     public static SYNC_UPDATE_INSTALLED = 1;
@@ -51,6 +55,13 @@ export class TestMessage {
     public static SYNC_AWAITING_USER_ACTION = 5;
     public static SYNC_DOWNLOADING_PACKAGE = 6;
     public static SYNC_INSTALLING_UPDATE = 7;
+}
+
+/**
+ * Contains all the messages sent from the mock server back to the application during tests.
+ */
+export class TestMessageResponse {
+    public static SKIP_NOTIFY_APPLICATION_READY = "SKIP_NOTIFY_APPLICATION_READY";
 }
 
 /**

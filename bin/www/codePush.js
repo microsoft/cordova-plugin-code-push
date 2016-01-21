@@ -8,11 +8,6 @@
  *********************************************************************************************/ 
 
 
-/// <reference path="../typings/codePush.d.ts" />
-/// <reference path="../typings/fileSystem.d.ts" />
-/// <reference path="../typings/fileTransfer.d.ts" />
-/// <reference path="../typings/cordova.d.ts" />
-/// <reference path="../typings/dialogs.d.ts" />
 "use strict";
 var LocalPackage = require("./localPackage");
 var RemotePackage = require("./remotePackage");
@@ -26,8 +21,51 @@ var CodePush = (function () {
     CodePush.prototype.notifyApplicationReady = function (notifySucceeded, notifyFailed) {
         cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updateSuccess", []);
     };
+    CodePush.prototype.restartApplication = function (installSuccess, errorCallback) {
+        cordova.exec(installSuccess, errorCallback, "CodePush", "restartApplication", []);
+    };
+    CodePush.prototype.reportStatus = function (status, label, appVersion, deploymentKey) {
+        try {
+            console.log("Reporting status: " + status + " " + label + " " + appVersion);
+            var createPackageForReporting = function (label, appVersion) {
+                return {
+                    label: label, appVersion: appVersion,
+                    deploymentKey: deploymentKey, description: null,
+                    isMandatory: false, packageHash: null,
+                    packageSize: null, failedInstall: false
+                };
+            };
+            switch (status) {
+                case ReportStatus.STORE_VERSION:
+                    Sdk.reportStatusDeploy(null, AcquisitionStatus.DeploymentSucceeded, deploymentKey);
+                    break;
+                case ReportStatus.UPDATE_CONFIRMED:
+                    Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentSucceeded, deploymentKey);
+                    break;
+                case ReportStatus.UPDATE_ROLLED_BACK:
+                    Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentFailed, deploymentKey);
+                    break;
+            }
+        }
+        catch (e) {
+            CodePushUtil.logError("An error occurred while reporting." + CodePushUtil.getErrorMessage(e));
+        }
+    };
     CodePush.prototype.getCurrentPackage = function (packageSuccess, packageError) {
-        return LocalPackage.getPackageInfoOrNull(LocalPackage.PackageInfoFile, packageSuccess, packageError);
+        NativeAppInfo.isPendingUpdate(function (pendingUpdate) {
+            var packageInfoFile = pendingUpdate ? LocalPackage.OldPackageInfoFile : LocalPackage.PackageInfoFile;
+            LocalPackage.getPackageInfoOrNull(packageInfoFile, packageSuccess, packageError);
+        });
+    };
+    CodePush.prototype.getPendingPackage = function (packageSuccess, packageError) {
+        NativeAppInfo.isPendingUpdate(function (pendingUpdate) {
+            if (pendingUpdate) {
+                LocalPackage.getPackageInfoOrNull(LocalPackage.PackageInfoFile, packageSuccess, packageError);
+            }
+            else {
+                packageSuccess(null);
+            }
+        });
     };
     CodePush.prototype.checkForUpdate = function (querySuccess, queryError, deploymentKey) {
         try {
@@ -160,7 +198,6 @@ var CodePush = (function () {
     CodePush.prototype.getDefaultSyncOptions = function () {
         if (!CodePush.DefaultSyncOptions) {
             CodePush.DefaultSyncOptions = {
-                rollbackTimeout: 0,
                 ignoreFailedUpdates: true,
                 installMode: InstallMode.ON_NEXT_RESTART,
                 updateDialog: false,
@@ -186,5 +223,11 @@ var CodePush = (function () {
     };
     return CodePush;
 })();
+var ReportStatus;
+(function (ReportStatus) {
+    ReportStatus[ReportStatus["STORE_VERSION"] = 0] = "STORE_VERSION";
+    ReportStatus[ReportStatus["UPDATE_CONFIRMED"] = 1] = "UPDATE_CONFIRMED";
+    ReportStatus[ReportStatus["UPDATE_ROLLED_BACK"] = 2] = "UPDATE_ROLLED_BACK";
+})(ReportStatus || (ReportStatus = {}));
 var instance = new CodePush();
 module.exports = instance;

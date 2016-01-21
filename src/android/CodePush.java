@@ -1,7 +1,6 @@
 package com.microsoft.cordova;
 
 import android.content.pm.PackageManager;
-import android.os.CountDownTimer;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.ConfigXmlParser;
@@ -19,16 +18,14 @@ import java.net.MalformedURLException;
  */
 public class CodePush extends CordovaPlugin {
 
-    private static final String WWW_ASSET_PATH_PREFIX = "file:///android_asset/www/";
     public static final String RESOURCES_BUNDLE = "resources.arsc";
-
+    private static final String WWW_ASSET_PATH_PREFIX = "file:///android_asset/www/";
+    private static boolean ShouldClearHistoryOnLoad = false;
     private CordovaWebView mainWebView;
     private CodePushPackageManager codePushPackageManager;
     private boolean pluginDestroyed = false;
     private boolean didUpdate = false;
     private boolean didStartApp = false;
-    private static boolean InstallSucceeded = false;
-    private static boolean ShouldClearHistoryOnLoad = false;
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
@@ -54,20 +51,42 @@ public class CodePush extends CordovaPlugin {
         } else if ("install".equals(action)) {
             return execInstall(args, callbackContext);
         } else if ("updateSuccess".equals(action)) {
-            CodePush.InstallSucceeded = true;
-            callbackContext.success();
-            return true;
+            return execUpdateSuccess(callbackContext);
+        } else if ("restartApplication".equals(action)) {
+            return execRestartApplication(args, callbackContext);
+        } else if ("isPendingUpdate".equals(action)) {
+            return execIsPendingUpdate(args, callbackContext);
         } else if ("isFailedUpdate".equals(action)) {
             return execIsFailedUpdate(args, callbackContext);
         } else if ("isFirstRun".equals(action)) {
-            execIsFirstRun(args, callbackContext);
-            return true;
+            return execIsFirstRun(args, callbackContext);
         } else {
             return false;
         }
     }
 
-    private void execIsFirstRun(CordovaArgs args, CallbackContext callbackContext) {
+    private boolean execUpdateSuccess(CallbackContext callbackContext) {
+
+        if (this.codePushPackageManager.isFirstRun()) {
+            this.codePushPackageManager.saveFirstRunFlag();
+            /* save reporting status for first install */
+            Reporting.saveStatus(Reporting.Status.STORE_VERSION, null, null, null);
+        }
+
+        if (this.codePushPackageManager.installNeedsConfirmation()) {
+            /* save reporting status */
+            CodePushPackageMetadata currentMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
+            Reporting.saveStatus(Reporting.Status.UPDATE_CONFIRMED, currentMetadata.label, currentMetadata.appVersion, currentMetadata.deploymentKey);
+        }
+
+        this.codePushPackageManager.clearInstallNeedsConfirmation();
+        this.cleanOldPackageSilently();
+        callbackContext.success();
+
+        return true;
+    }
+
+    private boolean execIsFirstRun(CordovaArgs args, CallbackContext callbackContext) {
         try {
             boolean isFirstRun = false;
             String packageHash = args.getString(0);
@@ -83,6 +102,17 @@ public class CodePush extends CordovaPlugin {
         } catch (JSONException e) {
             callbackContext.error("Invalid package hash. " + e.getMessage());
         }
+        return true;
+    }
+
+    private boolean execIsPendingUpdate(CordovaArgs args, CallbackContext callbackContext) {
+        try {
+            InstallOptions pendingInstall = this.codePushPackageManager.getPendingInstall();
+            callbackContext.success((pendingInstall != null) ? 1 : 0);
+        } catch (Exception e) {
+            callbackContext.error("An error occurred. " + e.getMessage());
+        }
+        return true;
     }
 
     private boolean execIsFailedUpdate(CordovaArgs args, CallbackContext callbackContext) {
@@ -99,8 +129,7 @@ public class CodePush extends CordovaPlugin {
     private boolean execInstall(CordovaArgs args, CallbackContext callbackContext) {
         try {
             final String startLocation = args.getString(0);
-            final int updateSuccessTimeoutInMillis = args.optInt(1);
-            final InstallMode installMode = InstallMode.fromValue(args.optInt(2));
+            final InstallMode installMode = InstallMode.fromValue(args.optInt(1));
 
             File startPage = this.getStartPageForPackage(startLocation);
             if (startPage != null) {
@@ -108,9 +137,9 @@ public class CodePush extends CordovaPlugin {
                 /* navigate to the start page */
                 if (InstallMode.IMMEDIATE.equals(installMode)) {
                     this.navigateToFile(startPage);
-                    markUpdateAndStartTimer(updateSuccessTimeoutInMillis);
+                    markUpdate();
                 } else {
-                    InstallOptions pendingInstall = new InstallOptions(updateSuccessTimeoutInMillis, installMode);
+                    InstallOptions pendingInstall = new InstallOptions(installMode);
                     this.codePushPackageManager.savePendingInstall(pendingInstall);
                 }
 
@@ -124,32 +153,45 @@ public class CodePush extends CordovaPlugin {
         return true;
     }
 
-    private void markUpdateAndStartTimer(int updateSuccessTimeoutInMillis) {
-    /* this flag will clear when reloading the plugin */
-        this.didUpdate = true;
-
-        if (updateSuccessTimeoutInMillis > 0) {
-            startRollbackTimeout(updateSuccessTimeoutInMillis);
-        } else {
-            cleanOldPackageSilently();
+    private boolean execRestartApplication(CordovaArgs args, CallbackContext callbackContext) {
+        try {
+            /* check if we have a deployed package already */
+            CodePushPackageMetadata deployedPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
+            if (deployedPackageMetadata != null) {
+                callbackContext.success();
+                didStartApp = false;
+                onStart();
+            } else {
+                final String configLaunchUrl = this.getConfigLaunchUrl();
+                if (!this.pluginDestroyed) {
+                    callbackContext.success();
+                    this.cordova.getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            navigateToURL(configLaunchUrl);
+                        }
+                    });
+                }
+            }
+        } catch (Exception e) {
+            callbackContext.error("An error occurred while restarting the application." + e.getMessage());
         }
+        return true;
     }
 
-    private void startRollbackTimeout(final int updateSuccessTimeoutInMillis) {
-    /* start countdown for success */
-        CodePush.InstallSucceeded = false;
-        final CountDownTimer successTimer = new CountDownTimer(updateSuccessTimeoutInMillis, updateSuccessTimeoutInMillis) {
-            @Override
-            public void onTick(long millisUntilFinished) {
-                /* empty - no need for progress updates */
-            }
+    private void markUpdate() {
+    /* this flag will clear when reloading the plugin */
+        this.didUpdate = true;
+        this.codePushPackageManager.markInstallNeedsConfirmation();
+    }
 
-            @Override
-            public void onFinish() {
-                onSuccessTimerFinish();
-            }
-        };
-        successTimer.start();
+    private void cleanOldPackageSilently() {
+        try {
+            this.codePushPackageManager.cleanOldPackage();
+        } catch (Exception e) {
+            /* silently fail if there was an error during cleanup */
+            Utilities.logException(e);
+        }
     }
 
     private boolean execPreInstall(CordovaArgs args, CallbackContext callbackContext) {
@@ -190,43 +232,6 @@ public class CodePush extends CordovaPlugin {
         return true;
     }
 
-    private void onSuccessTimerFinish() {
-        if (!CodePush.InstallSucceeded) {
-            /* revert application to the previous version */
-            this.codePushPackageManager.revertToPreviousVersion();
-            String url;
-            try {
-                CodePushPackageMetadata currentPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
-                url = this.getStartPageURLForPackage(currentPackageMetadata.localPath);
-            } catch (Exception e) {
-                url = this.getConfigLaunchUrl();
-            }
-
-            final String finalURL = url;
-
-            if (!this.pluginDestroyed) {
-                this.cordova.getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        navigateToURL(finalURL);
-                    }
-                });
-            }
-        } else {
-            /* success updating - delete the old package */
-            cleanOldPackageSilently();
-        }
-    }
-
-    private void cleanOldPackageSilently() {
-        try {
-            this.codePushPackageManager.cleanOldPackage();
-        } catch (Exception e) {
-            /* silently fail if there was an error during cleanup */
-            Utilities.logException(e);
-        }
-    }
-
     private void returnStringPreference(String preferenceName, CallbackContext callbackContext) {
         String result = mainWebView.getPreferences().getString(preferenceName, null);
         if (result != null) {
@@ -260,12 +265,48 @@ public class CodePush extends CordovaPlugin {
                             this.codePushPackageManager.cleanDeployments();
                             this.codePushPackageManager.clearFailedUpdates();
                             this.codePushPackageManager.clearPendingInstall();
+                            this.codePushPackageManager.clearInstallNeedsConfirmation();
+                            Reporting.saveStatus(Reporting.Status.STORE_VERSION, null, null, null);
                         }
                     }
                 }
             }
         } catch (Exception e) {
             /* empty - if there is an exception, the app will launch with the bundled content */
+        }
+    }
+
+    private void handleUnconfirmedInstall(boolean navigate) {
+        if (this.codePushPackageManager.installNeedsConfirmation()) {
+            /* save status for later reporting */
+            CodePushPackageMetadata currentMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
+            Reporting.saveStatus(Reporting.Status.UPDATE_ROLLED_BACK, currentMetadata.label, currentMetadata.appVersion, currentMetadata.deploymentKey);
+
+            /* revert application to the previous version */
+            this.codePushPackageManager.clearInstallNeedsConfirmation();
+            this.codePushPackageManager.revertToPreviousVersion();
+
+            /* reload the previous version */
+            if (navigate) {
+                String url;
+                try {
+                    CodePushPackageMetadata currentPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
+                    url = this.getStartPageURLForPackage(currentPackageMetadata.localPath);
+                } catch (Exception e) {
+                    url = this.getConfigLaunchUrl();
+                }
+
+                final String finalURL = url;
+
+                if (!this.pluginDestroyed) {
+                    this.cordova.getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            navigateToURL(finalURL);
+                        }
+                    });
+                }
+            }
         }
     }
 
@@ -321,6 +362,16 @@ public class CodePush extends CordovaPlugin {
     }
 
     /**
+     * Called when the system is about to start resuming a previous activity.
+     *
+     * @param multitasking Flag indicating if multitasking is turned on for app
+     */
+    @Override
+    public void onPause(boolean multitasking) {
+        Reporting.reportStatuses(this.mainWebView);
+    }
+
+    /**
      * Called when the activity will start interacting with the user.
      *
      * @param multitasking Flag indicating if multitasking is turned on for app
@@ -338,11 +389,17 @@ public class CodePush extends CordovaPlugin {
         if (!didStartApp) {
             /* The application was just started. */
             didStartApp = true;
+            InstallOptions pendingInstall = this.codePushPackageManager.getPendingInstall();
+
+            /* Revert to the previous version if the install is not confirmed and no update is pending. */
+            if (pendingInstall == null) {
+                handleUnconfirmedInstall(false);
+            }
+
             handleAppStart();
             /* Handle ON_NEXT_RESUME and ON_NEXT_RESTART pending installations */
-            InstallOptions pendingInstall = this.codePushPackageManager.getPendingInstall();
             if (pendingInstall != null && (InstallMode.ON_NEXT_RESUME.equals(pendingInstall.installMode) || InstallMode.ON_NEXT_RESTART.equals(pendingInstall.installMode))) {
-                this.markUpdateAndStartTimer(pendingInstall.rollbackTimeout);
+                this.markUpdate();
                 this.codePushPackageManager.clearPendingInstall();
             }
         } else {
@@ -351,7 +408,7 @@ public class CodePush extends CordovaPlugin {
             InstallOptions pendingInstall = this.codePushPackageManager.getPendingInstall();
             if ((pendingInstall != null) && (InstallMode.ON_NEXT_RESUME.equals(pendingInstall.installMode))) {
                 handleAppStart();
-                this.markUpdateAndStartTimer(pendingInstall.rollbackTimeout);
+                this.markUpdate();
                 this.codePushPackageManager.clearPendingInstall();
             }
         }

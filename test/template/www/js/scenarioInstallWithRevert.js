@@ -42,7 +42,7 @@ var app = {
     downloadSuccess: function (localPackage) {
         console.log("Download succeeded.");
         /* Wait for 5s before we revert the application if notifyApplicationReady is not invoked. */
-        localPackage.install(app.installSuccess, app.installError, { installMode: InstallMode.IMMEDIATE, rollbackTimeout: 5000 });
+        localPackage.install(app.installSuccess, app.installError, { installMode: InstallMode.IMMEDIATE });
     },
     downloadError: function (error) {
         console.log("Download error.");

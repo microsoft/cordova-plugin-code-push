@@ -34,26 +34,86 @@ class CodePush implements CodePushCordovaPlugin {
      */
     private static DefaultUpdateDialogOptions: UpdateDialogOptions;
     
-    /**
-      * Notifies the plugin that the update operation succeeded and that the application is ready.
-      * Calling this function is required if a rollbackTimeout parameter is used for your LocalPackage.install() call.
-      * If install() is used without a rollbackTimeout, calling this function is a noop.
-      * 
-      * @param notifySucceeded Optional callback invoked if the plugin was successfully notified.
-      * @param notifyFailed Optional callback invoked in case of an error during notifying the plugin.
-      */
+    /**  
+     * Notifies the plugin that the update operation succeeded and that the application is ready.
+     * Calling this function is required on the first run after an update. On every subsequent application run, calling this function is a noop.
+     * If using sync API, calling this function is not required since sync calls it internally. 
+     * 
+     * @param notifySucceeded Optional callback invoked if the plugin was successfully notified.
+     * @param notifyFailed Optional callback invoked in case of an error during notifying the plugin.
+     */
     public notifyApplicationReady(notifySucceeded?: SuccessCallback<void>, notifyFailed?: ErrorCallback): void {
         cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updateSuccess", []);
     }
     
     /**
-    * Get the current package information.
-    * 
-    * @param packageSuccess Callback invoked with the currently deployed package information.
-    * @param packageError Optional callback invoked in case of an error.
-    */
+     * Reloads the application. If there is a pending update package installed using ON_NEXT_RESTART or ON_NEXT_RESUME modes, the update
+     * will be immediately visible to the user. Otherwise, calling this function will simply reload the current version of the application.
+     */
+    public restartApplication(installSuccess: SuccessCallback<void>, errorCallback?: ErrorCallback): void {
+        cordova.exec(installSuccess, errorCallback, "CodePush", "restartApplication", []);
+    }
+    
+    /**
+     * Reports an application status back to the server.
+     * !!! This function is called from the native side, please make changes accordingly. !!!
+     */
+    public reportStatus(status: number, label: string, appVersion: string, deploymentKey: string) {
+        try {
+            console.log("Reporting status: " + status + " " + label + " " + appVersion);
+
+            var createPackageForReporting = (label: string, appVersion: string): IPackage => {
+                return {
+                    /* The SDK only reports the label and appVersion.
+                       The rest of the properties are added for type safety. */
+                    label: label, appVersion: appVersion,
+                    deploymentKey: deploymentKey, description: null,
+                    isMandatory: false, packageHash: null,
+                    packageSize: null, failedInstall: false
+                };
+            };
+
+            switch (status) {
+                case ReportStatus.STORE_VERSION:
+                    Sdk.reportStatusDeploy(null, AcquisitionStatus.DeploymentSucceeded, deploymentKey);
+                    break;
+                case ReportStatus.UPDATE_CONFIRMED:
+                    Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentSucceeded, deploymentKey);
+                    break;
+                case ReportStatus.UPDATE_ROLLED_BACK:
+                    Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentFailed, deploymentKey);
+                    break;
+            }
+        } catch (e) {
+            CodePushUtil.logError("An error occurred while reporting." + CodePushUtil.getErrorMessage(e));
+        }
+    }
+    
+    /**
+     * Get the current package information.
+     * 
+     * @param packageSuccess Callback invoked with the currently deployed package information.
+     * @param packageError Optional callback invoked in case of an error.
+     */
     public getCurrentPackage(packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
-        return LocalPackage.getPackageInfoOrNull(LocalPackage.PackageInfoFile, packageSuccess, packageError);
+        NativeAppInfo.isPendingUpdate((pendingUpdate: boolean) => {
+            var packageInfoFile = pendingUpdate ? LocalPackage.OldPackageInfoFile : LocalPackage.PackageInfoFile;
+            LocalPackage.getPackageInfoOrNull(packageInfoFile, packageSuccess, packageError);
+        });
+    }
+
+    /**
+     * Gets the pending package information, if any. A pending package is one that has been installed but the application still runs the old code.
+     * This happends only after a package has been installed using ON_NEXT_RESTART or ON_NEXT_RESUME mode, but the application was not restarted/resumed yet.
+     */
+    public getPendingPackage(packageSuccess: SuccessCallback<ILocalPackage>, packageError?: ErrorCallback): void {
+        NativeAppInfo.isPendingUpdate((pendingUpdate: boolean) => {
+            if (pendingUpdate) {
+                LocalPackage.getPackageInfoOrNull(LocalPackage.PackageInfoFile, packageSuccess, packageError);
+            } else {
+                packageSuccess(null);
+            }
+        });
     }
 
     /**
@@ -240,7 +300,6 @@ class CodePush implements CodePushCordovaPlugin {
     private getDefaultSyncOptions(): SyncOptions {
         if (!CodePush.DefaultSyncOptions) {
             CodePush.DefaultSyncOptions = {
-                rollbackTimeout: 0,
                 ignoreFailedUpdates: true,
                 installMode: InstallMode.ON_NEXT_RESTART,
                 updateDialog: false,
@@ -273,6 +332,17 @@ class CodePush implements CodePushCordovaPlugin {
     }
 
 }
+
+/**
+ * Defines the application statuses reported from the native layer.
+ * !!! This enum is defined in native code as well, please make changes accordingly. !!!
+ */
+enum ReportStatus {
+    STORE_VERSION = 0,
+    UPDATE_CONFIRMED = 1,
+    UPDATE_ROLLED_BACK = 2
+}
+
 
 var instance = new CodePush();
 export = instance;

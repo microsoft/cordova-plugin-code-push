@@ -95,4 +95,24 @@ public class CodePushPackageManager {
     public void clearPendingInstall() {
         this.codePushPreferences.clearPendingInstall();
     }
+
+    public void markInstallNeedsConfirmation() {
+        this.codePushPreferences.markInstallNeedsConfirmation();
+    }
+
+    public void clearInstallNeedsConfirmation() {
+        this.codePushPreferences.clearInstallNeedsConfirmation();
+    }
+
+    public boolean installNeedsConfirmation() {
+        return this.codePushPreferences.installNeedsConfirmation();
+    }
+
+    public boolean isFirstRun() {
+        return this.codePushPreferences.isFirstRun();
+    }
+
+    public void saveFirstRunFlag() {
+        this.codePushPreferences.saveFirstRunFlag();
+    }
 }

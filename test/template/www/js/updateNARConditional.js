@@ -8,12 +8,30 @@ var app = {
     },
     onDeviceReady: function () {
         app.receivedDeviceReady();
-        app.checkForUpdates();
     },
     // Update DOM on a Received Event
     receivedDeviceReady: function () {
-        document.getElementById("deviceready").innerText = "Device is ready (scenario - install on next resume)";
+        document.getElementById("deviceready").innerText = "Device is ready (scenario - conditional notify application ready)";
         console.log('Received Event: deviceready');
+        app.sendTestMessage("DEVICE_READY_AFTER_UPDATE", null, function (responseBody) {
+            console.log("Server response: " + responseBody);
+            if (responseBody !== "SKIP_NOTIFY_APPLICATION_READY") {
+
+                var notifySucceeded = function () {
+                    app.sendTestMessage("NOTIFY_APP_READY_SUCCESS");
+                };
+
+                var notifyFailed = function () {
+                    app.sendTestMessage("NOTIFY_APP_READY_FAILURE");
+                };
+
+                window.codePush.notifyApplicationReady(notifySucceeded, notifyFailed);
+                app.checkForUpdates();
+            } else {
+                console.log("Skipping notifyApplicationReady!");
+                app.sendTestMessage("SKIPPED_NOTIFY_APPLICATION_READY");
+            }
+        });
     },
     checkForUpdates: function () {
         console.log("Checking for updates...");
@@ -26,9 +44,13 @@ var app = {
             app.sendTestMessage("CHECK_UP_TO_DATE");
         }
         else {
-            console.log("There is an update available. Remote package:" + JSON.stringify(remotePackage));
-            console.log("Downloading package...");
-            remotePackage.download(app.downloadSuccess, app.downloadError);
+            if (remotePackage.failedInstall) {
+                app.sendTestMessage("UPDATE_FAILED_PREVIOUSLY");
+            } else {
+                console.log("There is an update available. Remote package:" + JSON.stringify(remotePackage));
+                console.log("Downloading package...");
+                remotePackage.download(app.downloadSuccess, app.downloadError);
+            }
         }
     },
     checkError: function (error) {
@@ -37,7 +59,7 @@ var app = {
     },
     downloadSuccess: function (localPackage) {
         console.log("Download succeeded.");
-        localPackage.install(app.installSuccess, app.installError, { installMode: InstallMode.ON_NEXT_RESUME });
+        localPackage.install(app.installSuccess, app.installError, { installMode: InstallMode.ON_NEXT_RESTART });
     },
     downloadError: function (error) {
         console.log("Download error.");
@@ -51,8 +73,14 @@ var app = {
         console.log("Install error.");
         app.sendTestMessage("INSTALL_ERROR");
     },
-    sendTestMessage: function (message, args) {
+    sendTestMessage: function (message, args, callback) {
         var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                callback(xhr.response);
+            }
+        };
+
         xhr.open("POST", "CODE_PUSH_SERVER_URL/reportTestMessage", false);
         var body = JSON.stringify({ message: message, args: args });
         console.log("Sending test message body: " + body);

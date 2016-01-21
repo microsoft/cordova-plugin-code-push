@@ -8,8 +8,6 @@
  *********************************************************************************************/ 
 
 
-/// <reference path="../typings/codePush.d.ts" />
-/// <reference path="../typings/cordova.d.ts" />
 "use strict";
 var DefaultServerUrl = "https://codepush.azurewebsites.net/";
 var NativeAppInfo = (function () {
@@ -52,6 +50,15 @@ var NativeAppInfo = (function () {
             firstRunCallback(false);
         };
         cordova.exec(win, fail, "CodePush", "isFirstRun", [packageHash]);
+    };
+    NativeAppInfo.isPendingUpdate = function (callback) {
+        var win = function (firstRun) {
+            callback(!!firstRun);
+        };
+        var fail = function () {
+            callback(false);
+        };
+        cordova.exec(win, fail, "CodePush", "isPendingUpdate", []);
     };
     return NativeAppInfo;
 })();

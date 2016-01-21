@@ -41,7 +41,7 @@ var app = {
     },
     downloadSuccess: function (localPackage) {
         console.log("Download succeeded.");
-        localPackage.install(app.installSuccess, app.installError, { installMode: InstallMode.ON_NEXT_RESTART, rollbackTimeout: 5000 });
+        localPackage.install(app.installSuccess, app.installError, { installMode: InstallMode.ON_NEXT_RESTART });
     },
     downloadError: function (error) {
         console.log("Download error.");

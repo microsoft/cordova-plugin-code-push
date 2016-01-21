@@ -8,19 +8,24 @@
  *********************************************************************************************/ 
 
 
-/// <reference path="../typings/codePush.d.ts" />
-/// <reference path="../typings/fileTransfer.d.ts" />
 "use strict";
 var NativeAppInfo = require("./nativeAppInfo");
 var HttpRequester = require("./httpRequester");
 var Sdk = (function () {
     function Sdk() {
     }
-    Sdk.getAcquisitionManager = function (callback, userDeploymentKey) {
+    Sdk.getAcquisitionManager = function (callback, userDeploymentKey, contentType) {
         var resolveManager = function (defaultInstance) {
-            if (userDeploymentKey) {
-                var customConfiguration = { deploymentKey: userDeploymentKey, serverUrl: Sdk.DefaultConfiguration.serverUrl, ignoreAppVersion: Sdk.DefaultConfiguration.ignoreAppVersion };
-                var customAcquisitionManager = new AcquisitionManager(new HttpRequester(), customConfiguration);
+            if (userDeploymentKey || contentType) {
+                var customConfiguration = {
+                    deploymentKey: (userDeploymentKey ? userDeploymentKey : Sdk.DefaultConfiguration.deploymentKey),
+                    serverUrl: Sdk.DefaultConfiguration.serverUrl,
+                    ignoreAppVersion: Sdk.DefaultConfiguration.ignoreAppVersion,
+                    appVersion: Sdk.DefaultConfiguration.appVersion,
+                    clientUniqueId: Sdk.DefaultConfiguration.clientUniqueId
+                };
+                var requester = new HttpRequester(contentType);
+                var customAcquisitionManager = new AcquisitionManager(requester, customConfiguration);
                 callback(null, customAcquisitionManager);
             }
             else {
@@ -33,31 +38,54 @@ var Sdk = (function () {
         else {
             NativeAppInfo.getServerURL(function (serverError, serverURL) {
                 NativeAppInfo.getDeploymentKey(function (depolymentKeyError, deploymentKey) {
-                    if (!serverURL || !deploymentKey) {
-                        callback(new Error("Could not get the CodePush configuration. Please check your config.xml file."), null);
-                    }
-                    else {
-                        Sdk.DefaultConfiguration = { deploymentKey: deploymentKey, serverUrl: serverURL, ignoreAppVersion: false };
-                        Sdk.DefaultAcquisitionManager = new AcquisitionManager(new HttpRequester(), Sdk.DefaultConfiguration);
-                        resolveManager(Sdk.DefaultAcquisitionManager);
-                    }
+                    NativeAppInfo.getApplicationVersion(function (appVersionError, appVersion) {
+                        if (!serverURL || !deploymentKey || !appVersion) {
+                            callback(new Error("Could not get the CodePush configuration. Please check your config.xml file."), null);
+                        }
+                        else {
+                            Sdk.DefaultConfiguration = {
+                                deploymentKey: deploymentKey,
+                                serverUrl: serverURL,
+                                ignoreAppVersion: false,
+                                appVersion: appVersion,
+                                clientUniqueId: device.uuid
+                            };
+                            Sdk.DefaultAcquisitionManager = new AcquisitionManager(new HttpRequester(), Sdk.DefaultConfiguration);
+                            resolveManager(Sdk.DefaultAcquisitionManager);
+                        }
+                    });
                 });
             });
         }
     };
-    Sdk.reportStatus = function (status, callback) {
+    Sdk.reportStatusDeploy = function (pkg, status, deploymentKey, callback) {
         try {
             Sdk.getAcquisitionManager(function (error, acquisitionManager) {
                 if (error) {
                     callback && callback(error, null);
                 }
                 else {
-                    acquisitionManager.reportStatus(status, null, callback);
+                    acquisitionManager.reportStatusDeploy(pkg, status, callback);
                 }
-            });
+            }, deploymentKey, "application/json");
         }
         catch (e) {
-            callback && callback(new Error("An error occured while reporting the status. " + e), null);
+            callback && callback(new Error("An error occured while reporting the deployment status. " + e), null);
+        }
+    };
+    Sdk.reportStatusDownload = function (pkg, deploymentKey, callback) {
+        try {
+            Sdk.getAcquisitionManager(function (error, acquisitionManager) {
+                if (error) {
+                    callback && callback(error, null);
+                }
+                else {
+                    acquisitionManager.reportStatusDownload(pkg, callback);
+                }
+            }, deploymentKey, "application/json");
+        }
+        catch (e) {
+            callback && callback(new Error("An error occured while reporting the download status. " + e), null);
         }
     };
     return Sdk;

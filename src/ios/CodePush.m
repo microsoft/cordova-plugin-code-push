@@ -6,32 +6,46 @@
 #import "Utilities.h"
 #import "InstallOptions.h"
 #import "InstallMode.h"
+#import "Reporting.h"
 
 @implementation CodePush
 
-bool updateSuccess = false;
 bool didUpdate = false;
 bool pendingInstall = false;
 
-- (void)onUpdateSuccessTimeout {
-    if (!updateSuccess) {
-        [CodePushPackageManager revertToPreviousVersion];
+- (void)handleUnconfirmedInstall:(BOOL)navigate {
+    if ([CodePushPackageManager installNeedsConfirmation]) {
+        /* save reporting status */
         CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
-        bool revertSuccess = (nil != currentMetadata && [self loadPackage:currentMetadata.localPath]);
-        if (!revertSuccess) {
-            /* first update failed, go back to store version */
-            [self loadStoreVersion];
-            
+        [Reporting saveStatus:UPDATE_ROLLED_BACK withLabel:currentMetadata.label version:currentMetadata.appVersion deploymentKey:currentMetadata.deploymentKey];
+        
+        [CodePushPackageManager clearInstallNeedsConfirmation];
+        [CodePushPackageManager revertToPreviousVersion];
+        if (navigate) {
+            CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
+            bool revertSuccess = (nil != currentMetadata && [self loadPackage:currentMetadata.localPath]);
+            if (!revertSuccess) {
+                /* first update failed, go back to store version */
+                [self loadStoreVersion];
+            }
         }
-    }
-    else {
-        /* update success, delete the old package */
-        [CodePushPackageManager cleanOldPackage];
     }
 }
 
 - (void)updateSuccess:(CDVInvokedUrlCommand *)command {
-    updateSuccess = YES;
+    if ([CodePushPackageManager isFirstRun]) {
+        [CodePushPackageManager markFirstRunFlag];
+        [Reporting saveStatus:STORE_VERSION withLabel:nil version:nil deploymentKey:nil];
+    }
+    
+    if ([CodePushPackageManager installNeedsConfirmation]) {
+        /* save reporting status */
+        CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
+        [Reporting saveStatus:UPDATE_CONFIRMED withLabel:currentMetadata.label version:currentMetadata.appVersion deploymentKey:currentMetadata.deploymentKey];
+    }
+    
+    [CodePushPackageManager clearInstallNeedsConfirmation];
+    [CodePushPackageManager cleanOldPackage];
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -40,16 +54,10 @@ bool pendingInstall = false;
     CDVPluginResult* pluginResult = nil;
     
     NSString* location = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
-    NSString* successTimeoutMillisString = [command argumentAtIndex:1 withDefault:nil andClass:[NSString class]];
-    NSString* installModeString = [command argumentAtIndex:2 withDefault:nil andClass:[NSString class]];
+    NSString* installModeString = [command argumentAtIndex:1 withDefault:nil andClass:[NSString class]];
     
     InstallOptions* options = [[InstallOptions alloc] init];
     [options setInstallMode:IMMEDIATE];
-    [options setRollbackTimeout:0];
-    
-    if (successTimeoutMillisString) {
-        [options setRollbackTimeout:[successTimeoutMillisString intValue]];
-    }
     
     if (installModeString) {
         [options setInstallMode:[installModeString intValue]];
@@ -62,7 +70,7 @@ bool pendingInstall = false;
         else {
             bool applied = [self loadPackage: location];
             if (applied) {
-                [self markUpdateAndStartTimer:[options rollbackTimeout]];
+                [self markUpdate];
                 pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
             }
             else {
@@ -79,16 +87,28 @@ bool pendingInstall = false;
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
-- (void) markUpdateAndStartTimer:(NSInteger)updateSuccessTimeoutInMillis {
-    didUpdate = YES;
-    if (updateSuccessTimeoutInMillis > 0) {
-        updateSuccess = NO;
-        NSTimeInterval successTimeoutInterval = updateSuccessTimeoutInMillis / 1000;
-        [NSTimer scheduledTimerWithTimeInterval:successTimeoutInterval target:self selector:@selector(onUpdateSuccessTimeout) userInfo:nil repeats:NO];
+- (void)restartApplication:(CDVInvokedUrlCommand *)command {
+    /* Callback before navigating */
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    
+    CodePushPackageMetadata* deployedPackageMetadata = [CodePushPackageManager getCurrentPackageMetadata];
+    if (deployedPackageMetadata && deployedPackageMetadata.localPath && [self getStartPageURLForLocalPackage:deployedPackageMetadata.localPath]) {
+        [self loadPackage: deployedPackageMetadata.localPath];
+        InstallOptions* pendingInstall = [CodePushPackageManager getPendingInstall];
+        if (pendingInstall) {
+            [self markUpdate];
+            [CodePushPackageManager clearPendingInstall];
+        }
     }
     else {
-        [CodePushPackageManager cleanOldPackage];
+        [self loadStoreVersion];
     }
+}
+
+- (void) markUpdate {
+    didUpdate = YES;
+    [CodePushPackageManager markInstallNeedsConfirmation];
 }
 
 - (void)preInstall:(CDVInvokedUrlCommand *)command {
@@ -162,20 +182,26 @@ bool pendingInstall = false;
                 [CodePushPackageManager cleanDeployments];
                 [CodePushPackageManager clearFailedUpdates];
                 [CodePushPackageManager clearPendingInstall];
+                [CodePushPackageManager clearInstallNeedsConfirmation];
+                [Reporting saveStatus: STORE_VERSION withLabel:nil version:nil deploymentKey:nil];
             }
         }
     }
 }
 
 - (void)pluginInitialize {
-    // register for "on resume" notifications
+    // register for "on resume", "on pause" notifications
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillEnterForeground) name:UIApplicationWillEnterForegroundNotification object:nil];
-    
-    [self handleAppStart];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillResignActive) name:UIApplicationWillResignActiveNotification object:nil];
     InstallOptions* pendingInstall = [CodePushPackageManager getPendingInstall];
+    if (!pendingInstall) {
+        [self handleUnconfirmedInstall:NO];
+    }
+    [self handleAppStart];
+    
     // handle both ON_NEXT_RESUME and ON_NEXT_RESTART - the application might have been killed after transitioning to the background
     if (pendingInstall && (pendingInstall.installMode == ON_NEXT_RESTART || pendingInstall.installMode == ON_NEXT_RESUME)) {
-        [self markUpdateAndStartTimer:pendingInstall.rollbackTimeout];
+        [self markUpdate];
         [CodePushPackageManager clearPendingInstall];
     }
 }
@@ -187,11 +213,15 @@ bool pendingInstall = false;
         if (deployedPackageMetadata && deployedPackageMetadata.localPath) {
             bool applied = [self loadPackage: deployedPackageMetadata.localPath];
             if (applied) {
-                [self markUpdateAndStartTimer:pendingInstall.rollbackTimeout];
+                [self markUpdate];
                 [CodePushPackageManager clearPendingInstall];
             }
         }
     }
+}
+
+- (void)applicationWillResignActive {
+    [Reporting reportStatuses:((UIWebView*)((CDVViewController *)self.viewController).webView)];
 }
 
 - (BOOL)loadPackage:(NSString*)packageLocation {
@@ -205,7 +235,7 @@ bool pendingInstall = false;
 }
 
 - (void)loadURL:(NSURL*)url {
-    [((CDVViewController *)self.viewController).webView loadRequest:[NSURLRequest requestWithURL:url]];
+    [((UIWebView*)((CDVViewController *)self.viewController).webView) loadRequest:[NSURLRequest requestWithURL:url]];
 }
 
 - (void)loadStoreVersion {
@@ -281,6 +311,14 @@ bool pendingInstall = false;
     }
     
     result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:isFirstRun ? 1 : 0];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
+- (void)isPendingUpdate:(CDVInvokedUrlCommand *)command {
+    CDVPluginResult* result;
+    
+    InstallOptions* pendingInstall = [CodePushPackageManager getPendingInstall];
+    result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:pendingInstall ? 1 : 0];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
