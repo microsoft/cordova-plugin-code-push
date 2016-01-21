@@ -10,7 +10,8 @@
 
 "use strict";
 var HttpRequester = (function () {
-    function HttpRequester() {
+    function HttpRequester(contentType) {
+        this.contentType = contentType;
     }
     HttpRequester.prototype.request = function (verb, url, callbackOrRequestBody, callback) {
         var requestBody;
@@ -30,6 +31,9 @@ var HttpRequester = (function () {
             }
         };
         xhr.open(methodName, url, true);
+        if (this.contentType) {
+            xhr.setRequestHeader("Content-Type", this.contentType);
+        }
         xhr.send(requestBody);
     };
     HttpRequester.prototype.getHttpMethodName = function (verb) {

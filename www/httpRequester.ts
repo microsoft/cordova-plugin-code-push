@@ -6,6 +6,13 @@
  * XMLHttpRequest-based implementation of Http.Requester.
  */
 class HttpRequester implements Http.Requester {
+
+    private contentType: string;
+
+    constructor(contentType?: string) {
+        this.contentType = contentType;
+    }
+
     public request(verb: Http.Verb, url: string, callbackOrRequestBody: Callback<Http.Response> | string, callback?: Callback<Http.Response>): void {
         var requestBody: string;
         var requestCallback: Callback<Http.Response> = callback;
@@ -27,6 +34,9 @@ class HttpRequester implements Http.Requester {
             }
         };
         xhr.open(methodName, url, true);
+        if (this.contentType) {
+            xhr.setRequestHeader("Content-Type", this.contentType);
+        }
         xhr.send(requestBody);
     }
 

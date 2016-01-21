@@ -18,18 +18,19 @@ class Sdk {
     /**
      * Reads the CodePush configuration and creates an AcquisitionManager instance using it.
      */
-    public static getAcquisitionManager(callback: Callback<AcquisitionManager>, userDeploymentKey?: string): void {
+    public static getAcquisitionManager(callback: Callback<AcquisitionManager>, userDeploymentKey?: string, contentType?: string): void {
 
         var resolveManager = (defaultInstance: AcquisitionManager): void => {
-            if (userDeploymentKey) {
+            if (userDeploymentKey || contentType) {
                 var customConfiguration: Configuration = {
-                    deploymentKey: userDeploymentKey,
+                    deploymentKey: (userDeploymentKey ? userDeploymentKey : Sdk.DefaultConfiguration.deploymentKey),
                     serverUrl: Sdk.DefaultConfiguration.serverUrl,
                     ignoreAppVersion: Sdk.DefaultConfiguration.ignoreAppVersion,
                     appVersion: Sdk.DefaultConfiguration.appVersion,
                     clientUniqueId: Sdk.DefaultConfiguration.clientUniqueId
                 };
-                var customAcquisitionManager: AcquisitionManager = new AcquisitionManager(new HttpRequester(), customConfiguration);
+                var requester = new HttpRequester(contentType);
+                var customAcquisitionManager: AcquisitionManager = new AcquisitionManager(requester, customConfiguration);
                 callback(null, customAcquisitionManager);
             } else {
                 callback(null, Sdk.DefaultAcquisitionManager);
@@ -73,7 +74,7 @@ class Sdk {
                 else {
                     acquisitionManager.reportStatusDeploy(pkg, status, callback);
                 }
-            }, deploymentKey);
+            }, deploymentKey, "application/json");
         } catch (e) {
             callback && callback(new Error("An error occured while reporting the deployment status. " + e), null);
         }
@@ -91,7 +92,7 @@ class Sdk {
                 else {
                     acquisitionManager.reportStatusDownload(pkg, callback);
                 }
-            }, deploymentKey);
+            }, deploymentKey, "application/json");
         } catch (e) {
             callback && callback(new Error("An error occured while reporting the download status. " + e), null);
         }

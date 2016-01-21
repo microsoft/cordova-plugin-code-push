@@ -14,17 +14,18 @@ var HttpRequester = require("./httpRequester");
 var Sdk = (function () {
     function Sdk() {
     }
-    Sdk.getAcquisitionManager = function (callback, userDeploymentKey) {
+    Sdk.getAcquisitionManager = function (callback, userDeploymentKey, contentType) {
         var resolveManager = function (defaultInstance) {
-            if (userDeploymentKey) {
+            if (userDeploymentKey || contentType) {
                 var customConfiguration = {
-                    deploymentKey: userDeploymentKey,
+                    deploymentKey: (userDeploymentKey ? userDeploymentKey : Sdk.DefaultConfiguration.deploymentKey),
                     serverUrl: Sdk.DefaultConfiguration.serverUrl,
                     ignoreAppVersion: Sdk.DefaultConfiguration.ignoreAppVersion,
                     appVersion: Sdk.DefaultConfiguration.appVersion,
                     clientUniqueId: Sdk.DefaultConfiguration.clientUniqueId
                 };
-                var customAcquisitionManager = new AcquisitionManager(new HttpRequester(), customConfiguration);
+                var requester = new HttpRequester(contentType);
+                var customAcquisitionManager = new AcquisitionManager(requester, customConfiguration);
                 callback(null, customAcquisitionManager);
             }
             else {
@@ -66,7 +67,7 @@ var Sdk = (function () {
                 else {
                     acquisitionManager.reportStatusDeploy(pkg, status, callback);
                 }
-            }, deploymentKey);
+            }, deploymentKey, "application/json");
         }
         catch (e) {
             callback && callback(new Error("An error occured while reporting the deployment status. " + e), null);
@@ -81,7 +82,7 @@ var Sdk = (function () {
                 else {
                     acquisitionManager.reportStatusDownload(pkg, callback);
                 }
-            }, deploymentKey);
+            }, deploymentKey, "application/json");
         }
         catch (e) {
             callback && callback(new Error("An error occured while reporting the download status. " + e), null);
