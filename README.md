@@ -218,8 +218,8 @@ window.codePush.checkForUpdate(onUpdateCheck, onError);
 
 var app = {
     onDeviceReady: function () {
-        // If this call is not made in 10s after the updated version of the application is loaded,
-        // the application will be reverted to the previous version
+        // Calling this function is requirede during the first application run after an update.
+        // If not called, the application will be reverted to the previous version.
         window.codePush.notifyApplicationReady();
         // ...
     }
@@ -442,31 +442,52 @@ Otherwise, the install operation will be marked as failed, and the application i
 ##### Example
 
 ```javascript
+// App version 1 (current version)
+
 var onError = function (error) {
     console.log("An error occurred. " + error);
 };
 
 var onInstallSuccess = function () {
-    console.log("Install succeeded.");
+    console.log("Installation succeeded.");
 };
 
 var onPackageDownloaded = function (localPackage) {
-    localPackage.install(onInstallSuccess, onError);
+    localPackage.install(onInstallSuccess, onError, { installMode: InstallMode.ON_NEXT_RESUME });
 };
 
 var onUpdateCheck = function (remotePackage) {
     if (!remotePackage) {
         console.log("The application is up to date.");
     } else {
-        console.log("A CodePush update is available. Package hash: " + remotePackage.packageHash);
-        remotePackage.download(onPackageDownloaded, onError);
+        // The hash of each previously reverted package is stored for later use. 
+        // This way, we avoid going into an infinite bad update/revert loop.
+        if (!remotePackage.failedInstall) {
+            console.log("A CodePush update is available. Package hash: " + remotePackage.packageHash);
+            remotePackage.download(onPackageDownloaded, onError);
+        } else {
+            console.log("The available update was attempted before and failed.");
+        }
     }
 };
 
 window.codePush.checkForUpdate(onUpdateCheck, onError);
+
+//------------------------------------------------
+
+// App version 2 (updated version)
+
+var app = {
+    onDeviceReady: function () {
+        // Calling this function is requirede during the first application run after an update.
+        // If not called, the application will be reverted to the previous version.
+        window.codePush.notifyApplicationReady();
+        // ...
+    }
+}
 ```
 
-For an example on how to protect against a bad update, see the [notifyApplicationReady() documentation](#codepushnotifyapplicationready).
+For an example on how you are protected against a bad update, see the [notifyApplicationReady() documentation](#codepushnotifyapplicationready).
 
 #### RemotePackage
 
