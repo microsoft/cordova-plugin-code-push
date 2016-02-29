@@ -23,8 +23,8 @@ cordova platform ls
 If you're running an older Android and/or iOS platform than is mentioned above, and would be open to upgrading, you can easily do so by running the following commands (omitting a platform if it isn't neccessary):
 
 ```shell
-cordova platform upgrade android
-cordova platform upgrade ios
+cordova platform update android
+cordova platform update ios
 ```
 
 ## Getting Started
