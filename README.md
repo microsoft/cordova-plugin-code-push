@@ -17,7 +17,7 @@ Cordova 5.0.0+ is fully supported, along with the following asociated platforms:
 To check which versions of each Cordova platform you are currently using, you can run the following command and inspect the `Installed platforms` list:
 
 ```shell
-cordova platform
+cordova platform ls
 ```
 
 If you're running an older Android and/or iOS platform than is mentioned above, and would be open to upgrading, you can easily do so by running the following commands (omitting a platform if it isn't neccessary):
@@ -68,7 +68,7 @@ With the CodePush plugin installed, configure your app to use it via the followi
 4. Finally, double-check that you already have the [`cordova-plugin-whitelist`](https://github.com/apache/cordova-plugin-whitelist) plugin installed (most apps will). To check this, simply run the following command:
 
     ```shell
-    cordova plugin
+    cordova plugin ls
     ```
     
     If `cordova-plugin-whitelist` is in the list, then you are good to go. Otherwise, simply run the following command to add it:
