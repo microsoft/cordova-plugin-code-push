@@ -74,7 +74,7 @@ With the CodePush plugin installed, configure your app to use it via the followi
     If `cordova-plugin-whitelist` is in the list, then you are good to go. Otherwise, simply run the following command to add it:
     
     ```shell
-    cordova plugin cordova-plugin-whitelist
+    cordova plugin add cordova-plugin-whitelist
     ```
  
 You are now ready to use the plugin in the application code. See the [sample applications](/samples) for examples and the API documentation for more details.
