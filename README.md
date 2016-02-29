@@ -14,13 +14,21 @@ Cordova 5.0.0+ is fully supported, along with the following asociated platforms:
 - Android ([cordova-android](https://github.com/apache/cordova-android) 4.0.0+)
 - iOS ([cordova-ios](https://github.com/apache/cordova-ios) 3.9.0+)
 
-To check which versions of each Cordova platform you are currently using, you can run the following command:
+To check which versions of each Cordova platform you are currently using, you can run the following command and inspect the `Installed platforms` list:
 
 ```shell
-cordova platform version
+cordova platform ls
+```
+
+If you're running an older Android and/or iOS platform than is mentioned above, and would be open to upgrading, you can easily do so by running the following commands (omitting a platform if it isn't neccessary):
+
+```shell
+cordova platform update android
+cordova platform update ios
 ```
 
 ## Getting Started
+
 Once you've followed the general-purpose ["getting started"](http://microsoft.github.io/code-push//docs/getting-started.html) instructions for setting up your CodePush account, you can start CodePush-ifying your Cordova app by running the following command from within your app's root directory:
 
 ```shell
@@ -44,7 +52,7 @@ With the CodePush plugin installed, configure your app to use it via the followi
     
     *NOTE: We [recommend](http://microsoft.github.io/code-push/docs/cli.html#link-4) creating a seperate CodePush app for iOS and Android, which is why the above sample illustrates declaring seperate keys for Android and iOS. If you're only developing for a single platform, then you only need to specify the deployment key for either Android or iOS, so you don't need to add the additional `<platform>` element as illustrated above.*
     
-2. If you're already using an `<access origin"*" />` element in your `config.xml` file, then you can skip this step. Otherwise, add the following additional `<access />` elements to ensure that your app can access the CodePush server endpoints:
+2. If you're using an `<access origin="*" />` element in your `config.xml` file, then your app is already allowed to communicate with the CodePush servers and you can safely skip this step. Otherwise, add the following additional `<access />` elements:
  
     ```xml
     <access origin="https://codepush.azurewebsites.net" />
@@ -57,9 +65,22 @@ With the CodePush plugin installed, configure your app to use it via the followi
     <meta http-equiv="Content-Security-Policy" content="default-src https://codepush.azurewebsites.net 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *" />
     ```
    
+4. Finally, double-check that you already have the [`cordova-plugin-whitelist`](https://github.com/apache/cordova-plugin-whitelist) plugin installed (most apps will). To check this, simply run the following command:
+
+    ```shell
+    cordova plugin ls
+    ```
+    
+    If `cordova-plugin-whitelist` is in the list, then you are good to go. Otherwise, simply run the following command to add it:
+    
+    ```shell
+    cordova plugin add cordova-plugin-whitelist
+    ```
+ 
 You are now ready to use the plugin in the application code. See the [sample applications](/samples) for examples and the API documentation for more details.
 
 ## Plugin Usage
+
 With the CodePush plugin installed and configured, the only thing left is to add the necessary code to your app to control the following policies:
 
 1. When (and how often) to check for an update? (e.g. app start, in response to clicking a button in a settings page, periodically at some fixed interval)
@@ -73,6 +94,8 @@ codePush.sync();
 ```
 
 If an update is available, it will be silently downloaded, and installed the next time the app is restarted (either explicitly by the end user or by the OS), which ensures the least invasive experience for your end users. If you would like to display a confirmation dialog (an "active install"), or customize the update experience in any way, refer to the sync method's API reference for information on how to tweak this default behavior.
+
+*NOTE: While [Apple's developer agreement](https://developer.apple.com/programs/ios/information/iOS_Program_Information_4_3_15.pdf) fully allows performing over-the-air updates of JavaScript and assets (which is what enables CodePush!), it is against their policy for an app to display an update prompt. Because of this, we recommend that App Store-distributed apps don't enable the `updateDialog` option when calling `sync`, whereas Google Play and internally distributed apps (e.g. Enterprise, Fabric, HockeyApp) can choose to enable/customize it.*
 
 ## Releasing Updates
 Once your app has been configured and distributed to your users, and you've made some changes, it's time to release it to them instantly! To do this, simply perform the following steps:
