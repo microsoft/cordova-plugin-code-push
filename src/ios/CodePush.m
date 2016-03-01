@@ -221,7 +221,7 @@ bool pendingInstall = false;
 }
 
 - (void)applicationWillResignActive {
-    [Reporting reportStatuses:((UIWebView*)((CDVViewController *)self.viewController).webView)];
+    [Reporting reportStatuses:self.webView];
 }
 
 - (BOOL)loadPackage:(NSString*)packageLocation {
@@ -235,7 +235,9 @@ bool pendingInstall = false;
 }
 
 - (void)loadURL:(NSURL*)url {
-    [((UIWebView*)((CDVViewController *)self.viewController).webView) loadRequest:[NSURLRequest requestWithURL:url]];
+    // Cast to a UIWebView here to enable call to loadRequest.
+    // Both UIWebView and WKWebview share this call, so regardless of which type the returned webview is, this will work.
+    [(UIWebView*)self.webView loadRequest:[NSURLRequest requestWithURL:url]];
 }
 
 - (void)loadStoreVersion {
