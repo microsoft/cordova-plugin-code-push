@@ -61,5 +61,5 @@ var HttpRequester = (function () {
         }
     };
     return HttpRequester;
-})();
+}());
 module.exports = HttpRequester;

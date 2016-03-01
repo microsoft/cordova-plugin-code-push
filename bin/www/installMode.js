@@ -8,6 +8,7 @@
  *********************************************************************************************/ 
 
 
+"use strict";
 var InstallMode;
 (function (InstallMode) {
     InstallMode[InstallMode["IMMEDIATE"] = 0] = "IMMEDIATE";

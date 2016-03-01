@@ -89,5 +89,5 @@ var Sdk = (function () {
         }
     };
     return Sdk;
-})();
+}());
 module.exports = Sdk;

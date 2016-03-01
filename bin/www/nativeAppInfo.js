@@ -61,5 +61,5 @@ var NativeAppInfo = (function () {
         cordova.exec(win, fail, "CodePush", "isPendingUpdate", []);
     };
     return NativeAppInfo;
-})();
+}());
 module.exports = NativeAppInfo;
