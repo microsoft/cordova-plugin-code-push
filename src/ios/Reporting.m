@@ -1,4 +1,3 @@
-#import <Webkit/Webkit.h>
 #import "Reporting.h"
 
 @interface PendingStatus : NSObject
@@ -49,8 +48,8 @@ static NSMutableArray* PendingStatuses;
     NSString* deploymentKeyParameter = [Reporting convertStringParameter:pendingStatus.deploymentKey];
     /* JS function to call: window.codePush.reportStatus(status: number, label: String, appVersion: String, deploymentKey: String) */
     NSString* script = [NSString stringWithFormat:@"window.codePush.reportStatus(%i, %@, %@, %@)", (int)pendingStatus.status, labelParameter, appVersionParameter, deploymentKeyParameter];
-    if ([webView isKindOfClass:[WKWebView class]]) {
-        [(WKWebView*)webView evaluateJavaScript:script completionHandler: NULL];
+    if ([webView respondsToSelector:@selector(evaluateJavaScript:completionHandler:)]) {
+        [webView performSelector:@selector(evaluateJavaScript:completionHandler:) withObject:script withObject: NULL];
     } else if ([webView isKindOfClass:[UIWebView class]]) {
         [(UIWebView*)webView stringByEvaluatingJavaScriptFromString:script];
     }

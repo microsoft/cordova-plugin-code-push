@@ -1,5 +1,3 @@
-#import <Webkit/Webkit.h>
-
 enum {
     STORE_VERSION = 0,
     UPDATE_CONFIRMED = 1,
