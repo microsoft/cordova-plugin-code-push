@@ -26,10 +26,12 @@ var updatesDirectory = path.join(os.tmpdir(), "cordova-plugin-code-push", "updat
 var serverUrl = testUtil.readMockServerName();
 var targetEmulator = testUtil.readTargetEmulator();
 var targetPlatform: platform.IPlatform = platform.PlatformResolver.resolvePlatform(testUtil.readTargetPlatform());
+var shouldUseWkWebView = testUtil.readShouldUseWkWebView();
 
 const TestAppName = "TestCodePush";
 const TestNamespace = "com.microsoft.codepush.test";
 const AcquisitionSDKPluginName = "code-push";
+const WkWebViewEnginePluginName = "cordova-plugin-wkwebview-engine";
 
 const ScenarioCheckForUpdatePath = "js/scenarioCheckForUpdate.js";
 const ScenarioCheckForUpdateCustomKey = "js/scenarioCheckForUpdateCustomKey.js";
@@ -70,6 +72,13 @@ function setupScenario(scenarioPath: string): Q.Promise<void> {
     app = express();
     app.use(bodyparser.json());
     app.use(bodyparser.urlencoded({ extended: true }));
+    
+    app.use(function(req: any, res: any, next: any) {
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Access-Control-Allow-Methods", "*");
+        res.setHeader("Access-Control-Allow-Headers", "origin, content-type, accept");
+        next();
+    });
 
     app.get("/updateCheck", function(req: any, res: any) {
         updateCheckCallback && updateCheckCallback(req);
@@ -107,6 +116,7 @@ function setupScenario(scenarioPath: string): Q.Promise<void> {
         .then<void>(() => { return projectManager.addPlatform(testRunDirectory, targetPlatform); })
         .then<void>(() => { return projectManager.addPlugin(testRunDirectory, AcquisitionSDKPluginName); })
         .then<void>(() => { return projectManager.addPlugin(testRunDirectory, thisPluginPath); })
+        .then<void>(() => { return (shouldUseWkWebView ? projectManager.addPlugin(testRunDirectory, WkWebViewEnginePluginName) : null); })
         .then<void>(() => { return projectManager.buildPlatform(testRunDirectory, targetPlatform); });
 }
 
@@ -160,6 +170,7 @@ function setupUpdateProject(scenarioPath: string, version: string): Q.Promise<vo
         .then<void>(() => { return projectManager.addPlatform(updatesDirectory, targetPlatform); })
         .then<void>(() => { return projectManager.addPlugin(testRunDirectory, AcquisitionSDKPluginName); })
         .then<void>(() => { return projectManager.addPlugin(updatesDirectory, thisPluginPath); })
+        .then<void>(() => { return (shouldUseWkWebView ? projectManager.addPlugin(testRunDirectory, WkWebViewEnginePluginName) : null); })
         .then<void>(() => { return projectManager.preparePlatform(updatesDirectory, targetPlatform); });
 };
 
