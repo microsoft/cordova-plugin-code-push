@@ -124,7 +124,9 @@ gulp.task("default", function (callback) {
     runSequence("clean", "compile", "tslint", callback);
 });
 
-gulp.task("test-ios",["test-ios-uiwebkit", "test-ios-wkwebkit"]);
+gulp.task("test-ios", function (callback) {
+    runSequence("test-ios-uiwebview", "test-ios-wkwebview", callback);
+});
 
 gulp.task("test-ios-uiwebview", function (callback) {
     var command = "mocha";
