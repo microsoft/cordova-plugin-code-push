@@ -125,8 +125,18 @@ gulp.task("default", function (callback) {
 });
 
 gulp.task("test-ios", function (callback) {
+    runSequence("test-ios-uiwebview", "test-ios-wkwebview", callback);
+});
+
+gulp.task("test-ios-uiwebview", function (callback) {
     var command = "mocha";
-    var args = ["./bin/test", "--mockserver", "http://127.0.0.1:3000", "--platform", "ios"];
+    var args = ["./bin/test", "--mockserver", "http://127.0.0.1:3000", "--platform", "ios", "--use-wkwebview", "false"];
+    executeCommand(command, args, callback);
+});
+
+gulp.task("test-ios-wkwebview", function (callback) {
+    var command = "mocha";
+    var args = ["./bin/test", "--mockserver", "http://127.0.0.1:3000", "--platform", "ios", "--use-wkwebview", "true"];
     executeCommand(command, args, callback);
 });
 

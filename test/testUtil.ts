@@ -11,6 +11,7 @@ export class TestUtil {
     public static MOCK_SERVER_OPTION_NAME: string = "--mockserver";
     public static PLATFORM_OPTION_NAME: string = "--platform";
     public static TARGET_OPTION_NAME: string = "--target";
+    public static SHOULD_USE_WKWEBVIEW: string = "--use-wkwebview";
 
     /**
      * Reads the target emulator name.
@@ -32,6 +33,13 @@ export class TestUtil {
      */
     public static readTargetPlatform(): string {
         return TestUtil.readMochaCommandLineOption(TestUtil.PLATFORM_OPTION_NAME);
+    }
+    
+    /**
+     * Reads if we should use the WkWebView or the UIWebView
+     */
+    public static readShouldUseWkWebView(): boolean {
+        return JSON.parse(TestUtil.readMochaCommandLineOption(TestUtil.SHOULD_USE_WKWEBVIEW));
     }
 
 	/**

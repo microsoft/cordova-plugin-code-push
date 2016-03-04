@@ -84,5 +84,5 @@ var RemotePackage = (function (_super) {
         }
     };
     return RemotePackage;
-})(Package);
+}(Package));
 module.exports = RemotePackage;

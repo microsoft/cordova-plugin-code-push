@@ -343,5 +343,5 @@ var LocalPackage = (function (_super) {
     LocalPackage.OldPackageInfoFile = "oldPackage.json";
     LocalPackage.DiffManifestFile = "hotcodepush.json";
     return LocalPackage;
-})(Package);
+}(Package));
 module.exports = LocalPackage;

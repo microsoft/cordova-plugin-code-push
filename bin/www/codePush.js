@@ -222,7 +222,7 @@ var CodePush = (function () {
         return CodePush.DefaultUpdateDialogOptions;
     };
     return CodePush;
-})();
+}());
 var ReportStatus;
 (function (ReportStatus) {
     ReportStatus[ReportStatus["STORE_VERSION"] = 0] = "STORE_VERSION";

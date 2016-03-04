@@ -13,5 +13,5 @@ var Package = (function () {
     function Package() {
     }
     return Package;
-})();
+}());
 module.exports = Package;

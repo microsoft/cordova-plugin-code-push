@@ -45,5 +45,5 @@ var CodePushUtil = (function () {
         errorCallback && errorCallback(error);
     };
     return CodePushUtil;
-})();
+}());
 module.exports = CodePushUtil;

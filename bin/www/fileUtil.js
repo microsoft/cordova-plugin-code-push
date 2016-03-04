@@ -262,5 +262,5 @@ var FileUtil = (function () {
         parent.getDirectory(path, { create: false, exclusive: false }, success, failFirst);
     };
     return FileUtil;
-})();
+}());
 module.exports = FileUtil;
