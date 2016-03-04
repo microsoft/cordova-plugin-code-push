@@ -9,10 +9,11 @@ CodePush is here to simplify this process by allowing you to instantly update yo
 For an easy way to get started, please see our [sample applications](/samples) and our [getting started guide](#getting-started).
 
 ## Supported platforms
+
 Cordova 5.0.0+ is fully supported, along with the following asociated platforms:
 
-- Android ([cordova-android](https://github.com/apache/cordova-android) 4.0.0+)
-- iOS ([cordova-ios](https://github.com/apache/cordova-ios) 3.9.0+)
+* Android ([cordova-android](https://github.com/apache/cordova-android) 4.0.0+)
+* iOS ([cordova-ios](https://github.com/apache/cordova-ios) 3.9.0+) - *Note: In order to use CodePush along with the [`cordova-plugin-wkwebview-engine`](https://github.com/apache/cordova-plugin-wkwebview-engine) plugin, you need to install `v1.5.1-beta+`, which includes full support for apps using either WebView.*
 
 To check which versions of each Cordova platform you are currently using, you can run the following command and inspect the `Installed platforms` list:
 
