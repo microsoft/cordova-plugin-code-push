@@ -93,13 +93,13 @@ interface FileUploadOptions {
     /** Whether to upload the data in chunked streaming mode. Defaults to true. */
     chunkedMode?: boolean;
     /** A map of header name/header values. Use an array to specify more than one value. */
-    headers?: Object[];
+    headers?: Object
 }
 
 /** Optional parameters for download method. */
 interface FileDownloadOptions {
     /** A map of header name/header values. Use an array to specify more than one value. */
-    headers?: Object[];
+    headers?: Object;
 }
 
 /** A FileTransferError object is passed to an error callback when an error occurs. */
