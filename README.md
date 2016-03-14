@@ -175,7 +175,7 @@ When the update check completes, it will trigger the `onUpdateCheck` callback wi
 
 Parameters:
 
-- __onUpdateCheck__: Callback that invoked is upon receiving a successful response from the server. The callback receives a single parameter, which is described above.
+- __onUpdateCheck__: Callback that is invoked upon receiving a successful response from the server. The callback receives a single parameter, which is described above.
 
 - __onError__: Optional callback that is invoked in the event of an error. The callback takes one error parameter, containing the details of the error.
 
@@ -219,7 +219,7 @@ When the update retrieval completes, it will trigger the `onPackageSuccess` call
 
 Parameters:
 
-- __onPackageSuccess__: Callback that invoked is upon receiving the metadata about the currently running update. The callback receives a single parameter, which is described above.
+- __onPackageSuccess__: Callback that is invoked upon receiving the metadata about the currently running update. The callback receives a single parameter, which is described above.
 
 - __onError__: Optional callback that is invoked in the event of an error. The callback takes one error parameter, containing the details of the error.
 
