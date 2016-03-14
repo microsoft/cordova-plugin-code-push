@@ -1,14 +1,24 @@
 # Cordova Plugin for CodePush
-This plugin provides client-side integration with the [CodePush service](http://codepush.tools), allowing you to easily update your Cordova app(s).
+
+This plugin provides client-side integration for the [CodePush service](http://codepush.tools), allowing you to easily add a dynamic update experience to your Cordova app(s).
+* [How does it work?](#how-does-it-work)
+* [Supported Cordova Platforms](#supported-cordova-platforms)
+* [Getting Started](#getting-started)
+* [Plugin Usage](#plugin-usage)
+* [Releasing Updates](#releasing-updates)
+* [API Reference](#api-reference)
 
 ## How does it work?
-A Cordova application's assets (HTML, JavaScript, CSS files and other resources) are traditionally loaded from the application installation location on the target device. After you submit an update to the store, the user downloads the update, and those assets will be replaced with the new assets.
 
-CodePush is here to simplify this process by allowing you to instantly update your application's assets without having to submit a new update to the store. We do this by packaging the application assets in a zip archive and sending it to the CodePush server. In the application, we install and persist the update. Then, since these are all web assets, the application will just reload from the updated package location. We store the update packages in the internal storage of the device.
+A Cordova app is composed of HTML, CSS and JavaScript files and any accompanying images, which are bundled together by the Cordova CLI and distributed as part of a platform-specific binary (i.e. an .ipa or .apk file). Once the app is released, updating either the code (e.g. making bug fixes, adding new features) or image assets, requires you to recompile and redistribute the entire binary, which of course, includes any review time associated with the store(s) you are publishing to.
 
-For an easy way to get started, please see our [sample applications](/samples) and our [getting started guide](#getting-started).
+The CodePush plugin helps get product improvements in front of your end users instantly, by keeping your code and images synchronized with updates you release to the CodePush server. This way, your app gets the benefits of an offline mobile experience, as well as the "web-like" agility of side-loading updates as soon as they are available. It's a win-win!
 
-## Supported platforms
+In order to ensure that your end users always have a functioning version of your app, the CodePush plugin maintains a copy of the previous update, so that in the event that you accidentally push an update which includes a crash, it can automatically roll back. This way, you can rest assured that your newfound release agility won't result in users becoming blocked before you have a chance to roll back on the server. It's a win-win-win!
+
+*Note: Any product changes which touch native code (e.g. upgrading Cordova versions, adding a new plugin) cannot be distributed via CodePush, and therefore, must be updated via the appropriate store(s).*
+
+## Supported Cordova Platforms
 
 Cordova 5.0.0+ is fully supported, along with the following asociated platforms:
 
@@ -99,6 +109,7 @@ If an update is available, it will be silently downloaded, and installed the nex
 *NOTE: While [Apple's developer agreement](https://developer.apple.com/programs/ios/information/iOS_Program_Information_4_3_15.pdf) fully allows performing over-the-air updates of JavaScript and assets (which is what enables CodePush!), it is against their policy for an app to display an update prompt. Because of this, we recommend that App Store-distributed apps don't enable the `updateDialog` option when calling `sync`, whereas Google Play and internally distributed apps (e.g. Enterprise, Fabric, HockeyApp) can choose to enable/customize it.*
 
 ## Releasing Updates
+
 Once your app has been configured and distributed to your users, and you've made some changes, it's time to release it to them instantly! To do this, simply perform the following steps:
 
 1. Prepare your app's updated `www` folder by running the following command:
@@ -107,7 +118,7 @@ Once your app has been configured and distributed to your users, and you've made
     cordova prepare
     ```
     
-    *NOTE: We are not deploying binaries via CodePush, so running a `prepare` is more enough for this step. The `cordova build` command works as well, since it calls `cordova prepare` behind the scenes, so you can also choose to run the `build` command if you prefer.*
+    *NOTE: We are not deploying binaries via CodePush, so running `prepare` is more than enough for this step. The `cordova build` command works as well, since it calls `cordova prepare` behind the scenes, so you can also choose to run the `build` command if you prefer.*
   
 2. Release the updated app code to the CodePush server via the CodePush [management CLI](https://github.com/Microsoft/code-push/tree/master/cli). To do this, use the following CLIs commands, depending on the platform your update is targetting:
 
@@ -121,12 +132,18 @@ Once your app has been configured and distributed to your users, and you've made
 Your update will now be available to your app as soon as it calls either `codePush.checkForUpdate` or `codePush.sync`.
 
 ## API Reference
+
 The CodePush API is exposed to your app via the global `codePush` object, which is available after the `deviceready` event fires. This API exposes the following top-level methods:
 
-- __[checkForUpdate](#codepushcheckforupdate)__: Checks the server for update packages.
-- __[getCurrentPackage](#codepushgetcurrentpackage)__: Gets information about the currently applied package.
-- __[notifyApplicationReady](#codepushnotifyapplicationready)__: Notifies the plugin that the update operation succeeded.
-- __[sync](#codepushsync)__: Convenience function for installing updates in one call.
+- __[checkForUpdate](#codepushcheckforupdate)__: Asks the CodePush service whether the configured app deployment has an update available.
+
+- __[getCurrentPackage](#codepushgetcurrentpackage)__: Retrieves the metadata about the currently installed update (e.g. description, installation time, size).
+
+- __[notifyApplicationReady](#codepushnotifyapplicationready)__: Notifies the CodePush runtime that an installed update is considered successful. If you are manually checking for and installing updates (i.e. not using the sync method to handle it all for you), then this method **MUST** be called; otherwise CodePush will treat the update as failed and rollback to the previous version when the app next restarts.
+
+- __[restartApplication](#codepushrestartapplication)__: Immediately restarts the app. If there is an update pending, it will be immediately displayed to the end user.
+
+- __[sync](#codepushsync)__: Allows checking for an update, downloading it and installing it, all with a single call. Unless you need custom UI and/or behavior, we recommend most developers to use this method when integrating CodePush into their apps.
 
 Additionally, the following objects and enums are also exposed globally as part of the CodePush API:
 
@@ -136,19 +153,35 @@ Additionally, the following objects and enums are also exposed globally as part 
 - __[SyncStatus](#syncstatus)__: Defines the possible intermediate and result statuses of the [sync](#codepushsync) operation.
 
 ### codePush.checkForUpdate
-Queries the CodePush server for updates.
 
 ```javascript
-codePush.checkForUpdate(onUpdateCheck, onError, deploymentKey);
+codePush.checkForUpdate(onUpdateCheck, onError?, deploymentKey?: String);
 ```
 
-- __onUpdateCheck__ Callback invoked in case of a successful response from the server. The callback takes one `RemotePackage` parameter. A non-null package is a valid update. A null package means the application is up to date for the current native application version.
+Queries the CodePush service to see whether the configured app deployment has an update available. By default, it will use the deployment key that is configured in your `config.xml` file, but you can override that by specifying a value via the optional `deploymentKey` parameter. This can be useful when you want to dynamically "redirect" a user to a specific deployment, such as allowing "Early access" via an easter egg or a user setting switch.
 
-- __onError__ Optional callback invoked in case of an error. The callback takes one error parameter, containing the details of the error.
+When the update check completes, it will trigger the `onUpdateCheck` callback with one of two possible values:
 
-- __deploymentKey__ Optional deployment key that overrides the config.xml setting.
+1. `null` if there is no update available. This occurs in the following scenarios:
 
-#### Example
+    1. The configured deployment doesn't contain any releases, and therefore, nothing to update.
+    
+    2. The latest release within the configured deployment is targeting a different binary version than what you're currently running (either older or newer).
+
+    3. The currently running app already has the latest release from the configured deployment, and therefore, doesn't need it again.
+
+2. A `RemotePackage` instance which represents an available update that can be inspected and/or subsequently downloaded.
+
+Parameters:
+
+- __onUpdateCheck__: Callback that invoked is upon receiving a successful response from the server. The callback receives a single parameter, which is described above.
+
+- __onError__: Optional callback that is invoked in the event of an error. The callback takes one error parameter, containing the details of the error.
+
+- __deploymentKey__: Optional deployment key that overrides the `config.xml` setting.
+
+Example usage:
+
 ```javascript
 var onError = function (error) {
     console.log("An error occurred. " + error);
@@ -168,16 +201,29 @@ window.codePush.checkForUpdate(onUpdateCheck, onError);
 ### codePush.getCurrentPackage
 
 ```javascript
-codePush.getCurrentPackage(onPackageSuccess, onError);
+codePush.getCurrentPackage(onPackageSuccess, onError?);
 ```
 
-Get the currently installed package information. 
+Retrieves the metadata about the currently installed "package" (e.g. description, installation time). This can be useful for scenarios such as displaying a "what's new?" dialog after an update has been applied or checking whether there is a pending update that is waiting to be applied via a resume or restart.
 
-- __onPackageSuccess__: Callback invoked with the currently deployed package information. If the application did not install updates yet, ```packageSuccess``` will be called with a ```null``` argument.
+When the update retrieval completes, it will trigger the `onPackageSuccess` callback with one of two possible values:
 
-- __onError__: Optional callback invoked in case of an error.
+1. `null` if the app is currently running the HTML start page from the binary and not a CodePush update. This occurs in the following scenarios:
 
-#### Example
+    1. The end-user installed the app binary and has yet to install a CodePush update
+    
+    2. The end-user installed an update of the binary (e.g. from the store), which cleared away the old CodePush updates, and gave precedence back to the binary.
+    
+2. A `LocalPackage` instance which represents the metadata for the currently running CodePush update.
+
+Parameters:
+
+- __onPackageSuccess__: Callback that invoked is upon receiving the metadata about the currently running update. The callback receives a single parameter, which is described above.
+
+- __onError__: Optional callback that is invoked in the event of an error. The callback takes one error parameter, containing the details of the error.
+
+Example Usage:
+
 ```javascript
 var onError = function (error) {
     console.log("An error occurred. " + error);
@@ -195,17 +241,23 @@ window.codePush.getCurrentPackage(onPackageSuccess, onError);
 ```
 
 ### codePush.notifyApplicationReady
+
 ```javascript
-codePush.notifyApplicationReady(notifySucceeded, notifyFailed);
+codePush.notifyApplicationReady(notifySucceeded?, notifyFailed?);
 ```
-Notifies the plugin that the update operation succeeded and that the application is ready.
-Calling this function is required on the first run after an update. On every subsequent application run, calling this function is a noop.
-If using the sync API, calling this function is not required since sync calls it internally. 
+
+Notifies the CodePush runtime that a freshly installed update should be considered successful, and therefore, an automatic client-side rollback isn't necessary. It is mandatory to call this function somewhere in the code of the updated bundle. Otherwise, when the app next restarts, the CodePush runtime will assume that the installed update has failed and roll back to the previous version. This behavior exists to help ensure that your end users aren't blocked by a broken update.
+
+If you are using the `sync` function, and doing your update check on app start, then you don't need to manually call `notifyApplicationReady` since `sync` will call it for you. This behavior exists due to the assumption that the point at which `sync` is called in your app represents a good approximation of a successful startup.
+
+Parameters:
 
 - __notifySucceeded__: Optional callback invoked if the plugin was successfully notified.
+
 - __notifyFailed__: Optional callback invoked in case of an error during notifying the plugin.
 
-#### Example
+Example Usage:
+
 ```javascript
 // App version 1 (current version)
 
@@ -252,47 +304,74 @@ var app = {
 }
 ```
 
+### codePush.restartApplication
+
+```javascript
+codePush.restartApplication();
+```
+
+Immediately restarts the app. This method is for advanced scenarios, and is primarily useful when the following conditions are true:
+
+1. Your app is specifying an install mode value of `ON_NEXT_RESTART` or `ON_NEXT_RESUME` when calling the `sync` or `LocalPackage.install` methods. This has the effect of not applying your update until the app has been restarted (by either the end user or OS) or resumed, and therefore, the update won't be immediately displayed to the end user.
+
+2. You have an app-specific user event (e.g. the end user navigated back to the app's home route) that allows you to apply the update in an unobtrusive way, and potentially gets the update in front of the end user sooner then waiting until the next restart or resume.
+
 ### codePush.sync
 
 ```javascript
-codePush.sync(syncCallback, syncOptions, downloadProgress);
+codePush.sync(syncCallback?, syncOptions?, downloadProgress?);
 ```
-Convenience method for installing updates in one method call.
-This method is provided for simplicity, and its behavior can be replicated by using window.codePush.checkForUpdate(), RemotePackage's download() and LocalPackage's install() methods.
-The algorithm of this method is the following:
-- Check for an update on the CodePush server.
-  - If an update is available
-    - If the update is mandatory and the alertMessage is set in options, the user will be informed that the application will be updated to the latest version. The update package will then be downloaded and applied. 
-    - If the update is not mandatory and the confirmMessage is set in options, the user will be asked if they want to update to the latest version. If they decline, the syncCallback will be invoked with SyncStatus.UPDATE_IGNORED status.
-    - Otherwise, the update package will be downloaded and applied with no user interaction.
-- If no update is available on the server, the syncCallback will be invoked with the SyncStatus.UP_TO_DATE status.
-- If an error occurs during checking for update, downloading or installing it, the syncCallback will be invoked with the SyncStatus.ERROR status.
 
-- __syncCallback__: Optional callback to be called with the status of the sync operation. The callback will be called multiple times. It will be called at least one time with an intermediate status, and only one time (the final call) with a result status. The possible statuses are defined by the SyncStatus enum.
-- __syncOptions__: Optional SyncOptions parameter configuring the behavior of the sync operation.
-- __downloadProgress__: Optional callback invoked during the download process. It is called several times with one DownloadProgress parameter.
+Synchronizes your app's code and images with the latest release to the configured deployment. Unlike the `checkForUpdate` method, which simply checks for the presence of an update, and let's you control what to do next, `sync` handles the update check, download and installation experience for you.
+
+This method provides support for two different (but customizable) "modes" to easily enable apps with different requirements:
+
+1. **Silent mode** *(the default behavior)*, which automatically downloads available updates, and applies them the next time the app restarts (e.g. the OS or end user killed it, or the device was restarted). This way, the entire update experience is "silent" to the end user, since they don't see any update prompt and/or "synthetic" app restarts.
+
+2. **Active mode**, which when an update is available, prompts the end user for permission before downloading it, and then immediately applies the update. If an update was released using the mandatory flag, the end user would still be notified about the update, but they wouldn't have the choice to ignore it.
+
+Parameters:
+
+- __syncCallback__: Optional callback to be called with the status of the sync operation. The callback will be called multiple times. It will be called at least one time with an intermediate status, and only one time (the final call) with a result status. The possible statuses are defined by the `SyncStatus` enum.
+
+- __syncOptions__: Optional `SyncOptions` parameter configuring the behavior of the sync operation.
+
+- __downloadProgress__: Optional callback invoked during the download process. It is called several times with one `DownloadProgress` parameter.
 
 #### SyncOptions
-Interface defining several options for customizing the [sync](#codepushsync) operation behavior.
 
-- __installMode__: Used to specity the [InstallMode](#installmode) used for the install operation. This is optional and defaults to InstallMode.ON_NEXT_RESTART.
-- __ignoreFailedUpdates__: Optional boolean flag. If set, updates available on the server for which and update was attempted and rolled back will be ignored. Defaults to true. (boolean)
-- __updateDialog__: Option used to enable, disable or customize the user interaction during sync. If set to false, user interaction will be disabled. If set to true, the user will be alerted or asked to confirm new updates, based on whether the update is mandatory. To customize the user dialog, this option can be set to a custom UpdateDialogOptions instance.
-- __deploymentKey__: Option used to override the config.xml deployment key when checking for updates.
+While the `sync` method tries to make it easy to perform silent and active updates with little configuration, it accepts an "options" object that allows you to customize numerous aspects of the default behavior mentioned above:
+
+- __deploymentKey__ *(String)* - Option used to override the config.xml deployment key when checking for updates. Defaults to `undefined`.
+
+- __installMode__ *(InstallMode)* - Used to specify the [InstallMode](#installmode) used for the install operation. Defaults to `InstallMode.ON_NEXT_RESTART`.
+
+- __ignoreFailedUpdates__ *(Boolean)* - Optional boolean flag. If set, updates available on the server for which and update was attempted and rolled back will be ignored. Defaults to `true`.
+
+- __updateDialog__ *(UpdateDialogOptions)* - Option used to enable, disable or customize the user interaction during sync. If set to false, user interaction will be disabled. If set to true, the user will be alerted or asked to confirm new updates, based on whether the update is mandatory. To customize the user dialog, this option can be set to a custom `UpdateDialogOptions` instance. Defaults to `false.
 
 ##### UpdateDialogOptions
+
 Interface defining the configuration options for the alert or confirmation dialog.
 
-- __mandatoryUpdateMessage__:  If a mandatory update is available and this option is set, the message will be displayed to the user in an alert dialog before downloading and installing the update. The user will not be able to cancel the operation, since the update is mandatory. (string)
-- __optionalUpdateMessage__: If an optional update is available and this option is set, the message will be displayed to the user in a confirmation dialog. If the user confirms the update, it will be downloaded and installed. Otherwise, the update update is not downloaded. (string)
-- __updateTitle__: The title of the dialog box used for interacting with the user in case of a mandatory or optional update. This title will only be used if at least one of mandatoryUpdateMessage or optionalUpdateMessage options are set. (string)
-- __optionalInstallButtonLabel__: The label of the confirmation button in case of an optional update. (string)
-- __optionalIgnoreButtonLabel__: The label of the cancel button in case of an optional update. (string)
-- __mandatoryContinueButtonLabel__: The label of the continue button in case of a mandatory update. (string)
-- __appendReleaseDescription__: Flag indicating if the update description provided by the CodePush server should be displayed in the dialog box appended to the update message. Defaults to false. (boolean)
-- __descriptionPrefix__: Optional prefix to add to the release description. (string)
+- __appendReleaseDescription__ *(Boolean)* - Flag indicating if the update description provided by the CodePush server should be displayed in the dialog box appended to the update message. Defaults to `false`.
 
-#### Example
+- __descriptionPrefix__ *(String)* - Optional prefix to add to the release description. Defaults to `" Description: "`.
+
+- __mandatoryContinueButtonLabel__ *(String)*: The label of the continue button in case of a mandatory update. Defaults to `"Continue"`.
+
+- __mandatoryUpdateMessage__ *(String)* - If a mandatory update is available and this option is set, the message will be displayed to the user in an alert dialog before downloading and installing the update. The user will not be able to cancel the operation, since the update is mandatory. Defaults to `"You will be updated to the latest version."`.
+
+- __optionalIgnoreButtonLabel__ *(String)* - The label of the cancel button in case of an optional update. Defaults to `"Ignore"`.
+
+- __optionalInstallButtonLabel__ *(String)* - The label of the confirmation button in case of an optional update. Defaults to `"Install"`.
+
+- __optionalUpdateMessage__ *(String)* - If an optional update is available and this option is set, the message will be displayed to the user in a confirmation dialog. If the user confirms the update, it will be downloaded and installed. Otherwise, the update update is not downloaded. Defaults to `"An update is available. Would you like to install it?"`.
+
+- __updateTitle__ *(String)* - The title of the dialog box used for interacting with the user in case of a mandatory or optional update. This title will only be used if at least one of mandatoryUpdateMessage or optionalUpdateMessage options are set. Defaults to `"Update"`.
+
+Example Usage:
+
 ```javascript
 
 // Using default sync options: user interaction is disabled
@@ -434,23 +513,27 @@ window.codePush.sync(syncStatusCallback, syncOptions);
 
 ### Package objects
 
-The `checkForUpdate` and `getCurrentPackage` methods provide acces to "package" objects. A package represents a specific CodePush update along with its metadata (e.g. description, mandatory?). The CodePush API has the distinction between the following two types of packages:
+The `checkForUpdate` and `getCurrentPackage` methods invoke success callbacks, that when triggered, provide acces to "package" objects. The package represents your code update as well as any extra metadata (e.g. description, mandatory?). The CodePush API has the distinction between the following types of packages:
+
+1. `LocalPackage`: Represents a downloaded update that is either already running, or has been installed and is pending an app restart.
+
+2. `RemotePackage`: Represents an available update on the CodePush server that hasn't been downloaded yet.
 
 #### LocalPackage
-Contains details about an update package that has been downloaded locally or already applied (currently installed package).
+
+Contains details about an update that has been downloaded locally or already installed. You can get a reference to an instance of this object either by calling the `codePush.getCurrentPackage` method, or as the value provided to the success callback of the `RemotePackage.download` method.
 
 ##### Properties
 
-- __deploymentKey__: Deployment key of the package. (String)
-- __description__: Package description. (String)
-- __label__: Package label. (String)
-- __appVersion__: The native version of the application this package update is intended for. (String)
-- __isMandatory__: Flag indicating if the update is mandatory. (Boolean)
-- __packageHash__: The hash value of the package. (String)
-- __packageSize__: The size of the package, in bytes. (Number)
-- __failedInstall__: Boolean flag indicating if this update package was previously attempted and the update failed. (Boolean). For an example on how to protect against a bad update, see the [notifyApplicationReady() documentation](#codepushnotifyapplicationready).
-- __localPath__: The current, local path of the package. (String)
-- __isFirstRun__: Flag indicating if the current application run is the first one after the package was applied. (Boolean)
+- __appVersion__: The native version of the application this package update is intended for. *(String)*
+- __deploymentKey__: Deployment key of the package. *(String)*
+- __description__: The description of the update. This is the same value that you specified in the CLI when you released the update. *(String)*
+- __failedInstall__: Indicates whether this update has been previously installed but was rolled back. The `sync` method will automatically ignore updates which have previously failed, so you only need to worry about this property if using `checkForUpdate`. *(Boolean)*
+- __isFirstRun__: Flag indicating if the current application run is the first one after the package was applied. *(Boolean)*
+- __isMandatory__: Indicates whether the update is considered mandatory. This is the value that was specified in the CLI when the update was released. *(Boolean)*
+- __label__: The internal label automatically given to the update by the CodePush server. This value uniquely identifies the update within it's deployment. *(String)*
+- __packageHash__: The SHA hash value of the update. *(String)*
+- __packageSize__: The size of the code contained within the update, in bytes. *(Number)*
 
 ##### Methods
 
@@ -465,7 +548,7 @@ Otherwise, the install operation will be marked as failed, and the application i
 
     - __installMode__: Used to specity the [InstallMode](#installmode) used for the install operation. This is optional and defaults to InstallMode.ON_NEXT_RESTART.
 
-##### Example
+Example Usage:
 
 ```javascript
 // App version 1 (current version)
@@ -517,23 +600,18 @@ For an example on how you are protected against a bad update, see the [notifyApp
 
 #### RemotePackage
 
-Contains details about an update package that is available for download.
+Contains details about an update that is available for download from the CodePush server. You get a reference to an instance of this object by calling the `codePush.checkForUpdate` method when an update is available. If you are using the sync API, you don't need to worry about the `RemotePackage`, since it will handle the download and installation process automatically for you.
 
 ##### Properties
 
-- __deploymentKey__: Deployment key of the package. (String)
-- __description__: Package description. (String)
-- __label__: Package label. (String)
-- __appVersion__: The native version of the application this package update is intended for. (String)
-- __isMandatory__: Flag indicating if the update is mandatory. (Boolean)
-- __packageHash__: The hash value of the package. (String)
-- __packageSize__: The size of the package, in bytes. (Number)
-- __failedInstall__: Boolean flag indicating if this update package was previously attempted and the update failed. (Boolean)
-- __downloadUrl__: The URL at which the package is available for download. (String)
+The `RemotePackage` inherits all of the same properties as the `LocalPackage`, but includes one additional one:
+
+- __downloadUrl__: The URL at which the package is available for download. This property is only needed for advanced usage, since the `download` method will automatically handle the acquisition of updates for you. *(String)*
 
 ##### Methods
 
 - __abortDownload(abortSuccess, abortError)__: Aborts the current download session, if any.
+
 - __download(downloadSuccess, downloadError, downloadProgress)__: Downloads the package update from the CodePush service. The ```downloadSuccess``` callback is invoked with a [LocalPackage](#localpackage) argument, representing the downloaded package.
 The optional `downloadProgress` callback is invoked several times during the download progress with one `DownloadProgress` parameter.
 
@@ -546,7 +624,7 @@ The optional `downloadProgress` callback is invoked several times during the dow
     - __totalBytes__: The size of the downloading update package, in bytes. (Number)
     - __receivedBytes__: The number of bytes already downloaded. (Number)
 
-##### Example
+Example Usage:
 
 ```javascript
 var onError = function (error) {
@@ -575,26 +653,39 @@ window.codePush.checkForUpdate(onUpdateCheck, onError);
 ```
 
 ### Enums
+
 The CodePush API includes the following "enum" objects which can be used to customize the update experience, and are available globally off of the `window` object:
 
 #### InstallMode
-Defines the available install modes for update packages.
+
+This enum specified when you would like an installed update to actually be applied, and can be passed to either the `sync` or `LocalPackage.install` methods. It includes the following values:
 
 - __IMMEDIATE__: The update will be applied to the running application immediately. The application will be reloaded with the new content immediately.
-- __ON_NEXT_RESTART__: The update is downloaded but not installed immediately. The new content will be available the next time the application is started.
-- __ON_NEXT_RESUME__: The udpate is downloaded but not installed immediately. The new content will be available the next time the application is resumed or restarted, whichever event happends first.
+
+- __ON_NEXT_RESTART__: Indicates that you want to install the update, but not forcibly restart the app. When the app is "naturally" restarted (due the OS or end user killing it), the update will be seamlessly picked up. This value is appropriate when performing silent updates, since it would likely be disruptive to the end user if the app suddenly restarted out of nowhere, since they wouldn't have realized an update was even downloaded. This is the default mode used for both the `sync` and `LocalPackage.install` methods.
+
+- __ON_NEXT_RESUME__: Indicates that you want to install the update, but don't want to restart the app until the next time the end user resumes it from the background. This way, you don't disrupt their current session, but you can get the update in front of them sooner then having to wait for the next natural restart. This value is appropriate for silent installs that can be applied on resume in a non-invasive way.
 
 #### SyncStatus
+
 Defines the possible statuses of the [sync](#codepushsync) operation. There are two categories of statuses: intermediate and result (final). The intermediate statuses represent progress statuses of the sync operation, and are not final. The result statuses represent final statuses of the sync operation. Every sync operation ends with only one result status, but can have zero or more intermediate statuses.
 
-- __UP_TO_DATE__: Result status - the application is up to date. (number)
-- __UPDATE_INSTALLED__: Result status - an update is available, it has been downloaded, unzipped and copied to the deployment folder. After the completion of the callback invoked with SyncStatus.UPDATE_INSTALLED, the application will be reloaded with the updated code and resources. (number)
-- __UPDATE_IGNORED__: Result status - an optional update is available, but the user declined to install it. The update was not downloaded. (number)
-- __ERROR__: Result status - an error happened during the sync operation. This might be an error while communicating with the server, downloading or unziping the update. The console logs should contain more information about what happened. No update has been applied in this case. (number)
-- __CHECKING_FOR_UPDATE__: Intermediate status - the plugin is about to check for updates.
-- __AWAITING_USER_ACTION__: Intermediate status - a user dialog is about to be displayed. This status will be reported only if user interaction is enabled.
-- __DOWNLOADING_PACKAGE__: Intermediate status - the update package is about to be downloaded.
-- __INSTALLING_UPDATE__: Intermediate status - the update package is about to be installed.
+- __UP_TO_DATE__: The app is fully up-to-date with the configured deployment.
+
+- __UPDATE_INSTALLED__: An available update has been installed and will be run either immediately after the callback function returns or the next time the app resumes/restarts, depending on the `InstallMode` specified in `SyncOptions`.
+
+- __UPDATE_IGNORED__: The app has an optional update, which the end user chose to ignore. *(This is only applicable when the `updateDialog` is used)*
+ 
+- __ERROR__: An error occured during the `sync` operation. This might be an error while communicating with the server, downloading or unziping the update. The console logs should contain more information about what happened. No update has been applied in this case.
+
+- __CHECKING_FOR_UPDATE__: The CodePush server is being queried for an update.
+
+- __AWAITING_USER_ACTION__: An update is available, and a confirmation dialog was shown to the end user. *(This is only applicable when the `updateDialog` is used)*
+
+- __DOWNLOADING_PACKAGE__: An available update is being downloaded from the CodePush server.
+
+- __INSTALLING_UPDATE__: An available update was downloaded and is about to be installed.
 
 ## Compiling sources & contributing
+
 The JavaScript code in this plugin is compiled from TypeScript. Please see [this page](CONTRIBUTING.md) for more details on contributing and how to build the project.
