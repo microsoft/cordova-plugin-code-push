@@ -1,6 +1,7 @@
 # Cordova Plugin for CodePush
 
 This plugin provides client-side integration for the [CodePush service](http://codepush.tools), allowing you to easily add a dynamic update experience to your Cordova app(s).
+
 * [How does it work?](#how-does-it-work)
 * [Supported Cordova Platforms](#supported-cordova-platforms)
 * [Getting Started](#getting-started)
@@ -330,6 +331,8 @@ This method provides support for two different (but customizable) "modes" to eas
 
 2. **Active mode**, which when an update is available, prompts the end user for permission before downloading it, and then immediately applies the update. If an update was released using the mandatory flag, the end user would still be notified about the update, but they wouldn't have the choice to ignore it.
 
+Note that regardless whether you choose to display an update dialog, whenever an available update is discovered, that is marked as mandatory, it will be installed immediately after downloading it. This way, developers have the ability to enforce critical updates as neccessary, regardless what kind of UI they chose to implement. If the update dialog is being displayed, the end user will be notified about the update, but want be able to ignore it.
+
 Parameters:
 
 - __syncCallback__: Optional callback to be called with the status of the sync operation. The callback will be called multiple times. It will be called at least one time with an intermediate status, and only one time (the final call) with a result status. The possible statuses are defined by the `SyncStatus` enum.
@@ -546,7 +549,7 @@ Otherwise, the install operation will be marked as failed, and the application i
 
     Interface defining several options for customizing install operation behavior.
 
-    - __installMode__: Used to specity the [InstallMode](#installmode) used for the install operation. This is optional and defaults to InstallMode.ON_NEXT_RESTART.
+    - __installMode__: Used to specify the [InstallMode](#installmode) used for the install operation. Defaults `InstallMode.ON_NEXT_RESTART`.
 
 Example Usage:
 
