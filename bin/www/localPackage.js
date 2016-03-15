@@ -27,7 +27,7 @@ var LocalPackage = (function (_super) {
     LocalPackage.prototype.install = function (installSuccess, errorCallback, installOptions) {
         var _this = this;
         try {
-            CodePushUtil.logMessage("Installing update package ...");
+            CodePushUtil.logMessage("Installing update");
             if (!installOptions) {
                 installOptions = LocalPackage.getDefaultInstallOptions();
             }

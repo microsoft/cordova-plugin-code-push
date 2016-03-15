@@ -75,11 +75,12 @@ var CodePush = (function () {
                 }
                 else {
                     var appUpToDate = function () {
-                        CodePushUtil.logMessage("The application is up to date.");
+                        CodePushUtil.logMessage("App is up to date.");
                         querySuccess && querySuccess(null);
                     };
                     if (remotePackageOrUpdateNotification) {
                         if (remotePackageOrUpdateNotification.updateAppVersion) {
+                            CodePushUtil.logMessage("An update is available, but it is targetting a newer binary version than you are currently running.");
                             appUpToDate();
                         }
                         else {
@@ -111,6 +112,7 @@ var CodePush = (function () {
                 }
                 else {
                     LocalPackage.getCurrentOrDefaultPackage(function (localPackage) {
+                        CodePushUtil.logMessage("Checking for update.");
                         acquisitionManager.queryUpdateWithCurrentPackage(localPackage, callback);
                     }, function (error) {
                         CodePushUtil.invokeErrorCallback(error, queryError);
@@ -145,6 +147,14 @@ var CodePush = (function () {
             syncCallback && syncCallback(SyncStatus.ERROR);
         };
         var onInstallSuccess = function () {
+            switch (syncOptions.installMode) {
+                case InstallMode.ON_NEXT_RESTART:
+                    CodePushUtil.logMessage("Update is installed and will be run on the next app restart.");
+                    break;
+                case InstallMode.ON_NEXT_RESUME:
+                    CodePushUtil.logMessage("Update is installed and will be run when the app next resumes.");
+                    break;
+            }
             syncCallback && syncCallback(SyncStatus.UPDATE_INSTALLED);
         };
         var onDownloadSuccess = function (localPackage) {
@@ -156,12 +166,17 @@ var CodePush = (function () {
             remotePackage.download(onDownloadSuccess, onError, downloadProgress);
         };
         var onUpdate = function (remotePackage) {
-            if (!remotePackage || (remotePackage.failedInstall && syncOptions.ignoreFailedUpdates)) {
+            var updateShouldBeIgnored = remotePackage && (remotePackage.failedInstall && syncOptions.ignoreFailedUpdates);
+            if (!remotePackage || updateShouldBeIgnored) {
+                if (updateShouldBeIgnored) {
+                    CodePushUtil.logMessage("An update is available, but it is being ignored due to have been previously rolled back.");
+                }
                 syncCallback && syncCallback(SyncStatus.UP_TO_DATE);
             }
             else {
                 var dlgOpts = syncOptions.updateDialog;
                 if (dlgOpts) {
+                    CodePushUtil.logMessage("Awaiting user action.");
                     syncCallback && syncCallback(SyncStatus.AWAITING_USER_ACTION);
                 }
                 if (remotePackage.isMandatory && syncOptions.updateDialog) {
@@ -178,6 +193,7 @@ var CodePush = (function () {
                                 break;
                             case 2:
                             default:
+                                CodePushUtil.logMessage("User cancelled the update.");
                                 syncCallback && syncCallback(SyncStatus.UPDATE_IGNORED);
                                 break;
                         }
@@ -209,8 +225,8 @@ var CodePush = (function () {
     CodePush.prototype.getDefaultUpdateDialogOptions = function () {
         if (!CodePush.DefaultUpdateDialogOptions) {
             CodePush.DefaultUpdateDialogOptions = {
-                updateTitle: "Update",
-                mandatoryUpdateMessage: "You will be updated to the latest version.",
+                updateTitle: "Update available",
+                mandatoryUpdateMessage: "An update is available that must be installed.",
                 mandatoryContinueButtonLabel: "Continue",
                 optionalUpdateMessage: "An update is available. Would you like to install it?",
                 optionalInstallButtonLabel: "Install",
