@@ -51,7 +51,7 @@ class LocalPackage extends Package implements ILocalPackage {
      */
     public install(installSuccess: SuccessCallback<void>, errorCallback?: ErrorCallback, installOptions?: InstallOptions) {
         try {
-            CodePushUtil.logMessage("Installing update package ...");
+            CodePushUtil.logMessage("Installing update");
 
             if (!installOptions) {
                 installOptions = LocalPackage.getDefaultInstallOptions();

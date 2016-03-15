@@ -32,7 +32,7 @@ class RemotePackage extends Package implements IRemotePackage {
      */
     public download(successCallback: SuccessCallback<LocalPackage>, errorCallback?: ErrorCallback, downloadProgress?: SuccessCallback<DownloadProgress>): void {
         try {
-            CodePushUtil.logMessage("Downloading update package ...");
+            CodePushUtil.logMessage("Downloading update");
             if (!this.downloadUrl) {
                 CodePushUtil.invokeErrorCallback(new Error("The remote package does not contain a download URL."), errorCallback);
             } else {

@@ -133,13 +133,14 @@ class CodePush implements CodePushCordovaPlugin {
                 }
                 else {
                     var appUpToDate = () => {
-                        CodePushUtil.logMessage("The application is up to date.");
+                        CodePushUtil.logMessage("App is up to date.");
                         querySuccess && querySuccess(null);
                     };
 
                     if (remotePackageOrUpdateNotification) {
                         if ((<NativeUpdateNotification>remotePackageOrUpdateNotification).updateAppVersion) {
                             /* There is an update available for a different version. In the current version of the plugin, we treat that as no update. */
+                            CodePushUtil.logMessage("An update is available, but it is targeting a newer binary version than you are currently running.");
                             appUpToDate();
                         } else {
                             /* There is an update available for the current version. */
@@ -171,6 +172,7 @@ class CodePush implements CodePushCordovaPlugin {
                     CodePushUtil.invokeErrorCallback(initError, queryError);
                 } else {
                     LocalPackage.getCurrentOrDefaultPackage((localPackage: LocalPackage) => {
+                        CodePushUtil.logMessage("Checking for update.");
                         acquisitionManager.queryUpdateWithCurrentPackage(localPackage, callback);
                     }, (error: Error) => {
                         CodePushUtil.invokeErrorCallback(error, queryError);
@@ -235,6 +237,16 @@ class CodePush implements CodePushCordovaPlugin {
         };
 
         var onInstallSuccess = () => {
+            switch (syncOptions.installMode) {
+                case InstallMode.ON_NEXT_RESTART:
+                    CodePushUtil.logMessage("Update is installed and will be run on the next app restart.");
+                    break;
+                    
+                case InstallMode.ON_NEXT_RESUME:
+                    CodePushUtil.logMessage("Update is installed and will be run when the app next resumes.");
+                    break;
+            }
+            
             syncCallback && syncCallback(SyncStatus.UPDATE_INSTALLED);
         };
 
@@ -249,11 +261,17 @@ class CodePush implements CodePushCordovaPlugin {
         };
 
         var onUpdate = (remotePackage: RemotePackage) => {
-            if (!remotePackage || (remotePackage.failedInstall && syncOptions.ignoreFailedUpdates)) {
+            var updateShouldBeIgnored = remotePackage && (remotePackage.failedInstall && syncOptions.ignoreFailedUpdates);
+            if (!remotePackage || updateShouldBeIgnored) {
+                if (updateShouldBeIgnored) {
+                    CodePushUtil.logMessage("An update is available, but it is being ignored due to have been previously rolled back.");
+                }
+                
                 syncCallback && syncCallback(SyncStatus.UP_TO_DATE);
             } else {
                 var dlgOpts: UpdateDialogOptions = <UpdateDialogOptions>syncOptions.updateDialog;
                 if (dlgOpts) {
+                    CodePushUtil.logMessage("Awaiting user action.");
                     syncCallback && syncCallback(SyncStatus.AWAITING_USER_ACTION);
                 }
                 if (remotePackage.isMandatory && syncOptions.updateDialog) {
@@ -273,6 +291,7 @@ class CodePush implements CodePushCordovaPlugin {
                             case 2:
                             default:
                                 /* Cancel */
+                                CodePushUtil.logMessage("User cancelled the update.");
                                 syncCallback && syncCallback(SyncStatus.UPDATE_IGNORED);
                                 break;
                         }
