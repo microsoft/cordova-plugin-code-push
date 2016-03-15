@@ -39,7 +39,7 @@ export class TestUtil {
      * Reads if we should use the WkWebView or the UIWebView
      */
     public static readShouldUseWkWebView(): boolean {
-        return JSON.parse(TestUtil.readMochaCommandLineOption(TestUtil.SHOULD_USE_WKWEBVIEW));
+        return JSON.parse(TestUtil.readMochaCommandLineOption(TestUtil.SHOULD_USE_WKWEBVIEW) || "false");
     }
 
 	/**
