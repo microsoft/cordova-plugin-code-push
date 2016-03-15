@@ -142,7 +142,7 @@ gulp.task("test-ios-wkwebview", function (callback) {
 
 gulp.task("test-android", function (callback) {
     var command = "mocha";
-    var args = ["./bin/test", "--mockserver", "http://10.0.2.2:3000", "--platform", "android"];
+    var args = ["./bin/test", "--mockserver", "http://10.0.2.2:3000", "--platform", "android", "--use-wkwebview", "false"];
     executeCommand(command, args, callback);
 });
 
