@@ -317,8 +317,8 @@ class CodePush implements CodePushCordovaPlugin {
     private getDefaultUpdateDialogOptions(): UpdateDialogOptions {
         if (!CodePush.DefaultUpdateDialogOptions) {
             CodePush.DefaultUpdateDialogOptions = {
-                updateTitle: "Update",
-                mandatoryUpdateMessage: "You will be updated to the latest version.",
+                updateTitle: "Update available",
+                mandatoryUpdateMessage: "An update is available that must be installed.",
                 mandatoryContinueButtonLabel: "Continue",
                 optionalUpdateMessage: "An update is available. Would you like to install it?",
                 optionalInstallButtonLabel: "Install",

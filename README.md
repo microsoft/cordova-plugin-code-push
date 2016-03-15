@@ -363,7 +363,7 @@ Interface defining the configuration options for the alert or confirmation dialo
 
 - __mandatoryContinueButtonLabel__ *(String)*: The label of the continue button in case of a mandatory update. Defaults to `"Continue"`.
 
-- __mandatoryUpdateMessage__ *(String)* - If a mandatory update is available and this option is set, the message will be displayed to the user in an alert dialog before downloading and installing the update. The user will not be able to cancel the operation, since the update is mandatory. Defaults to `"You will be updated to the latest version."`.
+- __mandatoryUpdateMessage__ *(String)* - If a mandatory update is available and this option is set, the message will be displayed to the user in an alert dialog before downloading and installing the update. The user will not be able to cancel the operation, since the update is mandatory. Defaults to `"An update is available that must be installed."`.
 
 - __optionalIgnoreButtonLabel__ *(String)* - The label of the cancel button in case of an optional update. Defaults to `"Ignore"`.
 
@@ -371,7 +371,7 @@ Interface defining the configuration options for the alert or confirmation dialo
 
 - __optionalUpdateMessage__ *(String)* - If an optional update is available and this option is set, the message will be displayed to the user in a confirmation dialog. If the user confirms the update, it will be downloaded and installed. Otherwise, the update update is not downloaded. Defaults to `"An update is available. Would you like to install it?"`.
 
-- __updateTitle__ *(String)* - The title of the dialog box used for interacting with the user in case of a mandatory or optional update. This title will only be used if at least one of mandatoryUpdateMessage or optionalUpdateMessage options are set. Defaults to `"Update"`.
+- __updateTitle__ *(String)* - The title of the dialog box used for interacting with the user in case of a mandatory or optional update. This title will only be used if at least one of mandatoryUpdateMessage or optionalUpdateMessage options are set. Defaults to `"Update available"`.
 
 Example Usage:
 
