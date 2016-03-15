@@ -27,7 +27,7 @@ var RemotePackage = (function (_super) {
     RemotePackage.prototype.download = function (successCallback, errorCallback, downloadProgress) {
         var _this = this;
         try {
-            CodePushUtil.logMessage("Downloading update package");
+            CodePushUtil.logMessage("Downloading update");
             if (!this.downloadUrl) {
                 CodePushUtil.invokeErrorCallback(new Error("The remote package does not contain a download URL."), errorCallback);
             }
