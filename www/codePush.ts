@@ -140,7 +140,7 @@ class CodePush implements CodePushCordovaPlugin {
                     if (remotePackageOrUpdateNotification) {
                         if ((<NativeUpdateNotification>remotePackageOrUpdateNotification).updateAppVersion) {
                             /* There is an update available for a different version. In the current version of the plugin, we treat that as no update. */
-                            CodePushUtil.logMessage("An update is available, but it is targetting a newer binary version than you are currently running.");
+                            CodePushUtil.logMessage("An update is available, but it is targeting a newer binary version than you are currently running.");
                             appUpToDate();
                         } else {
                             /* There is an update available for the current version. */

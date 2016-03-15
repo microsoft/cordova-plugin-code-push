@@ -80,7 +80,7 @@ var CodePush = (function () {
                     };
                     if (remotePackageOrUpdateNotification) {
                         if (remotePackageOrUpdateNotification.updateAppVersion) {
-                            CodePushUtil.logMessage("An update is available, but it is targetting a newer binary version than you are currently running.");
+                            CodePushUtil.logMessage("An update is available, but it is targeting a newer binary version than you are currently running.");
                             appUpToDate();
                         }
                         else {
