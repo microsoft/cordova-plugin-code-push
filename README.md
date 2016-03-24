@@ -60,7 +60,7 @@ With the CodePush plugin installed, configure your app to use it via the followi
     </platform>
     ```
     
-    As a reminder, these keys are generated for you when you created your CodePush app via the CLI. If you need to retreive them, you can simply run `code-push deployment ls APP_NAME -k`, and grab the key for the specific deployment you want to use (e.g. `Staging`, `Production`).
+    As a reminder, these keys are generated for you when you created your CodePush app via the CLI. If you need to retrieve them, you can simply run `code-push deployment ls APP_NAME -k`, and grab the key for the specific deployment you want to use (e.g. `Staging`, `Production`).
     
     *NOTE: We [recommend](http://microsoft.github.io/code-push/docs/cli.html#link-4) creating a seperate CodePush app for iOS and Android, which is why the above sample illustrates declaring seperate keys for Android and iOS. If you're only developing for a single platform, then you only need to specify the deployment key for either Android or iOS, so you don't need to add the additional `<platform>` element as illustrated above.*
     
