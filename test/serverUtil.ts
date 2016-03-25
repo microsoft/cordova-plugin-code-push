@@ -51,10 +51,11 @@ export class TestMessage {
     public static SYNC_UPDATE_INSTALLED = 1;
     public static SYNC_UPDATE_IGNORED = 2;
     public static SYNC_ERROR = 3;
-    public static SYNC_CHECKING_FOR_UPDATE = 4;
-    public static SYNC_AWAITING_USER_ACTION = 5;
-    public static SYNC_DOWNLOADING_PACKAGE = 6;
-    public static SYNC_INSTALLING_UPDATE = 7;
+    public static SYNC_IN_PROGRESS = 4;
+    public static SYNC_CHECKING_FOR_UPDATE = 5;
+    public static SYNC_AWAITING_USER_ACTION = 6;
+    public static SYNC_DOWNLOADING_PACKAGE = 7;
+    public static SYNC_INSTALLING_UPDATE = 8;
 }
 
 /**

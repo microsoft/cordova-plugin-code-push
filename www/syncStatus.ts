@@ -8,6 +8,7 @@
  * The intermediate statuses are not final, one or more of them can happen before sync ends, based on the options you use and user interaction.
  * 
  * NOTE: Adding new statuses or changing old statuses requires an update to CodePush.sync(), which must know which callbacks are results and which are not!
+ *       Also, don't forget to change the TestMessage module in ServerUtils!
  */
 enum SyncStatus {
     /**
