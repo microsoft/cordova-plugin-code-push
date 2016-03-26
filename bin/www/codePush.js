@@ -125,6 +125,34 @@ var CodePush = (function () {
         }
     };
     CodePush.prototype.sync = function (syncCallback, syncOptions, downloadProgress) {
+        if (CodePush.SyncInProgress) {
+            CodePushUtil.logMessage("Sync already in progress.");
+            syncCallback && syncCallback(SyncStatus.IN_PROGRESS);
+        }
+        else {
+            var syncCallbackAndUpdateSyncInProgress = function (result) {
+                switch (result) {
+                    case SyncStatus.ERROR:
+                    case SyncStatus.IN_PROGRESS:
+                    case SyncStatus.UP_TO_DATE:
+                    case SyncStatus.UPDATE_IGNORED:
+                    case SyncStatus.UPDATE_INSTALLED:
+                        CodePush.SyncInProgress = false;
+                        break;
+                    case SyncStatus.AWAITING_USER_ACTION:
+                    case SyncStatus.CHECKING_FOR_UPDATE:
+                    case SyncStatus.DOWNLOADING_PACKAGE:
+                    case SyncStatus.INSTALLING_UPDATE:
+                    default:
+                        break;
+                }
+                syncCallback && syncCallback(result);
+            };
+            CodePush.SyncInProgress = true;
+            this.syncInternal(syncCallbackAndUpdateSyncInProgress, syncOptions, downloadProgress);
+        }
+    };
+    CodePush.prototype.syncInternal = function (syncCallback, syncOptions, downloadProgress) {
         if (!syncOptions) {
             syncOptions = this.getDefaultSyncOptions();
         }
