@@ -211,8 +211,6 @@ class CodePush implements CodePushCordovaPlugin {
      * 
      */
     public sync(syncCallback?: SuccessCallback<any>, syncOptions?: SyncOptions, downloadProgress?: SuccessCallback<DownloadProgress>): void {
-        // TODO: update this code to mirror the React-Native plugin, which uses promises instead of a callback.
-        
         /* Check if a sync is already in progress */
         if (CodePush.SyncInProgress) {
             /* A sync is already in progress */

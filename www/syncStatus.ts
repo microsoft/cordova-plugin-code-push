@@ -34,7 +34,7 @@ enum SyncStatus {
     ERROR,
     
     /**
-     * Result status - there is an ongoing sync in progress.
+     * Result status - there is an ongoing sync in progress, so this attempt to sync has been aborted.
      */
     IN_PROGRESS,
     

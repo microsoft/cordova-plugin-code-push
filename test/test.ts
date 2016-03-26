@@ -802,6 +802,9 @@ describe("window.codePush", function() {
 
     describe("#window.codePush.sync", function() {
         
+        /* We test the functionality with sync twice--first, with sync only called one,
+         * then, with sync called again while the first sync is still running 
+        
         /* Tests where sync is called just once */
         describe("window.codePush.sync.1x", function() {
 
