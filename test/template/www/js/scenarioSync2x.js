@@ -14,7 +14,10 @@ var app = {
         document.getElementById("deviceready").innerText = "Device is ready (scenario - sync 2x)";
         console.log('Received Event: deviceready');
         /* invoke sync with no UI options */
-        window.codePush.sync(null,
+        window.codePush.sync(
+            function (status) {
+                app.sendTestMessage("SYNC_STATUS", [status]);
+            },
             {
                 installMode: InstallMode.IMMEDIATE
             });
