@@ -230,12 +230,7 @@ class CodePush implements CodePushCordovaPlugin {
                     case SyncStatus.UPDATE_INSTALLED:
                         /* The sync has completed */
                         CodePush.SyncInProgress = false;
-                        break;
                         
-                    case SyncStatus.AWAITING_USER_ACTION:
-                    case SyncStatus.CHECKING_FOR_UPDATE:
-                    case SyncStatus.DOWNLOADING_PACKAGE:
-                    case SyncStatus.INSTALLING_UPDATE:
                     default:
                         /* The sync is not yet complete, so do nothing */
                         break;

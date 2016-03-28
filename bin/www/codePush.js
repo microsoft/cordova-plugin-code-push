@@ -138,11 +138,6 @@ var CodePush = (function () {
                     case SyncStatus.UPDATE_IGNORED:
                     case SyncStatus.UPDATE_INSTALLED:
                         CodePush.SyncInProgress = false;
-                        break;
-                    case SyncStatus.AWAITING_USER_ACTION:
-                    case SyncStatus.CHECKING_FOR_UPDATE:
-                    case SyncStatus.DOWNLOADING_PACKAGE:
-                    case SyncStatus.INSTALLING_UPDATE:
                     default:
                         break;
                 }
