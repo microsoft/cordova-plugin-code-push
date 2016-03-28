@@ -30,7 +30,7 @@ var tsCompileOptions = {
 };
 
 function executeCommand(command, args, callback) {
-    var process = child_process.spawn(command, args);
+    var process = child_process.exec(command + " " + args.join(" "));
 
     process.stdout.on('data', function(data) {
         console.log("" + data);        

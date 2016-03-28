@@ -33,6 +33,10 @@ class CodePush implements CodePushCordovaPlugin {
      * Please note that the update dialog is disabled by default. 
      */
     private static DefaultUpdateDialogOptions: UpdateDialogOptions;
+    /**
+     * Whether or not a sync is currently in progress.
+     */
+    private static SyncInProgress: boolean;
     
     /**  
      * Notifies the plugin that the update operation succeeded and that the application is ready.
@@ -187,6 +191,7 @@ class CodePush implements CodePushCordovaPlugin {
     /**
      * Convenience method for installing updates in one method call.
      * This method is provided for simplicity, and its behavior can be replicated by using window.codePush.checkForUpdate(), RemotePackage's download() and LocalPackage's install() methods.
+     * If another sync is already running, it yields SyncStatus.IN_PROGRESS.
      *  
      * The algorithm of this method is the following:
      * - Checks for an update on the CodePush server.
@@ -206,7 +211,53 @@ class CodePush implements CodePushCordovaPlugin {
      * 
      */
     public sync(syncCallback?: SuccessCallback<any>, syncOptions?: SyncOptions, downloadProgress?: SuccessCallback<DownloadProgress>): void {
-
+        /* Check if a sync is already in progress */
+        if (CodePush.SyncInProgress) {
+            /* A sync is already in progress */
+            CodePushUtil.logMessage("Sync already in progress.");
+            syncCallback && syncCallback(SyncStatus.IN_PROGRESS);
+        } else {
+            /* Create a callback that resets the SyncInProgress flag when the sync is complete
+             * If the sync status is a result status, then the sync must be complete and the flag must be updated
+             * Otherwise, do not change the flag and trigger the syncCallback as usual
+             */
+            var syncCallbackAndUpdateSyncInProgress: SuccessCallback<any> = (result: any): void => {
+                switch (result) {
+                    case SyncStatus.ERROR:
+                    case SyncStatus.IN_PROGRESS:
+                    case SyncStatus.UP_TO_DATE:
+                    case SyncStatus.UPDATE_IGNORED:
+                    case SyncStatus.UPDATE_INSTALLED:
+                        /* The sync has completed */
+                        CodePush.SyncInProgress = false;
+                        
+                    default:
+                        /* The sync is not yet complete, so do nothing */
+                        break;
+                }
+                syncCallback && syncCallback(result);
+            };
+            
+            /* Begin the sync */
+            CodePush.SyncInProgress = true;
+            this.syncInternal(syncCallbackAndUpdateSyncInProgress, syncOptions, downloadProgress);
+        }
+    }
+    
+    /**
+     * Convenience method for installing updates in one method call.
+     * This method is provided for simplicity, and its behavior can be replicated by using window.codePush.checkForUpdate(), RemotePackage's download() and LocalPackage's install() methods.
+     *  
+     * A helper function for the sync function. It does not check if another sync is ongoing.
+     * 
+     * @param syncCallback Optional callback to be called with the status of the sync operation.
+     *                     The callback will be called only once, and the possible statuses are defined by the SyncStatus enum. 
+     * @param syncOptions Optional SyncOptions parameter configuring the behavior of the sync operation.
+     * @param downloadProgress Optional callback invoked during the download process. It is called several times with one DownloadProgress parameter.
+     * 
+     */
+    private syncInternal(syncCallback?: SuccessCallback<any>, syncOptions?: SyncOptions, downloadProgress?: SuccessCallback<DownloadProgress>): void {
+        
         /* No options were specified, use default */
         if (!syncOptions) {
             syncOptions = this.getDefaultSyncOptions();

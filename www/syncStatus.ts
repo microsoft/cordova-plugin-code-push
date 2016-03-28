@@ -6,6 +6,9 @@
  * Defines the possible result and intermediate statuses of the window.codePush.sync operation.
  * The result statuses are final, mutually exclusive statuses of the sync operation. The operation will end with only one of the possible result statuses.
  * The intermediate statuses are not final, one or more of them can happen before sync ends, based on the options you use and user interaction.
+ * 
+ * NOTE: Adding new statuses or changing old statuses requires an update to CodePush.sync(), which must know which callbacks are results and which are not!
+ *       Also, don't forget to change the TestMessage module in ServerUtils!
  */
 enum SyncStatus {
     /**
@@ -29,6 +32,11 @@ enum SyncStatus {
      * The console logs should contain more information about what happened. No update has been applied in this case.
      */
     ERROR,
+    
+    /**
+     * Result status - there is an ongoing sync in progress, so this attempt to sync has been aborted.
+     */
+    IN_PROGRESS,
     
     /**
      * Intermediate status - the plugin is about to check for updates.
