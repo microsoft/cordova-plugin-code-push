@@ -1,7 +1,7 @@
 #built by npm install
-node_modules\*
+node_modules/*
 
 #built by building the project
-bin\*
+bin/*
 #keep the javascript files compiled from the project (but not those from the tests)
-!bin\www\*
+!bin/www/*
