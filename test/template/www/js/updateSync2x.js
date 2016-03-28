@@ -11,20 +11,14 @@ var app = {
     },
     // Update DOM on a Received Event
     receivedDeviceReady: function () {
-        document.getElementById("deviceready").innerText = "Device is ready (scenario - sync 2x)";
+        document.getElementById("deviceready").innerText = "Device is ready (scenario - update sync)";
         console.log('Received Event: deviceready');
-        /* invoke sync with no UI options */
-        window.codePush.sync(null,
-            {
-                installMode: InstallMode.IMMEDIATE
-            });
-        /* Only send the sync status of the second sync as a test message */
+        app.sendTestMessage("DEVICE_READY_AFTER_UPDATE");
+        /* invoke sync with UI options such that the update will not be installed */
+        window.codePush.sync();
         window.codePush.sync(
             function (status) {
                 app.sendTestMessage("SYNC_STATUS", [status]);
-            },
-            {
-                installMode: InstallMode.IMMEDIATE
             });
     },
     sendTestMessage: function (message, args) {
