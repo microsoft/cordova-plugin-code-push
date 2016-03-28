@@ -1,7 +1,5 @@
-#built by npm install
+#ignore the files built by npm install
 node_modules/*
 
-#built by building the project
-bin/*
-#keep the javascript files compiled from the project (but not those from the tests)
-!bin/www/*
+#ignore the compiled test files
+bin/test/*
