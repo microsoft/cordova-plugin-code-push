@@ -191,7 +191,7 @@ class CodePush implements CodePushCordovaPlugin {
     /**
      * Convenience method for installing updates in one method call.
      * This method is provided for simplicity, and its behavior can be replicated by using window.codePush.checkForUpdate(), RemotePackage's download() and LocalPackage's install() methods.
-     * If another sync is already running, it yields SyncStatus.SYNC_IN_PROGRESS.
+     * If another sync is already running, it yields SyncStatus.IN_PROGRESS.
      *  
      * The algorithm of this method is the following:
      * - Checks for an update on the CodePush server.
