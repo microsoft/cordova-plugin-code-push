@@ -118,7 +118,7 @@ In it's most basic form, this command only requires two parameters: your app nam
 ```shell
 code-push release-cordova <appName> <platform>
 
-code-push release-cordova MyApp ios
+code-push release-cordova MyApp-ios ios
 code-push release-cordova MyApp-Android android
 ```
 
@@ -126,7 +126,7 @@ The `release-cordova` command enables such a simple workflow because it understa
 
 ```shell
 # Release a mandatory update with a changelog
-code-push release-cordova MyApp ios -m -description "Modified the header color"
+code-push release-cordova MyApp-ios ios -m --description "Modified the header color"
 
 # Release a dev Android build to just 1/4 of your end users
 code-push release-cordova MyApp-Android android --rollout 25%
@@ -137,14 +137,14 @@ code-push release-cordova MyApp-Android android --targetBinaryVersion "~1.1.0"
 
 # Release the update now but mark it as disabled
 # so that no users can download it yet
-code-push release-cordova MyApp ios -x
+code-push release-cordova MyApp-ios ios -x
 ```
 
 The CodePush client supports differential updates, so even though you are releasing your app code on every update, your end users will only actually download the files they need. The service handles this automatically so that you can focus on creating awesome apps and we can worry about optimizing end user downloads.
 
 For more details about how the `release-cordova` command works, as well as the various parameters it exposes, refer to the [CLI docs](https://github.com/Microsoft/code-push/tree/master/cli#releasing-updates-cordova). Additionally, if you would prefer to handle running the `cordova prepare` command yourself, and therefore, want an even more flexible solution than `release-cordova`, refer to the [`release` command](https://github.com/Microsoft/code-push/tree/master/cli#releasing-updates-general) for more details.
 
-If you run into any issues, or have any questions/comments/feedback, you can [e-mail us](mailto:codepushfeed@microsoft.com) and/or open a new issue on this repo and we'll responsd ASAP!
+If you run into any issues, or have any questions/comments/feedback, you can [e-mail us](mailto:codepushfeed@microsoft.com) and/or open a new issue on this repo and we'll respond ASAP!
 
 ## API Reference
 
