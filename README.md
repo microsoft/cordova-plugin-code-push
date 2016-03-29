@@ -23,7 +23,7 @@ In order to ensure that your end users always have a functioning version of your
 
 Cordova 5.0.0+ is fully supported, along with the following asociated platforms:
 
-* Android ([cordova-android](https://github.com/apache/cordova-android) 4.0.0+)
+* Android ([cordova-android](https://github.com/apache/cordova-android) 4.0.0+) - *Including CrossWalk!* 
 * iOS ([cordova-ios](https://github.com/apache/cordova-ios) 3.9.0+) - *Note: In order to use CodePush along with the [`cordova-plugin-wkwebview-engine`](https://github.com/apache/cordova-plugin-wkwebview-engine) plugin, you need to install `v1.5.1-beta+`, which includes full support for apps using either WebView.*
 
 To check which versions of each Cordova platform you are currently using, you can run the following command and inspect the `Installed platforms` list:
@@ -111,26 +111,40 @@ If an update is available, it will be silently downloaded, and installed the nex
 
 ## Releasing Updates
 
-Once your app has been configured and distributed to your users, and you've made some changes, it's time to release it to them instantly! To do this, simply perform the following steps:
+Once your app has been configured and distributed to your users, and you've made some code and/or asset changes, it's time to instantly release them! The simplest (and recommended) way to do this is to use the `release-cordova` comand in the CodePush CLI, which will handle preparing and releasing your update to the CodePush server. 
 
-1. Prepare your app's updated `www` folder by running the following command:
+In it's most basic form, this command only requires two parameters: your app name and the platform you are bundling the update for (either `ios` or `android`).
 
-    ```shell
-    cordova prepare
-    ```
-    
-    *NOTE: We are not deploying binaries via CodePush, so running `prepare` is more than enough for this step. The `cordova build` command works as well, since it calls `cordova prepare` behind the scenes, so you can also choose to run the `build` command if you prefer.*
-  
-2. Release the updated app code to the CodePush server via the CodePush [management CLI](https://github.com/Microsoft/code-push/tree/master/cli). To do this, use the following CLIs commands, depending on the platform your update is targetting:
+```shell
+code-push release-cordova <appName> <platform>
 
-| Platform | Release Command                                                                                                                              |
-|----------|----------------------------------------------------------------------------------------------------------------------------------------------|
-| Android  | `code-push release <appName> <path_to_your_app>/platforms/android/assets/www <targetBinaryVersion> --deploymentName <AndroidDeploymentName>` |
-| iOS      | `code-push release <appName> <path_to_your_app>/platforms/ios/www <targetBinaryVersion> --deploymentName <iOSDeploymentName>`                |
+code-push release-cordova MyApp-ios ios
+code-push release-cordova MyApp-Android android
+```
 
-*NOTE: The `<targetBinaryVersion>` parameter needs to be set to the exact value of the `<widget version>` attribute (e.g. `1.0.0`) in your `config.xml` file.*
+The `release-cordova` command enables such a simple workflow because it understands the standard layout of a Cordova app, and therefore, can generate your update and know exactly which files to upload. Additionally, in order to support flexible release strategies, the `release-cordova` command exposes numerous optional parameters that let you customize how the update should be distributed to your end users (e.g. Which binary versions are compatible with it? Should the release be viewed as mandatory?).  
 
-Your update will now be available to your app as soon as it calls either `codePush.checkForUpdate` or `codePush.sync`.
+```shell
+# Release a mandatory update with a changelog
+code-push release-cordova MyApp-ios ios -m --description "Modified the header color"
+
+# Release a dev Android build to just 1/4 of your end users
+code-push release-cordova MyApp-Android android --rollout 25%
+
+# Release an update that targets users running any 1.1.* binary, as opposed to
+# limiting the update to exact version name in the build.gradle file
+code-push release-cordova MyApp-Android android --targetBinaryVersion "~1.1.0"
+
+# Release the update now but mark it as disabled
+# so that no users can download it yet
+code-push release-cordova MyApp-ios ios -x
+```
+
+The CodePush client supports differential updates, so even though you are releasing your app code on every update, your end users will only actually download the files they need. The service handles this automatically so that you can focus on creating awesome apps and we can worry about optimizing end user downloads.
+
+For more details about how the `release-cordova` command works, as well as the various parameters it exposes, refer to the [CLI docs](https://github.com/Microsoft/code-push/tree/master/cli#releasing-updates-cordova). Additionally, if you would prefer to handle running the `cordova prepare` command yourself, and therefore, want an even more flexible solution than `release-cordova`, refer to the [`release` command](https://github.com/Microsoft/code-push/tree/master/cli#releasing-updates-general) for more details.
+
+If you run into any issues, or have any questions/comments/feedback, you can [e-mail us](mailto:codepushfeed@microsoft.com) and/or open a new issue on this repo and we'll respond ASAP!
 
 ## API Reference
 
