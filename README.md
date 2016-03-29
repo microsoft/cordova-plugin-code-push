@@ -113,7 +113,7 @@ If an update is available, it will be silently downloaded, and installed the nex
 
 Once your app has been configured and distributed to your users, and you've made some code and/or asset changes, it's time to instantly release them! The simplest (and recommended) way to do this is to use the `release-cordova` comand in the CodePush CLI, which will handle preparing and releasing your update to the CodePush server. 
 
-In it's most basic form, this command only requires two parameters: your app name and the platform you are bundling the update for (either `ios` or `android`).
+In it's most basic form, this command only requires two parameters: your app name and the platform you are creating the update for (either `ios` or `android`).
 
 ```shell
 code-push release-cordova <appName> <platform>
@@ -132,7 +132,7 @@ code-push release-cordova MyApp-ios ios -m --description "Modified the header co
 code-push release-cordova MyApp-Android android --rollout 25%
 
 # Release an update that targets users running any 1.1.* binary, as opposed to
-# limiting the update to exact version name in the build.gradle file
+# limiting the update to exact version name in the config.xml file
 code-push release-cordova MyApp-Android android --targetBinaryVersion "~1.1.0"
 
 # Release the update now but mark it as disabled
