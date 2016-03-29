@@ -9,6 +9,7 @@
  * 
  * NOTE: Adding new statuses or changing old statuses requires an update to CodePush.sync(), which must know which callbacks are results and which are not!
  *       Also, don't forget to change the TestMessage module in ServerUtils!
+ *       AND THE codePush.d.ts (typings) file!!!
  */
 enum SyncStatus {
     /**
