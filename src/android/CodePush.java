@@ -1,6 +1,7 @@
 package com.microsoft.cordova;
 
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.ConfigXmlParser;
@@ -11,6 +12,7 @@ import org.apache.cordova.CordovaWebView;
 import org.json.JSONException;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 
 /**
@@ -26,6 +28,7 @@ public class CodePush extends CordovaPlugin {
     private boolean pluginDestroyed = false;
     private boolean didUpdate = false;
     private boolean didStartApp = false;
+    private boolean isRunningBinaryVersion = true;
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
@@ -42,10 +45,15 @@ public class CodePush extends CordovaPlugin {
         } else if ("getDeploymentKey".equals(action)) {
             this.returnStringPreference("codepushdeploymentkey", callbackContext);
             return true;
+        } else if ("isRunningBinaryVersion".equals(action)) {
+            callbackContext.success(isRunningBinaryVersion ? 1 : 0);
+            return true;
         } else if ("getNativeBuildTime".equals(action)) {
             return execGetNativeBuildTime(callbackContext);
         } else if ("getAppVersion".equals(action)) {
             return execGetAppVersion(callbackContext);
+        } else if ("getBinaryHash".equals(action)) {
+            return execGetBinaryHash(callbackContext);
         } else if ("preInstall".equals(action)) {
             return execPreInstall(args, callbackContext);
         } else if ("install".equals(action)) {
@@ -65,8 +73,31 @@ public class CodePush extends CordovaPlugin {
         }
     }
 
-    private boolean execUpdateSuccess(CallbackContext callbackContext) {
+    private boolean execGetBinaryHash(final CallbackContext callbackContext) {
+        String binaryHash = codePushPackageManager.getCachedBinaryHash();
+        if (binaryHash == null) {
+            new AsyncTask<Void, Void, Void>() {
+                @Override
+                protected Void doInBackground(Void... params) {
+                    try {
+                        binaryHash = UpdateHashUtils.getBinaryHash(cordova.getActivity());
+                        codePushPackageManager.saveBinaryHash(binaryHash);
+                        callbackContext.success(binaryHash);
+                    } catch (IOException e) {
+                        callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
+                    }
 
+                    return null;
+                }
+            }.execute();
+        } else {
+            callbackContext.success(binaryHash);
+        }
+
+        return true;
+    }
+
+    private boolean execUpdateSuccess(CallbackContext callbackContext) {
         if (this.codePushPackageManager.isFirstRun()) {
             this.codePushPackageManager.saveFirstRunFlag();
             /* save reporting status for first install */
@@ -242,6 +273,7 @@ public class CodePush extends CordovaPlugin {
     }
 
     private void handleAppStart() {
+        this.isRunningBinaryVersion = true;
         try {
             /* check if we have a deployed package already */
             CodePushPackageMetadata deployedPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
@@ -257,6 +289,7 @@ public class CodePush extends CordovaPlugin {
                                 File startPage = this.getStartPageForPackage(deployedPackageMetadata.localPath);
                                 if (startPage != null) {
                                     /* file exists */
+                                    this.isRunningBinaryVersion = false;
                                     navigateToFile(startPage);
                                 }
                             }

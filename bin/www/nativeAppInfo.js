@@ -23,6 +23,11 @@ var NativeAppInfo = (function () {
         var versionError = function () { callback(new Error("Could not get application version."), null); };
         cordova.exec(versionSuccess, versionError, "CodePush", "getAppVersion", []);
     };
+    NativeAppInfo.getBinaryHash = function (callback) {
+        var binaryHashSuccess = function (binaryHash) { callback(null, binaryHash); };
+        var binaryHashError = function () { callback(new Error("Could not get binary hash."), null); };
+        cordova.exec(binaryHashSuccess, binaryHashError, "CodePush", "getBinaryHash", []);
+    };
     NativeAppInfo.getServerURL = function (serverCallback) {
         var serverSuccess = function (serverURL) { serverCallback(null, serverURL); };
         var serverError = function () { serverCallback(null, DefaultServerUrl); };
@@ -59,6 +64,15 @@ var NativeAppInfo = (function () {
             callback(false);
         };
         cordova.exec(win, fail, "CodePush", "isPendingUpdate", []);
+    };
+    NativeAppInfo.isRunningBinaryVersion = function (callback) {
+        var win = function (runningBinaryVersion) {
+            callback(!!runningBinaryVersion);
+        };
+        var fail = function () {
+            callback(false);
+        };
+        cordova.exec(win, fail, "CodePush", "isRunningBinaryVersion", []);
     };
     return NativeAppInfo;
 }());

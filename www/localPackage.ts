@@ -36,7 +36,7 @@ class LocalPackage extends Package implements ILocalPackage {
     localPath: string;
     
     /**
-     * Indicates if this is the current application run is the first one after the package was applied.
+     * Indicates if the current application run is the first one after the package was applied.
      */
     isFirstRun: boolean;
     
@@ -209,9 +209,23 @@ class LocalPackage extends Package implements ILocalPackage {
         var handleError = (e: Error) => {
             copyCallback && copyCallback(e, null);
         };
-
-        FileUtil.getDataDirectory(newPackageLocation, true, (deployDirError: Error, deployDir: DirectoryEntry) => {
-            LocalPackage.getPackage(LocalPackage.PackageInfoFile, (currentPackage: LocalPackage) => {
+        
+        NativeAppInfo.isRunningBinaryVersion((isRunningBinaryVersion: boolean) => {
+            var getCurrentPackageDirectory: (callback: Callback<DirectoryEntry>) => void;
+            if (isRunningBinaryVersion) {
+                newPackageLocation = newPackageLocation + "/www";
+                getCurrentPackageDirectory = (getCurrentPackageDirectoryCallback: Callback<DirectoryEntry>) => {
+                    FileUtil.getApplicationDirectory("www", getCurrentPackageDirectoryCallback);
+                };
+            } else {
+                getCurrentPackageDirectory = (getCurrentPackageDirectoryCallback: Callback<DirectoryEntry>) => {
+                    LocalPackage.getPackage(LocalPackage.PackageInfoFile, (currentPackage: LocalPackage) => {
+                        FileUtil.getDataDirectory(currentPackage.localPath, false, getCurrentPackageDirectoryCallback);
+                    }, handleError);
+                };
+            }
+            
+            FileUtil.getDataDirectory(newPackageLocation, true, (deployDirError: Error, deployDir: DirectoryEntry) => {
                 if (deployDirError) {
                     handleError(new Error("Could not acquire the source/destination folders. "));
                 } else {
@@ -222,10 +236,10 @@ class LocalPackage extends Package implements ILocalPackage {
                     var fail = (fileSystemError: FileError) => {
                         copyCallback && copyCallback(FileUtil.fileErrorToError(fileSystemError), null);
                     };
-
-                    FileUtil.getDataDirectory(currentPackage.localPath, false, CodePushUtil.getNodeStyleCallbackFor(success, fail));
+                    
+                    getCurrentPackageDirectory(CodePushUtil.getNodeStyleCallbackFor(success, fail));
                 }
-            }, handleError);
+            });
         });
     }
 
@@ -382,15 +396,27 @@ class LocalPackage extends Package implements ILocalPackage {
     public static getPackageInfoOrDefault(packageFile: string, packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
         var packageFailure = (error: Error) => {
             NativeAppInfo.getApplicationVersion((appVersionError: Error, appVersion: string) => {
-                if (appVersionError) {
-                    CodePushUtil.logError("Could not get application version." + appVersionError);
-                    packageError(appVersionError);
-                } else {
+                NativeAppInfo.getBinaryHash((binaryHashError: Error, binaryHash: string) => {
+                    /** 
+                     * For the default package we need the app version, 
+                     * and ideally the hash of the binary contents.
+                     */
+                    if (appVersionError) {
+                        CodePushUtil.logError("Could not get application version." + appVersionError);
+                        packageError(appVersionError);
+                        return;
+                    } 
+                    
                     var defaultPackage: LocalPackage = new LocalPackage();
-                    /* for the default package, we only need the app version */
                     defaultPackage.appVersion = appVersion;
+                    if (binaryHashError) {
+                        CodePushUtil.logError("Could not get binary hash." + binaryHashError);
+                    } else {
+                        defaultPackage.packageHash = binaryHash;
+                    }
+                    
                     packageSuccess(defaultPackage);
-                }
+                });
             });
         };
 

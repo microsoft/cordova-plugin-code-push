@@ -7,11 +7,40 @@
 #import "InstallOptions.h"
 #import "InstallMode.h"
 #import "Reporting.h"
+#import "UpdateHashUtils.h"
 
 @implementation CodePush
 
 bool didUpdate = false;
 bool pendingInstall = false;
+bool isRunningBinaryVersion = true;
+
+- (void)isRunningBinaryVersion:(CDVInvokedUrlCommand *)command {
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                                         messageAsInt:isRunningBinaryVersion ? 1 : 0];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)getBinaryHash:(CDVInvokedUrlCommand *)command {
+    CDVPluginResult* pluginResult = nil;
+    NSString* binaryHash = [CodePushPackageManager getCachedBinaryHash];
+    if (binaryHash) {
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                         messageAsString:binaryHash];
+    } else {
+        NSError* error;
+        binaryHash = [UpdateHashUtils getBinaryHash:&error];
+        if (error) {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
+                                             messageAsString:[@"An error occurred when trying to get the hash of the binary contents. " stringByAppendingString:error.description]];
+        } else {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                             messageAsString:binaryHash];
+        }
+    }
+    
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
 
 - (void)handleUnconfirmedInstall:(BOOL)navigate {
     if ([CodePushPackageManager installNeedsConfirmation]) {
@@ -164,6 +193,7 @@ bool pendingInstall = false;
 }
 
 - (void)handleAppStart {
+    isRunningBinaryVersion = true;
     // check if we have a deployed package
     CodePushPackageMetadata* deployedPackageMetadata = [CodePushPackageManager getCurrentPackageMetadata];
     if (deployedPackageMetadata) {
@@ -174,6 +204,7 @@ bool pendingInstall = false;
             if ([deployedPackageNativeBuildTime isEqualToString: applicationBuildTime] ) {
                 // same version, safe to launch from local storage
                 if (deployedPackageMetadata.localPath) {
+                    isRunningBinaryVersion = false;
                     [self redirectStartPageToURL: deployedPackageMetadata.localPath];
                 }
             }

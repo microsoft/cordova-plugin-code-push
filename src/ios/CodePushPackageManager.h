@@ -8,6 +8,7 @@
 + (CodePushPackageMetadata*)getCurrentPackageMetadata;
 + (void)clearFailedUpdates;
 + (void)cleanDeployments;
++ (NSString*)getCachedBinaryHash;
 + (BOOL)isFailedHash:(NSString*)packageHash;
 + (void)savePendingInstall:(InstallOptions *)installOptions;
 + (InstallOptions*)getPendingInstall;
