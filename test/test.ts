@@ -123,44 +123,44 @@ function setupScenario(scenarioPath: string): Q.Promise<void> {
 }
 
 function createDefaultResponse(): su.CheckForUpdateResponseMock {
-    var defaultReponse = new su.CheckForUpdateResponseMock();
+    var defaultResponse = new su.CheckForUpdateResponseMock();
 
-    defaultReponse.downloadURL = "";
-    defaultReponse.description = "";
-    defaultReponse.isAvailable = false;
-    defaultReponse.isMandatory = false;
-    defaultReponse.appVersion = "";
-    defaultReponse.packageHash = "";
-    defaultReponse.label = "";
-    defaultReponse.packageSize = 0;
-    defaultReponse.updateAppVersion = false;
+    defaultResponse.downloadURL = "";
+    defaultResponse.description = "";
+    defaultResponse.isAvailable = false;
+    defaultResponse.isMandatory = false;
+    defaultResponse.appVersion = "";
+    defaultResponse.packageHash = "";
+    defaultResponse.label = "";
+    defaultResponse.packageSize = 0;
+    defaultResponse.updateAppVersion = false;
 
-    return defaultReponse;
+    return defaultResponse;
 }
 
 function createMockResponse(): su.CheckForUpdateResponseMock {
-    var updateReponse = new su.CheckForUpdateResponseMock();
-    updateReponse.isAvailable = true;
-    updateReponse.appVersion = "1.0.0";
-    updateReponse.downloadURL = "mock.url/download";
-    updateReponse.isMandatory = true;
-    updateReponse.label = "mock-update";
-    updateReponse.packageHash = "12345-67890";
-    updateReponse.packageSize = 12345;
-    updateReponse.updateAppVersion = false;
+    var updateResponse = new su.CheckForUpdateResponseMock();
+    updateResponse.isAvailable = true;
+    updateResponse.appVersion = "1.0.0";
+    updateResponse.downloadURL = "mock.url/download";
+    updateResponse.isMandatory = true;
+    updateResponse.label = "mock-update";
+    updateResponse.packageHash = "12345-67890";
+    updateResponse.packageSize = 12345;
+    updateResponse.updateAppVersion = false;
 
-    return updateReponse;
+    return updateResponse;
 }
 
 var getMockResponse = (randomHash: boolean): su.CheckForUpdateResponseMock => {
-    var updateReponse = createMockResponse();
-    updateReponse.downloadURL = serverUrl + "/download";
+    var updateResponse = createMockResponse();
+    updateResponse.downloadURL = serverUrl + "/download";
     /* for some tests we need unique hashes to avoid conflicts - the application is not uninstalled between tests
        and we store the failed hashes in preferences */
     if (randomHash) {
-        updateReponse.packageHash = "randomHash-" + Math.floor(Math.random() * 10000);
+        updateResponse.packageHash = "randomHash-" + Math.floor(Math.random() * 10000);
     }
-    return updateReponse;
+    return updateResponse;
 };
 
 function setupUpdateProject(scenarioPath: string, version: string): Q.Promise<void> {
@@ -221,11 +221,11 @@ describe("window.codePush", function() {
         });
 
         it("window.codePush.checkForUpdate.noUpdate", function(done) {
-            var noUpdateReponse = createDefaultResponse();
-            noUpdateReponse.isAvailable = false;
-            noUpdateReponse.appVersion = "0.0.1";
+            var noUpdateResponse = createDefaultResponse();
+            noUpdateResponse.isAvailable = false;
+            noUpdateResponse.appVersion = "0.0.1";
 
-            mockResponse = { updateInfo: noUpdateReponse };
+            mockResponse = { updateInfo: noUpdateResponse };
 
             testMessageCallback = (requestBody: any) => {
                 try {
@@ -241,11 +241,11 @@ describe("window.codePush", function() {
         });
 
         it("window.codePush.checkForUpdate.noUpdate.updateAppVersion", function(done) {
-            var updateAppVersionReponse = createDefaultResponse();
-            updateAppVersionReponse.updateAppVersion = true;
-            updateAppVersionReponse.appVersion = "2.0.0";
+            var updateAppVersionResponse = createDefaultResponse();
+            updateAppVersionResponse.updateAppVersion = true;
+            updateAppVersionResponse.appVersion = "2.0.0";
 
-            mockResponse = { updateInfo: updateAppVersionReponse };
+            mockResponse = { updateInfo: updateAppVersionResponse };
 
             testMessageCallback = (requestBody: any) => {
                 try {
@@ -261,19 +261,19 @@ describe("window.codePush", function() {
         });
 
         it("window.codePush.checkForUpdate.update", function(done) {
-            var updateReponse = createMockResponse();
-            mockResponse = { updateInfo: updateReponse };
+            var updateResponse = createMockResponse();
+            mockResponse = { updateInfo: updateResponse };
 
             testMessageCallback = (requestBody: any) => {
                 try {
                     assert.equal(su.TestMessage.CHECK_UPDATE_AVAILABLE, requestBody.message);
                     assert.notEqual(null, requestBody.args[0]);
                     var remotePackage: IRemotePackage = requestBody.args[0];
-                    assert.equal(remotePackage.downloadUrl, updateReponse.downloadURL);
-                    assert.equal(remotePackage.isMandatory, updateReponse.isMandatory);
-                    assert.equal(remotePackage.label, updateReponse.label);
-                    assert.equal(remotePackage.packageHash, updateReponse.packageHash);
-                    assert.equal(remotePackage.packageSize, updateReponse.packageSize);
+                    assert.equal(remotePackage.downloadUrl, updateResponse.downloadURL);
+                    assert.equal(remotePackage.isMandatory, updateResponse.isMandatory);
+                    assert.equal(remotePackage.label, updateResponse.label);
+                    assert.equal(remotePackage.packageHash, updateResponse.packageHash);
+                    assert.equal(remotePackage.packageSize, updateResponse.packageSize);
                     assert.equal(remotePackage.deploymentKey, targetPlatform.getDefaultDeploymentKey());
                     done();
                 } catch (e) {
@@ -322,8 +322,8 @@ describe("window.codePush", function() {
         });
 
         it("window.codePush.checkForUpdate.customKey.update", function(done) {
-            var updateReponse = createMockResponse();
-            mockResponse = { updateInfo: updateReponse };
+            var updateResponse = createMockResponse();
+            mockResponse = { updateInfo: updateResponse };
 
             updateCheckCallback = (request: any) => {
                 try {
@@ -352,9 +352,9 @@ describe("window.codePush", function() {
         });
 
         var getMockResponse = (): su.CheckForUpdateResponseMock => {
-            var updateReponse = createMockResponse();
-            updateReponse.downloadURL = serverUrl + "/download";
-            return updateReponse;
+            var updateResponse = createMockResponse();
+            updateResponse.downloadURL = serverUrl + "/download";
+            return updateResponse;
         };
 
         it("remotePackage.download.success", function(done) {
@@ -407,9 +407,9 @@ describe("window.codePush", function() {
         });
 
         var getMockResponse = (): su.CheckForUpdateResponseMock => {
-            var updateReponse = createMockResponse();
-            updateReponse.downloadURL = serverUrl + "/download";
-            return updateReponse;
+            var updateResponse = createMockResponse();
+            updateResponse.downloadURL = serverUrl + "/download";
+            return updateResponse;
         };
 
         it("localPackage.install.unzip.error", function(done) {
@@ -817,10 +817,10 @@ describe("window.codePush", function() {
             });
 
             it("window.codePush.sync.noupdate", function(done) {
-                var noUpdateReponse = createDefaultResponse();
-                noUpdateReponse.isAvailable = false;
-                noUpdateReponse.appVersion = "0.0.1";
-                mockResponse = { updateInfo: noUpdateReponse };
+                var noUpdateResponse = createDefaultResponse();
+                noUpdateResponse.isAvailable = false;
+                noUpdateResponse.appVersion = "0.0.1";
+                mockResponse = { updateInfo: noUpdateResponse };
 
                 Q({})
                     .then<void>(p => {
@@ -925,10 +925,10 @@ describe("window.codePush", function() {
                     })
                     .then<void>(() => {
                         var deferred = Q.defer<void>();
-                        var noUpdateReponse = createDefaultResponse();
-                        noUpdateReponse.isAvailable = false;
-                        noUpdateReponse.appVersion = "0.0.1";
-                        mockResponse = { updateInfo: noUpdateReponse };
+                        var noUpdateResponse = createDefaultResponse();
+                        noUpdateResponse.isAvailable = false;
+                        noUpdateResponse.appVersion = "0.0.1";
+                        mockResponse = { updateInfo: noUpdateResponse };
                         testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                         projectManager.restartApplication(targetPlatform, TestNamespace, testRunDirectory, targetEmulator).done();
                         return deferred.promise;
@@ -949,10 +949,10 @@ describe("window.codePush", function() {
             });
 
             it("window.codePush.sync.2x.noupdate", function(done) {
-                var noUpdateReponse = createDefaultResponse();
-                noUpdateReponse.isAvailable = false;
-                noUpdateReponse.appVersion = "0.0.1";
-                mockResponse = { updateInfo: noUpdateReponse };
+                var noUpdateResponse = createDefaultResponse();
+                noUpdateResponse.isAvailable = false;
+                noUpdateResponse.appVersion = "0.0.1";
+                mockResponse = { updateInfo: noUpdateResponse };
 
                 Q({})
                     .then<void>(p => {
@@ -1065,10 +1065,10 @@ describe("window.codePush", function() {
                     })
                     .then<void>(() => {
                         var deferred = Q.defer<void>();
-                        var noUpdateReponse = createDefaultResponse();
-                        noUpdateReponse.isAvailable = false;
-                        noUpdateReponse.appVersion = "0.0.1";
-                        mockResponse = { updateInfo: noUpdateReponse };
+                        var noUpdateResponse = createDefaultResponse();
+                        noUpdateResponse.isAvailable = false;
+                        noUpdateResponse.appVersion = "0.0.1";
+                        mockResponse = { updateInfo: noUpdateResponse };
                         testMessageCallback = verifyMessages([
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE,
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_IN_PROGRESS])],
