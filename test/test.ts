@@ -86,7 +86,7 @@ function setupScenario(scenarioPath: string): Q.Promise<void> {
         updateCheckCallback && updateCheckCallback(req);
         res.send(mockResponse);
         console.log("Update check called from the app.");
-        console.log("Request: " + req);
+        console.log("Request: " + JSON.stringify(req.query));
     });
 
     app.get("/download", function(req: any, res: any) {
@@ -219,7 +219,7 @@ describe("window.codePush", function() {
         after(() => {
             cleanupScenario();
         });
-
+        
         it("window.codePush.checkForUpdate.noUpdate", function(done) {
             var noUpdateResponse = createDefaultResponse();
             noUpdateResponse.isAvailable = false;
@@ -240,6 +240,34 @@ describe("window.codePush", function() {
             projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
         });
 
+        it("window.codePush.checkForUpdate.sendsBinaryHash", function(done) {
+            var noUpdateResponse = createDefaultResponse();
+            noUpdateResponse.isAvailable = false;
+            noUpdateResponse.appVersion = "0.0.1";
+
+            updateCheckCallback = (request: any) => {
+                try {
+                    assert(request.query.packageHash);
+                } catch (e) {
+                    done(e);
+                }
+            };
+            
+            mockResponse = { updateInfo: noUpdateResponse };
+
+            testMessageCallback = (requestBody: any) => {
+                try {
+                    assert.equal(su.TestMessage.CHECK_UP_TO_DATE, requestBody.message);
+                    done();
+                } catch (e) {
+                    done(e);
+                }
+            };
+
+            console.log("Running project...");
+            projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+        });
+        
         it("window.codePush.checkForUpdate.noUpdate.updateAppVersion", function(done) {
             var updateAppVersionResponse = createDefaultResponse();
             updateAppVersionResponse.updateAppVersion = true;
@@ -432,6 +460,32 @@ describe("window.codePush", function() {
             projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
         });
 
+        it.only("localPackage.install.handlesDiff.againstBinary", function(done) {
+
+            mockResponse = { updateInfo: getMockResponse() };
+
+            /* create an update */
+            setupUpdateProject(UpdateNotifyApplicationReady, "Diff Update 1")
+                .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform, /*isDiff*/ true))
+                .then<void>((updatePath: string) => {
+                    var deferred = Q.defer<void>();
+                    mockUpdatePackagePath = updatePath;
+                    testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED, su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS], deferred);
+                    console.log("Running project...");
+                    projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+                    return deferred.promise;
+                })
+                .then<void>(() => {
+                    /* run the app again to ensure it was not reverted */
+                    var deferred = Q.defer<void>();
+                    testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS], deferred);
+                    console.log("Restarting application...");
+                    projectManager.restartApplication(targetPlatform, TestNamespace, testRunDirectory, targetEmulator);
+                    return deferred.promise;
+                })
+                .done(done, done);
+        });
+        
         it("localPackage.install.immediately", function(done) {
 
             mockResponse = { updateInfo: getMockResponse() };

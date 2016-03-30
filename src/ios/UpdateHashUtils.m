@@ -1,10 +1,10 @@
 #include <CommonCrypto/CommonDigest.h>
 
-@implementation UpdateHashUtils
+@implementation UpdateHashUtils : NSObject
 
 + (NSString*)binaryAssetsPath
 {
-    return [[[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"assets"] stringByAppendingPathComponent:@"www"];
+    return [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"www"];
 }
 
 + (void)addFolderEntriesToManifest:(NSString*)folderPath

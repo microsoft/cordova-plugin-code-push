@@ -74,13 +74,13 @@ public class CodePush extends CordovaPlugin {
     }
 
     private boolean execGetBinaryHash(final CallbackContext callbackContext) {
-        String binaryHash = codePushPackageManager.getCachedBinaryHash();
-        if (binaryHash == null) {
+        String cachedBinaryHash = codePushPackageManager.getCachedBinaryHash();
+        if (cachedBinaryHash == null) {
             new AsyncTask<Void, Void, Void>() {
                 @Override
                 protected Void doInBackground(Void... params) {
                     try {
-                        binaryHash = UpdateHashUtils.getBinaryHash(cordova.getActivity());
+                        String binaryHash = UpdateHashUtils.getBinaryHash(cordova.getActivity());
                         codePushPackageManager.saveBinaryHash(binaryHash);
                         callbackContext.success(binaryHash);
                     } catch (IOException e) {
@@ -91,7 +91,7 @@ public class CodePush extends CordovaPlugin {
                 }
             }.execute();
         } else {
-            callbackContext.success(binaryHash);
+            callbackContext.success(cachedBinaryHash);
         }
 
         return true;
