@@ -249,6 +249,11 @@ declare enum SyncStatus {
     ERROR,
     
     /**
+     * There is an ongoing sync in progress, so this attempt to sync has been aborted.
+     */
+    IN_PROGRESS,
+    
+    /**
      * Intermediate status - the plugin is about to check for updates.
      */
     CHECKING_FOR_UPDATE,

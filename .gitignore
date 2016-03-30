@@ -1,0 +1,5 @@
+#ignore the files built by npm install
+node_modules/*
+
+#ignore the compiled test files
+bin/test/*
