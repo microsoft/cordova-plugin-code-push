@@ -115,21 +115,6 @@ class NativeAppInfo {
 
         cordova.exec(win, fail, "CodePush", "isPendingUpdate", []);
     }
-    
-    /**
-     * Checks with the native side if it is running the version of the app contained in the binary.
-     */
-    public static isRunningBinaryVersion(callback: SuccessCallback<boolean>): void {
-        var win = (runningBinaryVersion?: number) => {
-            callback(!!runningBinaryVersion);
-        };
-
-        var fail = () => {
-            callback(false);
-        };
-
-        cordova.exec(win, fail, "CodePush", "isRunningBinaryVersion", []);
-    }
 }
 
 export = NativeAppInfo;

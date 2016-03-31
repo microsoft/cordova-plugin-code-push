@@ -28,7 +28,6 @@ public class CodePush extends CordovaPlugin {
     private boolean pluginDestroyed = false;
     private boolean didUpdate = false;
     private boolean didStartApp = false;
-    private boolean isRunningBinaryVersion = true;
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
@@ -44,9 +43,6 @@ public class CodePush extends CordovaPlugin {
             return true;
         } else if ("getDeploymentKey".equals(action)) {
             this.returnStringPreference("codepushdeploymentkey", callbackContext);
-            return true;
-        } else if ("isRunningBinaryVersion".equals(action)) {
-            callbackContext.success(isRunningBinaryVersion ? 1 : 0);
             return true;
         } else if ("getNativeBuildTime".equals(action)) {
             return execGetNativeBuildTime(callbackContext);
@@ -273,7 +269,6 @@ public class CodePush extends CordovaPlugin {
     }
 
     private void handleAppStart() {
-        this.isRunningBinaryVersion = true;
         try {
             /* check if we have a deployed package already */
             CodePushPackageMetadata deployedPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
@@ -289,7 +284,6 @@ public class CodePush extends CordovaPlugin {
                                 File startPage = this.getStartPageForPackage(deployedPackageMetadata.localPath);
                                 if (startPage != null) {
                                     /* file exists */
-                                    this.isRunningBinaryVersion = false;
                                     navigateToFile(startPage);
                                 }
                             }

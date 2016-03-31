@@ -9,6 +9,7 @@
 + (void)clearFailedUpdates;
 + (void)cleanDeployments;
 + (NSString*)getCachedBinaryHash;
++ (void)saveBinaryHash:(NSString*)binaryHash;
 + (BOOL)isFailedHash:(NSString*)packageHash;
 + (void)savePendingInstall:(InstallOptions *)installOptions;
 + (InstallOptions*)getPendingInstall;

@@ -65,15 +65,6 @@ var NativeAppInfo = (function () {
         };
         cordova.exec(win, fail, "CodePush", "isPendingUpdate", []);
     };
-    NativeAppInfo.isRunningBinaryVersion = function (callback) {
-        var win = function (runningBinaryVersion) {
-            callback(!!runningBinaryVersion);
-        };
-        var fail = function () {
-            callback(false);
-        };
-        cordova.exec(win, fail, "CodePush", "isRunningBinaryVersion", []);
-    };
     return NativeAppInfo;
 }());
 module.exports = NativeAppInfo;

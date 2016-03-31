@@ -210,22 +210,8 @@ class LocalPackage extends Package implements ILocalPackage {
             copyCallback && copyCallback(e, null);
         };
         
-        NativeAppInfo.isRunningBinaryVersion((isRunningBinaryVersion: boolean) => {
-            var getCurrentPackageDirectory: (callback: Callback<DirectoryEntry>) => void;
-            if (isRunningBinaryVersion) {
-                newPackageLocation = newPackageLocation + "/www";
-                getCurrentPackageDirectory = (getCurrentPackageDirectoryCallback: Callback<DirectoryEntry>) => {
-                    FileUtil.getApplicationDirectory("www", getCurrentPackageDirectoryCallback);
-                };
-            } else {
-                getCurrentPackageDirectory = (getCurrentPackageDirectoryCallback: Callback<DirectoryEntry>) => {
-                    LocalPackage.getPackage(LocalPackage.PackageInfoFile, (currentPackage: LocalPackage) => {
-                        FileUtil.getDataDirectory(currentPackage.localPath, false, getCurrentPackageDirectoryCallback);
-                    }, handleError);
-                };
-            }
-            
-            FileUtil.getDataDirectory(newPackageLocation, true, (deployDirError: Error, deployDir: DirectoryEntry) => {
+        var doCopy = (destinationPath: string, getCurrentPackageDirectory: (callback: Callback<DirectoryEntry>) => void) => {
+            FileUtil.getDataDirectory(destinationPath, true, (deployDirError: Error, deployDir: DirectoryEntry) => {
                 if (deployDirError) {
                     handleError(new Error("Could not acquire the source/destination folders. "));
                 } else {
@@ -240,7 +226,24 @@ class LocalPackage extends Package implements ILocalPackage {
                     getCurrentPackageDirectory(CodePushUtil.getNodeStyleCallbackFor(success, fail));
                 }
             });
-        });
+        };
+        
+        var packageFailure = (error: Error) => {
+            // Currently running the version in the binary, handle diff against that version.
+            doCopy(newPackageLocation + "/www", (getCurrentPackageDirectoryCallback: Callback<DirectoryEntry>) => {
+                FileUtil.getApplicationDirectory("www", getCurrentPackageDirectoryCallback);
+            });
+        };
+
+        var packageSuccess = (currentPackage: LocalPackage) => {
+            doCopy(newPackageLocation, (getCurrentPackageDirectoryCallback: Callback<DirectoryEntry>) => {
+                LocalPackage.getPackage(LocalPackage.PackageInfoFile, (currentPackage: LocalPackage) => {
+                    FileUtil.getDataDirectory(currentPackage.localPath, false, getCurrentPackageDirectoryCallback);
+                }, handleError);
+            });
+        };
+        
+        LocalPackage.getPackage(LocalPackage.PackageInfoFile, packageSuccess, packageFailure);
     }
 
     private static handleDiffDeployment(newPackageLocation: string, diffManifest: FileEntry, diffCallback: Callback<DirectoryEntry>): void {
@@ -396,17 +399,17 @@ class LocalPackage extends Package implements ILocalPackage {
     public static getPackageInfoOrDefault(packageFile: string, packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
         var packageFailure = (error: Error) => {
             NativeAppInfo.getApplicationVersion((appVersionError: Error, appVersion: string) => {
+                /** 
+                 * For the default package we need the app version, 
+                 * and ideally the hash of the binary contents.
+                 */
+                if (appVersionError) {
+                    CodePushUtil.logError("Could not get application version." + appVersionError);
+                    packageError(appVersionError);
+                    return;
+                } 
+                
                 NativeAppInfo.getBinaryHash((binaryHashError: Error, binaryHash: string) => {
-                    /** 
-                     * For the default package we need the app version, 
-                     * and ideally the hash of the binary contents.
-                     */
-                    if (appVersionError) {
-                        CodePushUtil.logError("Could not get application version." + appVersionError);
-                        packageError(appVersionError);
-                        return;
-                    } 
-                    
                     var defaultPackage: LocalPackage = new LocalPackage();
                     defaultPackage.appVersion = appVersion;
                     if (binaryHashError) {

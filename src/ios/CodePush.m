@@ -13,13 +13,6 @@
 
 bool didUpdate = false;
 bool pendingInstall = false;
-bool isRunningBinaryVersion = true;
-
-- (void)isRunningBinaryVersion:(CDVInvokedUrlCommand *)command {
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
-                                                         messageAsInt:isRunningBinaryVersion ? 1 : 0];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-}
 
 - (void)getBinaryHash:(CDVInvokedUrlCommand *)command {
     CDVPluginResult* pluginResult = nil;
@@ -34,6 +27,7 @@ bool isRunningBinaryVersion = true;
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
                                              messageAsString:[@"An error occurred when trying to get the hash of the binary contents. " stringByAppendingString:error.description]];
         } else {
+            [CodePushPackageManager saveBinaryHash:binaryHash];
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
                                              messageAsString:binaryHash];
         }
@@ -193,7 +187,6 @@ bool isRunningBinaryVersion = true;
 }
 
 - (void)handleAppStart {
-    isRunningBinaryVersion = true;
     // check if we have a deployed package
     CodePushPackageMetadata* deployedPackageMetadata = [CodePushPackageManager getCurrentPackageMetadata];
     if (deployedPackageMetadata) {
@@ -204,7 +197,6 @@ bool isRunningBinaryVersion = true;
             if ([deployedPackageNativeBuildTime isEqualToString: applicationBuildTime] ) {
                 // same version, safe to launch from local storage
                 if (deployedPackageMetadata.localPath) {
-                    isRunningBinaryVersion = false;
                     [self redirectStartPageToURL: deployedPackageMetadata.localPath];
                 }
             }
