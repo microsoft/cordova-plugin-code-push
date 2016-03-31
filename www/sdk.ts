@@ -14,13 +14,13 @@ class Sdk {
 
     private static DefaultAcquisitionManager: AcquisitionManager;
     private static DefaultConfiguration: Configuration;
-    
+
     /**
      * Reads the CodePush configuration and creates an AcquisitionManager instance using it.
      */
     public static getAcquisitionManager(callback: Callback<AcquisitionManager>, userDeploymentKey?: string, contentType?: string): void {
 
-        var resolveManager = (defaultInstance: AcquisitionManager): void => {
+        var resolveManager = (): void => {
             if (userDeploymentKey || contentType) {
                 var customConfiguration: Configuration = {
                     deploymentKey: (userDeploymentKey ? userDeploymentKey : Sdk.DefaultConfiguration.deploymentKey),
@@ -32,18 +32,20 @@ class Sdk {
                 var requester = new HttpRequester(contentType);
                 var customAcquisitionManager: AcquisitionManager = new AcquisitionManager(requester, customConfiguration);
                 callback(null, customAcquisitionManager);
-            } else {
+            } else if (Sdk.DefaultConfiguration.deploymentKey) {
                 callback(null, Sdk.DefaultAcquisitionManager);
+            } else {
+                callback(new Error("No deployment key provided, please provide a default one in your config.xml or specify one in the call to checkForUpdate() or sync()."), null);
             }
         };
 
         if (Sdk.DefaultAcquisitionManager) {
-            resolveManager(Sdk.DefaultAcquisitionManager);
+            resolveManager();
         } else {
             NativeAppInfo.getServerURL((serverError: Error, serverURL: string) => {
                 NativeAppInfo.getDeploymentKey((depolymentKeyError: Error, deploymentKey: string) => {
                     NativeAppInfo.getApplicationVersion((appVersionError: Error, appVersion: string) => {
-                        if (!serverURL || !deploymentKey || !appVersion) {
+                        if (!serverURL || !appVersion) {
                             callback(new Error("Could not get the CodePush configuration. Please check your config.xml file."), null);
                         } else {
                             Sdk.DefaultConfiguration = {
@@ -53,8 +55,12 @@ class Sdk {
                                 appVersion: appVersion,
                                 clientUniqueId: device.uuid
                             };
-                            Sdk.DefaultAcquisitionManager = new AcquisitionManager(new HttpRequester(), Sdk.DefaultConfiguration);
-                            resolveManager(Sdk.DefaultAcquisitionManager);
+
+                            if (deploymentKey) {
+                                Sdk.DefaultAcquisitionManager = new AcquisitionManager(new HttpRequester(), Sdk.DefaultConfiguration);
+                            }
+
+                            resolveManager();
                         }
                     });
                 });
@@ -79,7 +85,7 @@ class Sdk {
             callback && callback(new Error("An error occured while reporting the deployment status. " + e), null);
         }
     }
-    
+
     /**
      * Reports the download status to the CodePush server.
      */
