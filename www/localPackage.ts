@@ -210,8 +210,21 @@ class LocalPackage extends Package implements ILocalPackage {
             copyCallback && copyCallback(e, null);
         };
         
-        var doCopy = (destinationPath: string, getCurrentPackageDirectory: (callback: Callback<DirectoryEntry>) => void) => {
-            FileUtil.getDataDirectory(destinationPath, true, (deployDirError: Error, deployDir: DirectoryEntry) => {
+        var doCopy = (currentPackagePath?: string) => {
+            var getCurrentPackageDirectory: (getCurrentPackageDirectoryCallback: Callback<DirectoryEntry>) => void;
+            if (currentPackagePath) {
+                getCurrentPackageDirectory = (getCurrentPackageDirectoryCallback: Callback<DirectoryEntry>) => {
+                    FileUtil.getDataDirectory(currentPackagePath, false, getCurrentPackageDirectoryCallback);
+                };
+            } else {
+                // The binary's version is the latest
+                newPackageLocation = newPackageLocation + "/www";
+                getCurrentPackageDirectory = (getCurrentPackageDirectoryCallback: Callback<DirectoryEntry>) => {
+                    FileUtil.getApplicationDirectory("www", getCurrentPackageDirectoryCallback);
+                };
+            }
+            
+            FileUtil.getDataDirectory(newPackageLocation, true, (deployDirError: Error, deployDir: DirectoryEntry) => {
                 if (deployDirError) {
                     handleError(new Error("Could not acquire the source/destination folders. "));
                 } else {
@@ -229,18 +242,11 @@ class LocalPackage extends Package implements ILocalPackage {
         };
         
         var packageFailure = (error: Error) => {
-            // Currently running the version in the binary, handle diff against that version.
-            doCopy(newPackageLocation + "/www", (getCurrentPackageDirectoryCallback: Callback<DirectoryEntry>) => {
-                FileUtil.getApplicationDirectory("www", getCurrentPackageDirectoryCallback);
-            });
+            doCopy();
         };
 
         var packageSuccess = (currentPackage: LocalPackage) => {
-            doCopy(newPackageLocation, (getCurrentPackageDirectoryCallback: Callback<DirectoryEntry>) => {
-                LocalPackage.getPackage(LocalPackage.PackageInfoFile, (currentPackage: LocalPackage) => {
-                    FileUtil.getDataDirectory(currentPackage.localPath, false, getCurrentPackageDirectoryCallback);
-                }, handleError);
-            });
+            doCopy(currentPackage.localPath);
         };
         
         LocalPackage.getPackage(LocalPackage.PackageInfoFile, packageSuccess, packageFailure);

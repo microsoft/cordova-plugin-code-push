@@ -173,8 +173,20 @@ var LocalPackage = (function (_super) {
         var handleError = function (e) {
             copyCallback && copyCallback(e, null);
         };
-        var doCopy = function (destinationPath, getCurrentPackageDirectory) {
-            FileUtil.getDataDirectory(destinationPath, true, function (deployDirError, deployDir) {
+        var doCopy = function (currentPackagePath) {
+            var getCurrentPackageDirectory;
+            if (currentPackagePath) {
+                getCurrentPackageDirectory = function (getCurrentPackageDirectoryCallback) {
+                    FileUtil.getDataDirectory(currentPackagePath, false, getCurrentPackageDirectoryCallback);
+                };
+            }
+            else {
+                newPackageLocation = newPackageLocation + "/www";
+                getCurrentPackageDirectory = function (getCurrentPackageDirectoryCallback) {
+                    FileUtil.getApplicationDirectory("www", getCurrentPackageDirectoryCallback);
+                };
+            }
+            FileUtil.getDataDirectory(newPackageLocation, true, function (deployDirError, deployDir) {
                 if (deployDirError) {
                     handleError(new Error("Could not acquire the source/destination folders. "));
                 }
@@ -190,16 +202,10 @@ var LocalPackage = (function (_super) {
             });
         };
         var packageFailure = function (error) {
-            doCopy(newPackageLocation + "/www", function (getCurrentPackageDirectoryCallback) {
-                FileUtil.getApplicationDirectory("www", getCurrentPackageDirectoryCallback);
-            });
+            doCopy();
         };
         var packageSuccess = function (currentPackage) {
-            doCopy(newPackageLocation, function (getCurrentPackageDirectoryCallback) {
-                LocalPackage.getPackage(LocalPackage.PackageInfoFile, function (currentPackage) {
-                    FileUtil.getDataDirectory(currentPackage.localPath, false, getCurrentPackageDirectoryCallback);
-                }, handleError);
-            });
+            doCopy(currentPackage.localPath);
         };
         LocalPackage.getPackage(LocalPackage.PackageInfoFile, packageSuccess, packageFailure);
     };
