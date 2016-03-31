@@ -32,7 +32,7 @@ var Sdk = (function () {
                 callback(null, Sdk.DefaultAcquisitionManager);
             }
             else {
-                callback(new Error("No deployment key provided, please provide default one in your config.xml or specify one in the call to checkForUpdate() or sync()."), null);
+                callback(new Error("No deployment key provided, please provide a default one in your config.xml or specify one in the call to checkForUpdate() or sync()."), null);
             }
         };
         if (Sdk.DefaultAcquisitionManager) {
