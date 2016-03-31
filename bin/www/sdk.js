@@ -15,7 +15,7 @@ var Sdk = (function () {
     function Sdk() {
     }
     Sdk.getAcquisitionManager = function (callback, userDeploymentKey, contentType) {
-        var resolveManager = function (defaultInstance) {
+        var resolveManager = function () {
             if (userDeploymentKey || contentType) {
                 var customConfiguration = {
                     deploymentKey: (userDeploymentKey ? userDeploymentKey : Sdk.DefaultConfiguration.deploymentKey),
@@ -28,18 +28,21 @@ var Sdk = (function () {
                 var customAcquisitionManager = new AcquisitionManager(requester, customConfiguration);
                 callback(null, customAcquisitionManager);
             }
-            else {
+            else if (Sdk.DefaultConfiguration.deploymentKey) {
                 callback(null, Sdk.DefaultAcquisitionManager);
+            }
+            else {
+                callback(new Error("No deployment key provided, please provide default one in your config.xml or specify one in the call to checkForUpdate() or sync()."), null);
             }
         };
         if (Sdk.DefaultAcquisitionManager) {
-            resolveManager(Sdk.DefaultAcquisitionManager);
+            resolveManager();
         }
         else {
             NativeAppInfo.getServerURL(function (serverError, serverURL) {
                 NativeAppInfo.getDeploymentKey(function (depolymentKeyError, deploymentKey) {
                     NativeAppInfo.getApplicationVersion(function (appVersionError, appVersion) {
-                        if (!serverURL || !deploymentKey || !appVersion) {
+                        if (!serverURL || !appVersion) {
                             callback(new Error("Could not get the CodePush configuration. Please check your config.xml file."), null);
                         }
                         else {
@@ -50,8 +53,10 @@ var Sdk = (function () {
                                 appVersion: appVersion,
                                 clientUniqueId: device.uuid
                             };
-                            Sdk.DefaultAcquisitionManager = new AcquisitionManager(new HttpRequester(), Sdk.DefaultConfiguration);
-                            resolveManager(Sdk.DefaultAcquisitionManager);
+                            if (deploymentKey) {
+                                Sdk.DefaultAcquisitionManager = new AcquisitionManager(new HttpRequester(), Sdk.DefaultConfiguration);
+                            }
+                            resolveManager();
                         }
                     });
                 });
