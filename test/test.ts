@@ -460,7 +460,7 @@ describe("window.codePush", function() {
             projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
         });
 
-        it.only("localPackage.install.handlesDiff.againstBinary", function(done) {
+        it("localPackage.install.handlesDiff.againstBinary", function(done) {
 
             mockResponse = { updateInfo: getMockResponse() };
 
