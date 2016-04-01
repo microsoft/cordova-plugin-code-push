@@ -11,6 +11,8 @@ import java.util.Set;
  */
 public class CodePushPreferences {
 
+    private static final String BINARY_HASH_PREFERENCE = "BINARY_HASH";
+    private static final String BINARY_HASH_PREFERENCE_KEY = "BINARY_HASH_KEY";
     private static final String FAILED_UPDATES_PREFERENCE = "FAILED_UPDATES";
     private static final String FAILED_UPDATES_KEY = "FAILED_UPDATES_KEY";
     private static final String PENDING_INSTALL_PREFERENCE = "PENDING_INSTALL";
@@ -24,6 +26,18 @@ public class CodePushPreferences {
 
     public CodePushPreferences(Context context) {
         this.context = context;
+    }
+
+    public String getCachedBinaryHash() {
+        SharedPreferences preferences = context.getSharedPreferences(CodePushPreferences.BINARY_HASH_PREFERENCE, Context.MODE_PRIVATE);
+        return preferences.getString(CodePushPreferences.BINARY_HASH_PREFERENCE_KEY, null);
+    }
+
+    public void saveBinaryHash(String binaryHash) {
+        SharedPreferences preferences = context.getSharedPreferences(CodePushPreferences.BINARY_HASH_PREFERENCE, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString(CodePushPreferences.BINARY_HASH_PREFERENCE_KEY, binaryHash);
+        editor.commit();
     }
 
     public void saveFailedUpdate(String hashCode) {

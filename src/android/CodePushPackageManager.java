@@ -76,6 +76,14 @@ public class CodePushPackageManager {
         return CodePushPackageMetadata.getPackageMetadata(currentPackageFilePath);
     }
 
+    public String getCachedBinaryHash() {
+        return this.codePushPreferences.getCachedBinaryHash();
+    }
+
+    public void saveBinaryHash(String binaryHash) {
+        this.codePushPreferences.saveBinaryHash(binaryHash);
+    }
+
     public boolean isFailedUpdate(String packageHash) {
         return this.codePushPreferences.isFailedUpdate(packageHash);
     }

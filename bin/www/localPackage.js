@@ -173,8 +173,20 @@ var LocalPackage = (function (_super) {
         var handleError = function (e) {
             copyCallback && copyCallback(e, null);
         };
-        FileUtil.getDataDirectory(newPackageLocation, true, function (deployDirError, deployDir) {
-            LocalPackage.getPackage(LocalPackage.PackageInfoFile, function (currentPackage) {
+        var doCopy = function (currentPackagePath) {
+            var getCurrentPackageDirectory;
+            if (currentPackagePath) {
+                getCurrentPackageDirectory = function (getCurrentPackageDirectoryCallback) {
+                    FileUtil.getDataDirectory(currentPackagePath, false, getCurrentPackageDirectoryCallback);
+                };
+            }
+            else {
+                newPackageLocation = newPackageLocation + "/www";
+                getCurrentPackageDirectory = function (getCurrentPackageDirectoryCallback) {
+                    FileUtil.getApplicationDirectory("www", getCurrentPackageDirectoryCallback);
+                };
+            }
+            FileUtil.getDataDirectory(newPackageLocation, true, function (deployDirError, deployDir) {
                 if (deployDirError) {
                     handleError(new Error("Could not acquire the source/destination folders. "));
                 }
@@ -185,10 +197,17 @@ var LocalPackage = (function (_super) {
                     var fail = function (fileSystemError) {
                         copyCallback && copyCallback(FileUtil.fileErrorToError(fileSystemError), null);
                     };
-                    FileUtil.getDataDirectory(currentPackage.localPath, false, CodePushUtil.getNodeStyleCallbackFor(success, fail));
+                    getCurrentPackageDirectory(CodePushUtil.getNodeStyleCallbackFor(success, fail));
                 }
-            }, handleError);
-        });
+            });
+        };
+        var packageFailure = function (error) {
+            doCopy();
+        };
+        var packageSuccess = function (currentPackage) {
+            doCopy(currentPackage.localPath);
+        };
+        LocalPackage.getPackage(LocalPackage.PackageInfoFile, packageSuccess, packageFailure);
     };
     LocalPackage.handleDiffDeployment = function (newPackageLocation, diffManifest, diffCallback) {
         var handleError = function (e) {
@@ -312,12 +331,19 @@ var LocalPackage = (function (_super) {
                 if (appVersionError) {
                     CodePushUtil.logError("Could not get application version." + appVersionError);
                     packageError(appVersionError);
+                    return;
                 }
-                else {
+                NativeAppInfo.getBinaryHash(function (binaryHashError, binaryHash) {
                     var defaultPackage = new LocalPackage();
                     defaultPackage.appVersion = appVersion;
+                    if (binaryHashError) {
+                        CodePushUtil.logError("Could not get binary hash." + binaryHashError);
+                    }
+                    else {
+                        defaultPackage.packageHash = binaryHash;
+                    }
                     packageSuccess(defaultPackage);
-                }
+                });
             });
         };
         LocalPackage.getPackage(packageFile, packageSuccess, packageFailure);

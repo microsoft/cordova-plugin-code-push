@@ -28,7 +28,7 @@
         <js-module src="bin/www/syncStatus.js" name="syncStatus">
             <clobbers target="SyncStatus" />
         </js-module>
-        
+
         <js-module src="bin/www/installMode.js" name="installMode">
             <clobbers target="InstallMode" />
         </js-module>
@@ -58,6 +58,7 @@
         </js-module>
 
         <platform name="android">
+            <framework src="src/android/build-extras.gradle" custom="true" type="gradleReference" />
             <source-file src="src/android/CodePush.java" target-dir="src/com/microsoft/cordova" />
             <source-file src="src/android/CodePushPackageManager.java" target-dir="src/com/microsoft/cordova" />
             <source-file src="src/android/CodePushPackageMetadata.java" target-dir="src/com/microsoft/cordova" />
@@ -66,6 +67,7 @@
             <source-file src="src/android/InstallOptions.java" target-dir="src/com/microsoft/cordova" />
             <source-file src="src/android/Reporting.java" target-dir="src/com/microsoft/cordova" />
             <source-file src="src/android/Utilities.java" target-dir="src/com/microsoft/cordova" />
+            <source-file src="src/android/UpdateHashUtils.java" target-dir="src/com/microsoft/cordova" />
             <config-file target="config.xml" parent="/*">
                 <feature name="CodePush">
                     <param name="android-package" value="com.microsoft.cordova.CodePush" />
@@ -88,6 +90,8 @@
             <header-file src="src/ios/InstallMode.h" />
             <source-file src="src/ios/Reporting.m" />
             <header-file src="src/ios/Reporting.h" />
+            <source-file src="src/ios/UpdateHashUtils.m" />
+            <header-file src="src/ios/UpdateHashUtils.h" />
             <config-file target="config.xml" parent="/*">
                 <feature name="CodePush">
                     <param name="ios-package" value="CodePush" />

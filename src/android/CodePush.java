@@ -1,6 +1,7 @@
 package com.microsoft.cordova;
 
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.ConfigXmlParser;
@@ -11,7 +12,9 @@ import org.apache.cordova.CordovaWebView;
 import org.json.JSONException;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Native Android CodePush Cordova Plugin.
@@ -46,6 +49,8 @@ public class CodePush extends CordovaPlugin {
             return execGetNativeBuildTime(callbackContext);
         } else if ("getAppVersion".equals(action)) {
             return execGetAppVersion(callbackContext);
+        } else if ("getBinaryHash".equals(action)) {
+            return execGetBinaryHash(callbackContext);
         } else if ("preInstall".equals(action)) {
             return execPreInstall(args, callbackContext);
         } else if ("install".equals(action)) {
@@ -65,8 +70,33 @@ public class CodePush extends CordovaPlugin {
         }
     }
 
-    private boolean execUpdateSuccess(CallbackContext callbackContext) {
+    private boolean execGetBinaryHash(final CallbackContext callbackContext) {
+        String cachedBinaryHash = codePushPackageManager.getCachedBinaryHash();
+        if (cachedBinaryHash == null) {
+            new AsyncTask<Void, Void, Void>() {
+                @Override
+                protected Void doInBackground(Void... params) {
+                    try {
+                        String binaryHash = UpdateHashUtils.getBinaryHash(cordova.getActivity());
+                        codePushPackageManager.saveBinaryHash(binaryHash);
+                        callbackContext.success(binaryHash);
+                    } catch (IOException e) {
+                        callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
+                    } catch (NoSuchAlgorithmException e) {
+                        callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
+                    }
 
+                    return null;
+                }
+            }.execute();
+        } else {
+            callbackContext.success(cachedBinaryHash);
+        }
+
+        return true;
+    }
+
+    private boolean execUpdateSuccess(CallbackContext callbackContext) {
         if (this.codePushPackageManager.isFirstRun()) {
             this.codePushPackageManager.saveFirstRunFlag();
             /* save reporting status for first install */

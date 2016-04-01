@@ -4,6 +4,7 @@
 
 @implementation CodePushPackageManager
 
+NSString* const BinaryHashKey = @"BINARY_HASH";
 NSString* const FailedUpdatesKey = @"FAILED_UPDATES";
 NSString* const PendingInstallKey = @"PENDING_INSTALL";
 NSString* const NotConfirmedInstallKey = @"NOT_CONFIRMED_INSTALL";
@@ -51,6 +52,18 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
     if ([[NSFileManager defaultManager] fileExistsAtPath:codePushDirPath]) {
         [[NSFileManager defaultManager] removeItemAtPath:codePushDirPath error:nil];
     }
+}
+
++ (NSString*)getCachedBinaryHash {
+    NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
+    NSString* cachedBinaryHash = [preferences objectForKey:BinaryHashKey];
+    return cachedBinaryHash;
+}
+
++ (void)saveBinaryHash:(NSString*)binaryHash {
+    NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
+    [preferences setObject:binaryHash forKey:BinaryHashKey];
+    [preferences synchronize];
 }
 
 + (CodePushPackageMetadata*)getOldPackageMetadata {

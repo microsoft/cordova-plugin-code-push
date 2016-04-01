@@ -33,6 +33,16 @@ class NativeAppInfo {
     }
     
     /**
+     * Gets a hash of the `www` folder contents compiled in the app store binary.
+     */
+    public static getBinaryHash(callback: Callback<String>): void {
+        var binaryHashSuccess = (binaryHash?: String) => { callback(null, binaryHash); };
+        var binaryHashError = () => { callback(new Error("Could not get binary hash."), null); };
+
+        cordova.exec(binaryHashSuccess, binaryHashError, "CodePush", "getBinaryHash", []);
+    }
+    
+    /**
      * Gets the server URL from config.xml by calling into the native platform.
      */
     public static getServerURL(serverCallback: Callback<String>): void {

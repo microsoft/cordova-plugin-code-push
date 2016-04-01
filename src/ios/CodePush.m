@@ -7,11 +7,34 @@
 #import "InstallOptions.h"
 #import "InstallMode.h"
 #import "Reporting.h"
+#import "UpdateHashUtils.h"
 
 @implementation CodePush
 
 bool didUpdate = false;
 bool pendingInstall = false;
+
+- (void)getBinaryHash:(CDVInvokedUrlCommand *)command {
+    CDVPluginResult* pluginResult = nil;
+    NSString* binaryHash = [CodePushPackageManager getCachedBinaryHash];
+    if (binaryHash) {
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                         messageAsString:binaryHash];
+    } else {
+        NSError* error;
+        binaryHash = [UpdateHashUtils getBinaryHash:&error];
+        if (error) {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
+                                             messageAsString:[@"An error occurred when trying to get the hash of the binary contents. " stringByAppendingString:error.description]];
+        } else {
+            [CodePushPackageManager saveBinaryHash:binaryHash];
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                             messageAsString:binaryHash];
+        }
+    }
+    
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
 
 - (void)handleUnconfirmedInstall:(BOOL)navigate {
     if ([CodePushPackageManager installNeedsConfirmation]) {

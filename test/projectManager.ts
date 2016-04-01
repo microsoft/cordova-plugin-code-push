@@ -79,7 +79,7 @@ export class ProjectManager {
     /**
      * Creates a CodePush update package zip for a Cordova project.
      */
-    public static createUpdateArchive(projectLocation: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
+    public static createUpdateArchive(projectLocation: string, targetPlatform: platform.IPlatform, isDiff?: boolean): Q.Promise<string> {
         var deferred = Q.defer<string>();
         var archive = archiver.create("zip", {});
         var archivePath = path.join(projectLocation, "update.zip");
@@ -99,13 +99,17 @@ export class ProjectManager {
             deferred.reject(e);
         });
 
+        if (isDiff) {
+            archive.append(`{"deletedFiles":[]}`, { name: "hotcodepush.json" });
+        }
+        
         archive.directory(targetFolder, "www");
         archive.pipe(writeStream);
         archive.finalize();
 
         return deferred.promise;
     }
-
+    
     /**
      * Adds a plugin to a Cordova project.
      */
