@@ -19,7 +19,7 @@ import java.util.Collections;
  */
 public class UpdateHashUtils {
 
-    public static String getBinaryHash(Activity activity) throws IOException {
+    public static String getBinaryHash(Activity activity) throws IOException, NoSuchAlgorithmException {
         ArrayList<String> manifestEntries = new ArrayList<String>();
         addFolderEntriesToManifest(manifestEntries, "www", activity.getAssets());
         Collections.sort(manifestEntries);
@@ -33,7 +33,7 @@ public class UpdateHashUtils {
         return computeHash(new ByteArrayInputStream(manifestString.getBytes()));
     }
 
-    private static void addFolderEntriesToManifest(ArrayList<String> manifestEntries, String path, AssetManager assetManager) throws IOException {
+    private static void addFolderEntriesToManifest(ArrayList<String> manifestEntries, String path, AssetManager assetManager) throws IOException, NoSuchAlgorithmException {
         String[] fileList = assetManager.list(path);
         if (fileList.length > 0) {
             // This is a folder, recursively add folder entries to the manifest.
@@ -46,7 +46,7 @@ public class UpdateHashUtils {
         }
     }
 
-    private static String computeHash(InputStream dataStream) throws IOException {
+    private static String computeHash(InputStream dataStream) throws IOException, NoSuchAlgorithmException {
         MessageDigest messageDigest = null;
         DigestInputStream digestInputStream = null;
         try {
@@ -54,9 +54,6 @@ public class UpdateHashUtils {
             digestInputStream = new DigestInputStream(dataStream, messageDigest);
             byte[] byteBuffer = new byte[1024 * 8];
             while (digestInputStream.read(byteBuffer) != -1);
-        } catch (NoSuchAlgorithmException e) {
-            // Should not happen.
-            throw new RuntimeException("Unable to compute hash of update contents.", e);
         } finally {
             try {
                 if (digestInputStream != null) digestInputStream.close();

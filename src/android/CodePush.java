@@ -14,6 +14,7 @@ import org.json.JSONException;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Native Android CodePush Cordova Plugin.
@@ -80,6 +81,8 @@ public class CodePush extends CordovaPlugin {
                         codePushPackageManager.saveBinaryHash(binaryHash);
                         callbackContext.success(binaryHash);
                     } catch (IOException e) {
+                        callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
+                    } catch (NoSuchAlgorithmException e) {
                         callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
                     }
 
