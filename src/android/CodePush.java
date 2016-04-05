@@ -444,12 +444,6 @@ public class CodePush extends CordovaPlugin {
             /* The application was resumed from the background. */
             /* Handle ON_NEXT_RESUME pending installations. */
             InstallOptions pendingInstall = this.codePushPackageManager.getPendingInstall();
-            if (pendingInstall != null) {
-                Log.v("CODEPUSH", Integer.toString(pendingInstall.minimumBackgroundDuration / 1000));
-                Log.v("CODEPUSH", Long.toString(lastPausedTimeMs / 1000));
-                Log.v("CODEPUSH", Long.toString(new Date().getTime() / 1000));
-                Log.v("CODEPUSH", Long.toString((new Date().getTime() - lastPausedTimeMs) / 1000));
-            }
             if (pendingInstall != null && 
                 InstallMode.ON_NEXT_RESUME.equals(pendingInstall.installMode) && 
                 (new Date().getTime() - lastPausedTimeMs) / 1000 >= pendingInstall.minimumBackgroundDuration) {
