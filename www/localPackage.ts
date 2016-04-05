@@ -121,9 +121,9 @@ class LocalPackage extends Package implements ILocalPackage {
                                 /* invoke success before navigating */
                                 installSuccess && installSuccess();
                                 /* no neeed for callbacks, the javascript context will reload */
-                                cordova.exec(() => { }, () => { }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString()]);
+                                cordova.exec(() => { }, () => { }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString(), installOptions.minimumBackgroundDuration.toString()]);
                             } else {
-                                cordova.exec(() => { installSuccess && installSuccess(); }, () => { installError && installError(); }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString()]);
+                                cordova.exec(() => { installSuccess && installSuccess(); }, () => { installError && installError(); }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString(), installOptions.minimumBackgroundDuration.toString()]);
                             }
                         };
 
@@ -444,6 +444,7 @@ class LocalPackage extends Package implements ILocalPackage {
         if (!LocalPackage.DefaultInstallOptions) {
             LocalPackage.DefaultInstallOptions = {
                 installMode: InstallMode.ON_NEXT_RESTART,
+                minimumBackgroundDuration: 0
             };
         }
 

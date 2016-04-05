@@ -372,6 +372,7 @@ class CodePush implements CodePushCordovaPlugin {
             CodePush.DefaultSyncOptions = {
                 ignoreFailedUpdates: true,
                 installMode: InstallMode.ON_NEXT_RESTART,
+                minimumBackgroundDuration: 0,
                 updateDialog: false,
                 deploymentKey: undefined
             };
