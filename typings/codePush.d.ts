@@ -304,7 +304,7 @@ interface InstallOptions {
     installMode?: InstallMode;
     
     /**
-     * If installMode === ON_NEXT_RESUME, the minimum amount of time which needs to pass with the app paused before an update install occurs when the app is resumed.
+     * If installMode === ON_NEXT_RESUME, the minimum amount of time (in seconds) which needs to pass with the app in the background before an update install occurs when the app is resumed.
      */
     minimumBackgroundDuration?: number;
 }

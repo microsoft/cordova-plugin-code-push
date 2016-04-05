@@ -17,6 +17,7 @@ public class CodePushPreferences {
     private static final String FAILED_UPDATES_KEY = "FAILED_UPDATES_KEY";
     private static final String PENDING_INSTALL_PREFERENCE = "PENDING_INSTALL";
     private static final String INSTALL_MODE_KEY = "INSTALL_MODE_KEY";
+    private static final String INSTALL_MIN_BACKGROUND_DURATION = "INSTALL_MINIMUM_BACKGROUND_DURATION";
     private static final String INSTALL_NEEDS_CONFIRMATION = "INSTALL_NEEDS_CONFIRMATION";
     private static final String INSTALL_NEEDS_CONFIRMATION_KEY = "INSTALL_NEEDS_CONFIRMATION_KEY";
     private static final String FIRST_RUN_PREFERENCE = "CODE_PUSH_FIRST_RUN";
@@ -71,6 +72,7 @@ public class CodePushPreferences {
         SharedPreferences preferences = context.getSharedPreferences(CodePushPreferences.PENDING_INSTALL_PREFERENCE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt(CodePushPreferences.INSTALL_MODE_KEY, installOptions.installMode.getValue());
+        editor.putInt(CodePushPreferences.INSTALL_MIN_BACKGROUND_DURATION, installOptions.minimumBackgroundDuration);
         editor.commit();
     }
 
@@ -83,9 +85,10 @@ public class CodePushPreferences {
 
         SharedPreferences preferences = context.getSharedPreferences(CodePushPreferences.PENDING_INSTALL_PREFERENCE, Context.MODE_PRIVATE);
         int installMode = preferences.getInt(CodePushPreferences.INSTALL_MODE_KEY, -1);
+        int minimumBackgroundDuration = preferences.getInt(CodePushPreferences.INSTALL_MIN_BACKGROUND_DURATION, -1);
 
-        if (installMode != -1) {
-            pendingInstall = new InstallOptions(InstallMode.fromValue(installMode));
+        if (installMode != -1 && minimumBackgroundDuration != -1) {
+            pendingInstall = new InstallOptions(InstallMode.fromValue(installMode), minimumBackgroundDuration);
         }
 
         return pendingInstall;

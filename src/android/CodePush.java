@@ -16,6 +16,10 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.security.NoSuchAlgorithmException;
 
+import java.util.Date;
+
+import android.util.Log;
+
 /**
  * Native Android CodePush Cordova Plugin.
  */
@@ -29,6 +33,7 @@ public class CodePush extends CordovaPlugin {
     private boolean pluginDestroyed = false;
     private boolean didUpdate = false;
     private boolean didStartApp = false;
+    private long lastPausedTimeMs = 0;
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
@@ -160,6 +165,7 @@ public class CodePush extends CordovaPlugin {
         try {
             final String startLocation = args.getString(0);
             final InstallMode installMode = InstallMode.fromValue(args.optInt(1));
+            final int minimumBackgroundDuration = args.optInt(2);
 
             File startPage = this.getStartPageForPackage(startLocation);
             if (startPage != null) {
@@ -169,7 +175,7 @@ public class CodePush extends CordovaPlugin {
                     this.navigateToFile(startPage);
                     markUpdate();
                 } else {
-                    InstallOptions pendingInstall = new InstallOptions(installMode);
+                    InstallOptions pendingInstall = new InstallOptions(installMode, minimumBackgroundDuration);
                     this.codePushPackageManager.savePendingInstall(pendingInstall);
                 }
 
@@ -398,6 +404,8 @@ public class CodePush extends CordovaPlugin {
      */
     @Override
     public void onPause(boolean multitasking) {
+        lastPausedTimeMs = new Date().getTime();
+        
         Reporting.reportStatuses(this.mainWebView);
     }
 
@@ -436,7 +444,15 @@ public class CodePush extends CordovaPlugin {
             /* The application was resumed from the background. */
             /* Handle ON_NEXT_RESUME pending installations. */
             InstallOptions pendingInstall = this.codePushPackageManager.getPendingInstall();
-            if ((pendingInstall != null) && (InstallMode.ON_NEXT_RESUME.equals(pendingInstall.installMode))) {
+            if (pendingInstall != null) {
+                Log.v("CODEPUSH", Integer.toString(pendingInstall.minimumBackgroundDuration / 1000));
+                Log.v("CODEPUSH", Long.toString(lastPausedTimeMs / 1000));
+                Log.v("CODEPUSH", Long.toString(new Date().getTime() / 1000));
+                Log.v("CODEPUSH", Long.toString((new Date().getTime() - lastPausedTimeMs) / 1000));
+            }
+            if (pendingInstall != null && 
+                InstallMode.ON_NEXT_RESUME.equals(pendingInstall.installMode) && 
+                (new Date().getTime() - lastPausedTimeMs) / 1000 >= pendingInstall.minimumBackgroundDuration) {
                 handleAppStart();
                 this.markUpdate();
                 this.codePushPackageManager.clearPendingInstall();
