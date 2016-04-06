@@ -13,6 +13,7 @@
 
 bool didUpdate = false;
 bool pendingInstall = false;
+NSDate *lastResignedDate;
 
 - (void)getBinaryHash:(CDVInvokedUrlCommand *)command {
     CDVPluginResult* pluginResult = nil;
@@ -231,7 +232,8 @@ bool pendingInstall = false;
 
 - (void)applicationWillEnterForeground {
     InstallOptions* pendingInstall = [CodePushPackageManager getPendingInstall];
-    if (pendingInstall && pendingInstall.installMode == ON_NEXT_RESUME) {
+    int durationInBackground = [[NSDate date] timeIntervalSinceDate:lastResignedDate];
+    if (pendingInstall && pendingInstall.installMode == ON_NEXT_RESUME && durationInBackground >= pendingInstall.minimumBackgroundDuration) {
         CodePushPackageMetadata* deployedPackageMetadata = [CodePushPackageManager getCurrentPackageMetadata];
         if (deployedPackageMetadata && deployedPackageMetadata.localPath) {
             bool applied = [self loadPackage: deployedPackageMetadata.localPath];
@@ -245,6 +247,8 @@ bool pendingInstall = false;
 
 - (void)applicationWillResignActive {
     [Reporting reportStatuses:self.webView];
+    // Save the current time so that when the app is later resumed, we can detect how long it was in the background
+    lastResignedDate = [NSDate date];
 }
 
 - (BOOL)loadPackage:(NSString*)packageLocation {
