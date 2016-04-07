@@ -78,7 +78,7 @@ NSDate *lastResignedDate;
     CDVPluginResult* pluginResult = nil;
     
     NSString* location = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
-    NSString* installModeString = [command argumentAtIndex:1 withDefault:nil andClass:[NSString class]];
+    NSString* installModeString = [command argumentAtIndex:1 withDefault:IMMEDIATE andClass:[NSString class]];
     NSString* minimumBackgroundDurationString = [command argumentAtIndex:2 withDefault:0 andClass:[NSString class]];
     
     InstallOptions* options = [[InstallOptions alloc] init];
