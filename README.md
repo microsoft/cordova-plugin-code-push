@@ -695,6 +695,8 @@ Defines the possible statuses of the [sync](#codepushsync) operation. There are 
  
 - __ERROR__: An error occured during the `sync` operation. This might be an error while communicating with the server, downloading or unziping the update. The console logs should contain more information about what happened. No update has been applied in this case.
 
+- __IN_PROGRESS__: Another sync is already running, so this attempt to sync has been aborted.
+
 - __CHECKING_FOR_UPDATE__: The CodePush server is being queried for an update.
 
 - __AWAITING_USER_ACTION__: An update is available, and a confirmation dialog was shown to the end user. *(This is only applicable when the `updateDialog` is used)*
