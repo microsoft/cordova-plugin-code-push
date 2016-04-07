@@ -18,8 +18,6 @@ import java.security.NoSuchAlgorithmException;
 
 import java.util.Date;
 
-import android.util.Log;
-
 /**
  * Native Android CodePush Cordova Plugin.
  */
