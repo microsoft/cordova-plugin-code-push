@@ -79,13 +79,11 @@ NSDate *lastResignedDate;
     
     NSString* location = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
     NSString* installModeString = [command argumentAtIndex:1 withDefault:nil andClass:[NSString class]];
+    NSString* minimumBackgroundDurationString = [command argumentAtIndex:2 withDefault:0 andClass:[NSString class]];
     
     InstallOptions* options = [[InstallOptions alloc] init];
-    [options setInstallMode:IMMEDIATE];
-    
-    if (installModeString) {
-        [options setInstallMode:[installModeString intValue]];
-    }
+    [options setInstallMode:[installModeString intValue]];
+    [options setMinimumBackgroundDuration:[minimumBackgroundDurationString intValue]];
     
     if ([options installMode] == IMMEDIATE) {
         if (nil == location) {
@@ -232,7 +230,8 @@ NSDate *lastResignedDate;
 
 - (void)applicationWillEnterForeground {
     InstallOptions* pendingInstall = [CodePushPackageManager getPendingInstall];
-    int durationInBackground = [[NSDate date] timeIntervalSinceDate:lastResignedDate];
+    // calculate the duration that the app was in the background
+    int durationInBackground = lastResignedDate ? [[NSDate date] timeIntervalSinceDate:lastResignedDate] : 0;
     if (pendingInstall && pendingInstall.installMode == ON_NEXT_RESUME && durationInBackground >= pendingInstall.minimumBackgroundDuration) {
         CodePushPackageMetadata* deployedPackageMetadata = [CodePushPackageManager getCurrentPackageMetadata];
         if (deployedPackageMetadata && deployedPackageMetadata.localPath) {
