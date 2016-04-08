@@ -174,7 +174,7 @@ export class ProjectManager {
         var emulatorManager = targetPlatform.getOptionalEmulatorManager();
         if (emulatorManager) {
             // open a default iOS app (for example, the App Store)
-            return emulatorManager.launchInstalledApplication("com.apple.AppStore")
+            return emulatorManager.launchInstalledApplication("com.apple.camera")
                 .then<void>(() => {
                     console.log("Waiting for " + delayBeforeResumingMs + "ms before resuming the test application.");
                     return Q.delay(delayBeforeResumingMs);
