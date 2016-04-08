@@ -565,6 +565,8 @@ Otherwise, the install operation will be marked as failed, and the application i
 
     - __installMode__: Used to specify the [InstallMode](#installmode) used for the install operation. Defaults `InstallMode.ON_NEXT_RESTART`.
 
+    - __minimumBackgroundDuration__: If __installMode__ is `InstallMode.ON_NEXT_RESUME`, used to specify the amount of time the app must be in the background before the update is installed when it is resumed. Defaults `0`.
+
 Example Usage:
 
 ```javascript
