@@ -231,7 +231,7 @@ NSDate *lastResignedDate;
 - (void)applicationWillEnterForeground {
     InstallOptions* pendingInstall = [CodePushPackageManager getPendingInstall];
     // calculate the duration that the app was in the background
-    int durationInBackground = lastResignedDate ? [[NSDate date] timeIntervalSinceDate:lastResignedDate] : 0;
+    long durationInBackground = lastResignedDate ? [[NSDate date] timeIntervalSinceDate:lastResignedDate] : 0;
     if (pendingInstall && pendingInstall.installMode == ON_NEXT_RESUME && durationInBackground >= pendingInstall.minimumBackgroundDuration) {
         CodePushPackageMetadata* deployedPackageMetadata = [CodePushPackageManager getCurrentPackageMetadata];
         if (deployedPackageMetadata && deployedPackageMetadata.localPath) {
