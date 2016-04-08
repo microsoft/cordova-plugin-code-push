@@ -706,7 +706,3 @@ Defines the possible statuses of the [sync](#codepushsync) operation. There are 
 - __DOWNLOADING_PACKAGE__: An available update is being downloaded from the CodePush server.
 
 - __INSTALLING_UPDATE__: An available update was downloaded and is about to be installed.
-
-## Compiling sources & contributing
-
-The JavaScript code in this plugin is compiled from TypeScript. Please see [this page](CONTRIBUTING.md) for more details on contributing and how to build the project.
