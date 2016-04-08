@@ -166,6 +166,36 @@ export class ProjectManager {
             return ProjectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
         }
     }
+    
+    /**
+     * Navigates away from the application and then navigates back to it.
+     */
+    public static resumeApplication(delayBeforeResumingMs: number, targetPlatform: platform.IPlatform, namespace: string, testRunDirectory: string, targetEmulator: string): Q.Promise<void> {
+        var emulatorManager = targetPlatform.getOptionalEmulatorManager();
+        if (emulatorManager) {
+            // open a default iOS app (for example, the App Store)
+            return emulatorManager.launchInstalledApplication("com.apple.AppStore")
+                .then<void>(() => {
+                    console.log("Waiting for " + delayBeforeResumingMs + "ms before resuming the test application.");
+                    return Q.delay(delayBeforeResumingMs);
+                })
+                .then<void>(() => {
+                    // reopen our app
+                    return emulatorManager.launchInstalledApplication(namespace);
+                });
+        } else {
+            // open a default Android app (for example, Settings)
+            return ProjectManager.execAndLogChildProcess("adb shell monkey -p com.android.settings -c android.intent.category.LAUNCHER 1")
+                .then<void>(() => {
+                    console.log("Waiting for " + delayBeforeResumingMs + "ms before resuming the test application.");
+                    return Q.delay(delayBeforeResumingMs);
+                })
+                .then<void>(() => {
+                    // reopen our app
+                    return ProjectManager.execAndLogChildProcess("adb shell monkey -p " + namespace + " -c android.intent.category.LAUNCHER 1");
+                });
+        }
+    }
 
     /**
      * Executes a child process and logs its output to the console.
