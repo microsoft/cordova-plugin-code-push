@@ -41,8 +41,8 @@ const ScenarioInstallOnRestartWithRevert = "js/scenarioInstallOnRestartWithRever
 const ScenarioInstallWithRevert = "js/scenarioInstallWithRevert.js";
 const ScenarioSync1x = "js/scenarioSync.js";
 const ScenarioSyncResume = "js/scenarioSyncResume.js";
-const ScenarioSyncResume30 = "js/scenarioSyncResume30.js";
-const ScenarioSyncRestart30 = "js/scenarioSyncResume30.js";
+const ScenarioSyncResumeDelay = "js/scenarioSyncResumeDelay.js";
+const ScenarioSyncRestartDelay = "js/scenarioSyncResumeDelay.js";
 const ScenarioSync2x = "js/scenarioSync2x.js";
 const ScenarioRestart = "js/scenarioRestart.js";
 
@@ -1175,11 +1175,11 @@ describe("window.codePush", function() {
                     .done(done, done);
             });
             
-            it("min background duration 30s", function(done) {
+            it("min background duration 15s", function(done) {
                 mockResponse = { updateInfo: getMockResponse(false) };
 
                 /* create an update */
-                setupScenario(ScenarioSyncResume30).then<void>(() => {
+                setupScenario(ScenarioSyncResumeDelay).then<void>(() => {
                         return setupUpdateProject(UpdateSync, "Update 1 (good update)");
                     })
                     .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
@@ -1201,7 +1201,7 @@ describe("window.codePush", function() {
                         testMessageCallback = verifyMessages([
                             su.TestMessage.APPLICATION_RESUMED], deferred);
                         console.log("Resuming project...");
-                        projectManager.resumeApplication(10 * 1000, targetPlatform, TestNamespace, testRunDirectory, targetEmulator).done();
+                        projectManager.resumeApplication(5 * 1000, targetPlatform, TestNamespace, testRunDirectory, targetEmulator).done();
                         return deferred.promise;
                     })
                     .then<void>(() => {
@@ -1209,7 +1209,7 @@ describe("window.codePush", function() {
                         testMessageCallback = verifyMessages([
                             su.TestMessage.APPLICATION_RESUMED,
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
-                        projectManager.resumeApplication(40 * 1000, targetPlatform, TestNamespace, testRunDirectory, targetEmulator).done();
+                        projectManager.resumeApplication(20 * 1000, targetPlatform, TestNamespace, testRunDirectory, targetEmulator).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -1219,7 +1219,7 @@ describe("window.codePush", function() {
                 mockResponse = { updateInfo: getMockResponse(false) };
 
                 /* create an update */
-                setupScenario(ScenarioSyncRestart30).then<void>(() => {
+                setupScenario(ScenarioSyncRestartDelay).then<void>(() => {
                         return setupUpdateProject(UpdateSync, "Update 1 (good update)");
                     })
                     .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
