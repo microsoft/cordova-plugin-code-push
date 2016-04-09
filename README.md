@@ -363,6 +363,8 @@ While the `sync` method tries to make it easy to perform silent and active updat
 
 - __installMode__ *(InstallMode)* - Used to specify the [InstallMode](#installmode) used for the install operation. Defaults to `InstallMode.ON_NEXT_RESTART`.
 
+- __minimumBackgroundDuration__: If __installMode__ is `InstallMode.ON_NEXT_RESUME`, used to specify the amount of time the app must be in the background before the update is installed when it is resumed. Defaults to `0`.
+
 - __ignoreFailedUpdates__ *(Boolean)* - Optional boolean flag. If set, updates available on the server for which and update was attempted and rolled back will be ignored. Defaults to `true`.
 
 - __updateDialog__ *(UpdateDialogOptions)* - Option used to enable, disable or customize the user interaction during sync. If set to false, user interaction will be disabled. If set to true, the user will be alerted or asked to confirm new updates, based on whether the update is mandatory. To customize the user dialog, this option can be set to a custom `UpdateDialogOptions` instance. Defaults to `false.
@@ -563,9 +565,9 @@ Otherwise, the install operation will be marked as failed, and the application i
 
     Interface defining several options for customizing install operation behavior.
 
-    - __installMode__: Used to specify the [InstallMode](#installmode) used for the install operation. Defaults `InstallMode.ON_NEXT_RESTART`.
+    - __installMode__: Used to specify the [InstallMode](#installmode) used for the install operation. Defaults to `InstallMode.ON_NEXT_RESTART`.
 
-    - __minimumBackgroundDuration__: If __installMode__ is `InstallMode.ON_NEXT_RESUME`, used to specify the amount of time the app must be in the background before the update is installed when it is resumed. Defaults `0`.
+    - __minimumBackgroundDuration__: If __installMode__ is `InstallMode.ON_NEXT_RESUME`, used to specify the amount of time the app must be in the background before the update is installed when it is resumed. Defaults to `0`.
 
 Example Usage:
 

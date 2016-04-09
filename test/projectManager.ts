@@ -158,12 +158,12 @@ export class ProjectManager {
      * Stops and restarts an application specified by its namespace identifier.
      */
     public static restartApplication(targetPlatform: platform.IPlatform, namespace: string, testRunDirectory: string, targetEmulator: string): Q.Promise<void> {
-        var emulatorManager = targetPlatform.getOptionalEmulatorManager();
+        var emulatorManager = targetPlatform.getEmulatorManager();
         if (emulatorManager) {
-            return emulatorManager.endRunningApplication(namespace)
-                .then(() => emulatorManager.launchInstalledApplication(namespace));
+            return emulatorManager.restartApplication(namespace);
         } else {
-            return ProjectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
+            console.log("No emulator manager found!");
+            return null;
         }
     }
     
@@ -171,36 +171,19 @@ export class ProjectManager {
      * Navigates away from the application and then navigates back to it.
      */
     public static resumeApplication(delayBeforeResumingMs: number, targetPlatform: platform.IPlatform, namespace: string, testRunDirectory: string, targetEmulator: string): Q.Promise<void> {
-        var emulatorManager = targetPlatform.getOptionalEmulatorManager();
+        var emulatorManager = targetPlatform.getEmulatorManager();
         if (emulatorManager) {
-            // open a default iOS app (for example, the App Store)
-            return emulatorManager.launchInstalledApplication("com.apple.camera")
-                .then<void>(() => {
-                    console.log("Waiting for " + delayBeforeResumingMs + "ms before resuming the test application.");
-                    return Q.delay(delayBeforeResumingMs);
-                })
-                .then<void>(() => {
-                    // reopen our app
-                    return emulatorManager.launchInstalledApplication(namespace);
-                });
+            return emulatorManager.resumeApplication(namespace, delayBeforeResumingMs);
         } else {
-            // open a default Android app (for example, Settings)
-            return ProjectManager.execAndLogChildProcess("adb shell monkey -p com.android.settings -c android.intent.category.LAUNCHER 1")
-                .then<void>(() => {
-                    console.log("Waiting for " + delayBeforeResumingMs + "ms before resuming the test application.");
-                    return Q.delay(delayBeforeResumingMs);
-                })
-                .then<void>(() => {
-                    // reopen our app
-                    return ProjectManager.execAndLogChildProcess("adb shell monkey -p " + namespace + " -c android.intent.category.LAUNCHER 1");
-                });
+            console.log("No emulator manager found!");
+            return null;
         }
     }
 
     /**
      * Executes a child process and logs its output to the console.
      */
-    private static execAndLogChildProcess(command: string, options?: child_process.IExecOptions): Q.Promise<void> {
+    public static execAndLogChildProcess(command: string, options?: child_process.IExecOptions): Q.Promise<void> {
         var deferred = Q.defer<void>();
 
         options = options || {};

@@ -5,9 +5,13 @@ var app = {
     },
     bindEvents: function () {
         document.addEventListener('deviceready', this.onDeviceReady, false);
+        document.addEventListener('resume', this.onResume, false);
     },
     onDeviceReady: function () {
         app.receivedDeviceReady();
+    },
+    onResume: function () {
+        app.sendTestMessage("APPLICATION_RESUMED");
     },
     // Update DOM on a Received Event
     receivedDeviceReady: function () {

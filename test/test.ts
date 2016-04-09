@@ -10,7 +10,6 @@ import tu = require("./testUtil");
 import su = require("./serverUtil");
 import platform = require("./platform");
 import path = require("path");
-import os = require("os");
 import assert = require("assert");
 import Q = require("q");
 
@@ -19,10 +18,10 @@ var bodyparser = require("body-parser");
 var projectManager = tm.ProjectManager;
 var testUtil = tu.TestUtil;
 
-var templatePath = path.join(__dirname, "../../test/template");
-var thisPluginPath = path.join(__dirname, "../..");
-var testRunDirectory = path.join(os.tmpdir(), "cordova-plugin-code-push", "test-run");
-var updatesDirectory = path.join(os.tmpdir(), "cordova-plugin-code-push", "updates");
+var templatePath = testUtil.templatePath;
+var thisPluginPath = testUtil.thisPluginPath;
+var testRunDirectory = testUtil.testRunDirectory;
+var updatesDirectory = testUtil.updatesDirectory;
 var serverUrl = testUtil.readMockServerName();
 var targetEmulator = testUtil.readTargetEmulator();
 var targetPlatform: platform.IPlatform = platform.PlatformResolver.resolvePlatform(testUtil.readTargetPlatform());
@@ -1166,7 +1165,9 @@ describe("window.codePush", function() {
                         noUpdateResponse.isAvailable = false;
                         noUpdateResponse.appVersion = "0.0.1";
                         mockResponse = { updateInfo: noUpdateResponse };
-                        testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
+                        testMessageCallback = verifyMessages([
+                            su.TestMessage.APPLICATION_RESUMED,
+                            su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                         console.log("Resuming project...");
                         projectManager.resumeApplication(0, targetPlatform, TestNamespace, testRunDirectory, targetEmulator).done();
                         return deferred.promise;
@@ -1192,16 +1193,22 @@ describe("window.codePush", function() {
                         return deferred.promise;
                     })
                     .then<void>(() => {
+                        var deferred = Q.defer<void>();
                         var noUpdateResponse = createDefaultResponse();
                         noUpdateResponse.isAvailable = false;
                         noUpdateResponse.appVersion = "0.0.1";
                         mockResponse = { updateInfo: noUpdateResponse };
+                        testMessageCallback = verifyMessages([
+                            su.TestMessage.APPLICATION_RESUMED], deferred);
                         console.log("Resuming project...");
-                        return projectManager.resumeApplication(10 * 1000, targetPlatform, TestNamespace, testRunDirectory, targetEmulator);
+                        projectManager.resumeApplication(10 * 1000, targetPlatform, TestNamespace, testRunDirectory, targetEmulator).done();
+                        return deferred.promise;
                     })
                     .then<void>(() => {
                         var deferred = Q.defer<void>();
-                        testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
+                        testMessageCallback = verifyMessages([
+                            su.TestMessage.APPLICATION_RESUMED,
+                            su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                         projectManager.resumeApplication(40 * 1000, targetPlatform, TestNamespace, testRunDirectory, targetEmulator).done();
                         return deferred.promise;
                     })
