@@ -583,7 +583,8 @@ var onInstallSuccess = function () {
 };
 
 var onPackageDownloaded = function (localPackage) {
-    localPackage.install(onInstallSuccess, onError, { installMode: InstallMode.ON_NEXT_RESUME });
+    // Install the update after someone navigates away from the app for more than 2 minutes
+    localPackage.install(onInstallSuccess, onError, { installMode: InstallMode.ON_NEXT_RESUME, minimumBackgroundDuration: 120 });
 };
 
 var onUpdateCheck = function (remotePackage) {
