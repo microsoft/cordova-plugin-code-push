@@ -92,6 +92,7 @@ function setupScenario(scenarioPath: string): Q.Promise<void> {
         res.send(mockResponse);
         console.log("Update check called from the app.");
         console.log("Request: " + JSON.stringify(req.query));
+        console.log("Response: " + JSON.stringify(mockResponse));
     });
 
     app.get("/download", function(req: any, res: any) {
@@ -157,10 +158,10 @@ function createMockResponse(mandatory: boolean = false): su.CheckForUpdateRespon
     return updateResponse;
 }
 
-var getMockResponse = (randomHash: boolean, mandatory: boolean = false): su.CheckForUpdateResponseMock => {
+var getMockResponse = (mandatory: boolean = false, randomHash: boolean = true): su.CheckForUpdateResponseMock => {
     var updateResponse = createMockResponse(mandatory);
     updateResponse.downloadURL = serverUrl + "/download";
-    /* for some tests we need unique hashes to avoid conflicts - the application is not uninstalled between tests
+    /* we need unique hashes to avoid conflicts - the application is not uninstalled between tests
        and we store the failed hashes in preferences */
     if (randomHash) {
         updateResponse.packageHash = "randomHash-" + Math.floor(Math.random() * 10000);
@@ -530,7 +531,7 @@ describe("window.codePush", function() {
 
         it("localPackage.install.revert.dorevert", function(done) {
 
-            mockResponse = { updateInfo: getMockResponse(false) };
+            mockResponse = { updateInfo: getMockResponse() };
 
             /* create an update */
             setupUpdateProject(UpdateDeviceReady, "Update 1 (bad update)")
@@ -555,7 +556,7 @@ describe("window.codePush", function() {
                     /* create a second failed update */
                     console.log("Creating a second failed update.");
                     var deferred = Q.defer<void>();
-                    mockResponse = { updateInfo: getMockResponse(true) };
+                    mockResponse = { updateInfo: getMockResponse() };
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED, su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                     console.log("Running project...");
                     projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator);
@@ -574,7 +575,7 @@ describe("window.codePush", function() {
 
         it("localPackage.install.revert.norevert", function(done) {
 
-            mockResponse = { updateInfo: getMockResponse(true) };
+            mockResponse = { updateInfo: getMockResponse() };
 
             /* create an update */
             setupUpdateProject(UpdateNotifyApplicationReady, "Update 1 (good update)")
@@ -611,7 +612,7 @@ describe("window.codePush", function() {
 
         it("localPackage.installOnNextResume.dorevert", function(done) {
 
-            mockResponse = { updateInfo: getMockResponse(true) };
+            mockResponse = { updateInfo: getMockResponse() };
 
             setupUpdateProject(UpdateDeviceReady, "Update 1")
                 .then<string>(() => { return projectManager.createUpdateArchive(updatesDirectory, targetPlatform); })
@@ -644,7 +645,7 @@ describe("window.codePush", function() {
 
         it("localPackage.installOnNextResume.norevert", function(done) {
 
-            mockResponse = { updateInfo: getMockResponse(true) };
+            mockResponse = { updateInfo: getMockResponse() };
 
             /* create an update */
             setupUpdateProject(UpdateNotifyApplicationReady, "Update 1 (good update)")
@@ -689,7 +690,7 @@ describe("window.codePush", function() {
 
         it("localPackage.installOnNextRestart.dorevert", function(done) {
 
-            mockResponse = { updateInfo: getMockResponse(true) };
+            mockResponse = { updateInfo: getMockResponse() };
 
             setupUpdateProject(UpdateDeviceReady, "Update 1")
                 .then<string>(() => { return projectManager.createUpdateArchive(updatesDirectory, targetPlatform); })
@@ -722,7 +723,7 @@ describe("window.codePush", function() {
 
         it("localPackage.installOnNextRestart.norevert", function(done) {
 
-            mockResponse = { updateInfo: getMockResponse(true) };
+            mockResponse = { updateInfo: getMockResponse() };
 
             /* create an update */
             setupUpdateProject(UpdateNotifyApplicationReady, "Update 1 (good update)")
@@ -756,7 +757,7 @@ describe("window.codePush", function() {
 
         it("localPackage.installOnNextRestart.revertToPrevious", function(done) {
 
-            mockResponse = { updateInfo: getMockResponse(true) };
+            mockResponse = { updateInfo: getMockResponse() };
 
             /* create an update */
             setupUpdateProject(UpdateNotifyApplicationReadyConditional, "Update 1 (good update)")
@@ -774,7 +775,7 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS, su.TestMessage.UPDATE_INSTALLED], deferred);
                     console.log("Running project...");
-                    mockResponse = { updateInfo: getMockResponse(true) };
+                    mockResponse = { updateInfo: getMockResponse() };
                     setupUpdateProject(UpdateDeviceReady, "Update 2 (bad update)")
                         .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
                         .then(() => { return projectManager.restartApplication(targetPlatform, TestNamespace, testRunDirectory, targetEmulator); }).done();
@@ -822,7 +823,7 @@ describe("window.codePush", function() {
 
         it("codePush.restartApplication.checkPackages", function(done) {
 
-            mockResponse = { updateInfo: getMockResponse(true) };
+            mockResponse = { updateInfo: getMockResponse() };
 
             setupUpdateProject(UpdateNotifyApplicationReady, "Update 1")
                 .then<string>(() => { return projectManager.createUpdateArchive(updatesDirectory, targetPlatform); })
@@ -934,7 +935,7 @@ describe("window.codePush", function() {
 
             it("window.codePush.sync.dorevert", function(done) {
 
-                mockResponse = { updateInfo: getMockResponse(true) };
+                mockResponse = { updateInfo: getMockResponse() };
             
                 /* create an update */
                 setupUpdateProject(UpdateDeviceReady, "Update 1 (bad update)")
@@ -964,7 +965,7 @@ describe("window.codePush", function() {
             });
 
             it("window.codePush.sync.update", function(done) {
-                mockResponse = { updateInfo: getMockResponse(false) };
+                mockResponse = { updateInfo: getMockResponse() };
 
                 /* create an update */
                 setupUpdateProject(UpdateSync, "Update 1 (good update)")
@@ -1069,7 +1070,7 @@ describe("window.codePush", function() {
 
             it("window.codePush.sync.2x.dorevert", function(done) {
 
-                mockResponse = { updateInfo: getMockResponse(true) };
+                mockResponse = { updateInfo: getMockResponse() };
             
                 /* create an update */
                 setupUpdateProject(UpdateDeviceReady, "Update 1 (bad update)")
@@ -1103,7 +1104,7 @@ describe("window.codePush", function() {
             });
 
             it("window.codePush.sync.2x.update", function(done) {
-                mockResponse = { updateInfo: getMockResponse(false) };
+                mockResponse = { updateInfo: getMockResponse() };
 
                 /* create an update */
                 setupUpdateProject(UpdateSync2x, "Update 1 (good update)")
@@ -1146,9 +1147,8 @@ describe("window.codePush", function() {
             });
             
             it("defaults to 0", function(done) {
-                mockResponse = { updateInfo: getMockResponse(false) };
+                mockResponse = { updateInfo: getMockResponse() };
 
-                /* create an update */
                 setupScenario(ScenarioSyncResume).then<void>(() => {
                         return setupUpdateProject(UpdateSync, "Update 1 (good update)");
                     })
@@ -1179,9 +1179,8 @@ describe("window.codePush", function() {
             });
             
             it("min background duration 15s", function(done) {
-                mockResponse = { updateInfo: getMockResponse(false) };
+                mockResponse = { updateInfo: getMockResponse() };
 
-                /* create an update */
                 setupScenario(ScenarioSyncResumeDelay).then<void>(() => {
                         return setupUpdateProject(UpdateSync, "Update 1 (good update)");
                     })
@@ -1219,9 +1218,8 @@ describe("window.codePush", function() {
             });
             
             it("has no effect on restart", function(done) {
-                mockResponse = { updateInfo: getMockResponse(false) };
+                mockResponse = { updateInfo: getMockResponse() };
 
-                /* create an update */
                 setupScenario(ScenarioSyncRestartDelay).then<void>(() => {
                         return setupUpdateProject(UpdateSync, "Update 1 (good update)");
                     })
@@ -1258,7 +1256,7 @@ describe("window.codePush", function() {
             });
             
             it("defaults to IMMEDIATE", function(done) {
-                mockResponse = { updateInfo: getMockResponse(false, true) };
+                mockResponse = { updateInfo: getMockResponse(true) };
 
                 setupScenario(ScenarioSyncMandatoryDefault).then<void>(() => {
                         return setupUpdateProject(UpdateDeviceReady, "Update 1 (good update)");
@@ -1278,7 +1276,7 @@ describe("window.codePush", function() {
             });
             
             it("works correctly when update is mandatory and mandatory install mode is specified", function(done) {
-                mockResponse = { updateInfo: getMockResponse(false, true) };
+                mockResponse = { updateInfo: getMockResponse(true) };
 
                 setupScenario(ScenarioSyncMandatoryResume).then<void>(() => {
                         return setupUpdateProject(UpdateDeviceReady, "Update 1 (good update)");
@@ -1310,7 +1308,7 @@ describe("window.codePush", function() {
             });
             
             it("has no effect on updates that are not mandatory", function(done) {
-                mockResponse = { updateInfo: getMockResponse(false) };
+                mockResponse = { updateInfo: getMockResponse() };
 
                 setupScenario(ScenarioSyncMandatoryRestart).then<void>(() => {
                         return setupUpdateProject(UpdateDeviceReady, "Update 1 (good update)");
