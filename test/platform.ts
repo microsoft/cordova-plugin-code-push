@@ -3,7 +3,9 @@
 "use strict";
 
 import path = require("path");
+import ProjectManager = require("./ProjectManager");
 import tu = require("./testUtil");
+import Q = require("q");
 
 /**
  * Defines a platform supported by CodePush.
@@ -24,7 +26,7 @@ export interface IPlatform {
      * IOS needs special handling here, since ios-sim touches the app every time and changes the app timestamp.
      * This challenges the tests since we rely on the app timestamp in our logic for finding out if the application was updated through the app store.
      */
-    getOptionalEmulatorManager(): IEmulatorManager;
+    getEmulatorManager(): IEmulatorManager;
     
     /**
      * Gets the default deployment key.
@@ -37,14 +39,19 @@ export interface IPlatform {
  */
 export interface IEmulatorManager {
     /**
-     * Ends a running application, given its Cordova app id.
-     */
-    endRunningApplication(appId: string): Q.Promise<void>;
-    
-    /**
      * Launches an already installed application by app id.
      */
     launchInstalledApplication(appId: string): Q.Promise<void>;
+    
+    /**
+     * Restarts an already installed application by app id.
+     */
+    restartApplication(appId: string): Q.Promise<void>;
+    
+    /**
+     * Navigates away from the current app, waits for a delay, then navigates to the specified app.
+     */
+    resumeApplication(appId: string, delayBeforeResumingMs: number): Q.Promise<void>;
 }
 
 /**
@@ -52,10 +59,15 @@ export interface IEmulatorManager {
  */
 export class Android implements IPlatform {
     private static instance: Android;
+    private emulatorManager: IEmulatorManager;
+    
+    constructor(emulatorManager: IEmulatorManager) {
+        this.emulatorManager = emulatorManager;
+    }
 
     public static getInstance(): Android {
         if (!this.instance) {
-            this.instance = new Android();
+            this.instance = new Android(new AndroidEmulatorManager());
         }
 
         return this.instance;
@@ -69,10 +81,8 @@ export class Android implements IPlatform {
         return path.join(projectDirectory, "platforms/android/assets/www");
     }
 
-    public getOptionalEmulatorManager(): IEmulatorManager {
-        /* Android does not need a separate emulator manager.
-        All interaction with the emulator is done using the Cordova CLI. */
-        return null;
+    public getEmulatorManager(): IEmulatorManager {
+        return this.emulatorManager;
     }
 
     public getDefaultDeploymentKey(): string {
@@ -107,7 +117,7 @@ export class IOS implements IPlatform {
         return path.join(projectDirectory, "platforms/ios/www");
     }
 
-    public getOptionalEmulatorManager(): IEmulatorManager {
+    public getEmulatorManager(): IEmulatorManager {
         return this.emulatorManager;
     }
 
@@ -118,9 +128,17 @@ export class IOS implements IPlatform {
 
 export class IOSEmulatorManager implements IEmulatorManager {
     /**
+     * Launches an already installed application by app id.
+     */
+    public launchInstalledApplication(appId: string): Q.Promise<void> {
+        return tu.TestUtil.getProcessOutput("xcrun simctl launch booted " + appId, undefined, true)
+            .then<void>(output => { console.log(output); });
+    }
+    
+    /**
      * Ends a running application, given its Cordova app id.
      */
-    public endRunningApplication(appId: string): Q.Promise<void> {
+    private endRunningApplication(appId: string): Q.Promise<void> {
         return tu.TestUtil.getProcessOutput("xcrun simctl spawn booted launchctl list", undefined, true)
             .then<string>(processListOutput => {
                 var regex = new RegExp("(\\S+" + appId + "\\S+)");
@@ -141,11 +159,59 @@ export class IOSEmulatorManager implements IEmulatorManager {
     }
     
     /**
+     * Restarts an already installed application by app id.
+     */
+    restartApplication(appId: string): Q.Promise<void> {
+        return this.endRunningApplication(appId)
+            .then(() => this.launchInstalledApplication(appId));
+    }
+    
+    /**
+     * Navigates away from the current app, waits for a delay, then navigates to the specified app.
+     */
+    resumeApplication(appId: string, delayBeforeResumingMs: number): Q.Promise<void> {
+        // open a default iOS app (for example, camera)
+        return this.launchInstalledApplication("com.apple.camera")
+            .then<void>(() => {
+                console.log("Waiting for " + delayBeforeResumingMs + "ms before resuming the test application.");
+                return Q.delay(delayBeforeResumingMs);
+            })
+            .then<void>(() => {
+                // reopen the app
+                return this.launchInstalledApplication(appId);
+            });
+    }
+}
+
+export class AndroidEmulatorManager implements IEmulatorManager {
+    /**
      * Launches an already installed application by app id.
      */
     public launchInstalledApplication(appId: string): Q.Promise<void> {
-        return tu.TestUtil.getProcessOutput("xcrun simctl launch booted " + appId, undefined, true)
-            .then<void>(output => { console.log(output); });
+        return ProjectManager.ProjectManager.execAndLogChildProcess("adb shell monkey -p " + appId + " -c android.intent.category.LAUNCHER 1");
+    }
+    
+    /**
+     * Restarts an already installed application by app id.
+     */
+    restartApplication(appId: string): Q.Promise<void> {
+        return ProjectManager.ProjectManager.runPlatform(tu.TestUtil.testRunDirectory, Android.getInstance(), true, tu.TestUtil.readTargetEmulator());
+    }
+    
+    /**
+     * Navigates away from the current app, waits for a delay, then navigates to the specified app.
+     */
+    resumeApplication(appId: string, delayBeforeResumingMs: number): Q.Promise<void> {
+        // open a default Android app (for example, settings)
+        return this.launchInstalledApplication("com.android.settings")
+            .then<void>(() => {
+                console.log("Waiting for " + delayBeforeResumingMs + "ms before resuming the test application.");
+                return Q.delay(delayBeforeResumingMs);
+            })
+            .then<void>(() => {
+                // reopen the app
+                this.launchInstalledApplication(appId);
+            });
     }
 }
 

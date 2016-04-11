@@ -13,6 +13,7 @@
 
 bool didUpdate = false;
 bool pendingInstall = false;
+NSDate *lastResignedDate;
 
 - (void)getBinaryHash:(CDVInvokedUrlCommand *)command {
     CDVPluginResult* pluginResult = nil;
@@ -77,14 +78,12 @@ bool pendingInstall = false;
     CDVPluginResult* pluginResult = nil;
     
     NSString* location = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
-    NSString* installModeString = [command argumentAtIndex:1 withDefault:nil andClass:[NSString class]];
+    NSString* installModeString = [command argumentAtIndex:1 withDefault:IMMEDIATE andClass:[NSString class]];
+    NSString* minimumBackgroundDurationString = [command argumentAtIndex:2 withDefault:0 andClass:[NSString class]];
     
     InstallOptions* options = [[InstallOptions alloc] init];
-    [options setInstallMode:IMMEDIATE];
-    
-    if (installModeString) {
-        [options setInstallMode:[installModeString intValue]];
-    }
+    [options setInstallMode:[installModeString intValue]];
+    [options setMinimumBackgroundDuration:[minimumBackgroundDurationString intValue]];
     
     if ([options installMode] == IMMEDIATE) {
         if (nil == location) {
@@ -231,7 +230,9 @@ bool pendingInstall = false;
 
 - (void)applicationWillEnterForeground {
     InstallOptions* pendingInstall = [CodePushPackageManager getPendingInstall];
-    if (pendingInstall && pendingInstall.installMode == ON_NEXT_RESUME) {
+    // calculate the duration that the app was in the background
+    long durationInBackground = lastResignedDate ? [[NSDate date] timeIntervalSinceDate:lastResignedDate] : 0;
+    if (pendingInstall && pendingInstall.installMode == ON_NEXT_RESUME && durationInBackground >= pendingInstall.minimumBackgroundDuration) {
         CodePushPackageMetadata* deployedPackageMetadata = [CodePushPackageManager getCurrentPackageMetadata];
         if (deployedPackageMetadata && deployedPackageMetadata.localPath) {
             bool applied = [self loadPackage: deployedPackageMetadata.localPath];
@@ -245,6 +246,8 @@ bool pendingInstall = false;
 
 - (void)applicationWillResignActive {
     [Reporting reportStatuses:self.webView];
+    // Save the current time so that when the app is later resumed, we can detect how long it was in the background
+    lastResignedDate = [NSDate date];
 }
 
 - (BOOL)loadPackage:(NSString*)packageLocation {

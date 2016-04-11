@@ -363,6 +363,8 @@ While the `sync` method tries to make it easy to perform silent and active updat
 
 - __installMode__ *(InstallMode)* - Used to specify the [InstallMode](#installmode) used for the install operation. Defaults to `InstallMode.ON_NEXT_RESTART`.
 
+- __minimumBackgroundDuration__: If __installMode__ is `InstallMode.ON_NEXT_RESUME`, used to specify the amount of time the app must be in the background before the update is installed when it is resumed. Defaults to `0`.
+
 - __ignoreFailedUpdates__ *(Boolean)* - Optional boolean flag. If set, updates available on the server for which and update was attempted and rolled back will be ignored. Defaults to `true`.
 
 - __updateDialog__ *(UpdateDialogOptions)* - Option used to enable, disable or customize the user interaction during sync. If set to false, user interaction will be disabled. If set to true, the user will be alerted or asked to confirm new updates, based on whether the update is mandatory. To customize the user dialog, this option can be set to a custom `UpdateDialogOptions` instance. Defaults to `false.
@@ -563,7 +565,9 @@ Otherwise, the install operation will be marked as failed, and the application i
 
     Interface defining several options for customizing install operation behavior.
 
-    - __installMode__: Used to specify the [InstallMode](#installmode) used for the install operation. Defaults `InstallMode.ON_NEXT_RESTART`.
+    - __installMode__: Used to specify the [InstallMode](#installmode) used for the install operation. Defaults to `InstallMode.ON_NEXT_RESTART`.
+
+    - __minimumBackgroundDuration__: If __installMode__ is `InstallMode.ON_NEXT_RESUME`, used to specify the amount of time the app must be in the background before the update is installed when it is resumed. Defaults to `0`.
 
 Example Usage:
 
@@ -579,7 +583,8 @@ var onInstallSuccess = function () {
 };
 
 var onPackageDownloaded = function (localPackage) {
-    localPackage.install(onInstallSuccess, onError, { installMode: InstallMode.ON_NEXT_RESUME });
+    // Install the update after someone navigates away from the app for more than 2 minutes
+    localPackage.install(onInstallSuccess, onError, { installMode: InstallMode.ON_NEXT_RESUME, minimumBackgroundDuration: 120 });
 };
 
 var onUpdateCheck = function (remotePackage) {
@@ -694,6 +699,8 @@ Defines the possible statuses of the [sync](#codepushsync) operation. There are 
 - __UPDATE_IGNORED__: The app has an optional update, which the end user chose to ignore. *(This is only applicable when the `updateDialog` is used)*
  
 - __ERROR__: An error occured during the `sync` operation. This might be an error while communicating with the server, downloading or unziping the update. The console logs should contain more information about what happened. No update has been applied in this case.
+
+- __IN_PROGRESS__: Another sync is already running, so this attempt to sync has been aborted.
 
 - __CHECKING_FOR_UPDATE__: The CodePush server is being queried for an update.
 

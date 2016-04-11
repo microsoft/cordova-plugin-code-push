@@ -48,7 +48,7 @@ gulp test-ios
 
 ##### Android
 
-To run the Android tests, make sure you have your Android emulator running on the machine, and run:
+To run the Android tests, make sure you have your Android emulator running on the machine and the ADB in your path, and run:
 ```
 gulp test-android
 ```

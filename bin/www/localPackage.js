@@ -92,10 +92,10 @@ var LocalPackage = (function (_super) {
                             CodePushUtil.logMessage("Install succeeded.");
                             if (installOptions.installMode === InstallMode.IMMEDIATE) {
                                 installSuccess && installSuccess();
-                                cordova.exec(function () { }, function () { }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString()]);
+                                cordova.exec(function () { }, function () { }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString(), installOptions.minimumBackgroundDuration.toString()]);
                             }
                             else {
-                                cordova.exec(function () { installSuccess && installSuccess(); }, function () { installError && installError(); }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString()]);
+                                cordova.exec(function () { installSuccess && installSuccess(); }, function () { installError && installError(); }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString(), installOptions.minimumBackgroundDuration.toString()]);
                             }
                         };
                         var preInstallSuccess = function () {
@@ -355,6 +355,7 @@ var LocalPackage = (function (_super) {
         if (!LocalPackage.DefaultInstallOptions) {
             LocalPackage.DefaultInstallOptions = {
                 installMode: InstallMode.ON_NEXT_RESTART,
+                minimumBackgroundDuration: 0
             };
         }
         return LocalPackage.DefaultInstallOptions;

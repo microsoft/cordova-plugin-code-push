@@ -4,6 +4,8 @@
 "use strict";
 
 import child_process = require("child_process");
+import os = require("os");
+import path = require("path");
 import Q = require("q");
 
 export class TestUtil {
@@ -12,6 +14,11 @@ export class TestUtil {
     public static PLATFORM_OPTION_NAME: string = "--platform";
     public static TARGET_OPTION_NAME: string = "--target";
     public static SHOULD_USE_WKWEBVIEW: string = "--use-wkwebview";
+    
+    public static templatePath = path.join(__dirname, "../../test/template");
+    public static thisPluginPath = path.join(__dirname, "../..");
+    public static testRunDirectory = path.join(os.tmpdir(), "cordova-plugin-code-push", "test-run");
+    public static updatesDirectory = path.join(os.tmpdir(), "cordova-plugin-code-push", "updates");
 
     /**
      * Reads the target emulator name.
