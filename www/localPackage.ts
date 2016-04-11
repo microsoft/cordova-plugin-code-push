@@ -117,13 +117,16 @@ class LocalPackage extends Package implements ILocalPackage {
                     } else {
                         var invokeSuccessAndInstall = () => {
                             CodePushUtil.logMessage("Install succeeded.");
+                            var installModeToUse: InstallMode = this.isMandatory ? installOptions.mandatoryInstallMode : installOptions.installMode;
                             if (installOptions.installMode === InstallMode.IMMEDIATE) {
                                 /* invoke success before navigating */
                                 installSuccess && installSuccess();
-                                /* no neeed for callbacks, the javascript context will reload */
-                                cordova.exec(() => { }, () => { }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString(), installOptions.minimumBackgroundDuration.toString()]);
+                                /* no need for callbacks, the javascript context will reload */
+                                cordova.exec(() => { }, () => { }, "CodePush", "install", [deployDir.fullPath, 
+                                    installModeToUse.toString(), installOptions.minimumBackgroundDuration.toString()]);
                             } else {
-                                cordova.exec(() => { installSuccess && installSuccess(); }, () => { installError && installError(); }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString(), installOptions.minimumBackgroundDuration.toString()]);
+                                cordova.exec(() => { installSuccess && installSuccess(); }, () => { installError && installError(); }, "CodePush", "install", [deployDir.fullPath, 
+                                    installModeToUse.toString(), installOptions.minimumBackgroundDuration.toString()]);
                             }
                         };
 
@@ -444,7 +447,8 @@ class LocalPackage extends Package implements ILocalPackage {
         if (!LocalPackage.DefaultInstallOptions) {
             LocalPackage.DefaultInstallOptions = {
                 installMode: InstallMode.ON_NEXT_RESTART,
-                minimumBackgroundDuration: 0
+                minimumBackgroundDuration: 0,
+                mandatoryInstallMode: InstallMode.IMMEDIATE
             };
         }
 
