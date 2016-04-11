@@ -16,7 +16,16 @@ var app = {
         /* invoke sync with no UI options */
         window.codePush.sync(
             function (status) {
-                app.sendTestMessage("SYNC_STATUS", [status]);
+                switch(status) {
+                    case SyncStatus.UP_TO_DATE:
+                    case SyncStatus.UPDATE_INSTALLED:
+                    case SyncStatus.UPDATE_IGNORED:
+                    case SyncStatus.ERROR:
+                    case SyncStatus.IN_PROGRESS:
+                        app.sendTestMessage("SYNC_STATUS", [status]);
+                    default:
+                        break;
+                }
             },
             {
                 installMode: InstallMode.ON_NEXT_RESTART

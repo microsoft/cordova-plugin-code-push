@@ -1251,7 +1251,7 @@ describe("window.codePush", function() {
             
         });
         
-        describe("mandatory install mode tests", function() {
+        describe.only("mandatory install mode tests", function() {
 
             afterEach(() => {
                 cleanupScenario();
@@ -1260,9 +1260,8 @@ describe("window.codePush", function() {
             it("defaults to IMMEDIATE", function(done) {
                 mockResponse = { updateInfo: getMockResponse(false, true) };
 
-                /* create an update */
                 setupScenario(ScenarioSyncMandatoryDefault).then<void>(() => {
-                        return setupUpdateProject(UpdateSync, "Update 1 (good update)");
+                        return setupUpdateProject(UpdateDeviceReady, "Update 1 (good update)");
                     })
                     .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
                     .then<void>((updatePath: string) => {
@@ -1281,9 +1280,8 @@ describe("window.codePush", function() {
             it("works correctly when update is mandatory and mandatory install mode is specified", function(done) {
                 mockResponse = { updateInfo: getMockResponse(false, true) };
 
-                /* create an update */
                 setupScenario(ScenarioSyncMandatoryResume).then<void>(() => {
-                        return setupUpdateProject(UpdateSync, "Update 1 (good update)");
+                        return setupUpdateProject(UpdateDeviceReady, "Update 1 (good update)");
                     })
                     .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
                     .then<void>((updatePath: string) => {
@@ -1314,9 +1312,8 @@ describe("window.codePush", function() {
             it("has no effect on updates that are not mandatory", function(done) {
                 mockResponse = { updateInfo: getMockResponse(false) };
 
-                /* create an update */
                 setupScenario(ScenarioSyncMandatoryRestart).then<void>(() => {
-                        return setupUpdateProject(UpdateSync, "Update 1 (good update)");
+                        return setupUpdateProject(UpdateDeviceReady, "Update 1 (good update)");
                     })
                     .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
                     .then<void>((updatePath: string) => {

@@ -90,12 +90,15 @@ var LocalPackage = (function (_super) {
                     else {
                         var invokeSuccessAndInstall = function () {
                             CodePushUtil.logMessage("Install succeeded.");
+                            var installModeToUse = _this.isMandatory ? installOptions.mandatoryInstallMode : installOptions.installMode;
                             if (installOptions.installMode === InstallMode.IMMEDIATE) {
                                 installSuccess && installSuccess();
-                                cordova.exec(function () { }, function () { }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString(), installOptions.minimumBackgroundDuration.toString()]);
+                                cordova.exec(function () { }, function () { }, "CodePush", "install", [deployDir.fullPath,
+                                    installModeToUse.toString(), installOptions.minimumBackgroundDuration.toString()]);
                             }
                             else {
-                                cordova.exec(function () { installSuccess && installSuccess(); }, function () { installError && installError(); }, "CodePush", "install", [deployDir.fullPath, installOptions.installMode.toString(), installOptions.minimumBackgroundDuration.toString()]);
+                                cordova.exec(function () { installSuccess && installSuccess(); }, function () { installError && installError(); }, "CodePush", "install", [deployDir.fullPath,
+                                    installModeToUse.toString(), installOptions.minimumBackgroundDuration.toString()]);
                             }
                         };
                         var preInstallSuccess = function () {
@@ -355,7 +358,8 @@ var LocalPackage = (function (_super) {
         if (!LocalPackage.DefaultInstallOptions) {
             LocalPackage.DefaultInstallOptions = {
                 installMode: InstallMode.ON_NEXT_RESTART,
-                minimumBackgroundDuration: 0
+                minimumBackgroundDuration: 0,
+                mandatoryInstallMode: InstallMode.IMMEDIATE
             };
         }
         return LocalPackage.DefaultInstallOptions;
