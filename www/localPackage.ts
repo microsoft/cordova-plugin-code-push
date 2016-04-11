@@ -110,7 +110,7 @@ class LocalPackage extends Package implements ILocalPackage {
         LocalPackage.getCurrentOrDefaultPackage((oldPackage: LocalPackage) => {
             LocalPackage.backupPackageInformationFile((backupError: Error) => {
                 backupError && CodePushUtil.logMessage("First update: back up package information skipped. ");
-                /* continue on error, current package information is missing if this is the fist update */
+                /* continue on error, current package information is missing if this is the first update */
                 this.writeNewPackageMetadata(deployDir, (writeMetadataError: Error) => {
                     if (writeMetadataError) {
                         installError && installError(writeMetadataError);
