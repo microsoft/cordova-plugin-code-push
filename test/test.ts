@@ -45,6 +45,9 @@ const ScenarioSyncResumeDelay = "js/scenarioSyncResumeDelay.js";
 const ScenarioSyncRestartDelay = "js/scenarioSyncResumeDelay.js";
 const ScenarioSync2x = "js/scenarioSync2x.js";
 const ScenarioRestart = "js/scenarioRestart.js";
+const ScenarioSyncMandatoryDefault = "js/scenarioSyncMandatoryDefault.js";
+const ScenarioSyncMandatoryResume = "js/scenarioSyncMandatoryResume.js";
+const ScenarioSyncMandatoryRestart = "js/scenarioSyncMandatoryRestart.js";
 
 const UpdateDeviceReady = "js/updateDeviceReady.js";
 const UpdateNotifyApplicationReady = "js/updateNotifyApplicationReady.js";
@@ -140,12 +143,12 @@ function createDefaultResponse(): su.CheckForUpdateResponseMock {
     return defaultResponse;
 }
 
-function createMockResponse(): su.CheckForUpdateResponseMock {
+function createMockResponse(mandatory: boolean = false): su.CheckForUpdateResponseMock {
     var updateResponse = new su.CheckForUpdateResponseMock();
     updateResponse.isAvailable = true;
     updateResponse.appVersion = "1.0.0";
     updateResponse.downloadURL = "mock.url/download";
-    updateResponse.isMandatory = true;
+    updateResponse.isMandatory = mandatory;
     updateResponse.label = "mock-update";
     updateResponse.packageHash = "12345-67890";
     updateResponse.packageSize = 12345;
@@ -154,8 +157,8 @@ function createMockResponse(): su.CheckForUpdateResponseMock {
     return updateResponse;
 }
 
-var getMockResponse = (randomHash: boolean): su.CheckForUpdateResponseMock => {
-    var updateResponse = createMockResponse();
+var getMockResponse = (randomHash: boolean, mandatory: boolean = false): su.CheckForUpdateResponseMock => {
+    var updateResponse = createMockResponse(mandatory);
     updateResponse.downloadURL = serverUrl + "/download";
     /* for some tests we need unique hashes to avoid conflicts - the application is not uninstalled between tests
        and we store the failed hashes in preferences */
@@ -1241,6 +1244,89 @@ describe("window.codePush", function() {
                         testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                         console.log("Restarting project...");
                         projectManager.restartApplication(targetPlatform, TestNamespace, testRunDirectory, targetEmulator).done();
+                        return deferred.promise;
+                    })
+                    .done(done, done);
+            });
+            
+        });
+        
+        describe("mandatory install mode tests", function() {
+
+            afterEach(() => {
+                cleanupScenario();
+            });
+            
+            it("defaults to IMMEDIATE", function(done) {
+                mockResponse = { updateInfo: getMockResponse(false, true) };
+
+                /* create an update */
+                setupScenario(ScenarioSyncMandatoryDefault).then<void>(() => {
+                        return setupUpdateProject(UpdateSync, "Update 1 (good update)");
+                    })
+                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                    .then<void>((updatePath: string) => {
+                        var deferred = Q.defer<void>();
+                        mockUpdatePackagePath = updatePath;
+                        testMessageCallback = verifyMessages([
+                            new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED]),
+                            su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
+                        console.log("Running project...");
+                        projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator).done();
+                        return deferred.promise;
+                    })
+                    .done(done, done);
+            });
+            
+            it("works correctly when update is mandatory and mandatory install mode is specified", function(done) {
+                mockResponse = { updateInfo: getMockResponse(false, true) };
+
+                /* create an update */
+                setupScenario(ScenarioSyncMandatoryResume).then<void>(() => {
+                        return setupUpdateProject(UpdateSync, "Update 1 (good update)");
+                    })
+                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                    .then<void>((updatePath: string) => {
+                        var deferred = Q.defer<void>();
+                        mockUpdatePackagePath = updatePath;
+                        testMessageCallback = verifyMessages([
+                            new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED])], deferred);
+                        console.log("Running project...");
+                        projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator).done();
+                        return deferred.promise;
+                    })
+                    .then<void>(() => {
+                        var deferred = Q.defer<void>();
+                        var noUpdateResponse = createDefaultResponse();
+                        noUpdateResponse.isAvailable = false;
+                        noUpdateResponse.appVersion = "0.0.1";
+                        mockResponse = { updateInfo: noUpdateResponse };
+                        testMessageCallback = verifyMessages([
+                            su.TestMessage.APPLICATION_RESUMED,
+                            su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
+                        console.log("Resuming project...");
+                        projectManager.resumeApplication(0, targetPlatform, TestNamespace, testRunDirectory, targetEmulator).done();
+                        return deferred.promise;
+                    })
+                    .done(done, done);
+            });
+            
+            it("has no effect on updates that are not mandatory", function(done) {
+                mockResponse = { updateInfo: getMockResponse(false) };
+
+                /* create an update */
+                setupScenario(ScenarioSyncMandatoryRestart).then<void>(() => {
+                        return setupUpdateProject(UpdateSync, "Update 1 (good update)");
+                    })
+                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                    .then<void>((updatePath: string) => {
+                        var deferred = Q.defer<void>();
+                        mockUpdatePackagePath = updatePath;
+                        testMessageCallback = verifyMessages([
+                            new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED]),
+                            su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
+                        console.log("Running project...");
+                        projectManager.runPlatform(testRunDirectory, targetPlatform, true, targetEmulator).done();
                         return deferred.promise;
                     })
                     .done(done, done);
