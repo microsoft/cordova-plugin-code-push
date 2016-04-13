@@ -52,8 +52,6 @@ public class CodePush extends CordovaPlugin {
             return execGetNativeBuildTime(callbackContext);
         } else if ("getAppVersion".equals(action)) {
             return execGetAppVersion(callbackContext);
-        } else if ("getFilesDirectory".equals(action)) {
-            return execGetFilesDirectory(callbackContext);
         } else if ("getBinaryHash".equals(action)) {
             return execGetBinaryHash(callbackContext);
         } else if ("preInstall".equals(action)) {
@@ -265,12 +263,6 @@ public class CodePush extends CordovaPlugin {
             String result = String.valueOf(millis);
             callbackContext.success(result);
         }
-        return true;
-    }
-
-    private boolean execGetFilesDirectory(CallbackContext callbackContext) {
-        String getFilesDir = cordova.getActivity().getFilesDir().toString();
-        callbackContext.success(getFilesDir);
         return true;
     }
 
