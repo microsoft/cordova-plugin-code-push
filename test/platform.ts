@@ -57,6 +57,11 @@ export interface IEmulatorManager {
      * Navigates away from the current app, waits for a delay (defaults to 1 second), then navigates to the specified app.
      */
     resumeApplication(appId: string, delayBeforeResumingMs: number): Q.Promise<string>;
+    
+    /**
+     * Uninstalls an application given its app id.
+     */
+    uninstallApplication(appId: string): Q.Promise<string>;
 }
 
 /**
@@ -182,6 +187,13 @@ export class IOSEmulatorManager implements IEmulatorManager {
                 return this.launchInstalledApplication(appId);
             });
     }
+    
+    /**
+     * Uninstalls an application given its app id.
+     */
+    uninstallApplication(appId: string): Q.Promise<string> {
+        return tu.TestUtil.getProcessOutput("xcrun simctl uninstall booted " + appId, undefined, true);
+    }
 }
 
 export class AndroidEmulatorManager implements IEmulatorManager {
@@ -222,6 +234,13 @@ export class AndroidEmulatorManager implements IEmulatorManager {
                 // reopen the app
                 return this.launchInstalledApplication(appId);
             });
+    }
+    
+    /**
+     * Uninstalls an application given its app id.
+     */
+    uninstallApplication(appId: string): Q.Promise<string> {
+        return ProjectManager.ProjectManager.execAndLogChildProcess("adb uninstall " + appId);
     }
 }
 
