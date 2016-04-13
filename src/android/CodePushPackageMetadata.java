@@ -4,6 +4,8 @@ import org.json.JSONObject;
 
 import java.io.File;
 
+import android.util.Log;
+
 /**
  * Model class for the CodePush metadata stored alongside a package deployment.
  */
@@ -34,11 +36,15 @@ public class CodePushPackageMetadata {
         CodePushPackageMetadata result = null;
 
         try {
+            Log.v("CODEPUSH", "filePath = " + filePath);
             File file = new File(filePath);
+            Log.v("CODEPUSH", "file.getPath() = " + file.getPath());
+            Log.v("CODEPUSH", "file.getAbsolutePath() = " + file.getAbsolutePath());
             if (file.exists()) {
                 String content = Utilities.readFileContents(file);
                 result = new CodePushPackageMetadata();
                 JSONObject jsonObject = new JSONObject(content);
+            Log.v("CODEPUSH", "jsonObject = " + jsonObject);
 
                 if (jsonObject.has(CodePushPackageMetadata.JsonField.DeploymentKey)) {
                     result.deploymentKey = jsonObject.getString(CodePushPackageMetadata.JsonField.DeploymentKey);

@@ -1,0 +1,14 @@
+{
+    "nativeBuildTime": "CODE_PUSH_NATIVE_BUILD_TIME",
+    "localPath": "/codepush/deploy/versions/test",
+    "isFirstRun": true,
+    
+    "deploymentKey": "CODE_PUSH_DEPLOYMENT_KEY",
+    "description": "test package",
+    "label": "v1",
+    "appVersion": "CODE_PUSH_APP_VERSION",
+    "isMandatory": true,
+    "packageHash": "test",
+    "packageSize": 0,
+    "failedInstall": false
+}

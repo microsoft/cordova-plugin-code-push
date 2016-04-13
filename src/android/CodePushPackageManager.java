@@ -7,6 +7,8 @@ import org.json.JSONException;
 import java.io.File;
 import java.io.IOException;
 
+import android.util.Log;
+
 /**
  * Handles update package management.
  */
@@ -73,6 +75,7 @@ public class CodePushPackageManager {
 
     public CodePushPackageMetadata getCurrentPackageMetadata() {
         String currentPackageFilePath = this.context.getFilesDir() + CODEPUSH_CURRENT_PACKAGE_PATH;
+        Log.v("CODEPUSH", "currentPackageFilePath = " + currentPackageFilePath);
         return CodePushPackageMetadata.getPackageMetadata(currentPackageFilePath);
     }
 

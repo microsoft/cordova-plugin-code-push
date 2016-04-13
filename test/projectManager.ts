@@ -22,74 +22,107 @@ var archiver = require("archiver");
  * In charge of Cordova project related operations.
  */
 export class ProjectManager {
-    public static ANDROID_KEY_PLACEHOLDER: string = "CODE_PUSH_ANDROID_DEPOYMENT_KEY";
+    public static ANDROID_KEY_PLACEHOLDER: string = "CODE_PUSH_ANDROID_DEPLOYMENT_KEY";
     public static IOS_KEY_PLACEHOLDER: string = "CODE_PUSH_IOS_DEPLOYMENT_KEY";
+    public static KEY_PLACEHOLDER: string = "CODE_PUSH_DEPLOYMENT_KEY";
     public static SERVER_URL_PLACEHOLDER: string = "CODE_PUSH_SERVER_URL";
     public static INDEX_JS_PLACEHOLDER: string = "CODE_PUSH_INDEX_JS_PATH";
     public static CODE_PUSH_APP_VERSION_PLACEHOLDER: string = "CODE_PUSH_APP_VERSION";
     public static CODE_PUSH_APP_ID_PLACEHOLDER: string = "CODE_PUSH_TEST_APPLICATION_ID";
+    public static NATIVE_BUILD_TIME_PLACEHOLDER: string = "CODE_PUSH_NATIVE_BUILD_TIME";
 
     public static DEFAULT_APP_VERSION: string = "Store version";
+    
+    public static setupCurrentPackage(deferred: Q.Deferred<void>, projectDirectory: string, targetPlatform: platform.IPlatform, nativeBuildTime: string, version: string = ProjectManager.DEFAULT_APP_VERSION): void {
+        var currentPackagePath = path.join(projectDirectory, "currentPackage.json");
+        
+        ProjectManager.replaceString(currentPackagePath, ProjectManager.KEY_PLACEHOLDER, targetPlatform.getDefaultDeploymentKey());
+        ProjectManager.replaceString(currentPackagePath, ProjectManager.CODE_PUSH_APP_VERSION_PLACEHOLDER, version);
+        ProjectManager.replaceString(currentPackagePath, ProjectManager.NATIVE_BUILD_TIME_PLACEHOLDER, nativeBuildTime);
+        
+        deferred && deferred.resolve(undefined);
+    }
 
 	/**
 	 * Creates a new cordova test application at the specified path, and configures it
 	 * with the given server URL, android and ios deployment keys.
 	 */
-    public static setupTemplate(destinationPath: string,
+    public static setupTemplate(projectDirectory: string,
         templatePath: string,
         serverURL: string,
         androidKey: string,
         iosKey: string,
         appName: string,
         appNamespace: string,
-        jsPath: string,
-        appVersion: string = ProjectManager.DEFAULT_APP_VERSION): Q.Promise<void> {
-        var configXmlPath = path.join(destinationPath, "config.xml");
-        var indexHtmlPath = path.join(destinationPath, "www/index.html");
-        var indexJsPath = path.join(destinationPath, "www/" + jsPath);
+        version: string = ProjectManager.DEFAULT_APP_VERSION): Q.Promise<void> {
+        var configXmlPath = path.join(projectDirectory, "config.xml");
+        var indexHtmlPath = path.join(projectDirectory, "www/index.html");
+        var setupScenario = "js/scenarioSetup.js";
+        var setupScenarioPath = path.join(projectDirectory, "www/", setupScenario);
 
-        if (fs.existsSync(destinationPath)) {
-            del.sync([destinationPath], { force: true });
+        if (fs.existsSync(projectDirectory)) {
+            del.sync([projectDirectory], { force: true });
         }
-        mkdirp.sync(destinationPath);
+        mkdirp.sync(projectDirectory);
 
-        return ProjectManager.execAndLogChildProcess("cordova create " + destinationPath + " " + appNamespace + " " + appName + " --copy-from " + templatePath)
-            .then<void>(ProjectManager.replaceString.bind(undefined, configXmlPath, ProjectManager.ANDROID_KEY_PLACEHOLDER, androidKey))
-            .then<void>(ProjectManager.replaceString.bind(undefined, configXmlPath, ProjectManager.IOS_KEY_PLACEHOLDER, iosKey))
-            .then<void>(ProjectManager.replaceString.bind(undefined, configXmlPath, ProjectManager.SERVER_URL_PLACEHOLDER, serverURL))
-            .then<void>(ProjectManager.replaceString.bind(undefined, indexHtmlPath, ProjectManager.SERVER_URL_PLACEHOLDER, serverURL))
-            .then<void>(ProjectManager.replaceString.bind(undefined, indexHtmlPath, ProjectManager.INDEX_JS_PLACEHOLDER, jsPath))
-            .then<void>(ProjectManager.replaceString.bind(undefined, indexHtmlPath, ProjectManager.CODE_PUSH_APP_VERSION_PLACEHOLDER, appVersion))
-            .then<void>(ProjectManager.replaceString.bind(undefined, indexJsPath, ProjectManager.SERVER_URL_PLACEHOLDER, serverURL));
+        return ProjectManager.execAndLogChildProcess("cordova create " + projectDirectory + " " + appNamespace + " " + appName + " --copy-from " + templatePath)
+            // copy the correct values into the config.xml file
+            .then<string>(ProjectManager.replaceString.bind(undefined, configXmlPath, ProjectManager.ANDROID_KEY_PLACEHOLDER, androidKey))
+            .then<string>(ProjectManager.replaceString.bind(undefined, configXmlPath, ProjectManager.IOS_KEY_PLACEHOLDER, iosKey))
+            .then<string>(ProjectManager.replaceString.bind(undefined, configXmlPath, ProjectManager.SERVER_URL_PLACEHOLDER, serverURL))
+            // copy the correct values into the index.html file
+            .then<string>(ProjectManager.replaceString.bind(undefined, indexHtmlPath, ProjectManager.SERVER_URL_PLACEHOLDER, serverURL))
+            .then<string>(ProjectManager.replaceString.bind(undefined, indexHtmlPath, ProjectManager.CODE_PUSH_APP_VERSION_PLACEHOLDER, version))
+            .then<string>(ProjectManager.replaceString.bind(undefined, indexHtmlPath, ProjectManager.SERVER_URL_PLACEHOLDER, serverURL))
+            .then<string>(ProjectManager.replaceString.bind(undefined, indexHtmlPath, ProjectManager.CODE_PUSH_APP_VERSION_PLACEHOLDER, version))
+            // use the setup scenario
+            .then<string>(ProjectManager.replaceString.bind(undefined, setupScenarioPath, ProjectManager.SERVER_URL_PLACEHOLDER, serverURL))
+            .then<string>(ProjectManager.replaceString.bind(undefined, indexHtmlPath, ProjectManager.SERVER_URL_PLACEHOLDER, serverURL))
+            .then<string>(ProjectManager.replaceString.bind(undefined, indexHtmlPath, ProjectManager.INDEX_JS_PLACEHOLDER, setupScenario))
+            .then<string>(ProjectManager.replaceString.bind(undefined, indexHtmlPath, ProjectManager.CODE_PUSH_APP_VERSION_PLACEHOLDER, version))
+            // copy the currentPackage.json file so that we can modify it
+            .then<void>(() => { return ProjectManager.copyFile(path.join(templatePath, "currentPackage.json"), path.join(projectDirectory, "currentPackage.json"), true); });
     }
     
     /**
-     * Updates an already existing Cordova project.
+     * Sets up the scenario for a test in an already existing Cordova project.
      */
-    public static updateProject(destinationPath: string, templatePath: string, version: string, platform: string, jsPath: string, serverURL: string): Q.Promise<void> {
-        var templateIndexPath = path.join(templatePath, "www/index.html");
-        var destination = path.join(destinationPath, "www/index.html");
+    public static setupScenario(projectDirectory: string, templatePath: string, targetPlatform: platform.IPlatform, jsPath: string, serverURL: string, version: string = ProjectManager.DEFAULT_APP_VERSION): Q.Promise<string> {
+        var indexHtml = "www/index.html";
+        var templateIndexPath = path.join(templatePath, indexHtml);
+        var destinationIndexPath = path.join(projectDirectory, indexHtml);
+        
+        var scenarioJs = "www/" + jsPath;
+        var templateScenarioJsPath = path.join(templatePath, scenarioJs);
+        var destinationScenarioJsPath = path.join(projectDirectory, scenarioJs);
 
-        return ProjectManager.copyFile(templateIndexPath, destinationPath, true)
-            .then<void>(ProjectManager.replaceString.bind(undefined, destination, ProjectManager.SERVER_URL_PLACEHOLDER, serverURL))
-            .then<void>(ProjectManager.replaceString.bind(undefined, destination, ProjectManager.INDEX_JS_PLACEHOLDER, jsPath))
-            .then<void>(ProjectManager.replaceString.bind(undefined, destination, ProjectManager.CODE_PUSH_APP_VERSION_PLACEHOLDER, version));
+        return ProjectManager.copyFile(templateIndexPath, destinationIndexPath, true)
+            .then<void>(ProjectManager.replaceString.bind(undefined, destinationIndexPath, ProjectManager.SERVER_URL_PLACEHOLDER, serverURL))
+            .then<void>(ProjectManager.replaceString.bind(undefined, destinationIndexPath, ProjectManager.INDEX_JS_PLACEHOLDER, jsPath))
+            .then<void>(ProjectManager.replaceString.bind(undefined, destinationIndexPath, ProjectManager.CODE_PUSH_APP_VERSION_PLACEHOLDER, version))
+            .then<void>(() => {
+                return ProjectManager.copyFile(templateScenarioJsPath, destinationScenarioJsPath, true);
+            })
+            .then<void>(ProjectManager.replaceString.bind(undefined, destinationScenarioJsPath, ProjectManager.SERVER_URL_PLACEHOLDER, serverURL))
+            .then<string>(() => {
+                return ProjectManager.preparePlatform(projectDirectory, targetPlatform);
+            });
     }
 
     /**
      * Creates a CodePush update package zip for a Cordova project.
      */
-    public static createUpdateArchive(projectLocation: string, targetPlatform: platform.IPlatform, isDiff?: boolean): Q.Promise<string> {
+    public static createUpdateArchive(projectDirectory: string, targetPlatform: platform.IPlatform, isDiff?: boolean): Q.Promise<string> {
         var deferred = Q.defer<string>();
         var archive = archiver.create("zip", {});
-        var archivePath = path.join(projectLocation, "update.zip");
+        var archivePath = path.join(projectDirectory, "update.zip");
         console.log("Creating a project update archive at: " + archivePath);
 
         if (fs.existsSync(archivePath)) {
             fs.unlinkSync(archivePath);
         }
         var writeStream = fs.createWriteStream(archivePath);
-        var targetFolder = targetPlatform.getPlatformWwwPath(projectLocation);
+        var targetFolder = targetPlatform.getPlatformWwwPath(projectDirectory);
 
         writeStream.on("close", function() {
             deferred.resolve(archivePath);
@@ -111,30 +144,56 @@ export class ProjectManager {
     }
     
     /**
+     * Modifies the emulator's currently installed package.
+     */
+    public static modifyEmulatorCurrentPackage(namespace: string, projectLocation: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
+        var emulatorManager = targetPlatform.getEmulatorManager();
+        if (emulatorManager) {
+            return emulatorManager.modifyEmulatorCurrentPackage(namespace, projectLocation);
+        } else {
+            console.log("No emulator manager found!");
+            return null;
+        }
+    }
+    
+    /**
      * Adds a plugin to a Cordova project.
      */
-    public static addPlugin(projectFolder: string, plugin: string): Q.Promise<void> {
+    public static addPlugin(projectFolder: string, plugin: string): Q.Promise<string> {
         return ProjectManager.execAndLogChildProcess("cordova plugin add " + plugin, { cwd: projectFolder });
     }    
 
     /**
      * Builds a specific platform of a Cordova project. 
      */
-    public static buildPlatform(projectFolder: string, targetPlatform: platform.IPlatform): Q.Promise<void> {
+    public static buildPlatform(projectFolder: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
         return ProjectManager.execAndLogChildProcess("cordova build " + targetPlatform.getCordovaName(), { cwd: projectFolder });
     }
     
     /**
      * Prepares a specific platform of a Cordova project. 
      */
-    public static preparePlatform(projectFolder: string, targetPlatform: platform.IPlatform): Q.Promise<void> {
+    public static preparePlatform(projectFolder: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
         return ProjectManager.execAndLogChildProcess("cordova prepare " + targetPlatform.getCordovaName(), { cwd: projectFolder });
     }
 
     /**
-     * Runs a project to a given target / platform.
+     * Launch the test app on the given target / platform.
      */
-    public static runPlatform(projectFolder: string, targetPlatform: platform.IPlatform, skipBuild: boolean = false, target?: string): Q.Promise<void> {
+    public static launchApp(namespace: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
+        var emulatorManager = targetPlatform.getEmulatorManager();
+        if (emulatorManager) {
+            return emulatorManager.launchInstalledApplication(namespace);
+        } else {
+            console.log("No emulator manager found!");
+            return null;
+        }
+    }
+
+    /**
+     * Runs the test app on the given target / platform.
+     */
+    public static runPlatform(projectFolder: string, targetPlatform: platform.IPlatform, skipBuild: boolean = false, target?: string): Q.Promise<string> {
         var runTarget = target ? " --target " + target : "";
         var nobuild = skipBuild ? " --nobuild" : "";
         return ProjectManager.execAndLogChildProcess("cordova run " + targetPlatform.getCordovaName() + runTarget + nobuild, { cwd: projectFolder });
@@ -143,7 +202,7 @@ export class ProjectManager {
     /**
      * Adds a platform to a Cordova project. 
      */
-    public static addPlatform(projectFolder: string, targetPlatform: platform.IPlatform, version?: string): Q.Promise<void> {
+    public static addPlatform(projectFolder: string, targetPlatform: platform.IPlatform, version?: string): Q.Promise<string> {
         return ProjectManager.execAndLogChildProcess("cordova platform add " + targetPlatform.getCordovaName() + (version ? "@" + version : ""), { cwd: projectFolder });
     }
 
@@ -157,7 +216,7 @@ export class ProjectManager {
     /**
      * Stops and restarts an application specified by its namespace identifier.
      */
-    public static restartApplication(targetPlatform: platform.IPlatform, namespace: string, testRunDirectory: string, targetEmulator: string): Q.Promise<void> {
+    public static restartApplication(targetPlatform: platform.IPlatform, namespace: string, testRunDirectory: string, targetEmulator: string): Q.Promise<string> {
         var emulatorManager = targetPlatform.getEmulatorManager();
         if (emulatorManager) {
             return emulatorManager.restartApplication(namespace);
@@ -170,7 +229,7 @@ export class ProjectManager {
     /**
      * Navigates away from the application and then navigates back to it.
      */
-    public static resumeApplication(delayBeforeResumingMs: number, targetPlatform: platform.IPlatform, namespace: string, testRunDirectory: string, targetEmulator: string): Q.Promise<void> {
+    public static resumeApplication(delayBeforeResumingMs: number, targetPlatform: platform.IPlatform, namespace: string, testRunDirectory: string, targetEmulator: string): Q.Promise<string> {
         var emulatorManager = targetPlatform.getEmulatorManager();
         if (emulatorManager) {
             return emulatorManager.resumeApplication(namespace, delayBeforeResumingMs);
@@ -181,10 +240,10 @@ export class ProjectManager {
     }
 
     /**
-     * Executes a child process and logs its output to the console.
+     * Executes a child process and logs its output to the console and returns its output in the promise as a string
      */
-    public static execAndLogChildProcess(command: string, options?: child_process.IExecOptions): Q.Promise<void> {
-        var deferred = Q.defer<void>();
+    public static execAndLogChildProcess(command: string, options?: child_process.IExecOptions): Q.Promise<string> {
+        var deferred = Q.defer<string>();
 
         options = options || {};
         options.maxBuffer = 1024 * 500;
@@ -199,7 +258,7 @@ export class ProjectManager {
                 console.error(error);
                 deferred.reject(error);
             } else {
-                deferred.resolve(undefined);
+                deferred.resolve(stdout.toString());
             }
         });
 

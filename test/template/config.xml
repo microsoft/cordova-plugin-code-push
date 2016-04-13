@@ -24,7 +24,7 @@
         <platform name="android">
             <allow-intent href="market:*" />
             <!-- CodePush deployment key for the Android platform. -->
-            <preference name="CodePushDeploymentKey" value="CODE_PUSH_ANDROID_DEPOYMENT_KEY" />
+            <preference name="CodePushDeploymentKey" value="CODE_PUSH_ANDROID_DEPLOYMENT_KEY" />
         </platform>
 
         <platform name="ios">

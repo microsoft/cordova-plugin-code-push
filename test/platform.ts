@@ -41,17 +41,32 @@ export interface IEmulatorManager {
     /**
      * Launches an already installed application by app id.
      */
-    launchInstalledApplication(appId: string): Q.Promise<void>;
+    launchInstalledApplication(appId: string): Q.Promise<string>;
+    
+    /**
+     * Ends a running application, given its app id.
+     */
+    endRunningApplication(appId: string): Q.Promise<string>;
     
     /**
      * Restarts an already installed application by app id.
      */
-    restartApplication(appId: string): Q.Promise<void>;
+    restartApplication(appId: string): Q.Promise<string>;
     
     /**
      * Navigates away from the current app, waits for a delay, then navigates to the specified app.
      */
-    resumeApplication(appId: string, delayBeforeResumingMs: number): Q.Promise<void>;
+    resumeApplication(appId: string, delayBeforeResumingMs: number): Q.Promise<string>;
+    
+    /**
+     * Modifies the emulator's currently installed package by injecting the index.html and desired scenario Javascript file. 
+     */
+    modifyEmulatorCurrentPackage(appId: string, projectDirectory: string): Q.Promise<string>;
+    
+    /**
+     * Sets the native files directory that modifyEmulatorCurrentPackage uses
+     */
+    setNativeFilesDirectory(filesDirectory: string): void;
 }
 
 /**
@@ -130,15 +145,14 @@ export class IOSEmulatorManager implements IEmulatorManager {
     /**
      * Launches an already installed application by app id.
      */
-    public launchInstalledApplication(appId: string): Q.Promise<void> {
-        return tu.TestUtil.getProcessOutput("xcrun simctl launch booted " + appId, undefined, true)
-            .then<void>(output => { console.log(output); });
+    launchInstalledApplication(appId: string): Q.Promise<string> {
+        return tu.TestUtil.getProcessOutput("xcrun simctl launch booted " + appId, undefined, true);
     }
     
     /**
-     * Ends a running application, given its Cordova app id.
+     * Ends a running application, given its app id.
      */
-    private endRunningApplication(appId: string): Q.Promise<void> {
+    endRunningApplication(appId: string): Q.Promise<string> {
         return tu.TestUtil.getProcessOutput("xcrun simctl spawn booted launchctl list", undefined, true)
             .then<string>(processListOutput => {
                 var regex = new RegExp("(\\S+" + appId + "\\S+)");
@@ -152,16 +166,13 @@ export class IOSEmulatorManager implements IEmulatorManager {
             })
             .then<string>(applicationLabel => {
                 return tu.TestUtil.getProcessOutput("xcrun simctl spawn booted launchctl stop " + applicationLabel, undefined, true);
-            })
-            .then<void>(output => {
-                console.log(output);
             });
     }
     
     /**
      * Restarts an already installed application by app id.
      */
-    restartApplication(appId: string): Q.Promise<void> {
+    restartApplication(appId: string): Q.Promise<string> {
         return this.endRunningApplication(appId)
             .then(() => this.launchInstalledApplication(appId));
     }
@@ -169,49 +180,133 @@ export class IOSEmulatorManager implements IEmulatorManager {
     /**
      * Navigates away from the current app, waits for a delay, then navigates to the specified app.
      */
-    resumeApplication(appId: string, delayBeforeResumingMs: number): Q.Promise<void> {
+    resumeApplication(appId: string, delayBeforeResumingMs: number): Q.Promise<string> {
         // open a default iOS app (for example, camera)
         return this.launchInstalledApplication("com.apple.camera")
             .then<void>(() => {
                 console.log("Waiting for " + delayBeforeResumingMs + "ms before resuming the test application.");
                 return Q.delay(delayBeforeResumingMs);
             })
-            .then<void>(() => {
+            .then<string>(() => {
                 // reopen the app
                 return this.launchInstalledApplication(appId);
             });
     }
+    
+    /**
+     * Modifies the emulator's currently installed package by injecting the index.html and desired scenario Javascript file. 
+     */
+    modifyEmulatorCurrentPackage(appId: string, projectDirectory: string): Q.Promise<string> {
+        // TODO
+        return null;
+    }
+    
+    /**
+     * Sets the native files directory that modifyEmulatorCurrentPackage uses
+     */
+    setNativeFilesDirectory(filesDirectory: string): void {
+        // TODO
+        return null;
+    }
 }
 
 export class AndroidEmulatorManager implements IEmulatorManager {
+    private appFilesDirectory: string;
+    
     /**
      * Launches an already installed application by app id.
      */
-    public launchInstalledApplication(appId: string): Q.Promise<void> {
+    launchInstalledApplication(appId: string): Q.Promise<string> {
         return ProjectManager.ProjectManager.execAndLogChildProcess("adb shell monkey -p " + appId + " -c android.intent.category.LAUNCHER 1");
+    }
+    
+    /**
+     * Ends a running application, given its app id.
+     */
+    endRunningApplication(appId: string): Q.Promise<string> {
+        return ProjectManager.ProjectManager.execAndLogChildProcess("adb shell am force-stop " + appId);
     }
     
     /**
      * Restarts an already installed application by app id.
      */
-    restartApplication(appId: string): Q.Promise<void> {
-        return ProjectManager.ProjectManager.runPlatform(tu.TestUtil.testRunDirectory, Android.getInstance(), true, tu.TestUtil.readTargetEmulator());
+    restartApplication(appId: string): Q.Promise<string> {
+        return this.endRunningApplication(appId).then<string>(() => {
+            return this.launchInstalledApplication(appId);
+        });
     }
     
     /**
      * Navigates away from the current app, waits for a delay, then navigates to the specified app.
      */
-    resumeApplication(appId: string, delayBeforeResumingMs: number): Q.Promise<void> {
+    resumeApplication(appId: string, delayBeforeResumingMs: number): Q.Promise<string> {
         // open a default Android app (for example, settings)
         return this.launchInstalledApplication("com.android.settings")
             .then<void>(() => {
                 console.log("Waiting for " + delayBeforeResumingMs + "ms before resuming the test application.");
                 return Q.delay(delayBeforeResumingMs);
             })
-            .then<void>(() => {
+            .then<string>(() => {
                 // reopen the app
-                this.launchInstalledApplication(appId);
+                return this.launchInstalledApplication(appId);
             });
+    }
+    
+    /**
+     * Modifies the emulator's currently installed package by injecting the index.html and desired scenario Javascript file. 
+     */
+    modifyEmulatorCurrentPackage(appId: string, projectDirectory: string): Q.Promise<string> {
+        var codePushDirectory = this.appFilesDirectory + "/codepush";
+        var deployDirectory = codePushDirectory + "/deploy";
+        
+        function mkdir(directory: string): Q.Promise<string> {
+            return ProjectManager.ProjectManager.execAndLogChildProcess("adb shell mkdir " + directory);
+        }
+        
+        return this.endRunningApplication(appId)
+            .then<string>(() => {
+                return mkdir(codePushDirectory);
+            })
+            .then<string>(() => {
+                return ProjectManager.ProjectManager.execAndLogChildProcess("adb push " + path.join(projectDirectory, "currentPackage.json") + " " + codePushDirectory);
+            })
+            .then<string>(() => {
+                return ProjectManager.ProjectManager.execAndLogChildProcess("adb shell rm -R " + deployDirectory); // codePushDirectory);
+            }) /*
+            .then<string>(() => {
+                return mkdir(codePushDirectory);
+            })
+            .then<string>(() => {
+                return mkdir(codePushDirectory + "/download");
+            }) */
+            .then<string>(() => {
+                return mkdir(deployDirectory);
+            })
+            .then<string>(() => {
+                return mkdir(deployDirectory + "/versions");
+            })
+            .then<string>(() => {
+                return mkdir(deployDirectory + "/versions/test");
+            })
+            .then<string>(() => {
+                return mkdir(deployDirectory + "/versions/test/www");
+            })
+            .then<string>(() => {
+                return mkdir(deployDirectory + "/versions/test/www/js");
+            })
+            .then<string>(() => {
+                return ProjectManager.ProjectManager.execAndLogChildProcess("adb push " + path.join(Android.getInstance().getPlatformWwwPath(projectDirectory), "index.html") + " " + deployDirectory + "/versions/test/www");
+            })
+            .then<string>(() => {
+                return ProjectManager.ProjectManager.execAndLogChildProcess("adb push " + path.join(Android.getInstance().getPlatformWwwPath(projectDirectory), "js") + " " + deployDirectory + "/versions/test/www");
+            });
+    }
+    
+    /**
+     * Sets the native files directory that modifyEmulatorCurrentPackage uses
+     */
+    setNativeFilesDirectory(filesDirectory: string): void {
+        this.appFilesDirectory = filesDirectory;
     }
 }
 
