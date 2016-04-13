@@ -1152,7 +1152,7 @@ describe("window.codePush", function() {
             });
         });
         
-        describe.only("minimum background duration tests", function() {
+        describe("minimum background duration tests", function() {
 
             afterEach(() => {
                 return cleanupScenario();
