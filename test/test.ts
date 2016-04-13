@@ -63,7 +63,12 @@ var testMessageCallback: (requestBody: any) => void;
 var updateCheckCallback: (requestBody: any) => void;
 var mockUpdatePackagePath: string;
 
-function cleanupScenario(): Q.Promise<string> {
+function cleanupTest(): Q.Promise<string> {
+    console.log("Cleaning up!");
+    mockResponse = undefined;
+    testMessageCallback = undefined;
+    updateCheckCallback = undefined;
+    testMessageResponse = undefined;
     return targetPlatform.getEmulatorManager().endRunningApplication(TestNamespace);
 }
 
@@ -218,24 +223,15 @@ describe("window.codePush", function() {
     before(() => {
         return setupTests();
     });
-    
-    /* clean up */
-    afterEach(() => {
-        console.log("Cleaning up!");
-        mockResponse = undefined;
-        testMessageCallback = undefined;
-        updateCheckCallback = undefined;
-        testMessageResponse = undefined;
-    });
 
     describe("#window.codePush.checkForUpdate", function() {
 
-        before(() => {
-            return setupScenario(ScenarioCheckForUpdatePath);
+        afterEach(() => {
+            return cleanupTest();
         });
 
-        after(() => {
-            return cleanupScenario();
+        before(() => {
+            return setupScenario(ScenarioCheckForUpdatePath);
         });
         
         it("window.codePush.checkForUpdate.noUpdate", function(done) {
@@ -359,12 +355,12 @@ describe("window.codePush", function() {
 
     describe("#window.codePush.checkForUpdate.customKey", function() {
 
-        before(() => {
-            return setupScenario(ScenarioCheckForUpdateCustomKey);
+        afterEach(() => {
+            return cleanupTest();
         });
 
-        after(() => {
-            return cleanupScenario();
+        before(() => {
+            return setupScenario(ScenarioCheckForUpdateCustomKey);
         });
 
         it("window.codePush.checkForUpdate.customKey.update", function(done) {
@@ -389,12 +385,12 @@ describe("window.codePush", function() {
 
     describe("#remotePackage.download", function() {
 
-        before(() => {
-            return setupScenario(ScenarioDownloadUpdate);
+        afterEach(() => {
+            return cleanupTest();
         });
 
-        after(() => {
-            return cleanupScenario();
+        before(() => {
+            return setupScenario(ScenarioDownloadUpdate);
         });
 
         var getMockResponse = (): su.CheckForUpdateResponseMock => {
@@ -444,8 +440,8 @@ describe("window.codePush", function() {
 
     describe("#localPackage.install", function() {
 
-        after(() => {
-            return cleanupScenario();
+        afterEach(() => {
+            return cleanupTest();
         });
 
         before(() => {
@@ -533,8 +529,8 @@ describe("window.codePush", function() {
 
     describe("#localPackage.install.revert", function() {
 
-        after(() => {
-            return cleanupScenario();
+        afterEach(() => {
+            return cleanupTest();
         });
 
         before(() => {
@@ -615,7 +611,7 @@ describe("window.codePush", function() {
     describe("#localPackage.installOnNextResume", function() {
 
         afterEach(() => {
-            return cleanupScenario();
+            return cleanupTest();
         });
 
         beforeEach(() => {
@@ -641,7 +637,7 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                     console.log("Resuming project...");
-                    projectManager.resumeApplication(0, targetPlatform, TestNamespace, testRunDirectory, targetEmulator);
+                    projectManager.resumeApplication(targetPlatform, TestNamespace, testRunDirectory, targetEmulator);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -675,7 +671,7 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS], deferred);
                     console.log("Resuming project...");
-                    projectManager.resumeApplication(0, targetPlatform, TestNamespace, testRunDirectory, targetEmulator).done();
+                    projectManager.resumeApplication(targetPlatform, TestNamespace, testRunDirectory, targetEmulator).done();
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -693,7 +689,7 @@ describe("window.codePush", function() {
     describe("#localPackage.installOnNextRestart", function() {
 
         afterEach(() => {
-            return cleanupScenario();
+            return cleanupTest();
         });
 
         beforeEach(() => {
@@ -826,7 +822,7 @@ describe("window.codePush", function() {
     describe("#codePush.restartApplication", function() {
 
         afterEach(() => {
-            return cleanupScenario();
+            return cleanupTest();
         });
 
         beforeEach(() => {
@@ -878,10 +874,10 @@ describe("window.codePush", function() {
          * then, with sync called again while the first sync is still running 
         
         /* Tests where sync is called just once */
-        describe("window.codePush.sync.1x", function() {
+        describe("#window.codePush.sync 1x", function() {
 
             afterEach(() => {
-                return cleanupScenario();
+                return cleanupTest();
             });
 
             beforeEach(() => {
@@ -1010,10 +1006,10 @@ describe("window.codePush", function() {
         });
         
         /* Tests where sync is called again before the first sync finishes */
-        describe("window.codePush.sync.2x", function() {
+        describe("#window.codePush.sync 2x", function() {
 
             afterEach(() => {
-                return cleanupScenario();
+                return cleanupTest();
             });
 
             beforeEach(() => {
@@ -1152,10 +1148,10 @@ describe("window.codePush", function() {
             });
         });
         
-        describe("minimum background duration tests", function() {
+        describe("#window.codePush.sync minimum background duration tests", function() {
 
             afterEach(() => {
-                return cleanupScenario();
+                return cleanupTest();
             });
             
             it("defaults to 0", function(done) {
@@ -1184,7 +1180,7 @@ describe("window.codePush", function() {
                             su.TestMessage.APPLICATION_RESUMED,
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                         console.log("Resuming project...");
-                        projectManager.resumeApplication(0, targetPlatform, TestNamespace, testRunDirectory, targetEmulator).done();
+                        projectManager.resumeApplication(targetPlatform, TestNamespace, testRunDirectory, targetEmulator).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -1215,7 +1211,7 @@ describe("window.codePush", function() {
                         testMessageCallback = verifyMessages([
                             su.TestMessage.APPLICATION_RESUMED], deferred);
                         console.log("Resuming project...");
-                        projectManager.resumeApplication(5 * 1000, targetPlatform, TestNamespace, testRunDirectory, targetEmulator).done();
+                        projectManager.resumeApplication(targetPlatform, TestNamespace, testRunDirectory, targetEmulator, 5 * 1000).done();
                         return deferred.promise;
                     })
                     .then<void>(() => {
@@ -1223,7 +1219,7 @@ describe("window.codePush", function() {
                         testMessageCallback = verifyMessages([
                             su.TestMessage.APPLICATION_RESUMED,
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
-                        projectManager.resumeApplication(20 * 1000, targetPlatform, TestNamespace, testRunDirectory, targetEmulator).done();
+                        projectManager.resumeApplication(targetPlatform, TestNamespace, testRunDirectory, targetEmulator, 20 * 1000).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -1261,10 +1257,10 @@ describe("window.codePush", function() {
             
         });
         
-        describe("mandatory install mode tests", function() {
+        describe("#window.codePush.sync mandatory install mode tests", function() {
 
             afterEach(() => {
-                return cleanupScenario();
+                return cleanupTest();
             });
             
             it("defaults to IMMEDIATE", function(done) {
@@ -1313,7 +1309,7 @@ describe("window.codePush", function() {
                             su.TestMessage.APPLICATION_RESUMED,
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                         console.log("Resuming project...");
-                        projectManager.resumeApplication(0, targetPlatform, TestNamespace, testRunDirectory, targetEmulator).done();
+                        projectManager.resumeApplication(targetPlatform, TestNamespace, testRunDirectory, targetEmulator).done();
                         return deferred.promise;
                     })
                     .done(done, done);

@@ -54,7 +54,7 @@ export interface IEmulatorManager {
     restartApplication(appId: string): Q.Promise<string>;
     
     /**
-     * Navigates away from the current app, waits for a delay, then navigates to the specified app.
+     * Navigates away from the current app, waits for a delay (defaults to 1 second), then navigates to the specified app.
      */
     resumeApplication(appId: string, delayBeforeResumingMs: number): Q.Promise<string>;
 }
@@ -168,9 +168,9 @@ export class IOSEmulatorManager implements IEmulatorManager {
     }
     
     /**
-     * Navigates away from the current app, waits for a delay, then navigates to the specified app.
+     * Navigates away from the current app, waits for a delay (defaults to 1 second), then navigates to the specified app.
      */
-    resumeApplication(appId: string, delayBeforeResumingMs: number): Q.Promise<string> {
+    resumeApplication(appId: string, delayBeforeResumingMs: number = 1000): Q.Promise<string> {
         // open a default iOS app (for example, camera)
         return this.launchInstalledApplication("com.apple.camera")
             .then<void>(() => {
@@ -209,9 +209,9 @@ export class AndroidEmulatorManager implements IEmulatorManager {
     }
     
     /**
-     * Navigates away from the current app, waits for a delay, then navigates to the specified app.
+     * Navigates away from the current app, waits for a delay (defaults to 1 second), then navigates to the specified app.
      */
-    resumeApplication(appId: string, delayBeforeResumingMs: number): Q.Promise<string> {
+    resumeApplication(appId: string, delayBeforeResumingMs: number = 1000): Q.Promise<string> {
         // open a default Android app (for example, settings)
         return this.launchInstalledApplication("com.android.settings")
             .then<void>(() => {

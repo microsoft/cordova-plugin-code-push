@@ -202,7 +202,7 @@ export class ProjectManager {
     /**
      * Navigates away from the application and then navigates back to it.
      */
-    public static resumeApplication(delayBeforeResumingMs: number, targetPlatform: platform.IPlatform, namespace: string, testRunDirectory: string, targetEmulator: string): Q.Promise<string> {
+    public static resumeApplication(targetPlatform: platform.IPlatform, namespace: string, testRunDirectory: string, targetEmulator: string, delayBeforeResumingMs: number = 1000): Q.Promise<string> {
         var emulatorManager = targetPlatform.getEmulatorManager();
         if (emulatorManager) {
             return emulatorManager.resumeApplication(namespace, delayBeforeResumingMs);
