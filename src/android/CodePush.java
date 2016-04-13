@@ -18,8 +18,6 @@ import java.security.NoSuchAlgorithmException;
 
 import java.util.Date;
 
-import android.util.Log;
-
 /**
  * Native Android CodePush Cordova Plugin.
  */
@@ -287,24 +285,18 @@ public class CodePush extends CordovaPlugin {
 
     private void handleAppStart() {
         try {
-            Log.v("CODEPUSH", "deployedPackageMetadata = " + this.codePushPackageManager.getCurrentPackageMetadata());
             /* check if we have a deployed package already */
             CodePushPackageMetadata deployedPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
             if (deployedPackageMetadata != null) {
                 String deployedPackageTimeStamp = deployedPackageMetadata.nativeBuildTime;
-            Log.v("CODEPUSH", "deployedPackageTimeStamp = " + deployedPackageMetadata.nativeBuildTime);
                 long nativeBuildTime = Utilities.getApkEntryBuildTime(RESOURCES_BUNDLE, this.cordova.getActivity());
-            Log.v("CODEPUSH", "nativeBuildTime = " + nativeBuildTime);
                 if (nativeBuildTime != -1) {
                     String currentAppTimeStamp = String.valueOf(nativeBuildTime);
-            Log.v("CODEPUSH", "currentAppTimeStamp = " + currentAppTimeStamp);
                     if ((deployedPackageTimeStamp != null) && (currentAppTimeStamp != null)) {
                         if (deployedPackageTimeStamp.equals(currentAppTimeStamp)) {
                             /* same native version, safe to launch from local storage */
-            Log.v("CODEPUSH", "localPath = " + deployedPackageMetadata.localPath);
                             if (deployedPackageMetadata.localPath != null) {
                                 File startPage = this.getStartPageForPackage(deployedPackageMetadata.localPath);
-            Log.v("CODEPUSH", "startPage = " + startPage);
                                 if (startPage != null) {
                                     /* file exists */
                                     navigateToFile(startPage);

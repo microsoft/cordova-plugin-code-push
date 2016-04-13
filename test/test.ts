@@ -63,9 +63,6 @@ var testMessageResponse: any;
 var testMessageCallback: (requestBody: any) => void;
 var updateCheckCallback: (requestBody: any) => void;
 var mockUpdatePackagePath: string;
-var currentPackageSetupPromise: Q.Deferred<void>;
-
-var nativeFilesDirectory: string;
 
 function cleanupScenario(): Q.Promise<string> {
     /*if (server) {
@@ -87,7 +84,7 @@ function createTestProject(directory: string): Q.Promise<string> {
         .then<string>(() => { return (shouldUseWkWebView ? projectManager.addPlugin(directory, WkWebViewEnginePluginName) : null); });
 }
 
-function setupTests(): Q.Promise<void> {
+function setupTests(): Q.Promise<string> {
     setupServer();
     
     // create the test project
@@ -95,16 +92,12 @@ function setupTests(): Q.Promise<void> {
         .then(() => {
             // create the update project
             return createTestProject(updatesDirectory);
-        })
-        .then(() => {
-            // run the app and wait for the device to be ready
-            currentPackageSetupPromise = Q.defer<void>();
-            projectManager.runPlatform(testRunDirectory, targetPlatform).done();
-            return currentPackageSetupPromise.promise;
         });
 }
 
 function setupServer() {
+    console.log("Setting up server at url " + serverUrl);
+    
     app = express();
     app.use(bodyparser.json());
     app.use(bodyparser.urlencoded({ extended: true }));
@@ -125,6 +118,8 @@ function setupServer() {
     });
 
     app.get("/download", function(req: any, res: any) {
+        console.log("Application downloading the package.");
+        
         res.download(mockUpdatePackagePath);
     });
 
@@ -142,40 +137,21 @@ function setupServer() {
 
         testMessageCallback && testMessageCallback(req.body);
     });
-    
-    app.post("/reportNativeEnv", function(req: any, res: any) {
-        console.log("Application reported the native build time.");
-        console.log("Body: " + JSON.stringify(req.body));
-
-        if (!testMessageResponse) {
-            console.log("Sending OK");
-            res.sendStatus(200);
-        } else {
-            console.log("Sending body: " + testMessageResponse);
-            res.status(200).send(testMessageResponse);
-        }
-        
-        nativeFilesDirectory = req.body.filesDirectory;
-        targetPlatform.getEmulatorManager().setNativeFilesDirectory(nativeFilesDirectory);
-        
-        projectManager.setupCurrentPackage(currentPackageSetupPromise, testRunDirectory, targetPlatform, req.body.nativeBuildTime);
-    });
 
     server = app.listen(3000);
 }
 
 function setupScenario(scenarioPath: string): Q.Promise<string> {
     console.log("\nScenario: " + scenarioPath);
-    console.log("Mock server url: " + serverUrl);
     console.log("Target platform: " + targetPlatform ? targetPlatform.getCordovaName() : "");
     console.log("Target emulator: " + targetEmulator);
-    
-    // setupServer();
 
-    return projectManager.setupScenario(testRunDirectory, templatePath, targetPlatform, scenarioPath, serverUrl)
+    return projectManager.setupScenario(testRunDirectory, templatePath, targetPlatform, scenarioPath, serverUrl);
+    /*
         .then<string>(() => {
             return projectManager.modifyEmulatorCurrentPackage(TestNamespace, testRunDirectory, targetPlatform);
         });
+    */
 }
 
 function createDefaultResponse(): su.CheckForUpdateResponseMock {
@@ -289,7 +265,7 @@ describe("window.codePush", function() {
             };
 
             console.log("Running project...");
-            projectManager.launchApp(TestNamespace, targetPlatform);
+            projectManager.runPlatform(testRunDirectory, targetPlatform);
         });
 
         it("window.codePush.checkForUpdate.sendsBinaryHash", function(done) {
@@ -317,7 +293,7 @@ describe("window.codePush", function() {
             };
 
             console.log("Running project...");
-            projectManager.launchApp(TestNamespace, targetPlatform);
+            projectManager.runPlatform(testRunDirectory, targetPlatform);
         });
         
         it("window.codePush.checkForUpdate.noUpdate.updateAppVersion", function(done) {
@@ -337,7 +313,7 @@ describe("window.codePush", function() {
             };
 
             console.log("Running project...");
-            projectManager.launchApp(TestNamespace, targetPlatform);
+            projectManager.runPlatform(testRunDirectory, targetPlatform);
         });
 
         it("window.codePush.checkForUpdate.update", function(done) {
@@ -371,7 +347,7 @@ describe("window.codePush", function() {
             };
 
             console.log("Running project...");
-            projectManager.launchApp(TestNamespace, targetPlatform);
+            projectManager.runPlatform(testRunDirectory, targetPlatform);
         });
 
         it("window.codePush.checkForUpdate.error", function(done) {
@@ -387,7 +363,7 @@ describe("window.codePush", function() {
             };
 
             console.log("Running project...");
-            projectManager.launchApp(TestNamespace, targetPlatform);
+            projectManager.runPlatform(testRunDirectory, targetPlatform);
         });
     });
 
@@ -416,7 +392,7 @@ describe("window.codePush", function() {
             };
 
             console.log("Running project...");
-            projectManager.launchApp(TestNamespace, targetPlatform);
+            projectManager.runPlatform(testRunDirectory, targetPlatform);
         });
     });
 
@@ -453,7 +429,7 @@ describe("window.codePush", function() {
             };
 
             console.log("Running project...");
-            projectManager.launchApp(TestNamespace, targetPlatform);
+            projectManager.runPlatform(testRunDirectory, targetPlatform);
         });
 
         it("remotePackage.download.error", function(done) {
@@ -472,7 +448,7 @@ describe("window.codePush", function() {
             };
 
             console.log("Running project...");
-            projectManager.launchApp(TestNamespace, targetPlatform);
+            projectManager.runPlatform(testRunDirectory, targetPlatform);
         });
     });
 
@@ -509,7 +485,7 @@ describe("window.codePush", function() {
             };
 
             console.log("Running project...");
-            projectManager.launchApp(TestNamespace, targetPlatform);
+            projectManager.runPlatform(testRunDirectory, targetPlatform);
         });
 
         it("localPackage.install.handlesDiff.againstBinary", function(done) {
@@ -524,7 +500,7 @@ describe("window.codePush", function() {
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED, su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS], deferred);
                     console.log("Running project...");
-                    projectManager.launchApp(TestNamespace, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory, targetPlatform);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -550,7 +526,7 @@ describe("window.codePush", function() {
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED, su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS], deferred);
                     console.log("Running project...");
-                    projectManager.launchApp(TestNamespace, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory, targetPlatform);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -587,7 +563,7 @@ describe("window.codePush", function() {
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED, su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                     console.log("Running project...");
-                    projectManager.launchApp(TestNamespace, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory, targetPlatform);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -605,7 +581,7 @@ describe("window.codePush", function() {
                     mockResponse = { updateInfo: getMockResponse() };
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED, su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                     console.log("Running project...");
-                    projectManager.launchApp(TestNamespace, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory, targetPlatform);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -631,7 +607,7 @@ describe("window.codePush", function() {
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED, su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS], deferred);
                     console.log("Running project...");
-                    projectManager.launchApp(TestNamespace, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory, targetPlatform);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -667,7 +643,7 @@ describe("window.codePush", function() {
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED], deferred);
                     console.log("Running project...");
-                    projectManager.launchApp(TestNamespace, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory, targetPlatform);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -701,7 +677,7 @@ describe("window.codePush", function() {
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED], deferred);
                     console.log("Running project...");
-                    projectManager.launchApp(TestNamespace, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory, targetPlatform);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -745,7 +721,7 @@ describe("window.codePush", function() {
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED], deferred);
                     console.log("Running project...");
-                    projectManager.launchApp(TestNamespace, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory, targetPlatform);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -779,7 +755,7 @@ describe("window.codePush", function() {
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED], deferred);
                     console.log("Running project...");
-                    projectManager.launchApp(TestNamespace, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory, targetPlatform);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -813,7 +789,7 @@ describe("window.codePush", function() {
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED], deferred);
                     console.log("Running project...");
-                    projectManager.launchApp(TestNamespace, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory, targetPlatform);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -890,7 +866,7 @@ describe("window.codePush", function() {
                         su.TestMessage.NOTIFY_APP_READY_SUCCESS
                     ], deferred);
                     console.log("Running project...");
-                    projectManager.launchApp(TestNamespace, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory, targetPlatform);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -936,7 +912,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UP_TO_DATE])],
                             deferred);
                         console.log("Running project...");
-                        projectManager.launchApp(TestNamespace, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -953,7 +929,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_ERROR])],
                             deferred);
                         console.log("Running project...");
-                        projectManager.launchApp(TestNamespace, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -973,7 +949,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_ERROR])],
                             deferred);
                         console.log("Running project...");
-                        projectManager.launchApp(TestNamespace, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -996,7 +972,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED]),
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                         console.log("Running project...");
-                        projectManager.launchApp(TestNamespace, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
                         return deferred.promise;
                     })
                     .then<void>(() => {
@@ -1026,7 +1002,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED]),
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                         console.log("Running project...");
-                        projectManager.launchApp(TestNamespace, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
                         return deferred.promise;
                     })
                     .then<void>(() => {
@@ -1069,7 +1045,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UP_TO_DATE])],
                             deferred);
                         console.log("Running project...");
-                        projectManager.launchApp(TestNamespace, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -1087,7 +1063,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_ERROR])],
                             deferred);
                         console.log("Running project...");
-                        projectManager.launchApp(TestNamespace, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -1108,7 +1084,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_ERROR])],
                             deferred);
                         console.log("Running project...");
-                        projectManager.launchApp(TestNamespace, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -1133,7 +1109,7 @@ describe("window.codePush", function() {
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE],
                             deferred);
                         console.log("Running project...");
-                        projectManager.launchApp(TestNamespace, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
                         return deferred.promise;
                     })
                     .then<void>(() => {
@@ -1166,7 +1142,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED])],
                             deferred);
                         console.log("Running project...");
-                        projectManager.launchApp(TestNamespace, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
                         return deferred.promise;
                     })
                     .then<void>(() => {
@@ -1205,7 +1181,7 @@ describe("window.codePush", function() {
                         testMessageCallback = verifyMessages([
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED])], deferred);
                         console.log("Running project...");
-                        projectManager.launchApp(TestNamespace, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
                         return deferred.promise;
                     })
                     .then<void>(() => {
@@ -1237,7 +1213,7 @@ describe("window.codePush", function() {
                         testMessageCallback = verifyMessages([
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED])], deferred);
                         console.log("Running project...");
-                        projectManager.launchApp(TestNamespace, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
                         return deferred.promise;
                     })
                     .then<void>(() => {
@@ -1276,7 +1252,7 @@ describe("window.codePush", function() {
                         testMessageCallback = verifyMessages([
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED])], deferred);
                         console.log("Running project...");
-                        projectManager.launchApp(TestNamespace, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
                         return deferred.promise;
                     })
                     .then<void>(() => {
@@ -1295,7 +1271,7 @@ describe("window.codePush", function() {
             
         });
         
-        describe.only("mandatory install mode tests", function() {
+        describe("mandatory install mode tests", function() {
 
             afterEach(() => {
                 return cleanupScenario();
@@ -1315,7 +1291,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED]),
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                         console.log("Running project...");
-                        projectManager.launchApp(TestNamespace, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -1334,7 +1310,7 @@ describe("window.codePush", function() {
                         testMessageCallback = verifyMessages([
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED])], deferred);
                         console.log("Running project...");
-                        projectManager.launchApp(TestNamespace, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
                         return deferred.promise;
                     })
                     .then<void>(() => {
@@ -1367,7 +1343,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED]),
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                         console.log("Running project...");
-                        projectManager.launchApp(TestNamespace, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
                         return deferred.promise;
                     })
                     .done(done, done);

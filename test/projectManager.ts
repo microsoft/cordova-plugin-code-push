@@ -24,24 +24,12 @@ var archiver = require("archiver");
 export class ProjectManager {
     public static ANDROID_KEY_PLACEHOLDER: string = "CODE_PUSH_ANDROID_DEPLOYMENT_KEY";
     public static IOS_KEY_PLACEHOLDER: string = "CODE_PUSH_IOS_DEPLOYMENT_KEY";
-    public static KEY_PLACEHOLDER: string = "CODE_PUSH_DEPLOYMENT_KEY";
     public static SERVER_URL_PLACEHOLDER: string = "CODE_PUSH_SERVER_URL";
     public static INDEX_JS_PLACEHOLDER: string = "CODE_PUSH_INDEX_JS_PATH";
     public static CODE_PUSH_APP_VERSION_PLACEHOLDER: string = "CODE_PUSH_APP_VERSION";
     public static CODE_PUSH_APP_ID_PLACEHOLDER: string = "CODE_PUSH_TEST_APPLICATION_ID";
-    public static NATIVE_BUILD_TIME_PLACEHOLDER: string = "CODE_PUSH_NATIVE_BUILD_TIME";
 
     public static DEFAULT_APP_VERSION: string = "Store version";
-    
-    public static setupCurrentPackage(deferred: Q.Deferred<void>, projectDirectory: string, targetPlatform: platform.IPlatform, nativeBuildTime: string, version: string = ProjectManager.DEFAULT_APP_VERSION): void {
-        var currentPackagePath = path.join(projectDirectory, "currentPackage.json");
-        
-        ProjectManager.replaceString(currentPackagePath, ProjectManager.KEY_PLACEHOLDER, targetPlatform.getDefaultDeploymentKey());
-        ProjectManager.replaceString(currentPackagePath, ProjectManager.CODE_PUSH_APP_VERSION_PLACEHOLDER, version);
-        ProjectManager.replaceString(currentPackagePath, ProjectManager.NATIVE_BUILD_TIME_PLACEHOLDER, nativeBuildTime);
-        
-        deferred && deferred.resolve(undefined);
-    }
 
 	/**
 	 * Creates a new cordova test application at the specified path, and configures it
@@ -54,7 +42,7 @@ export class ProjectManager {
         iosKey: string,
         appName: string,
         appNamespace: string,
-        version: string = ProjectManager.DEFAULT_APP_VERSION): Q.Promise<void> {
+        version: string = ProjectManager.DEFAULT_APP_VERSION): Q.Promise<string> {
         var configXmlPath = path.join(projectDirectory, "config.xml");
         var indexHtmlPath = path.join(projectDirectory, "www/index.html");
         var setupScenario = "js/scenarioSetup.js";
@@ -79,9 +67,7 @@ export class ProjectManager {
             .then<string>(ProjectManager.replaceString.bind(undefined, setupScenarioPath, ProjectManager.SERVER_URL_PLACEHOLDER, serverURL))
             .then<string>(ProjectManager.replaceString.bind(undefined, indexHtmlPath, ProjectManager.SERVER_URL_PLACEHOLDER, serverURL))
             .then<string>(ProjectManager.replaceString.bind(undefined, indexHtmlPath, ProjectManager.INDEX_JS_PLACEHOLDER, setupScenario))
-            .then<string>(ProjectManager.replaceString.bind(undefined, indexHtmlPath, ProjectManager.CODE_PUSH_APP_VERSION_PLACEHOLDER, version))
-            // copy the currentPackage.json file so that we can modify it
-            .then<void>(() => { return ProjectManager.copyFile(path.join(templatePath, "currentPackage.json"), path.join(projectDirectory, "currentPackage.json"), true); });
+            .then<string>(ProjectManager.replaceString.bind(undefined, indexHtmlPath, ProjectManager.CODE_PUSH_APP_VERSION_PLACEHOLDER, version));
     }
     
     /**
@@ -180,7 +166,7 @@ export class ProjectManager {
     /**
      * Launch the test app on the given target / platform.
      */
-    public static launchApp(namespace: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
+    public static launchApplication(namespace: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
         var emulatorManager = targetPlatform.getEmulatorManager();
         if (emulatorManager) {
             return emulatorManager.launchInstalledApplication(namespace);
