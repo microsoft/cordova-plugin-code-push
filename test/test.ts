@@ -32,7 +32,6 @@ const TestNamespace = "com.microsoft.codepush.test";
 const AcquisitionSDKPluginName = "code-push";
 const WkWebViewEnginePluginName = "cordova-plugin-wkwebview-engine";
 
-// const ScenarioSetup = "js/scenarioSetup.js";
 const ScenarioCheckForUpdatePath = "js/scenarioCheckForUpdate.js";
 const ScenarioCheckForUpdateCustomKey = "js/scenarioCheckForUpdateCustomKey.js";
 const ScenarioDownloadUpdate = "js/scenarioDownloadUpdate.js";
@@ -65,10 +64,6 @@ var updateCheckCallback: (requestBody: any) => void;
 var mockUpdatePackagePath: string;
 
 function cleanupScenario(): Q.Promise<string> {
-    /*if (server) {
-        server.close();
-        server = undefined;
-    }*/
     return targetPlatform.getEmulatorManager().endRunningApplication(TestNamespace);
 }
 
@@ -147,11 +142,6 @@ function setupScenario(scenarioPath: string): Q.Promise<string> {
     console.log("Target emulator: " + targetEmulator);
 
     return projectManager.setupScenario(testRunDirectory, templatePath, targetPlatform, scenarioPath, serverUrl);
-    /*
-        .then<string>(() => {
-            return projectManager.modifyEmulatorCurrentPackage(TestNamespace, testRunDirectory, targetPlatform);
-        });
-    */
 }
 
 function createDefaultResponse(): su.CheckForUpdateResponseMock {
@@ -1162,7 +1152,7 @@ describe("window.codePush", function() {
             });
         });
         
-        describe("minimum background duration tests", function() {
+        describe.only("minimum background duration tests", function() {
 
             afterEach(() => {
                 return cleanupScenario();

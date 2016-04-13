@@ -57,16 +57,6 @@ export interface IEmulatorManager {
      * Navigates away from the current app, waits for a delay, then navigates to the specified app.
      */
     resumeApplication(appId: string, delayBeforeResumingMs: number): Q.Promise<string>;
-    
-    /**
-     * Modifies the emulator's currently installed package by injecting the index.html and desired scenario Javascript file. 
-     */
-    modifyEmulatorCurrentPackage(appId: string, projectDirectory: string): Q.Promise<string>;
-    
-    /**
-     * Sets the native files directory that modifyEmulatorCurrentPackage uses
-     */
-    setNativeFilesDirectory(filesDirectory: string): void;
 }
 
 /**
@@ -192,27 +182,9 @@ export class IOSEmulatorManager implements IEmulatorManager {
                 return this.launchInstalledApplication(appId);
             });
     }
-    
-    /**
-     * Modifies the emulator's currently installed package by injecting the index.html and desired scenario Javascript file. 
-     */
-    modifyEmulatorCurrentPackage(appId: string, projectDirectory: string): Q.Promise<string> {
-        // TODO
-        return null;
-    }
-    
-    /**
-     * Sets the native files directory that modifyEmulatorCurrentPackage uses
-     */
-    setNativeFilesDirectory(filesDirectory: string): void {
-        // TODO
-        return null;
-    }
 }
 
 export class AndroidEmulatorManager implements IEmulatorManager {
-    private appFilesDirectory: string;
-    
     /**
      * Launches an already installed application by app id.
      */
@@ -250,63 +222,6 @@ export class AndroidEmulatorManager implements IEmulatorManager {
                 // reopen the app
                 return this.launchInstalledApplication(appId);
             });
-    }
-    
-    /**
-     * Modifies the emulator's currently installed package by injecting the index.html and desired scenario Javascript file. 
-     */
-    modifyEmulatorCurrentPackage(appId: string, projectDirectory: string): Q.Promise<string> {
-        var codePushDirectory = this.appFilesDirectory + "/codepush";
-        var deployDirectory = codePushDirectory + "/deploy";
-        
-        function mkdir(directory: string): Q.Promise<string> {
-            return ProjectManager.ProjectManager.execAndLogChildProcess("adb shell mkdir " + directory);
-        }
-        
-        return this.endRunningApplication(appId)
-            .then<string>(() => {
-                return mkdir(codePushDirectory);
-            })
-            .then<string>(() => {
-                return ProjectManager.ProjectManager.execAndLogChildProcess("adb push " + path.join(projectDirectory, "currentPackage.json") + " " + codePushDirectory);
-            })
-            .then<string>(() => {
-                return ProjectManager.ProjectManager.execAndLogChildProcess("adb shell rm -R " + deployDirectory); // codePushDirectory);
-            }) /*
-            .then<string>(() => {
-                return mkdir(codePushDirectory);
-            })
-            .then<string>(() => {
-                return mkdir(codePushDirectory + "/download");
-            }) */
-            .then<string>(() => {
-                return mkdir(deployDirectory);
-            })
-            .then<string>(() => {
-                return mkdir(deployDirectory + "/versions");
-            })
-            .then<string>(() => {
-                return mkdir(deployDirectory + "/versions/test");
-            })
-            .then<string>(() => {
-                return mkdir(deployDirectory + "/versions/test/www");
-            })
-            .then<string>(() => {
-                return mkdir(deployDirectory + "/versions/test/www/js");
-            })
-            .then<string>(() => {
-                return ProjectManager.ProjectManager.execAndLogChildProcess("adb push " + path.join(Android.getInstance().getPlatformWwwPath(projectDirectory), "index.html") + " " + deployDirectory + "/versions/test/www");
-            })
-            .then<string>(() => {
-                return ProjectManager.ProjectManager.execAndLogChildProcess("adb push " + path.join(Android.getInstance().getPlatformWwwPath(projectDirectory), "js") + " " + deployDirectory + "/versions/test/www");
-            });
-    }
-    
-    /**
-     * Sets the native files directory that modifyEmulatorCurrentPackage uses
-     */
-    setNativeFilesDirectory(filesDirectory: string): void {
-        this.appFilesDirectory = filesDirectory;
     }
 }
 

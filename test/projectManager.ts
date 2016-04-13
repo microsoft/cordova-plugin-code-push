@@ -130,19 +130,6 @@ export class ProjectManager {
     }
     
     /**
-     * Modifies the emulator's currently installed package.
-     */
-    public static modifyEmulatorCurrentPackage(namespace: string, projectLocation: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
-        var emulatorManager = targetPlatform.getEmulatorManager();
-        if (emulatorManager) {
-            return emulatorManager.modifyEmulatorCurrentPackage(namespace, projectLocation);
-        } else {
-            console.log("No emulator manager found!");
-            return null;
-        }
-    }
-    
-    /**
      * Adds a plugin to a Cordova project.
      */
     public static addPlugin(projectFolder: string, plugin: string): Q.Promise<string> {
