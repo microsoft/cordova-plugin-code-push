@@ -15,7 +15,7 @@ var app = {
     },
     // Update DOM on a Received Event
     receivedDeviceReady: function () {
-        document.getElementById("deviceready").innerText = "Device is ready (scenario - sync on resume minbackdur = 30s)";
+        document.getElementById("deviceready").innerText = "Device is ready (scenario - sync on resume minbackdur = 10s)";
         console.log('Received Event: deviceready');
         /* invoke sync with no UI options */
         window.codePush.sync(
@@ -34,7 +34,7 @@ var app = {
             },
             {
                 installMode: InstallMode.ON_NEXT_RESUME,
-                minimumBackgroundDuration: 15
+                minimumBackgroundDuration: 10
             });
     },
     sendTestMessage: function (message, args) {

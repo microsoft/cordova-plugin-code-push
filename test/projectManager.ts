@@ -177,12 +177,12 @@ export class ProjectManager {
     }
 
     /**
-     * Kill the test app on the given target / platform.
+     * Prepares the emulator for a test.
      */
-    public static uninstallApplication(namespace: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
+    public static prepareEmulatorForTest(namespace: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
         var emulatorManager = targetPlatform.getEmulatorManager();
         if (emulatorManager) {
-            return emulatorManager.uninstallApplication(namespace);
+            return emulatorManager.prepareEmulatorForTest(namespace);
         } else {
             console.log("No emulator manager found!");
             return null;

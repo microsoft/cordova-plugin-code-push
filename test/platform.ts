@@ -59,9 +59,9 @@ export interface IEmulatorManager {
     resumeApplication(appId: string, delayBeforeResumingMs: number): Q.Promise<string>;
     
     /**
-     * Uninstalls an application given its app id.
+     * Prepares the emulator for a test.
      */
-    uninstallApplication(appId: string): Q.Promise<string>;
+    prepareEmulatorForTest(appId: string): Q.Promise<string>;
 }
 
 /**
@@ -198,10 +198,11 @@ export class IOSEmulatorManager implements IEmulatorManager {
     }
     
     /**
-     * Uninstalls an application given its app id.
+     * Prepares the emulator for a test.
      */
-    uninstallApplication(appId: string): Q.Promise<string> {
-        return tu.TestUtil.getProcessOutput("xcrun simctl uninstall booted " + appId, undefined);
+    prepareEmulatorForTest(appId: string): Q.Promise<string> {
+        return this.endRunningApplication(appId);
+        // return tu.TestUtil.getProcessOutput("xcrun simctl uninstall booted " + appId, undefined);
     }
 }
 
@@ -251,10 +252,12 @@ export class AndroidEmulatorManager implements IEmulatorManager {
     }
     
     /**
-     * Uninstalls an application given its app id.
+     * Prepares the emulator for a test.
      */
-    uninstallApplication(appId: string): Q.Promise<string> {
-        return ProjectManager.ProjectManager.execAndLogChildProcess("adb uninstall " + appId);
+    prepareEmulatorForTest(appId: string): Q.Promise<string> {
+        return this.endRunningApplication(appId)
+            .then(() => { return ProjectManager.ProjectManager.execAndLogChildProcess("adb shell pm clear " + appId); });
+        // return ProjectManager.ProjectManager.execAndLogChildProcess("adb uninstall " + appId);
     }
 }
 
