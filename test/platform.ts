@@ -44,7 +44,7 @@ export interface IEmulatorManager {
     launchInstalledApplication(appId: string): Q.Promise<string>;
     
     /**
-     * Ends a running application, given its app id.
+     * Ends a running application given its app id.
      */
     endRunningApplication(appId: string): Q.Promise<string>;
     
@@ -141,15 +141,16 @@ export class IOSEmulatorManager implements IEmulatorManager {
      * Launches an already installed application by app id.
      */
     launchInstalledApplication(appId: string): Q.Promise<string> {
-        return tu.TestUtil.getProcessOutput("xcrun simctl launch booted " + appId, undefined, true);
+        return tu.TestUtil.getProcessOutput("xcrun simctl launch booted " + appId, undefined);
     }
     
     /**
-     * Ends a running application, given its app id.
+     * Ends a running application given its app id.
      */
     endRunningApplication(appId: string): Q.Promise<string> {
-        return tu.TestUtil.getProcessOutput("xcrun simctl spawn booted launchctl list", undefined, true)
+        return tu.TestUtil.getProcessOutput("xcrun simctl spawn booted launchctl list", undefined)
             .then<string>(processListOutput => {
+                // find the app's process
                 var regex = new RegExp("(\\S+" + appId + "\\S+)");
                 var execResult: any[] = regex.exec(processListOutput);
                 if (execResult) {
@@ -160,7 +161,11 @@ export class IOSEmulatorManager implements IEmulatorManager {
                 }
             })
             .then<string>(applicationLabel => {
-                return tu.TestUtil.getProcessOutput("xcrun simctl spawn booted launchctl stop " + applicationLabel, undefined, true);
+                // kill the app if we found the process
+                return tu.TestUtil.getProcessOutput("xcrun simctl spawn booted launchctl stop " + applicationLabel, undefined);
+            }, (error) => {
+                // we couldn't find the app's process so it must not be running
+                return Q.resolve(error);
             });
     }
     
@@ -192,7 +197,7 @@ export class IOSEmulatorManager implements IEmulatorManager {
      * Uninstalls an application given its app id.
      */
     uninstallApplication(appId: string): Q.Promise<string> {
-        return tu.TestUtil.getProcessOutput("xcrun simctl uninstall booted " + appId, undefined, true);
+        return tu.TestUtil.getProcessOutput("xcrun simctl uninstall booted " + appId, undefined);
     }
 }
 
@@ -205,7 +210,7 @@ export class AndroidEmulatorManager implements IEmulatorManager {
     }
     
     /**
-     * Ends a running application, given its app id.
+     * Ends a running application given its app id.
      */
     endRunningApplication(appId: string): Q.Promise<string> {
         return ProjectManager.ProjectManager.execAndLogChildProcess("adb shell am force-stop " + appId);
