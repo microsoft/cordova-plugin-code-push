@@ -118,7 +118,7 @@ class LocalPackage extends Package implements ILocalPackage {
                         var invokeSuccessAndInstall = () => {
                             CodePushUtil.logMessage("Install succeeded.");
                             var installModeToUse: InstallMode = this.isMandatory ? installOptions.mandatoryInstallMode : installOptions.installMode;
-                            if (installOptions.installMode === InstallMode.IMMEDIATE) {
+                            if (installModeToUse === InstallMode.IMMEDIATE) {
                                 /* invoke success before navigating */
                                 installSuccess && installSuccess();
                                 /* no need for callbacks, the javascript context will reload */

@@ -91,7 +91,7 @@ var LocalPackage = (function (_super) {
                         var invokeSuccessAndInstall = function () {
                             CodePushUtil.logMessage("Install succeeded.");
                             var installModeToUse = _this.isMandatory ? installOptions.mandatoryInstallMode : installOptions.installMode;
-                            if (installOptions.installMode === InstallMode.IMMEDIATE) {
+                            if (installModeToUse === InstallMode.IMMEDIATE) {
                                 installSuccess && installSuccess();
                                 cordova.exec(function () { }, function () { }, "CodePush", "install", [deployDir.fullPath,
                                     installModeToUse.toString(), installOptions.minimumBackgroundDuration.toString()]);
