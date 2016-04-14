@@ -174,6 +174,10 @@ export class IOSEmulatorManager implements IEmulatorManager {
      */
     restartApplication(appId: string): Q.Promise<string> {
         return this.endRunningApplication(appId)
+            .then<void>(() => {
+                // wait for a second before restarting
+                return Q.delay(1000);
+            })
             .then(() => this.launchInstalledApplication(appId));
     }
     
@@ -220,7 +224,12 @@ export class AndroidEmulatorManager implements IEmulatorManager {
      * Restarts an already installed application by app id.
      */
     restartApplication(appId: string): Q.Promise<string> {
-        return this.endRunningApplication(appId).then<string>(() => {
+        return this.endRunningApplication(appId)
+            .then<void>(() => {
+                // wait for a second before restarting
+                return Q.delay(1000);
+            })
+            .then<string>(() => {
             return this.launchInstalledApplication(appId);
         });
     }
