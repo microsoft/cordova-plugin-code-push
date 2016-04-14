@@ -593,7 +593,7 @@ describe("window.codePush", function() {
                     mockResponse = { updateInfo: getMockResponse() };
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED, su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                     console.log("Running project...");
-                    projectManager.endRunningApplication(TestNamespace, targetPlatform).then(() => { return projectManager.runPlatform(testRunDirectory, targetPlatform); }).done();
+                    projectManager.restartApplication(targetPlatform, TestNamespace).done();
                     return deferred.promise;
                 })
                 .then<void>(() => {
