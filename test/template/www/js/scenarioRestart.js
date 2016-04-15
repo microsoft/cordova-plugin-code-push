@@ -37,12 +37,12 @@ var app = {
             function () {
                 /* success */
                 app.sendTestMessage("RESTART_SUCCEEDED");
-                callback();
+                callback && callback();
             },
             function () {
                 /* error */
                 app.sendTestMessage("RESTART_FAILED");
-                callback();
+                callback && callback();
             });
     },
     /* sends the current and pending package to the mock server */
@@ -53,7 +53,7 @@ var app = {
             window.codePush.getCurrentPackage(function (currentPackage) {
                 console.log("Current package: " + currentPackage);
                 app.sendTestMessage("CURRENT_PACKAGE", [currentPackage ? currentPackage.packageHash : null]);
-                callback();
+                callback && callback();
             });
         });
     },
