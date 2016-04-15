@@ -140,7 +140,8 @@ export class ProjectManager {
      * Builds a specific platform of a Cordova project. 
      */
     public static buildPlatform(projectFolder: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
-        return ProjectManager.execAndLogChildProcess("cordova build " + targetPlatform.getCordovaName(), { cwd: projectFolder });
+        // don't print output here because the iOS build process outputs so much nonsense that it buffer overflows and exits the entire test process
+        return ProjectManager.execAndLogChildProcess("cordova build " + targetPlatform.getCordovaName(), { cwd: projectFolder }, false);
     }
     
     /**
@@ -241,7 +242,7 @@ export class ProjectManager {
     /**
      * Executes a child process and logs its output to the console and returns its output in the promise as a string
      */
-    public static execAndLogChildProcess(command: string, options?: child_process.IExecOptions): Q.Promise<string> {
+    public static execAndLogChildProcess(command: string, options?: child_process.IExecOptions, output: boolean = true): Q.Promise<string> {
         var deferred = Q.defer<string>();
 
         options = options || {};
@@ -250,7 +251,7 @@ export class ProjectManager {
         console.log("Running command: " + command);
         child_process.exec(command, options, (error: Error, stdout: Buffer, stderr: Buffer) => {
 
-            stdout && console.log(stdout);
+            if (output) stdout && console.log(stdout);
             stderr && console.error(stderr);
 
             if (error) {

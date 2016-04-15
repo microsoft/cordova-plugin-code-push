@@ -1361,7 +1361,7 @@ describe("window.codePush", function() {
                             su.TestMessage.APPLICATION_RESUMED,
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                         console.log("Resuming project...");
-                        projectManager.resumeApplication(targetPlatform, TestNamespace).done();
+                        projectManager.resumeApplication(targetPlatform, TestNamespace, 5 * 1000).done();
                         return deferred.promise;
                     })
                     .done(done, done);
