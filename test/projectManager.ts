@@ -208,7 +208,7 @@ export class ProjectManager {
      */
     public static runPlatform(projectFolder: string, skipBuild: boolean = true, target?: string): Q.Promise<string> {
         var targetPlatform = platform.PlatformResolver.resolvePlatform(tu.TestUtil.readTargetPlatform());
-        var runTarget = " --target " + target ? target : tu.TestUtil.readTargetEmulator();
+        var runTarget = target ? " --target " + target : "";
         var nobuild = skipBuild ? " --nobuild" : "";
         return ProjectManager.execAndLogChildProcess("cordova run " + targetPlatform.getCordovaName() + runTarget + nobuild, { cwd: projectFolder });
     }
