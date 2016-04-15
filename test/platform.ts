@@ -202,7 +202,6 @@ export class IOSEmulatorManager implements IEmulatorManager {
      */
     prepareEmulatorForTest(appId: string): Q.Promise<string> {
         return this.endRunningApplication(appId);
-        // return tu.TestUtil.getProcessOutput("xcrun simctl uninstall booted " + appId, undefined);
     }
 }
 
@@ -257,7 +256,6 @@ export class AndroidEmulatorManager implements IEmulatorManager {
     prepareEmulatorForTest(appId: string): Q.Promise<string> {
         return this.endRunningApplication(appId)
             .then(() => { return ProjectManager.ProjectManager.execAndLogChildProcess("adb shell pm clear " + appId); });
-        // return ProjectManager.ProjectManager.execAndLogChildProcess("adb uninstall " + appId);
     }
 }
 
