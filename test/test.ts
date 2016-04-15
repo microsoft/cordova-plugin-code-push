@@ -1036,12 +1036,14 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_DOWNLOADING_PACKAGE]),
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_INSTALLING_UPDATE]),
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED]),
+                            // the update is immediate so the update will install
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                         console.log("Running project...");
                         projectManager.runPlatform(testRunDirectory).done();
                         return deferred.promise;
                     })
                     .then<void>(() => {
+                        // restart the app and make sure it didn't roll out!
                         var deferred = Q.defer<void>();
                         var noUpdateResponse = createDefaultResponse();
                         noUpdateResponse.isAvailable = false;
@@ -1180,6 +1182,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_DOWNLOADING_PACKAGE]),
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_INSTALLING_UPDATE]),
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED]),
+                            // the update is immediate so the update will install
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE,
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_IN_PROGRESS])],
                             deferred);
@@ -1188,6 +1191,7 @@ describe("window.codePush", function() {
                         return deferred.promise;
                     })
                     .then<void>(() => {
+                        // restart the app and make sure it didn't roll out!
                         var deferred = Q.defer<void>();
                         var noUpdateResponse = createDefaultResponse();
                         noUpdateResponse.isAvailable = false;
