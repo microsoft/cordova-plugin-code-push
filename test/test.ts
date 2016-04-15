@@ -71,6 +71,13 @@ function cleanupTest(): void {
     testMessageResponse = undefined;
 }
 
+function cleanupServer(): void {
+    if (server) {
+        server.close();
+        server = undefined;
+    }
+}
+
 function prepareTest(): Q.Promise<string> {
     return projectManager.prepareEmulatorForTest(TestNamespace);
 }
@@ -225,6 +232,10 @@ describe("window.codePush", function() {
     
     before(() => {
         return setupTests();
+    });
+    
+    after(() => {
+        return cleanupServer();
     });
 
     describe("#window.codePush.checkForUpdate", function() {
