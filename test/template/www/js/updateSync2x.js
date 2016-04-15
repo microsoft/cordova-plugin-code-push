@@ -11,7 +11,7 @@ var app = {
     },
     // Update DOM on a Received Event
     receivedDeviceReady: function () {
-        document.getElementById("deviceready").innerText = "Device is ready (scenario - update sync)";
+        document.getElementById("deviceready").innerText = "Device is ready (scenario - update sync 2x)";
         console.log('Received Event: deviceready');
         app.sendTestMessage("DEVICE_READY_AFTER_UPDATE");
         /* invoke sync with UI options such that the update will not be installed */

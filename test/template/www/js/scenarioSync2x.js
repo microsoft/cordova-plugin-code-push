@@ -19,7 +19,7 @@ var app = {
                 app.sendTestMessage("SYNC_STATUS", [status]);
             },
             {
-                installMode: InstallMode.IMMEDIATE
+                installMode: InstallMode.ON_NEXT_RESTART
             });
         /* Only send the sync status of the second sync as a test message */
         window.codePush.sync(
@@ -27,7 +27,7 @@ var app = {
                 app.sendTestMessage("SYNC_STATUS", [status]);
             },
             {
-                installMode: InstallMode.IMMEDIATE
+                installMode: InstallMode.ON_NEXT_RESTART
             });
     },
     sendTestMessage: function (message, args) {
