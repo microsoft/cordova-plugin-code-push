@@ -19,7 +19,7 @@ var app = {
                 app.sendTestMessage("SYNC_STATUS", [status]);
             },
             {
-                installMode: InstallMode.ON_NEXT_RESTART
+                installMode: InstallMode.IMMEDIATE
             });
     },
     sendTestMessage: function (message, args) {
