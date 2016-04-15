@@ -14,6 +14,7 @@ import fs = require("fs");
 import mkdirp = require("mkdirp");
 
 import platform = require("./platform");
+import tu = require("./testUtil");
 
 var del = require("del");
 var archiver = require("archiver");
@@ -73,7 +74,7 @@ export class ProjectManager {
     /**
      * Sets up the scenario for a test in an already existing Cordova project.
      */
-    public static setupScenario(projectDirectory: string, templatePath: string, targetPlatform: platform.IPlatform, jsPath: string, serverURL: string, build: boolean = true, version: string = ProjectManager.DEFAULT_APP_VERSION): Q.Promise<string> {
+    public static setupScenario(projectDirectory: string, templatePath: string, jsPath: string, serverURL: string, build: boolean = true, version: string = ProjectManager.DEFAULT_APP_VERSION): Q.Promise<string> {
         var indexHtml = "www/index.html";
         var templateIndexPath = path.join(templatePath, indexHtml);
         var destinationIndexPath = path.join(projectDirectory, indexHtml);
@@ -91,14 +92,16 @@ export class ProjectManager {
             })
             .then<void>(ProjectManager.replaceString.bind(undefined, destinationScenarioJsPath, ProjectManager.SERVER_URL_PLACEHOLDER, serverURL))
             .then<string>(() => {
-                return build ? ProjectManager.buildPlatform(projectDirectory, targetPlatform) : ProjectManager.preparePlatform(projectDirectory, targetPlatform);
+                return build ? ProjectManager.buildPlatform(projectDirectory) : ProjectManager.preparePlatform(projectDirectory);
             });
     }
 
     /**
      * Creates a CodePush update package zip for a Cordova project.
      */
-    public static createUpdateArchive(projectDirectory: string, targetPlatform: platform.IPlatform, isDiff?: boolean): Q.Promise<string> {
+    public static createUpdateArchive(projectDirectory: string, isDiff?: boolean): Q.Promise<string> {
+        var targetPlatform = platform.PlatformResolver.resolvePlatform(tu.TestUtil.readTargetPlatform());
+        
         var deferred = Q.defer<string>();
         var archive = archiver.create("zip", {});
         var archivePath = path.join(projectDirectory, "update.zip");
@@ -139,7 +142,9 @@ export class ProjectManager {
     /**
      * Builds a specific platform of a Cordova project. 
      */
-    public static buildPlatform(projectFolder: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
+    public static buildPlatform(projectFolder: string): Q.Promise<string> {
+        var targetPlatform = platform.PlatformResolver.resolvePlatform(tu.TestUtil.readTargetPlatform());
+        
         // don't print output here because the iOS build process outputs so much nonsense that it buffer overflows and exits the entire test process
         return ProjectManager.execAndLogChildProcess("cordova build " + targetPlatform.getCordovaName(), { cwd: projectFolder }, false);
     }
@@ -147,14 +152,18 @@ export class ProjectManager {
     /**
      * Prepares a specific platform of a Cordova project. 
      */
-    public static preparePlatform(projectFolder: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
+    public static preparePlatform(projectFolder: string): Q.Promise<string> {
+        var targetPlatform = platform.PlatformResolver.resolvePlatform(tu.TestUtil.readTargetPlatform());
+        
         return ProjectManager.execAndLogChildProcess("cordova prepare " + targetPlatform.getCordovaName(), { cwd: projectFolder });
     }
 
     /**
      * Launch the test app on the given target / platform.
      */
-    public static launchApplication(namespace: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
+    public static launchApplication(namespace: string): Q.Promise<string> {
+        var targetPlatform = platform.PlatformResolver.resolvePlatform(tu.TestUtil.readTargetPlatform());
+        
         var emulatorManager = targetPlatform.getEmulatorManager();
         if (emulatorManager) {
             return emulatorManager.launchInstalledApplication(namespace);
@@ -167,7 +176,9 @@ export class ProjectManager {
     /**
      * Kill the test app on the given target / platform.
      */
-    public static endRunningApplication(namespace: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
+    public static endRunningApplication(namespace: string): Q.Promise<string> {
+        var targetPlatform = platform.PlatformResolver.resolvePlatform(tu.TestUtil.readTargetPlatform());
+        
         var emulatorManager = targetPlatform.getEmulatorManager();
         if (emulatorManager) {
             return emulatorManager.endRunningApplication(namespace);
@@ -180,7 +191,9 @@ export class ProjectManager {
     /**
      * Prepares the emulator for a test.
      */
-    public static prepareEmulatorForTest(namespace: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
+    public static prepareEmulatorForTest(namespace: string): Q.Promise<string> {
+        var targetPlatform = platform.PlatformResolver.resolvePlatform(tu.TestUtil.readTargetPlatform());
+        
         var emulatorManager = targetPlatform.getEmulatorManager();
         if (emulatorManager) {
             return emulatorManager.prepareEmulatorForTest(namespace);
@@ -193,8 +206,9 @@ export class ProjectManager {
     /**
      * Runs the test app on the given target / platform.
      */
-    public static runPlatform(projectFolder: string, targetPlatform: platform.IPlatform, skipBuild: boolean = true, target?: string): Q.Promise<string> {
-        var runTarget = target ? " --target " + target : "";
+    public static runPlatform(projectFolder: string, skipBuild: boolean = true, target?: string): Q.Promise<string> {
+        var targetPlatform = platform.PlatformResolver.resolvePlatform(tu.TestUtil.readTargetPlatform());
+        var runTarget = " --target " + target ? target : tu.TestUtil.readTargetEmulator();
         var nobuild = skipBuild ? " --nobuild" : "";
         return ProjectManager.execAndLogChildProcess("cordova run " + targetPlatform.getCordovaName() + runTarget + nobuild, { cwd: projectFolder });
     }
@@ -202,7 +216,8 @@ export class ProjectManager {
     /**
      * Adds a platform to a Cordova project. 
      */
-    public static addPlatform(projectFolder: string, targetPlatform: platform.IPlatform, version?: string): Q.Promise<string> {
+    public static addPlatform(projectFolder: string, version?: string): Q.Promise<string> {
+        var targetPlatform = platform.PlatformResolver.resolvePlatform(tu.TestUtil.readTargetPlatform());
         return ProjectManager.execAndLogChildProcess("cordova platform add " + targetPlatform.getCordovaName() + (version ? "@" + version : ""), { cwd: projectFolder });
     }
 
@@ -216,7 +231,8 @@ export class ProjectManager {
     /**
      * Stops and restarts an application specified by its namespace identifier.
      */
-    public static restartApplication(targetPlatform: platform.IPlatform, namespace: string): Q.Promise<string> {
+    public static restartApplication(namespace: string): Q.Promise<string> {
+        var targetPlatform = platform.PlatformResolver.resolvePlatform(tu.TestUtil.readTargetPlatform());
         var emulatorManager = targetPlatform.getEmulatorManager();
         if (emulatorManager) {
             return emulatorManager.restartApplication(namespace);
@@ -229,7 +245,8 @@ export class ProjectManager {
     /**
      * Navigates away from the application and then navigates back to it.
      */
-    public static resumeApplication(targetPlatform: platform.IPlatform, namespace: string, delayBeforeResumingMs: number = 1000): Q.Promise<string> {
+    public static resumeApplication(namespace: string, delayBeforeResumingMs: number = 1000): Q.Promise<string> {
+        var targetPlatform = platform.PlatformResolver.resolvePlatform(tu.TestUtil.readTargetPlatform());
         var emulatorManager = targetPlatform.getEmulatorManager();
         if (emulatorManager) {
             return emulatorManager.resumeApplication(namespace, delayBeforeResumingMs);

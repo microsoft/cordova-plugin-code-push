@@ -72,7 +72,7 @@ function cleanupTest(): void {
 }
 
 function prepareTest(): Q.Promise<string> {
-    return projectManager.prepareEmulatorForTest(TestNamespace, targetPlatform);
+    return projectManager.prepareEmulatorForTest(TestNamespace);
 }
 
 function createTestProject(directory: string): Q.Promise<string> {
@@ -81,7 +81,7 @@ function createTestProject(directory: string): Q.Promise<string> {
         platform.Android.getInstance().getDefaultDeploymentKey(),
         platform.IOS.getInstance().getDefaultDeploymentKey(),
         TestAppName, TestNamespace)
-        .then<string>(() => { return projectManager.addPlatform(directory, targetPlatform); })
+        .then<string>(() => { return projectManager.addPlatform(directory); })
         .then<string>(() => { return projectManager.addPlugin(directory, AcquisitionSDKPluginName); })
         .then<string>(() => { return projectManager.addPlugin(directory, thisPluginPath); })
         .then<string>(() => { return (shouldUseWkWebView ? projectManager.addPlugin(directory, WkWebViewEnginePluginName) : null); });
@@ -149,7 +149,7 @@ function setupScenario(scenarioPath: string): Q.Promise<string> {
     console.log("Target platform: " + targetPlatform ? targetPlatform.getCordovaName() : "");
     console.log("Target emulator: " + targetEmulator);
 
-    return projectManager.setupScenario(testRunDirectory, templatePath, targetPlatform, scenarioPath, serverUrl);
+    return projectManager.setupScenario(testRunDirectory, templatePath, scenarioPath, serverUrl);
 }
 
 function createDefaultResponse(): su.CheckForUpdateResponseMock {
@@ -195,7 +195,7 @@ var getMockResponse = (mandatory: boolean = false, randomHash: boolean = true): 
 
 function setupUpdateScenario(updateScenarioPath: string, version: string): Q.Promise<string> {
     console.log("Creating an update at location: " + updatesDirectory);
-    return projectManager.setupScenario(updatesDirectory, templatePath, targetPlatform, updateScenarioPath, serverUrl, false, version);
+    return projectManager.setupScenario(updatesDirectory, templatePath, updateScenarioPath, serverUrl, false, version);
 };
 
 function verifyMessages(expectedMessages: (string | su.AppMessage)[], deferred: Q.Deferred<void>): (requestBody: any) => void {
@@ -258,7 +258,7 @@ describe("window.codePush", function() {
             };
 
             console.log("Running project...");
-            projectManager.runPlatform(testRunDirectory, targetPlatform);
+            projectManager.runPlatform(testRunDirectory);
         });
 
         it("window.codePush.checkForUpdate.sendsBinaryHash", function(done) {
@@ -286,7 +286,7 @@ describe("window.codePush", function() {
             };
 
             console.log("Running project...");
-            projectManager.runPlatform(testRunDirectory, targetPlatform);
+            projectManager.runPlatform(testRunDirectory);
         });
         
         it("window.codePush.checkForUpdate.noUpdate.updateAppVersion", function(done) {
@@ -306,7 +306,7 @@ describe("window.codePush", function() {
             };
 
             console.log("Running project...");
-            projectManager.runPlatform(testRunDirectory, targetPlatform);
+            projectManager.runPlatform(testRunDirectory);
         });
 
         it("window.codePush.checkForUpdate.update", function(done) {
@@ -340,7 +340,7 @@ describe("window.codePush", function() {
             };
 
             console.log("Running project...");
-            projectManager.runPlatform(testRunDirectory, targetPlatform);
+            projectManager.runPlatform(testRunDirectory);
         });
 
         it("window.codePush.checkForUpdate.error", function(done) {
@@ -356,7 +356,7 @@ describe("window.codePush", function() {
             };
 
             console.log("Running project...");
-            projectManager.runPlatform(testRunDirectory, targetPlatform);
+            projectManager.runPlatform(testRunDirectory);
         });
     });
 
@@ -389,7 +389,7 @@ describe("window.codePush", function() {
             };
 
             console.log("Running project...");
-            projectManager.runPlatform(testRunDirectory, targetPlatform);
+            projectManager.runPlatform(testRunDirectory);
         });
     });
 
@@ -430,7 +430,7 @@ describe("window.codePush", function() {
             };
 
             console.log("Running project...");
-            projectManager.runPlatform(testRunDirectory, targetPlatform);
+            projectManager.runPlatform(testRunDirectory);
         });
 
         it("remotePackage.download.error", function(done) {
@@ -449,7 +449,7 @@ describe("window.codePush", function() {
             };
 
             console.log("Running project...");
-            projectManager.runPlatform(testRunDirectory, targetPlatform);
+            projectManager.runPlatform(testRunDirectory);
         });
     });
 
@@ -490,7 +490,7 @@ describe("window.codePush", function() {
             };
 
             console.log("Running project...");
-            projectManager.runPlatform(testRunDirectory, targetPlatform);
+            projectManager.runPlatform(testRunDirectory);
         });
 
         it("localPackage.install.handlesDiff.againstBinary", function(done) {
@@ -499,13 +499,13 @@ describe("window.codePush", function() {
 
             /* create an update */
             setupUpdateScenario(UpdateNotifyApplicationReady, "Diff Update 1")
-                .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform, /*isDiff*/ true))
+                .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, /*isDiff*/ true))
                 .then<void>((updatePath: string) => {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED, su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS], deferred);
                     console.log("Running project...");
-                    projectManager.runPlatform(testRunDirectory, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -513,7 +513,7 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS], deferred);
                     console.log("Restarting application...");
-                    projectManager.restartApplication(targetPlatform, TestNamespace);
+                    projectManager.restartApplication(TestNamespace);
                     return deferred.promise;
                 })
                 .done(done, done);
@@ -525,13 +525,13 @@ describe("window.codePush", function() {
 
             /* create an update */
             setupUpdateScenario(UpdateNotifyApplicationReady, "Update 1")
-                .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory))
                 .then<void>((updatePath: string) => {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED, su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS], deferred);
                     console.log("Running project...");
-                    projectManager.runPlatform(testRunDirectory, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -539,7 +539,7 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS], deferred);
                     console.log("Restarting application...");
-                    projectManager.restartApplication(targetPlatform, TestNamespace);
+                    projectManager.restartApplication(TestNamespace);
                     return deferred.promise;
                 })
                 .done(done, done);
@@ -566,13 +566,13 @@ describe("window.codePush", function() {
 
             /* create an update */
             setupUpdateScenario(UpdateDeviceReady, "Update 1 (bad update)")
-                .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory))
                 .then<void>((updatePath: string) => {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED, su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                     console.log("Running project...");
-                    projectManager.runPlatform(testRunDirectory, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -580,7 +580,7 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_FAILED_PREVIOUSLY], deferred);
                     console.log("Restarting application...");
-                    projectManager.restartApplication(targetPlatform, TestNamespace);
+                    projectManager.restartApplication(TestNamespace);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -590,7 +590,7 @@ describe("window.codePush", function() {
                     mockResponse = { updateInfo: getMockResponse() };
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED, su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                     console.log("Running project...");
-                    projectManager.restartApplication(targetPlatform, TestNamespace);
+                    projectManager.restartApplication(TestNamespace);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -598,7 +598,7 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_FAILED_PREVIOUSLY], deferred);
                     console.log("Restarting application...");
-                    projectManager.restartApplication(targetPlatform, TestNamespace);
+                    projectManager.restartApplication(TestNamespace);
                     return deferred.promise;
                 })
                 .done(done, done);
@@ -610,13 +610,13 @@ describe("window.codePush", function() {
 
             /* create an update */
             setupUpdateScenario(UpdateNotifyApplicationReady, "Update 1 (good update)")
-                .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory))
                 .then<void>((updatePath: string) => {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED, su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS], deferred);
                     console.log("Running project...");
-                    projectManager.runPlatform(testRunDirectory, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -624,7 +624,7 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS], deferred);
                     console.log("Restarting application...");
-                    projectManager.restartApplication(targetPlatform, TestNamespace);
+                    projectManager.restartApplication(TestNamespace);
                     return deferred.promise;
                 })
                 .done(done, done);
@@ -650,13 +650,13 @@ describe("window.codePush", function() {
             mockResponse = { updateInfo: getMockResponse() };
 
             setupUpdateScenario(UpdateDeviceReady, "Update 1")
-                .then<string>(() => { return projectManager.createUpdateArchive(updatesDirectory, targetPlatform); })
+                .then<string>(() => { return projectManager.createUpdateArchive(updatesDirectory); })
                 .then<void>((updatePath: string) => {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED], deferred);
                     console.log("Running project...");
-                    projectManager.runPlatform(testRunDirectory, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -664,7 +664,7 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                     console.log("Resuming project...");
-                    projectManager.resumeApplication(targetPlatform, TestNamespace);
+                    projectManager.resumeApplication(TestNamespace);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -672,7 +672,7 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_FAILED_PREVIOUSLY], deferred);
                     console.log("Restarting project...");
-                    projectManager.restartApplication(targetPlatform, TestNamespace);
+                    projectManager.restartApplication(TestNamespace);
                     return deferred.promise;
                 })
                 .done(done, done);
@@ -684,13 +684,13 @@ describe("window.codePush", function() {
 
             /* create an update */
             setupUpdateScenario(UpdateNotifyApplicationReady, "Update 1 (good update)")
-                .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory))
                 .then<void>((updatePath: string) => {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED], deferred);
                     console.log("Running project...");
-                    projectManager.runPlatform(testRunDirectory, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -698,7 +698,7 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS], deferred);
                     console.log("Resuming project...");
-                    projectManager.resumeApplication(targetPlatform, TestNamespace);
+                    projectManager.resumeApplication(TestNamespace);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -706,7 +706,7 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS], deferred);
                     console.log("Restarting project...");
-                    projectManager.restartApplication(targetPlatform, TestNamespace);
+                    projectManager.restartApplication(TestNamespace);
                     return deferred.promise;
                 })
                 .done(done, done);
@@ -732,13 +732,13 @@ describe("window.codePush", function() {
             mockResponse = { updateInfo: getMockResponse() };
 
             setupUpdateScenario(UpdateDeviceReady, "Update 1")
-                .then<string>(() => { return projectManager.createUpdateArchive(updatesDirectory, targetPlatform); })
+                .then<string>(() => { return projectManager.createUpdateArchive(updatesDirectory); })
                 .then<void>((updatePath: string) => {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED], deferred);
                     console.log("Running project...");
-                    projectManager.runPlatform(testRunDirectory, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -746,7 +746,7 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                     console.log("Restarting project. Update hash: " + mockResponse.updateInfo.packageHash);
-                    projectManager.restartApplication(targetPlatform, TestNamespace);
+                    projectManager.restartApplication(TestNamespace);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -754,7 +754,7 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_FAILED_PREVIOUSLY], deferred);
                     console.log("Restarting project. Update hash: " + mockResponse.updateInfo.packageHash);
-                    projectManager.restartApplication(targetPlatform, TestNamespace);
+                    projectManager.restartApplication(TestNamespace);
                     return deferred.promise;
                 })
                 .done(done, done);
@@ -766,13 +766,13 @@ describe("window.codePush", function() {
 
             /* create an update */
             setupUpdateScenario(UpdateNotifyApplicationReady, "Update 1 (good update)")
-                .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory))
                 .then<void>((updatePath: string) => {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED], deferred);
                     console.log("Running project...");
-                    projectManager.runPlatform(testRunDirectory, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -780,7 +780,7 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS], deferred);
                     console.log("Running project...");
-                    projectManager.restartApplication(targetPlatform, TestNamespace);
+                    projectManager.restartApplication(TestNamespace);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -788,7 +788,7 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS], deferred);
                     console.log("Running project...");
-                    projectManager.restartApplication(targetPlatform, TestNamespace);
+                    projectManager.restartApplication(TestNamespace);
                     return deferred.promise;
                 })
                 .done(done, done);
@@ -800,13 +800,13 @@ describe("window.codePush", function() {
 
             /* create an update */
             setupUpdateScenario(UpdateNotifyApplicationReadyConditional, "Update 1 (good update)")
-                .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory))
                 .then<void>((updatePath: string) => {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
                     testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED], deferred);
                     console.log("Running project...");
-                    projectManager.runPlatform(testRunDirectory, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -816,8 +816,8 @@ describe("window.codePush", function() {
                     console.log("Running project...");
                     mockResponse = { updateInfo: getMockResponse() };
                     setupUpdateScenario(UpdateDeviceReady, "Update 2 (bad update)")
-                        .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
-                        .then(() => { return projectManager.restartApplication(targetPlatform, TestNamespace); });
+                        .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory))
+                        .then(() => { return projectManager.restartApplication(TestNamespace); });
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -825,7 +825,7 @@ describe("window.codePush", function() {
                     var deferred = Q.defer<void>();
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                     console.log("Running project...");
-                    projectManager.restartApplication(targetPlatform, TestNamespace);
+                    projectManager.restartApplication(TestNamespace);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -834,7 +834,7 @@ describe("window.codePush", function() {
                     testMessageResponse = su.TestMessageResponse.SKIP_NOTIFY_APPLICATION_READY;
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.SKIPPED_NOTIFY_APPLICATION_READY], deferred);
                     console.log("Running project...");
-                    projectManager.restartApplication(targetPlatform, TestNamespace);
+                    projectManager.restartApplication(TestNamespace);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -843,7 +843,7 @@ describe("window.codePush", function() {
                     testMessageResponse = undefined;
                     testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS, su.TestMessage.UPDATE_FAILED_PREVIOUSLY], deferred);
                     console.log("Running project...");
-                    projectManager.restartApplication(targetPlatform, TestNamespace);
+                    projectManager.restartApplication(TestNamespace);
                     return deferred.promise;
                 })
                 .done(done, done);
@@ -869,7 +869,7 @@ describe("window.codePush", function() {
             mockResponse = { updateInfo: getMockResponse() };
 
             setupUpdateScenario(UpdateNotifyApplicationReady, "Update 1")
-                .then<string>(() => { return projectManager.createUpdateArchive(updatesDirectory, targetPlatform); })
+                .then<string>(() => { return projectManager.createUpdateArchive(updatesDirectory); })
                 .then<void>((updatePath: string) => {
                     var deferred = Q.defer<void>();
                     mockUpdatePackagePath = updatePath;
@@ -887,7 +887,7 @@ describe("window.codePush", function() {
                         su.TestMessage.NOTIFY_APP_READY_SUCCESS
                     ], deferred);
                     console.log("Running project...");
-                    projectManager.runPlatform(testRunDirectory, targetPlatform);
+                    projectManager.runPlatform(testRunDirectory);
                     return deferred.promise;
                 })
                 .then<void>(() => {
@@ -896,7 +896,7 @@ describe("window.codePush", function() {
                     testMessageCallback = verifyMessages([
                         su.TestMessage.DEVICE_READY_AFTER_UPDATE, su.TestMessage.NOTIFY_APP_READY_SUCCESS
                     ], deferred);
-                    projectManager.restartApplication(targetPlatform, TestNamespace);
+                    projectManager.restartApplication(TestNamespace);
                     return deferred.promise;
                 })
                 .done(done, done);
@@ -937,7 +937,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UP_TO_DATE])],
                             deferred);
                         console.log("Running project...");
-                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -954,7 +954,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_ERROR])],
                             deferred);
                         console.log("Running project...");
-                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -974,7 +974,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_ERROR])],
                             deferred);
                         console.log("Running project...");
-                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -986,7 +986,7 @@ describe("window.codePush", function() {
             
                 /* create an update */
                 setupUpdateScenario(UpdateDeviceReady, "Update 1 (bad update)")
-                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory))
                     .then<void>((updatePath: string) => {
                         var deferred = Q.defer<void>();
                         mockUpdatePackagePath = updatePath;
@@ -997,7 +997,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED]),
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                         console.log("Running project...");
-                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory).done();
                         return deferred.promise;
                     })
                     .then<void>(() => {
@@ -1005,7 +1005,7 @@ describe("window.codePush", function() {
                         testMessageCallback = verifyMessages([
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_CHECKING_FOR_UPDATE]),
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UP_TO_DATE])], deferred);
-                        projectManager.restartApplication(targetPlatform, TestNamespace).done();
+                        projectManager.restartApplication(TestNamespace).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -1016,7 +1016,7 @@ describe("window.codePush", function() {
 
                 /* create an update */
                 setupUpdateScenario(UpdateSync, "Update 1 (good update)")
-                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory))
                     .then<void>((updatePath: string) => {
                         var deferred = Q.defer<void>();
                         mockUpdatePackagePath = updatePath;
@@ -1027,7 +1027,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED]),
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                         console.log("Running project...");
-                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory).done();
                         return deferred.promise;
                     })
                     .then<void>(() => {
@@ -1037,7 +1037,7 @@ describe("window.codePush", function() {
                         noUpdateResponse.appVersion = "0.0.1";
                         mockResponse = { updateInfo: noUpdateResponse };
                         testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
-                        projectManager.restartApplication(targetPlatform, TestNamespace).done();
+                        projectManager.restartApplication(TestNamespace).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -1074,7 +1074,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UP_TO_DATE])],
                             deferred);
                         console.log("Running project...");
-                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -1092,7 +1092,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_ERROR])],
                             deferred);
                         console.log("Running project...");
-                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -1113,7 +1113,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_ERROR])],
                             deferred);
                         console.log("Running project...");
-                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -1125,7 +1125,7 @@ describe("window.codePush", function() {
             
                 /* create an update */
                 setupUpdateScenario(UpdateDeviceReady, "Update 1 (bad update)")
-                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory))
                     .then<void>((updatePath: string) => {
                         var deferred = Q.defer<void>();
                         mockUpdatePackagePath = updatePath;
@@ -1138,7 +1138,7 @@ describe("window.codePush", function() {
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE],
                             deferred);
                         console.log("Running project...");
-                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory).done();
                         return deferred.promise;
                     })
                     .then<void>(() => {
@@ -1148,7 +1148,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_IN_PROGRESS]),
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UP_TO_DATE])],
                             deferred);
-                        projectManager.restartApplication(targetPlatform, TestNamespace).done();
+                        projectManager.restartApplication(TestNamespace).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -1159,7 +1159,7 @@ describe("window.codePush", function() {
 
                 /* create an update */
                 setupUpdateScenario(UpdateSync2x, "Update 1 (good update)")
-                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory))
                     .then<void>((updatePath: string) => {
                         var deferred = Q.defer<void>();
                         mockUpdatePackagePath = updatePath;
@@ -1171,7 +1171,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED])],
                             deferred);
                         console.log("Running project...");
-                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory).done();
                         return deferred.promise;
                     })
                     .then<void>(() => {
@@ -1184,7 +1184,7 @@ describe("window.codePush", function() {
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE,
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_IN_PROGRESS])],
                             deferred);
-                        projectManager.restartApplication(targetPlatform, TestNamespace).done();
+                        projectManager.restartApplication(TestNamespace).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -1207,14 +1207,14 @@ describe("window.codePush", function() {
                 setupScenario(ScenarioSyncResume).then<string>(() => {
                         return setupUpdateScenario(UpdateSync, "Update 1 (good update)");
                     })
-                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory))
                     .then<void>((updatePath: string) => {
                         var deferred = Q.defer<void>();
                         mockUpdatePackagePath = updatePath;
                         testMessageCallback = verifyMessages([
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED])], deferred);
                         console.log("Running project...");
-                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory).done();
                         return deferred.promise;
                     })
                     .then<void>(() => {
@@ -1228,7 +1228,7 @@ describe("window.codePush", function() {
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                         console.log("Resuming project...");
                         // we specify a delay here because in some cases the emulator was not calling "APPLICATION_RESUMED" despite being resumed with no delay
-                        projectManager.resumeApplication(targetPlatform, TestNamespace, 5 * 1000).done();
+                        projectManager.resumeApplication(TestNamespace, 5 * 1000).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -1240,14 +1240,14 @@ describe("window.codePush", function() {
                 setupScenario(ScenarioSyncResumeDelay).then<string>(() => {
                         return setupUpdateScenario(UpdateSync, "Update 1 (good update)");
                     })
-                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory))
                     .then<void>((updatePath: string) => {
                         var deferred = Q.defer<void>();
                         mockUpdatePackagePath = updatePath;
                         testMessageCallback = verifyMessages([
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED])], deferred);
                         console.log("Running project...");
-                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory).done();
                         return deferred.promise;
                     })
                     .then<void>(() => {
@@ -1259,7 +1259,7 @@ describe("window.codePush", function() {
                         testMessageCallback = verifyMessages([
                             su.TestMessage.APPLICATION_RESUMED], deferred);
                         console.log("Resuming project...");
-                        projectManager.resumeApplication(targetPlatform, TestNamespace, 5 * 1000).done();
+                        projectManager.resumeApplication(TestNamespace, 5 * 1000).done();
                         return deferred.promise;
                     })
                     .then<void>(() => {
@@ -1267,7 +1267,7 @@ describe("window.codePush", function() {
                         testMessageCallback = verifyMessages([
                             su.TestMessage.APPLICATION_RESUMED,
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
-                        projectManager.resumeApplication(targetPlatform, TestNamespace, 10 * 1000).done();
+                        projectManager.resumeApplication(TestNamespace, 10 * 1000).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -1279,14 +1279,14 @@ describe("window.codePush", function() {
                 setupScenario(ScenarioSyncRestartDelay).then<string>(() => {
                         return setupUpdateScenario(UpdateSync, "Update 1 (good update)");
                     })
-                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory))
                     .then<void>((updatePath: string) => {
                         var deferred = Q.defer<void>();
                         mockUpdatePackagePath = updatePath;
                         testMessageCallback = verifyMessages([
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED])], deferred);
                         console.log("Running project...");
-                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory).done();
                         return deferred.promise;
                     })
                     .then<void>(() => {
@@ -1297,7 +1297,7 @@ describe("window.codePush", function() {
                         mockResponse = { updateInfo: noUpdateResponse };
                         testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                         console.log("Restarting project...");
-                        projectManager.restartApplication(targetPlatform, TestNamespace).done();
+                        projectManager.restartApplication(TestNamespace).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -1321,7 +1321,7 @@ describe("window.codePush", function() {
                 setupScenario(ScenarioSyncMandatoryDefault).then<string>(() => {
                         return setupUpdateScenario(UpdateDeviceReady, "Update 1 (good update)");
                     })
-                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory))
                     .then<void>((updatePath: string) => {
                         var deferred = Q.defer<void>();
                         mockUpdatePackagePath = updatePath;
@@ -1329,7 +1329,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED]),
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                         console.log("Running project...");
-                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -1341,14 +1341,14 @@ describe("window.codePush", function() {
                 setupScenario(ScenarioSyncMandatoryResume).then<string>(() => {
                         return setupUpdateScenario(UpdateDeviceReady, "Update 1 (good update)");
                     })
-                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory))
                     .then<void>((updatePath: string) => {
                         var deferred = Q.defer<void>();
                         mockUpdatePackagePath = updatePath;
                         testMessageCallback = verifyMessages([
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED])], deferred);
                         console.log("Running project...");
-                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory).done();
                         return deferred.promise;
                     })
                     .then<void>(() => {
@@ -1361,7 +1361,7 @@ describe("window.codePush", function() {
                             su.TestMessage.APPLICATION_RESUMED,
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                         console.log("Resuming project...");
-                        projectManager.resumeApplication(targetPlatform, TestNamespace, 5 * 1000).done();
+                        projectManager.resumeApplication(TestNamespace, 5 * 1000).done();
                         return deferred.promise;
                     })
                     .done(done, done);
@@ -1373,7 +1373,7 @@ describe("window.codePush", function() {
                 setupScenario(ScenarioSyncMandatoryRestart).then<string>(() => {
                         return setupUpdateScenario(UpdateDeviceReady, "Update 1 (good update)");
                     })
-                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory))
                     .then<void>((updatePath: string) => {
                         var deferred = Q.defer<void>();
                         mockUpdatePackagePath = updatePath;
@@ -1381,7 +1381,7 @@ describe("window.codePush", function() {
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED]),
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                         console.log("Running project...");
-                        projectManager.runPlatform(testRunDirectory, targetPlatform).done();
+                        projectManager.runPlatform(testRunDirectory).done();
                         return deferred.promise;
                     })
                     .done(done, done);
