@@ -36,7 +36,7 @@ var LocalPackage = (function (_super) {
             }
             var installError = function (error) {
                 CodePushUtil.invokeErrorCallback(error, errorCallback);
-                Sdk.reportStatusDeploy(_this, AcquisitionStatus.DeploymentFailed);
+                Sdk.reportStatusDeploy(_this, AcquisitionStatus.DeploymentFailed, _this.deploymentKey);
             };
             var newPackageLocation = LocalPackage.VersionsDir + "/" + this.packageHash;
             var donePackageFileCopy = function (deployDir) {

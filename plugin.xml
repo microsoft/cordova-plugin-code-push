@@ -63,9 +63,9 @@
             <source-file src="src/android/CodePushPackageManager.java" target-dir="src/com/microsoft/cordova" />
             <source-file src="src/android/CodePushPackageMetadata.java" target-dir="src/com/microsoft/cordova" />
             <source-file src="src/android/CodePushPreferences.java" target-dir="src/com/microsoft/cordova" />
+            <source-file src="src/android/CodePushReportingManager.java" target-dir="src/com/microsoft/cordova" />
             <source-file src="src/android/InstallMode.java" target-dir="src/com/microsoft/cordova" />
             <source-file src="src/android/InstallOptions.java" target-dir="src/com/microsoft/cordova" />
-            <source-file src="src/android/Reporting.java" target-dir="src/com/microsoft/cordova" />
             <source-file src="src/android/Utilities.java" target-dir="src/com/microsoft/cordova" />
             <source-file src="src/android/UpdateHashUtils.java" target-dir="src/com/microsoft/cordova" />
             <config-file target="config.xml" parent="/*">
@@ -83,13 +83,13 @@
             <source-file src="src/ios/CodePushPackageMetadata.m" />
             <header-file src="src/ios/CodePushPackageManager.h" />
             <source-file src="src/ios/CodePushPackageManager.m" />
+            <source-file src="src/ios/CodePushReportingManager.m" />
+            <header-file src="src/ios/CodePushReportingManager.h" />
             <header-file src="src/ios/Utilities.h" />
             <source-file src="src/ios/Utilities.m" />
             <header-file src="src/ios/InstallOptions.h" />
             <source-file src="src/ios/InstallOptions.m" />
             <header-file src="src/ios/InstallMode.h" />
-            <source-file src="src/ios/Reporting.m" />
-            <header-file src="src/ios/Reporting.h" />
             <source-file src="src/ios/UpdateHashUtils.m" />
             <header-file src="src/ios/UpdateHashUtils.h" />
             <config-file target="config.xml" parent="/*">
