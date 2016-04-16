@@ -22,6 +22,9 @@ public class CodePushPreferences {
     private static final String INSTALL_NEEDS_CONFIRMATION_KEY = "INSTALL_NEEDS_CONFIRMATION_KEY";
     private static final String FIRST_RUN_PREFERENCE = "CODE_PUSH_FIRST_RUN";
     private static final String FIRST_RUN_PREFERENCE_KEY = "CODE_PUSH_FIRST_RUN_KEY";
+    private static final String LAST_VERSION_PREFERENCE = "CODE_PUSH_LAST_VERSION";
+    private static final String LAST_VERSION_DEPLOYMENT_KEY_KEY = "LAST_VERSION_DEPLOYMENT_KEY_KEY";
+    private static final String LAST_VERSION_LABEL_OR_APP_VERSION_KEY = "LAST_VERSION_LABEL_OR_APP_VERSION_KEY";
 
     private Context context;
 
@@ -129,5 +132,23 @@ public class CodePushPreferences {
         SharedPreferences.Editor editor = preferences.edit();
         editor.clear();
         editor.commit();
+    }
+
+    public void saveLastVersion(String labelOrAppVersion, String deploymentKey) {
+        SharedPreferences preferences = context.getSharedPreferences(CodePushPreferences.LAST_VERSION_PREFERENCE, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString(CodePushPreferences.LAST_VERSION_LABEL_OR_APP_VERSION_KEY, labelOrAppVersion);
+        editor.putString(CodePushPreferences.LAST_VERSION_DEPLOYMENT_KEY_KEY, deploymentKey);
+        editor.commit();
+    }
+
+    public String getLastVersionDeploymentKey() {
+        SharedPreferences preferences = context.getSharedPreferences(CodePushPreferences.LAST_VERSION_PREFERENCE, Context.MODE_PRIVATE);
+        return preferences.getString(CodePushPreferences.LAST_VERSION_DEPLOYMENT_KEY_KEY, null);
+    }
+
+    public String getLastVersionLabelOrAppVersion() {
+        SharedPreferences preferences = context.getSharedPreferences(CodePushPreferences.LAST_VERSION_PREFERENCE, Context.MODE_PRIVATE);
+        return preferences.getString(CodePushPreferences.LAST_VERSION_LABEL_OR_APP_VERSION_KEY, null);
     }
 }

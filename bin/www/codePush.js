@@ -24,26 +24,25 @@ var CodePush = (function () {
     CodePush.prototype.restartApplication = function (installSuccess, errorCallback) {
         cordova.exec(installSuccess, errorCallback, "CodePush", "restartApplication", []);
     };
-    CodePush.prototype.reportStatus = function (status, label, appVersion, deploymentKey) {
+    CodePush.prototype.reportStatus = function (status, label, appVersion, currentDeploymentKey, previousLabelOrAppVersion, previousDeploymentKey) {
         try {
-            console.log("Reporting status: " + status + " " + label + " " + appVersion);
             var createPackageForReporting = function (label, appVersion) {
                 return {
                     label: label, appVersion: appVersion,
-                    deploymentKey: deploymentKey, description: null,
+                    deploymentKey: currentDeploymentKey, description: null,
                     isMandatory: false, packageHash: null,
                     packageSize: null, failedInstall: false
                 };
             };
             switch (status) {
                 case ReportStatus.STORE_VERSION:
-                    Sdk.reportStatusDeploy(null, AcquisitionStatus.DeploymentSucceeded, deploymentKey);
+                    Sdk.reportStatusDeploy(null, AcquisitionStatus.DeploymentSucceeded, currentDeploymentKey, previousLabelOrAppVersion, previousDeploymentKey);
                     break;
                 case ReportStatus.UPDATE_CONFIRMED:
-                    Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentSucceeded, deploymentKey);
+                    Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentSucceeded, currentDeploymentKey, previousLabelOrAppVersion, previousDeploymentKey);
                     break;
                 case ReportStatus.UPDATE_ROLLED_BACK:
-                    Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentFailed, deploymentKey);
+                    Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentFailed, currentDeploymentKey, previousLabelOrAppVersion, previousDeploymentKey);
                     break;
             }
         }
@@ -88,7 +87,7 @@ var CodePush = (function () {
                             NativeAppInfo.isFailedUpdate(remotePackage.packageHash, function (installFailed) {
                                 var result = new RemotePackage();
                                 result.appVersion = remotePackage.appVersion;
-                                result.deploymentKey = remotePackage.deploymentKey;
+                                result.deploymentKey = deploymentKey;
                                 result.description = remotePackage.description;
                                 result.downloadUrl = remotePackage.downloadUrl;
                                 result.isMandatory = remotePackage.isMandatory;
@@ -106,19 +105,35 @@ var CodePush = (function () {
                     }
                 }
             };
-            Sdk.getAcquisitionManager(function (initError, acquisitionManager) {
-                if (initError) {
-                    CodePushUtil.invokeErrorCallback(initError, queryError);
-                }
-                else {
-                    LocalPackage.getCurrentOrDefaultPackage(function (localPackage) {
-                        CodePushUtil.logMessage("Checking for update.");
-                        acquisitionManager.queryUpdateWithCurrentPackage(localPackage, callback);
-                    }, function (error) {
-                        CodePushUtil.invokeErrorCallback(error, queryError);
-                    });
-                }
-            }, deploymentKey);
+            var queryUpdate = function () {
+                Sdk.getAcquisitionManager(function (initError, acquisitionManager) {
+                    if (initError) {
+                        CodePushUtil.invokeErrorCallback(initError, queryError);
+                    }
+                    else {
+                        LocalPackage.getCurrentOrDefaultPackage(function (localPackage) {
+                            CodePushUtil.logMessage("Checking for update.");
+                            acquisitionManager.queryUpdateWithCurrentPackage(localPackage, callback);
+                        }, function (error) {
+                            CodePushUtil.invokeErrorCallback(error, queryError);
+                        });
+                    }
+                }, deploymentKey);
+            };
+            if (deploymentKey) {
+                queryUpdate();
+            }
+            else {
+                NativeAppInfo.getDeploymentKey(function (deploymentKeyError, defaultDeploymentKey) {
+                    if (deploymentKeyError) {
+                        CodePushUtil.invokeErrorCallback(deploymentKeyError, queryError);
+                    }
+                    else {
+                        deploymentKey = defaultDeploymentKey;
+                        queryUpdate();
+                    }
+                });
+            }
         }
         catch (e) {
             CodePushUtil.invokeErrorCallback(new Error("An error occurred while querying for updates." + CodePushUtil.getErrorMessage(e)), queryError);

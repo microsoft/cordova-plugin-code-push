@@ -19,11 +19,10 @@ class Sdk {
      * Reads the CodePush configuration and creates an AcquisitionManager instance using it.
      */
     public static getAcquisitionManager(callback: Callback<AcquisitionManager>, userDeploymentKey?: string, contentType?: string): void {
-
         var resolveManager = (): void => {
-            if (userDeploymentKey || contentType) {
+            if (userDeploymentKey !== Sdk.DefaultConfiguration.deploymentKey || contentType) {
                 var customConfiguration: Configuration = {
-                    deploymentKey: (userDeploymentKey ? userDeploymentKey : Sdk.DefaultConfiguration.deploymentKey),
+                    deploymentKey: userDeploymentKey || Sdk.DefaultConfiguration.deploymentKey,
                     serverUrl: Sdk.DefaultConfiguration.serverUrl,
                     ignoreAppVersion: Sdk.DefaultConfiguration.ignoreAppVersion,
                     appVersion: Sdk.DefaultConfiguration.appVersion,
@@ -71,16 +70,17 @@ class Sdk {
     /**
      * Reports the deployment status to the CodePush server.
      */
-    public static reportStatusDeploy(pkg?: IPackage, status?: string, deploymentKey?: string, callback?: Callback<void>) {
+    public static reportStatusDeploy(pkg?: IPackage, status?: string, currentDeploymentKey?: string, previousLabelOrAppVersion?: string, previousDeploymentKey?: string, callback?: Callback<void>) {
         try {
             Sdk.getAcquisitionManager((error: Error, acquisitionManager: AcquisitionManager) => {
                 if (error) {
                     callback && callback(error, null);
                 }
                 else {
-                    acquisitionManager.reportStatusDeploy(pkg, status, callback);
+                    console.log(`Reporting status: ${status} label: ${pkg && pkg.label} appVersion: ${Sdk.DefaultConfiguration.appVersion} previousLabelOrAppVersion: ${previousLabelOrAppVersion} previousDeploymentKey:${previousDeploymentKey}`);
+                    acquisitionManager.reportStatusDeploy(pkg, status, previousLabelOrAppVersion, previousDeploymentKey, callback);
                 }
-            }, deploymentKey, "application/json");
+            }, currentDeploymentKey, "application/json");
         } catch (e) {
             callback && callback(new Error("An error occured while reporting the deployment status. " + e), null);
         }
