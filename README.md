@@ -263,7 +263,7 @@ codePush.notifyApplicationReady(notifySucceeded?, notifyFailed?);
 
 Notifies the CodePush runtime that a freshly installed update should be considered successful, and therefore, an automatic client-side rollback isn't necessary. It is mandatory to call this function somewhere in the code of the updated bundle. Otherwise, when the app next restarts, the CodePush runtime will assume that the installed update has failed and roll back to the previous version. This behavior exists to help ensure that your end users aren't blocked by a broken update.
 
-If you are using the `sync` function, and doing your update check on app start, then you don't need to manually call `notifyApplicationReady` since `sync` will call it for you. This behavior exists due to the assumption that the point at which `sync` is called in your app represents a good approximation of a successful startup.
+If you are using the `sync` function, and doing your update check on app start, then you don't need to manually call `Ready` since `sync` will call it for you. This behavior exists due to the assumption that the point at which `sync` is called in your app represents a good approximation of a successful startup.
 
 Parameters:
 
@@ -362,6 +362,8 @@ While the `sync` method tries to make it easy to perform silent and active updat
 - __deploymentKey__ *(String)* - Option used to override the config.xml deployment key when checking for updates. Defaults to `undefined`.
 
 - __installMode__ *(InstallMode)* - Used to specify the [InstallMode](#installmode) used for the install operation. Defaults to `InstallMode.ON_NEXT_RESTART`.
+
+- __mandatoryInstallMode__ *(InstallMode)* - Used to specify the [InstallMode](#installmode) used for the install operation if the package is mandatory. Defaults to `InstallMode.IMMEDIATE`.
 
 - __minimumBackgroundDuration__: If __installMode__ is `InstallMode.ON_NEXT_RESUME`, used to specify the amount of time the app must be in the background before the update is installed when it is resumed. Defaults to `0`.
 
@@ -567,6 +569,8 @@ Otherwise, the install operation will be marked as failed, and the application i
 
     - __installMode__: Used to specify the [InstallMode](#installmode) used for the install operation. Defaults to `InstallMode.ON_NEXT_RESTART`.
 
+    - __mandatoryInstallMode__: Used to specify the [InstallMode](#installmode) used for the install operation if the package is mandatory. Defaults to `InstallMode.IMMEDIATE`.
+
     - __minimumBackgroundDuration__: If __installMode__ is `InstallMode.ON_NEXT_RESUME`, used to specify the amount of time the app must be in the background before the update is installed when it is resumed. Defaults to `0`.
 
 Example Usage:
@@ -583,8 +587,9 @@ var onInstallSuccess = function () {
 };
 
 var onPackageDownloaded = function (localPackage) {
-    // Install the update after someone navigates away from the app for more than 2 minutes
-    localPackage.install(onInstallSuccess, onError, { installMode: InstallMode.ON_NEXT_RESUME, minimumBackgroundDuration: 120 });
+    // Install regular updates after someone navigates away from the app for more than 2 minutes
+    // Install mandatory updates after someone restarts the app
+    localPackage.install(onInstallSuccess, onError, { installMode: InstallMode.ON_NEXT_RESUME, minimumBackgroundDuration: 120, mandatoryInstallMode: InstallMode.ON_NEXT_RESTART });
 };
 
 var onUpdateCheck = function (remotePackage) {
@@ -610,7 +615,7 @@ window.codePush.checkForUpdate(onUpdateCheck, onError);
 
 var app = {
     onDeviceReady: function () {
-        // Calling this function is requirede during the first application run after an update.
+        // Calling this function is required during the first application run after an update.
         // If not called, the application will be reverted to the previous version.
         window.codePush.notifyApplicationReady();
         // ...
