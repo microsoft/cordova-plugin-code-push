@@ -54,7 +54,7 @@ export class ProjectManager {
         }
         mkdirp.sync(projectDirectory);
 
-        return ProjectManager.execAndLogChildProcess("cordova create " + projectDirectory + " " + appNamespace + " " + appName + " --copy-from " + templatePath)
+        return ProjectManager.execChildProcess("cordova create " + projectDirectory + " " + appNamespace + " " + appName + " --copy-from " + templatePath)
             // copy the correct values into the config.xml file
             .then<string>(ProjectManager.replaceString.bind(undefined, configXmlPath, ProjectManager.ANDROID_KEY_PLACEHOLDER, androidKey))
             .then<string>(ProjectManager.replaceString.bind(undefined, configXmlPath, ProjectManager.IOS_KEY_PLACEHOLDER, iosKey))
@@ -136,7 +136,7 @@ export class ProjectManager {
      * Adds a plugin to a Cordova project.
      */
     public static addPlugin(projectFolder: string, plugin: string): Q.Promise<string> {
-        return ProjectManager.execAndLogChildProcess("cordova plugin add " + plugin, { cwd: projectFolder });
+        return ProjectManager.execChildProcess("cordova plugin add " + plugin, { cwd: projectFolder });
     }    
 
     /**
@@ -145,8 +145,8 @@ export class ProjectManager {
     public static buildPlatform(projectFolder: string): Q.Promise<string> {
         var targetPlatform = platform.PlatformResolver.resolvePlatform(tu.TestUtil.readTargetPlatform());
         
-        // don't print output here because the iOS build process outputs so much nonsense that it buffer overflows and exits the entire test process
-        return ProjectManager.execAndLogChildProcess("cordova build " + targetPlatform.getCordovaName(), { cwd: projectFolder }, false);
+        // don't log the iOS build output because it is too verbose and overflows the buffer
+        return ProjectManager.execChildProcess("cordova build " + targetPlatform.getCordovaName(), { cwd: projectFolder }, false);
     }
     
     /**
@@ -155,52 +155,31 @@ export class ProjectManager {
     public static preparePlatform(projectFolder: string): Q.Promise<string> {
         var targetPlatform = platform.PlatformResolver.resolvePlatform(tu.TestUtil.readTargetPlatform());
         
-        return ProjectManager.execAndLogChildProcess("cordova prepare " + targetPlatform.getCordovaName(), { cwd: projectFolder });
+        return ProjectManager.execChildProcess("cordova prepare " + targetPlatform.getCordovaName(), { cwd: projectFolder });
     }
 
     /**
      * Launch the test app on the given target / platform.
      */
-    public static launchApplication(namespace: string): Q.Promise<string> {
+    public static launchApplication(appNamespace: string): Q.Promise<string> {
         var targetPlatform = platform.PlatformResolver.resolvePlatform(tu.TestUtil.readTargetPlatform());
-        
-        var emulatorManager = targetPlatform.getEmulatorManager();
-        if (emulatorManager) {
-            return emulatorManager.launchInstalledApplication(namespace);
-        } else {
-            console.log("No emulator manager found!");
-            return null;
-        }
+        return targetPlatform.getEmulatorManager().launchInstalledApplication(appNamespace);
     }
 
     /**
      * Kill the test app on the given target / platform.
      */
-    public static endRunningApplication(namespace: string): Q.Promise<string> {
+    public static endRunningApplication(appNamespace: string): Q.Promise<string> {
         var targetPlatform = platform.PlatformResolver.resolvePlatform(tu.TestUtil.readTargetPlatform());
-        
-        var emulatorManager = targetPlatform.getEmulatorManager();
-        if (emulatorManager) {
-            return emulatorManager.endRunningApplication(namespace);
-        } else {
-            console.log("No emulator manager found!");
-            return null;
-        }
+        return targetPlatform.getEmulatorManager().endRunningApplication(appNamespace);
     }
 
     /**
      * Prepares the emulator for a test.
      */
-    public static prepareEmulatorForTest(namespace: string): Q.Promise<string> {
+    public static prepareEmulatorForTest(appNamespace: string): Q.Promise<string> {
         var targetPlatform = platform.PlatformResolver.resolvePlatform(tu.TestUtil.readTargetPlatform());
-        
-        var emulatorManager = targetPlatform.getEmulatorManager();
-        if (emulatorManager) {
-            return emulatorManager.prepareEmulatorForTest(namespace);
-        } else {
-            console.log("No emulator manager found!");
-            return null;
-        }
+        return targetPlatform.getEmulatorManager().prepareEmulatorForTest(appNamespace);
     }
 
     /**
@@ -210,7 +189,7 @@ export class ProjectManager {
         var targetPlatform = platform.PlatformResolver.resolvePlatform(tu.TestUtil.readTargetPlatform());
         var runTarget = target ? " --target " + target : "";
         var nobuild = skipBuild ? " --nobuild" : "";
-        return ProjectManager.execAndLogChildProcess("cordova run " + targetPlatform.getCordovaName() + runTarget + nobuild, { cwd: projectFolder });
+        return ProjectManager.execChildProcess("cordova run " + targetPlatform.getCordovaName() + runTarget + nobuild, { cwd: projectFolder });
     }
 
     /**
@@ -218,7 +197,7 @@ export class ProjectManager {
      */
     public static addPlatform(projectFolder: string, version?: string): Q.Promise<string> {
         var targetPlatform = platform.PlatformResolver.resolvePlatform(tu.TestUtil.readTargetPlatform());
-        return ProjectManager.execAndLogChildProcess("cordova platform add " + targetPlatform.getCordovaName() + (version ? "@" + version : ""), { cwd: projectFolder });
+        return ProjectManager.execChildProcess("cordova platform add " + targetPlatform.getCordovaName() + (version ? "@" + version : ""), { cwd: projectFolder });
     }
 
 	/**
@@ -231,15 +210,9 @@ export class ProjectManager {
     /**
      * Stops and restarts an application specified by its namespace identifier.
      */
-    public static restartApplication(namespace: string): Q.Promise<string> {
+    public static restartApplication(appNamespace: string): Q.Promise<string> {
         var targetPlatform = platform.PlatformResolver.resolvePlatform(tu.TestUtil.readTargetPlatform());
-        var emulatorManager = targetPlatform.getEmulatorManager();
-        if (emulatorManager) {
-            return emulatorManager.restartApplication(namespace);
-        } else {
-            console.log("No emulator manager found!");
-            return null;
-        }
+        return targetPlatform.getEmulatorManager().restartApplication(appNamespace);
     }
     
     /**
@@ -247,19 +220,13 @@ export class ProjectManager {
      */
     public static resumeApplication(namespace: string, delayBeforeResumingMs: number = 1000): Q.Promise<string> {
         var targetPlatform = platform.PlatformResolver.resolvePlatform(tu.TestUtil.readTargetPlatform());
-        var emulatorManager = targetPlatform.getEmulatorManager();
-        if (emulatorManager) {
-            return emulatorManager.resumeApplication(namespace, delayBeforeResumingMs);
-        } else {
-            console.log("No emulator manager found!");
-            return null;
-        }
+        return targetPlatform.getEmulatorManager().resumeApplication(namespace, delayBeforeResumingMs);
     }
 
     /**
      * Executes a child process and logs its output to the console and returns its output in the promise as a string
      */
-    public static execAndLogChildProcess(command: string, options?: child_process.IExecOptions, output: boolean = true): Q.Promise<string> {
+    public static execChildProcess(command: string, options?: child_process.IExecOptions, logOutput: boolean = true): Q.Promise<string> {
         var deferred = Q.defer<string>();
 
         options = options || {};
@@ -268,7 +235,7 @@ export class ProjectManager {
         console.log("Running command: " + command);
         child_process.exec(command, options, (error: Error, stdout: Buffer, stderr: Buffer) => {
 
-            if (output) stdout && console.log(stdout);
+            if (logOutput) stdout && console.log(stdout);
             stderr && console.error(stderr);
 
             if (error) {
