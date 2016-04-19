@@ -34,7 +34,7 @@ var app = {
             },
             {
                 installMode: InstallMode.ON_NEXT_RESUME,
-                minimumBackgroundDuration: 10
+                minimumBackgroundDuration: 5
             });
     },
     sendTestMessage: function (message, args) {

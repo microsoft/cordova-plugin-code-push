@@ -33,7 +33,7 @@ function executeCommand(command, args, callback) {
     var process = child_process.exec(command + " " + args.join(" "));
 
     process.stdout.on('data', function(data) {
-        console.log("" + data);        
+        console.log("" + data);
     });
     
     process.stderr.on('data', function(data) {
@@ -44,6 +44,18 @@ function executeCommand(command, args, callback) {
         callback(code === 0 ? undefined : "Error code: " + code);
     });
 };
+
+function runTests(callback, android, ios, uiwebview, wkwebview) {
+    var command = "mocha";
+    var args = ["./bin/test"];
+    if (android) args.push("--android");
+    if (ios) {
+        args.push("--ios");
+        args.push("--use-wkwebview");
+        args.push(wkwebview ? (uiwebview ? "both" : "true") : "false");
+    }
+    executeCommand(command, args, callback);
+}
 
 gulp.task("compile", function (callback) {
     runSequence("compile-src", "compile-test", callback);
@@ -125,27 +137,25 @@ gulp.task("default", function (callback) {
 });
 
 gulp.task("test-ios", function (callback) {
-    runSequence("test-ios-uiwebview", "test-ios-wkwebview", callback);
+    runTests(callback, false, true, true, true);
 });
 
 gulp.task("test-ios-uiwebview", function (callback) {
-    var command = "mocha";
-    var args = ["./bin/test", "--mockserver", "http://127.0.0.1:3000", "--platform", "ios", "--use-wkwebview", "false"];
-    executeCommand(command, args, callback);
+    runTests(callback, false, true, true, false);
 });
 
 gulp.task("test-ios-wkwebview", function (callback) {
-    var command = "mocha";
-    var args = ["./bin/test", "--mockserver", "http://127.0.0.1:3000", "--platform", "ios", "--use-wkwebview", "true"];
-    executeCommand(command, args, callback);
+    runTests(callback, false, true, false, true);
 });
 
 gulp.task("test-android", function (callback) {
-    var command = "mocha";
-    var args = ["./bin/test", "--mockserver", "http://10.0.2.2:3000", "--platform", "android"];
-    executeCommand(command, args, callback);
+    runTests(callback, true);
+});
+
+gulp.task("test-fast", function (callback) {
+    runTests(callback, true, true, true, true);
 });
 
 gulp.task("test", function (callback) {
-    runSequence("default", "test-android", "test-ios", callback);
+    runSequence("default", "test-fast", callback);
 });

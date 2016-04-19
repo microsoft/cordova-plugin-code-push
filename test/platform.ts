@@ -17,6 +17,11 @@ export interface IPlatform {
     getCordovaName(): string;
     
     /**
+     * Gets the server url used for testing.
+     */
+    getServerUrl(): string;
+    
+    /**
      * Gets the root of the platform www folder used for creating update packages.
      */
     getPlatformWwwPath(projectDirectory: string): string;
@@ -62,6 +67,11 @@ export interface IEmulatorManager {
      * Prepares the emulator for a test.
      */
     prepareEmulatorForTest(appId: string): Q.Promise<string>;
+    
+    /**
+     * Uninstalls the app from the emulator.
+     */
+    uninstallApplication(appId: string): Q.Promise<string>;
 }
 
 /**
@@ -85,6 +95,13 @@ export class Android implements IPlatform {
 
     public getCordovaName(): string {
         return "android";
+    }
+    
+    /**
+     * Gets the server url used for testing.
+     */
+    public getServerUrl(): string {
+        return tu.TestUtil.AndroidServerUrl;
     }
 
     public getPlatformWwwPath(projectDirectory: string): string {
@@ -121,6 +138,13 @@ export class IOS implements IPlatform {
 
     public getCordovaName(): string {
         return "ios";
+    }
+    
+    /**
+     * Gets the server url used for testing.
+     */
+    public getServerUrl(): string {
+        return tu.TestUtil.IOSServerUrl;
     }
 
     public getPlatformWwwPath(projectDirectory: string): string {
@@ -203,6 +227,13 @@ export class IOSEmulatorManager implements IEmulatorManager {
     prepareEmulatorForTest(appId: string): Q.Promise<string> {
         return this.endRunningApplication(appId);
     }
+    
+    /**
+     * Uninstalls the app from the emulator.
+     */
+    uninstallApplication(appId: string): Q.Promise<string> {
+        return tu.TestUtil.getProcessOutput("xcrun simctl uninstall booted " + appId, undefined);
+    }
 }
 
 export class AndroidEmulatorManager implements IEmulatorManager {
@@ -257,6 +288,13 @@ export class AndroidEmulatorManager implements IEmulatorManager {
         return this.endRunningApplication(appId)
             .then(() => { return ProjectManager.ProjectManager.execAndLogChildProcess("adb shell pm clear " + appId); });
     }
+    
+    /**
+     * Uninstalls the app from the emulator.
+     */
+    uninstallApplication(appId: string): Q.Promise<string> {
+        return ProjectManager.ProjectManager.execAndLogChildProcess("adb uninstall " + appId);
+    }
 }
 
 /**
@@ -269,14 +307,33 @@ export class PlatformResolver {
     /**
      * Given the cordova name of a platform, this method returns the IPlatform associated with it.
      */
-    public static resolvePlatform(cordovaPlatformName: string): IPlatform {
+    public static resolvePlatforms(cordovaPlatformNames: string[]): IPlatform[] {
+        var platforms: IPlatform[] = [];
 
+        for (var i = 0; i < cordovaPlatformNames.length; i++) {
+            var resolvedPlatform: IPlatform = PlatformResolver.resolvePlatform(cordovaPlatformNames[i]);
+            if (resolvedPlatform) platforms.push(resolvedPlatform);
+            else {
+                // we could not find this platform in the list of platforms, so abort
+                console.error("Unsupported platform: " + cordovaPlatformNames[i]);
+                return undefined;
+            }
+        }
+        
+        return platforms;
+    }
+
+    /**
+     * Given the cordova name of a platform, this method returns the IPlatform associated with it.
+     */
+    public static resolvePlatform(cordovaPlatformName: string): IPlatform {
         for (var i = 0; i < this.supportedPlatforms.length; i++) {
             if (this.supportedPlatforms[i].getCordovaName() === cordovaPlatformName) {
                 return this.supportedPlatforms[i];
             }
         }
-
+        
+        // we could not find this platform in the list of platforms, so abort
         console.error("Unsupported platform: " + cordovaPlatformName);
         return undefined;
     }

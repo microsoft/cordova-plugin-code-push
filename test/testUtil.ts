@@ -11,14 +11,30 @@ import Q = require("q");
 export class TestUtil {
 
     public static MOCK_SERVER_OPTION_NAME: string = "--mockserver";
-    public static PLATFORM_OPTION_NAME: string = "--platform";
+    public static ANDROID_PLATFORM_OPTION_NAME: string = "--android";
+    public static IOS_PLATFORM_OPTION_NAME: string = "--ios";
     public static TARGET_OPTION_NAME: string = "--target";
     public static SHOULD_USE_WKWEBVIEW: string = "--use-wkwebview";
+    public static TEST_RUN_DIRECTORY: string = "--test-directory";
+    public static TEST_UPDATES_DIRECTORY: string = "--updates-directory";
+    
+    public static IOSServerUrl = "http://127.0.0.1:3000";
+    public static AndroidServerUrl = "http://10.0.2.2:3000";
     
     public static templatePath = path.join(__dirname, "../../test/template");
     public static thisPluginPath = path.join(__dirname, "../..");
-    public static testRunDirectory = path.join(os.tmpdir(), "cordova-plugin-code-push", "test-run");
-    public static updatesDirectory = path.join(os.tmpdir(), "cordova-plugin-code-push", "updates");
+    private static defaultTestRunDirectory = path.join(os.tmpdir(), "cordova-plugin-code-push", "test-run");
+    private static defaultUpdatesDirectory = path.join(os.tmpdir(), "cordova-plugin-code-push", "updates");
+    
+    public static readTestRunDirectory(): string {
+        var commandLineOption = TestUtil.readMochaCommandLineOption(TestUtil.TEST_RUN_DIRECTORY);
+        return commandLineOption ? commandLineOption : TestUtil.defaultTestRunDirectory;
+    }
+    
+    public static readTestUpdatesDirectory(): string {
+        var commandLineOption = TestUtil.readMochaCommandLineOption(TestUtil.TEST_UPDATES_DIRECTORY);
+        return commandLineOption ? commandLineOption : TestUtil.defaultUpdatesDirectory;
+    }
 
     /**
      * Reads the target emulator name.
@@ -26,28 +42,32 @@ export class TestUtil {
     public static readTargetEmulator(): string {
         return TestUtil.readMochaCommandLineOption(TestUtil.TARGET_OPTION_NAME);
     }
-
-	/**
-	 * Reads the mock CodePush server URL parameter passed to mocha.
-	 * The mock server runs on the local machine during tests. 
-	 */
-    public static readMockServerName(): string {
-        return TestUtil.readMochaCommandLineOption(TestUtil.MOCK_SERVER_OPTION_NAME);
-    }
-
+    
     /**
-     * Reads the test target platform.
+     * Reads the test target platforms.
      */
-    public static readTargetPlatform(): string {
-        return TestUtil.readMochaCommandLineOption(TestUtil.PLATFORM_OPTION_NAME);
+    public static readTargetPlatforms(): string[] {
+        var platforms: string[] = [];
+        if (this.readMochaCommandLineFlag(TestUtil.ANDROID_PLATFORM_OPTION_NAME)) platforms.push("android");
+        if (this.readMochaCommandLineFlag(TestUtil.IOS_PLATFORM_OPTION_NAME)) platforms.push("ios");
+        return platforms;
     }
     
     /**
-     * Reads if we should use the WkWebView or the UIWebView
+     * Reads if we should use the WkWebView or the UIWebView or run tests for both.
+     * 0 for UIWebView, 1 for WkWebView, 2 for both
      */
-    public static readShouldUseWkWebView(): boolean {
+    public static readShouldUseWkWebView(): number {
         var shouldUseWkWebView = TestUtil.readMochaCommandLineOption(TestUtil.SHOULD_USE_WKWEBVIEW);
-        return shouldUseWkWebView ? JSON.parse(shouldUseWkWebView) : false;
+        switch (shouldUseWkWebView) {
+            case "true":
+                return 1;
+            case "both":
+                return 2;
+            case "false":
+            default:
+                return 0;
+        }
     }
 
 	/**
@@ -66,6 +86,17 @@ export class TestUtil {
         }
 
         return optionValue;
+    }
+
+	/**
+	 * Reads command line options passed to mocha.
+	 */
+    private static readMochaCommandLineFlag(optionName: string): boolean {
+        for (var i = 0; i < process.argv.length; i++) {
+            if (process.argv[i].indexOf(optionName) === 0) {
+                return true;
+            }
+        }
     }
     
     /**
