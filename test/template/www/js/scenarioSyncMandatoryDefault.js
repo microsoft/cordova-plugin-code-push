@@ -5,22 +5,17 @@ var app = {
     },
     bindEvents: function () {
         document.addEventListener('deviceready', this.onDeviceReady, false);
-        document.addEventListener('resume', this.onResume, false);
     },
     onDeviceReady: function () {
         app.receivedDeviceReady();
     },
-    onResume: function () {
-        app.sendTestMessage("APPLICATION_RESUMED");
-    },
     // Update DOM on a Received Event
     receivedDeviceReady: function () {
-        document.getElementById("deviceready").innerText = "Device is ready (scenario - sync on restart with minbackdur)";
+        document.getElementById("deviceready").innerText = "Device is ready (scenario - sync mandatory)";
         console.log('Received Event: deviceready');
         /* invoke sync with no UI options */
         window.codePush.sync(
             function (status) {
-                // only output result statuses
                 switch(status) {
                     case SyncStatus.UP_TO_DATE:
                     case SyncStatus.UPDATE_INSTALLED:
@@ -33,8 +28,7 @@ var app = {
                 }
             },
             {
-                installMode: InstallMode.ON_NEXT_RESTART,
-                minimumBackgroundDuration: 15
+                installMode: InstallMode.ON_NEXT_RESTART
             });
     },
     sendTestMessage: function (message, args) {

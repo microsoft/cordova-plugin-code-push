@@ -386,6 +386,7 @@ class CodePush implements CodePushCordovaPlugin {
                 ignoreFailedUpdates: true,
                 installMode: InstallMode.ON_NEXT_RESTART,
                 minimumBackgroundDuration: 0,
+                mandatoryInstallMode: InstallMode.IMMEDIATE,
                 updateDialog: false,
                 deploymentKey: undefined
             };

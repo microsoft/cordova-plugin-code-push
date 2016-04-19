@@ -15,7 +15,7 @@ var app = {
     },
     // Update DOM on a Received Event
     receivedDeviceReady: function () {
-        document.getElementById("deviceready").innerText = "Device is ready (scenario - sync on resume minbackdur = 0s)";
+        document.getElementById("deviceready").innerText = "Device is ready (scenario - sync on resume with no minbackdur)";
         console.log('Received Event: deviceready');
         /* invoke sync with no UI options */
         window.codePush.sync(

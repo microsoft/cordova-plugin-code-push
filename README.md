@@ -373,6 +373,8 @@ While the `sync` method tries to make it easy to perform silent and active updat
 
 - __installMode__ *(InstallMode)* - Used to specify the [InstallMode](#installmode) used for the install operation. Defaults to `InstallMode.ON_NEXT_RESTART`.
 
+- __mandatoryInstallMode__ *(InstallMode)* - Used to specify the [InstallMode](#installmode) used for the install operation if the package is mandatory. Defaults to `InstallMode.IMMEDIATE`.
+
 - __minimumBackgroundDuration__: If __installMode__ is `InstallMode.ON_NEXT_RESUME`, used to specify the amount of time the app must be in the background before the update is installed when it is resumed. Defaults to `0`.
 
 - __ignoreFailedUpdates__ *(Boolean)* - Optional boolean flag. If set, updates available on the server for which and update was attempted and rolled back will be ignored. Defaults to `true`.
@@ -577,6 +579,8 @@ Otherwise, the install operation will be marked as failed, and the application i
 
     - __installMode__: Used to specify the [InstallMode](#installmode) used for the install operation. Defaults to `InstallMode.ON_NEXT_RESTART`.
 
+    - __mandatoryInstallMode__: Used to specify the [InstallMode](#installmode) used for the install operation if the package is mandatory. Defaults to `InstallMode.IMMEDIATE`.
+
     - __minimumBackgroundDuration__: If __installMode__ is `InstallMode.ON_NEXT_RESUME`, used to specify the amount of time the app must be in the background before the update is installed when it is resumed. Defaults to `0`.
 
 Example Usage:
@@ -593,8 +597,9 @@ var onInstallSuccess = function () {
 };
 
 var onPackageDownloaded = function (localPackage) {
-    // Install the update after someone navigates away from the app for more than 2 minutes
-    localPackage.install(onInstallSuccess, onError, { installMode: InstallMode.ON_NEXT_RESUME, minimumBackgroundDuration: 120 });
+    // Install regular updates after someone navigates away from the app for more than 2 minutes
+    // Install mandatory updates after someone restarts the app
+    localPackage.install(onInstallSuccess, onError, { installMode: InstallMode.ON_NEXT_RESUME, minimumBackgroundDuration: 120, mandatoryInstallMode: InstallMode.ON_NEXT_RESTART });
 };
 
 var onUpdateCheck = function (remotePackage) {
@@ -620,7 +625,7 @@ window.codePush.checkForUpdate(onUpdateCheck, onError);
 
 var app = {
     onDeviceReady: function () {
-        // Calling this function is requirede during the first application run after an update.
+        // Calling this function is required during the first application run after an update.
         // If not called, the application will be reverted to the previous version.
         window.codePush.notifyApplicationReady();
         // ...

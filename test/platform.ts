@@ -41,17 +41,27 @@ export interface IEmulatorManager {
     /**
      * Launches an already installed application by app id.
      */
-    launchInstalledApplication(appId: string): Q.Promise<void>;
+    launchInstalledApplication(appId: string): Q.Promise<string>;
+    
+    /**
+     * Ends a running application given its app id.
+     */
+    endRunningApplication(appId: string): Q.Promise<string>;
     
     /**
      * Restarts an already installed application by app id.
      */
-    restartApplication(appId: string): Q.Promise<void>;
+    restartApplication(appId: string): Q.Promise<string>;
     
     /**
-     * Navigates away from the current app, waits for a delay, then navigates to the specified app.
+     * Navigates away from the current app, waits for a delay (defaults to 1 second), then navigates to the specified app.
      */
-    resumeApplication(appId: string, delayBeforeResumingMs: number): Q.Promise<void>;
+    resumeApplication(appId: string, delayBeforeResumingMs: number): Q.Promise<string>;
+    
+    /**
+     * Prepares the emulator for a test.
+     */
+    prepareEmulatorForTest(appId: string): Q.Promise<string>;
 }
 
 /**
@@ -130,17 +140,17 @@ export class IOSEmulatorManager implements IEmulatorManager {
     /**
      * Launches an already installed application by app id.
      */
-    public launchInstalledApplication(appId: string): Q.Promise<void> {
-        return tu.TestUtil.getProcessOutput("xcrun simctl launch booted " + appId, undefined, true)
-            .then<void>(output => { console.log(output); });
+    launchInstalledApplication(appId: string): Q.Promise<string> {
+        return tu.TestUtil.getProcessOutput("xcrun simctl launch booted " + appId, undefined);
     }
     
     /**
-     * Ends a running application, given its Cordova app id.
+     * Ends a running application given its app id.
      */
-    private endRunningApplication(appId: string): Q.Promise<void> {
-        return tu.TestUtil.getProcessOutput("xcrun simctl spawn booted launchctl list", undefined, true)
+    endRunningApplication(appId: string): Q.Promise<string> {
+        return tu.TestUtil.getProcessOutput("xcrun simctl spawn booted launchctl list", undefined)
             .then<string>(processListOutput => {
+                // find the app's process
                 var regex = new RegExp("(\\S+" + appId + "\\S+)");
                 var execResult: any[] = regex.exec(processListOutput);
                 if (execResult) {
@@ -151,35 +161,47 @@ export class IOSEmulatorManager implements IEmulatorManager {
                 }
             })
             .then<string>(applicationLabel => {
-                return tu.TestUtil.getProcessOutput("xcrun simctl spawn booted launchctl stop " + applicationLabel, undefined, true);
-            })
-            .then<void>(output => {
-                console.log(output);
+                // kill the app if we found the process
+                return tu.TestUtil.getProcessOutput("xcrun simctl spawn booted launchctl stop " + applicationLabel, undefined);
+            }, (error) => {
+                // we couldn't find the app's process so it must not be running
+                return Q.resolve(error);
             });
     }
     
     /**
      * Restarts an already installed application by app id.
      */
-    restartApplication(appId: string): Q.Promise<void> {
+    restartApplication(appId: string): Q.Promise<string> {
         return this.endRunningApplication(appId)
+            .then<void>(() => {
+                // wait for a second before restarting
+                return Q.delay(1000);
+            })
             .then(() => this.launchInstalledApplication(appId));
     }
     
     /**
-     * Navigates away from the current app, waits for a delay, then navigates to the specified app.
+     * Navigates away from the current app, waits for a delay (defaults to 1 second), then navigates to the specified app.
      */
-    resumeApplication(appId: string, delayBeforeResumingMs: number): Q.Promise<void> {
+    resumeApplication(appId: string, delayBeforeResumingMs: number = 1000): Q.Promise<string> {
         // open a default iOS app (for example, camera)
         return this.launchInstalledApplication("com.apple.camera")
             .then<void>(() => {
                 console.log("Waiting for " + delayBeforeResumingMs + "ms before resuming the test application.");
                 return Q.delay(delayBeforeResumingMs);
             })
-            .then<void>(() => {
+            .then<string>(() => {
                 // reopen the app
                 return this.launchInstalledApplication(appId);
             });
+    }
+    
+    /**
+     * Prepares the emulator for a test.
+     */
+    prepareEmulatorForTest(appId: string): Q.Promise<string> {
+        return this.endRunningApplication(appId);
     }
 }
 
@@ -187,31 +209,53 @@ export class AndroidEmulatorManager implements IEmulatorManager {
     /**
      * Launches an already installed application by app id.
      */
-    public launchInstalledApplication(appId: string): Q.Promise<void> {
-        return ProjectManager.ProjectManager.execAndLogChildProcess("adb shell monkey -p " + appId + " -c android.intent.category.LAUNCHER 1");
+    launchInstalledApplication(appId: string): Q.Promise<string> {
+        return ProjectManager.ProjectManager.execChildProcess("adb shell monkey -p " + appId + " -c android.intent.category.LAUNCHER 1");
+    }
+    
+    /**
+     * Ends a running application given its app id.
+     */
+    endRunningApplication(appId: string): Q.Promise<string> {
+        return ProjectManager.ProjectManager.execChildProcess("adb shell am force-stop " + appId);
     }
     
     /**
      * Restarts an already installed application by app id.
      */
-    restartApplication(appId: string): Q.Promise<void> {
-        return ProjectManager.ProjectManager.runPlatform(tu.TestUtil.testRunDirectory, Android.getInstance(), true, tu.TestUtil.readTargetEmulator());
+    restartApplication(appId: string): Q.Promise<string> {
+        return this.endRunningApplication(appId)
+            .then<void>(() => {
+                // wait for a second before restarting
+                return Q.delay(1000);
+            })
+            .then<string>(() => {
+            return this.launchInstalledApplication(appId);
+        });
     }
     
     /**
-     * Navigates away from the current app, waits for a delay, then navigates to the specified app.
+     * Navigates away from the current app, waits for a delay (defaults to 1 second), then navigates to the specified app.
      */
-    resumeApplication(appId: string, delayBeforeResumingMs: number): Q.Promise<void> {
+    resumeApplication(appId: string, delayBeforeResumingMs: number = 1000): Q.Promise<string> {
         // open a default Android app (for example, settings)
         return this.launchInstalledApplication("com.android.settings")
             .then<void>(() => {
                 console.log("Waiting for " + delayBeforeResumingMs + "ms before resuming the test application.");
                 return Q.delay(delayBeforeResumingMs);
             })
-            .then<void>(() => {
+            .then<string>(() => {
                 // reopen the app
-                this.launchInstalledApplication(appId);
+                return this.launchInstalledApplication(appId);
             });
+    }
+    
+    /**
+     * Prepares the emulator for a test.
+     */
+    prepareEmulatorForTest(appId: string): Q.Promise<string> {
+        return this.endRunningApplication(appId)
+            .then(() => { return ProjectManager.ProjectManager.execChildProcess("adb shell pm clear " + appId); });
     }
 }
 
