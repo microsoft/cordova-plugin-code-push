@@ -17,6 +17,7 @@ export class TestUtil {
     public static SHOULD_USE_WKWEBVIEW: string = "--use-wkwebview";
     public static TEST_RUN_DIRECTORY: string = "--test-directory";
     public static TEST_UPDATES_DIRECTORY: string = "--updates-directory";
+    public static CORE_TESTS_ONLY: string = "--core-tests";
     
     public static IOSServerUrl = "http://127.0.0.1:3000";
     public static AndroidServerUrl = "http://10.0.2.2:3000";
@@ -26,14 +27,24 @@ export class TestUtil {
     private static defaultTestRunDirectory = path.join(os.tmpdir(), "cordova-plugin-code-push", "test-run");
     private static defaultUpdatesDirectory = path.join(os.tmpdir(), "cordova-plugin-code-push", "updates");
     
+    /**
+     * Reads the directory in which the test project is.
+     */
     public static readTestRunDirectory(): string {
         var commandLineOption = TestUtil.readMochaCommandLineOption(TestUtil.TEST_RUN_DIRECTORY);
         return commandLineOption ? commandLineOption : TestUtil.defaultTestRunDirectory;
     }
     
+    /**
+     * Reads the directory in which the test project for updates is.
+     */
     public static readTestUpdatesDirectory(): string {
         var commandLineOption = TestUtil.readMochaCommandLineOption(TestUtil.TEST_UPDATES_DIRECTORY);
         return commandLineOption ? commandLineOption : TestUtil.defaultUpdatesDirectory;
+    }
+    
+    public static readCoreTestsOnly(): boolean {
+        return TestUtil.readMochaCommandLineFlag(TestUtil.CORE_TESTS_ONLY);
     }
 
     /**
@@ -97,6 +108,7 @@ export class TestUtil {
                 return true;
             }
         }
+        return false;
     }
     
     /**

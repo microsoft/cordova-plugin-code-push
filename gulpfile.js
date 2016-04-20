@@ -45,7 +45,7 @@ function executeCommand(command, args, callback) {
     });
 };
 
-function runTests(callback, android, ios, uiwebview, wkwebview) {
+function runTests(callback, android, ios, uiwebview, wkwebview, core) {
     var command = "mocha";
     var args = ["./bin/test"];
     if (android) args.push("--android");
@@ -54,6 +54,7 @@ function runTests(callback, android, ios, uiwebview, wkwebview) {
         args.push("--use-wkwebview");
         args.push(wkwebview ? (uiwebview ? "both" : "true") : "false");
     }
+    if (core) args.push("--core-tests");
     executeCommand(command, args, callback);
 }
 
@@ -158,4 +159,12 @@ gulp.task("test-fast", function (callback) {
 
 gulp.task("test", function (callback) {
     runSequence("default", "test-fast", callback);
+});
+
+gulp.task("test-core-fast", function (callback) {
+    runTests(callback, true, true, true, true, true);
+});
+
+gulp.task("test-core", function (callback) {
+    runSequence("default", "test-core-fast", callback);
 });
