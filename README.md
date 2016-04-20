@@ -328,9 +328,9 @@ While the sync method tries to make it easy to perform silent and active updates
 
 - __downloadProgress__: Called periodically when an available update is being downloaded from the CodePush server. The method is called with a `DownloadProgress` object, which contains the following two properties:
 
-    - __totalBytes__ *(Number)* - The total number of bytes expected to be received for this update.
+    - __totalBytes__ *(Number)* - The total number of bytes expected to be received for this update (i.e. the size of the set of files which changed from the previous release).
     
-    - __receivedBytes__ *(Number)* - The number of bytes downloaded so far.
+    - __receivedBytes__ *(Number)* - The number of bytes downloaded thus far, which can be used to track download progress.
 
 #### SyncOptions
 
