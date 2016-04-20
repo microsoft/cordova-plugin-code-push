@@ -316,7 +316,7 @@ codePush.sync();
 // about each update, and displays it to them
 // immediately after downloading it
 codePush.sync(null, { updateDialog: true, installMode: InstallMode.IMMEDIATE });
-``
+```
 
 *Note: If you want to decide whether you check and/or download an available update based on the end user's device battery level, network conditions, etc. then simply wrap the call to sync in a condition that ensures you only call it when desired.*
 
