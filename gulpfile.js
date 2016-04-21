@@ -35,7 +35,7 @@ var tsCompileOptions = {
     "removeComments": true
 };
 
-function executeCommand(command, args, callback, silent, detached) {
+function spawnCommand(command, args, callback, silent, detached) {
     var options = {};
     if (detached) {
         options.detached = true;
@@ -61,6 +61,24 @@ function executeCommand(command, args, callback, silent, detached) {
     return process;
 };
 
+function execCommand(command, args, callback, silent) {
+    var process = child_process.exec(command + " " + args.join(" "));
+
+    process.stdout.on('data', function (data) {
+        if (!silent) console.log("" + data);
+    });
+
+    process.stderr.on('data', function (data) {
+        if (!silent) console.error("" + data);
+    });
+    
+    process.on('exit', function (code) {
+        callback && callback(code === 0 ? undefined : "Error code: " + code);
+    });
+    
+    return process;
+};
+
 function runTests(callback, options) {
     var command = "mocha";
     var args = ["./bin/test"];
@@ -72,7 +90,7 @@ function runTests(callback, options) {
     }
     if (options.core) args.push("--core-tests");
     if (options.npm) args.push("--npm");
-    executeCommand(command, args, callback);
+    execCommand(command, args, callback);
 }
 
 gulp.task("compile", function (callback) {
@@ -170,7 +188,7 @@ function startEmulators(callback, restartIfRunning, android, ios) {
     function androidEmulatorReady(onFailure) {
         console.log("Checking if Android emulator is ready yet...");
         // dummy command that succeeds if emulator is ready and fails otherwise
-        executeCommand("adb", ["shell", "pm", "list", "packages"], (code) => {
+        spawnCommand("adb", ["shell", "pm", "list", "packages"], (code) => {
             if (!code) return onEmulatorInit("Android");
             else {
                 console.log("Android emulator is not ready yet!");
@@ -182,7 +200,7 @@ function startEmulators(callback, restartIfRunning, android, ios) {
     function iOSEmulatorReady(onFailure) {
         console.log("Checking if iOS emulator is ready yet...");
         // dummy command that succeeds if emulator is ready and fails otherwise
-        executeCommand("xcrun", ["simctl", "getenv", "booted", "asdf"], (code) => {
+        spawnCommand("xcrun", ["simctl", "getenv", "booted", "asdf"], (code) => {
             if (!code) return onEmulatorInit("iOS");
             else {
                 console.log("iOS emulator is not ready yet!");
@@ -192,9 +210,9 @@ function startEmulators(callback, restartIfRunning, android, ios) {
     }
     // kills the Android emulator then starts it
     function killThenStartAndroid() {
-        executeCommand("adb", ["emu", "kill"], () => {
+        spawnCommand("adb", ["emu", "kill"], () => {
             // emulator @emulator, which starts the android emulator, never returns, so we must check its success on another thread
-            executeCommand("emulator", ["@emulator"], undefined, false, true);
+            spawnCommand("emulator", ["@emulator"], undefined, false, true);
         
             var emulatorReadyAttempts = 0;
             function androidEmulatorReadyLooper() {
@@ -212,8 +230,8 @@ function startEmulators(callback, restartIfRunning, android, ios) {
     }
     // kills the iOS emulator then starts it
     function killThenStartIOS() {
-        executeCommand("killall", ["\"" + iOSSimulatorProcessName + "\""], () => {
-            executeCommand("xcrun", ["instruments", "-w", iOSEmulatorName], () => {
+        spawnCommand("killall", ["\"" + iOSSimulatorProcessName + "\""], () => {
+            spawnCommand("xcrun", ["instruments", "-w", iOSEmulatorName], () => {
                 var emulatorReadyAttempts = 0;
                 function iOSEmulatorReadyLooper() {
                     ++emulatorReadyAttempts;
