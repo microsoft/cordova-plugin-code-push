@@ -131,7 +131,7 @@ export class ProjectManager {
      * Adds a plugin to a Cordova project.
      */
     public static addPlugin(projectFolder: string, plugin: string): Q.Promise<string> {
-        console.log("Adding pluging " + plugin + " to " + projectFolder);
+        console.log("Adding plugin " + plugin + " to " + projectFolder);
         return ProjectManager.execChildProcess("cordova plugin add " + plugin, { cwd: projectFolder });
     }  
     
@@ -139,7 +139,7 @@ export class ProjectManager {
      * Removes a plugin from a Cordova project.
      */
     public static removePlugin(projectFolder: string, plugin: string): Q.Promise<string> {
-        console.log("Removing pluging " + plugin + " from " + projectFolder);
+        console.log("Removing plugin " + plugin + " from " + projectFolder);
         return ProjectManager.execChildProcess("cordova plugin remove " + plugin, { cwd: projectFolder });
     }    
 
