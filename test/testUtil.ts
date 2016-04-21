@@ -9,15 +9,13 @@ import path = require("path");
 import Q = require("q");
 
 export class TestUtil {
-
-    public static MOCK_SERVER_OPTION_NAME: string = "--mockserver";
     public static ANDROID_PLATFORM_OPTION_NAME: string = "--android";
     public static IOS_PLATFORM_OPTION_NAME: string = "--ios";
-    public static TARGET_OPTION_NAME: string = "--target";
     public static SHOULD_USE_WKWEBVIEW: string = "--use-wkwebview";
     public static TEST_RUN_DIRECTORY: string = "--test-directory";
     public static TEST_UPDATES_DIRECTORY: string = "--updates-directory";
     public static CORE_TESTS_ONLY: string = "--core-tests";
+    public static PULL_FROM_NPM: string = "--npm";
     
     public static IOSServerUrl = "http://127.0.0.1:3000";
     public static AndroidServerUrl = "http://10.0.2.2:3000";
@@ -32,7 +30,9 @@ export class TestUtil {
      */
     public static readTestRunDirectory(): string {
         var commandLineOption = TestUtil.readMochaCommandLineOption(TestUtil.TEST_RUN_DIRECTORY);
-        return commandLineOption ? commandLineOption : TestUtil.defaultTestRunDirectory;
+        var testRunDirectory = commandLineOption ? commandLineOption : TestUtil.defaultTestRunDirectory;
+        console.log("testRunDirectory = " + testRunDirectory);
+        return testRunDirectory;
     }
     
     /**
@@ -40,18 +40,28 @@ export class TestUtil {
      */
     public static readTestUpdatesDirectory(): string {
         var commandLineOption = TestUtil.readMochaCommandLineOption(TestUtil.TEST_UPDATES_DIRECTORY);
-        return commandLineOption ? commandLineOption : TestUtil.defaultUpdatesDirectory;
+        var testUpdatesDirectory = commandLineOption ? commandLineOption : TestUtil.defaultUpdatesDirectory;
+        console.log("testUpdatesDirectory = " + testUpdatesDirectory);
+        return testUpdatesDirectory;
     }
     
-    public static readCoreTestsOnly(): boolean {
-        return TestUtil.readMochaCommandLineFlag(TestUtil.CORE_TESTS_ONLY);
-    }
-
     /**
-     * Reads the target emulator name.
+     * Reads the path of the plugin (whether or not we should use the local copy or pull from npm)
      */
-    public static readTargetEmulator(): string {
-        return TestUtil.readMochaCommandLineOption(TestUtil.TARGET_OPTION_NAME);
+    public static readPluginPath(): string {
+        var commandLineFlag = TestUtil.readMochaCommandLineFlag(TestUtil.PULL_FROM_NPM);
+        var pluginPath = commandLineFlag ? "cordova-plugin-code-push" : TestUtil.thisPluginPath;
+        console.log("pluginPath = " + pluginPath);
+        return pluginPath;
+    }
+    
+    /**
+     * Reads whether or not only core tests should be run.
+     */
+    public static readCoreTestsOnly(): boolean {
+        var coreTestsOnly = TestUtil.readMochaCommandLineFlag(TestUtil.CORE_TESTS_ONLY);
+        if (coreTestsOnly) console.log("only core tests");
+        return coreTestsOnly;
     }
     
     /**
@@ -59,8 +69,14 @@ export class TestUtil {
      */
     public static readTargetPlatforms(): string[] {
         var platforms: string[] = [];
-        if (this.readMochaCommandLineFlag(TestUtil.ANDROID_PLATFORM_OPTION_NAME)) platforms.push("android");
-        if (this.readMochaCommandLineFlag(TestUtil.IOS_PLATFORM_OPTION_NAME)) platforms.push("ios");
+        if (this.readMochaCommandLineFlag(TestUtil.ANDROID_PLATFORM_OPTION_NAME)) {
+            console.log("Android");
+            platforms.push("android");
+        }
+        if (this.readMochaCommandLineFlag(TestUtil.IOS_PLATFORM_OPTION_NAME)) {
+            console.log("iOS");
+            platforms.push("ios");
+        }
         return platforms;
     }
     
@@ -72,8 +88,10 @@ export class TestUtil {
         var shouldUseWkWebView = TestUtil.readMochaCommandLineOption(TestUtil.SHOULD_USE_WKWEBVIEW);
         switch (shouldUseWkWebView) {
             case "true":
+                console.log("WkWebview");
                 return 1;
             case "both":
+                console.log("Both WkWebview and UIWebView");
                 return 2;
             case "false":
             default:

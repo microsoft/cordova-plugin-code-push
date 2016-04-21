@@ -23,11 +23,10 @@ var projectManager = tm.ProjectManager;
 var testUtil = tu.TestUtil;
 
 var templatePath = testUtil.templatePath;
-var thisPluginPath = testUtil.thisPluginPath;
+var thisPluginPath = testUtil.readPluginPath();
 var testRunDirectory = testUtil.readTestRunDirectory();
 var updatesDirectory = testUtil.readTestUpdatesDirectory();
 var onlyRunCoreTests = testUtil.readCoreTestsOnly();
-// var targetEmulator = testUtil.readTargetEmulator();
 var targetPlatforms: platform.IPlatform[] = platform.PlatformResolver.resolvePlatforms(testUtil.readTargetPlatforms()); // = platform.PlatformResolver.resolvePlatform(testUtil.readTargetPlatform());
 var shouldUseWkWebView = testUtil.readShouldUseWkWebView();
 
@@ -238,8 +237,6 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
 
     function setupScenario(scenarioPath: string): Q.Promise<string> {
         console.log("\nScenario: " + scenarioPath);
-        // console.log("Target emulator: " + targetEmulator);
-
         return projectManager.setupScenario(testRunDirectory, TestNamespace, templatePath, scenarioPath, targetPlatform);
     }
 
@@ -1243,10 +1240,8 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                                 noUpdateResponse.appVersion = "0.0.1";
                                 mockResponse = { updateInfo: noUpdateResponse };
                                 testMessageCallback = verifyMessages([
-                                    su.TestMessage.APPLICATION_RESUMED,
                                     su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
-                                // we specify a delay here because in some cases the emulator was not calling "APPLICATION_RESUMED" despite being resumed with no delay
-                                projectManager.resumeApplication(TestNamespace, targetPlatform, 5 * 1000).done();
+                                projectManager.resumeApplication(TestNamespace, targetPlatform).done();
                                 return deferred.promise;
                             })
                             .done(done, done);
@@ -1267,21 +1262,16 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                                 projectManager.runPlatform(testRunDirectory, targetPlatform).done();
                                 return deferred.promise;
                             })
-                            .then<void>(() => {
-                                var deferred = Q.defer<void>();
+                            .then<string>(() => {
                                 var noUpdateResponse = createDefaultResponse();
                                 noUpdateResponse.isAvailable = false;
                                 noUpdateResponse.appVersion = "0.0.1";
                                 mockResponse = { updateInfo: noUpdateResponse };
-                                testMessageCallback = verifyMessages([
-                                    su.TestMessage.APPLICATION_RESUMED], deferred);
-                                projectManager.resumeApplication(TestNamespace, targetPlatform, 3 * 1000).done();
-                                return deferred.promise;
+                                return projectManager.resumeApplication(TestNamespace, targetPlatform, 3 * 1000);
                             })
                             .then<void>(() => {
                                 var deferred = Q.defer<void>();
                                 testMessageCallback = verifyMessages([
-                                    su.TestMessage.APPLICATION_RESUMED,
                                     su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                                 projectManager.resumeApplication(TestNamespace, targetPlatform, 6 * 1000).done();
                                 return deferred.promise;
@@ -1370,7 +1360,6 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                                 noUpdateResponse.appVersion = "0.0.1";
                                 mockResponse = { updateInfo: noUpdateResponse };
                                 testMessageCallback = verifyMessages([
-                                    su.TestMessage.APPLICATION_RESUMED,
                                     su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                                 projectManager.resumeApplication(TestNamespace, targetPlatform, 5 * 1000).done();
                                 return deferred.promise;
@@ -1406,7 +1395,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
 // CODE THAT EXECUTES THE TESTS //
 
 targetPlatforms.forEach(platform => {
-    var prefix: string = "CodePush Cordova Plugin " + (onlyRunCoreTests ? "Core Tests " : "") + "on ";
+    var prefix: string = "CodePush Cordova Plugin " + (onlyRunCoreTests ? "Core Tests " : "") + thisPluginPath + " on ";
     if (platform.getCordovaName() === "ios") {
         // handle UIWebView
         if (shouldUseWkWebView === 0 || shouldUseWkWebView === 2) describe(prefix + platform.getCordovaName() + " with UIWebView", () => runTests(platform, false));
