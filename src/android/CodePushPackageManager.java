@@ -18,9 +18,9 @@ public class CodePushPackageManager {
     private Context context;
     private CodePushPreferences codePushPreferences;
 
-    public CodePushPackageManager(Context context) {
+    public CodePushPackageManager(Context context, CodePushPreferences codePushPreferences) {
         this.context = context;
-        this.codePushPreferences = new CodePushPreferences(context);
+        this.codePushPreferences = codePushPreferences;
     }
 
     public void revertToPreviousVersion() {

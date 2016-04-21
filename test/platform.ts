@@ -241,14 +241,14 @@ export class AndroidEmulatorManager implements IEmulatorManager {
      * Launches an already installed application by app id.
      */
     launchInstalledApplication(appId: string): Q.Promise<string> {
-        return ProjectManager.ProjectManager.execAndLogChildProcess("adb shell monkey -p " + appId + " -c android.intent.category.LAUNCHER 1");
+        return ProjectManager.ProjectManager.execChildProcess("adb shell monkey -p " + appId + " -c android.intent.category.LAUNCHER 1");
     }
     
     /**
      * Ends a running application given its app id.
      */
     endRunningApplication(appId: string): Q.Promise<string> {
-        return ProjectManager.ProjectManager.execAndLogChildProcess("adb shell am force-stop " + appId);
+        return ProjectManager.ProjectManager.execChildProcess("adb shell am force-stop " + appId);
     }
     
     /**
@@ -286,14 +286,14 @@ export class AndroidEmulatorManager implements IEmulatorManager {
      */
     prepareEmulatorForTest(appId: string): Q.Promise<string> {
         return this.endRunningApplication(appId)
-            .then(() => { return ProjectManager.ProjectManager.execAndLogChildProcess("adb shell pm clear " + appId); });
+            .then(() => { return ProjectManager.ProjectManager.execChildProcess("adb shell pm clear " + appId); });
     }
     
     /**
      * Uninstalls the app from the emulator.
      */
     uninstallApplication(appId: string): Q.Promise<string> {
-        return ProjectManager.ProjectManager.execAndLogChildProcess("adb uninstall " + appId);
+        return ProjectManager.ProjectManager.execChildProcess("adb uninstall " + appId);
     }
 }
 

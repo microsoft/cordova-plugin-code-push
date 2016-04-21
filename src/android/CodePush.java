@@ -24,10 +24,12 @@ import java.util.Date;
 public class CodePush extends CordovaPlugin {
 
     public static final String RESOURCES_BUNDLE = "resources.arsc";
+    private static final String DEPLOYMENT_KEY_PREFERENCE = "codepushdeploymentkey";
     private static final String WWW_ASSET_PATH_PREFIX = "file:///android_asset/www/";
     private static boolean ShouldClearHistoryOnLoad = false;
     private CordovaWebView mainWebView;
     private CodePushPackageManager codePushPackageManager;
+    private CodePushReportingManager codePushReportingManager;
     private boolean pluginDestroyed = false;
     private boolean didUpdate = false;
     private boolean didStartApp = false;
@@ -36,7 +38,9 @@ public class CodePush extends CordovaPlugin {
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
-        codePushPackageManager = new CodePushPackageManager(cordova.getActivity());
+        CodePushPreferences codePushPreferences = new CodePushPreferences(cordova.getActivity());
+        codePushPackageManager = new CodePushPackageManager(cordova.getActivity(), codePushPreferences);
+        codePushReportingManager = new CodePushReportingManager(cordova.getActivity(), codePushPreferences);
         mainWebView = webView;
     }
 
@@ -46,7 +50,7 @@ public class CodePush extends CordovaPlugin {
             this.returnStringPreference("codepushserverurl", callbackContext);
             return true;
         } else if ("getDeploymentKey".equals(action)) {
-            this.returnStringPreference("codepushdeploymentkey", callbackContext);
+            this.returnStringPreference(DEPLOYMENT_KEY_PREFERENCE, callbackContext);
             return true;
         } else if ("getNativeBuildTime".equals(action)) {
             return execGetNativeBuildTime(callbackContext);
@@ -103,13 +107,19 @@ public class CodePush extends CordovaPlugin {
         if (this.codePushPackageManager.isFirstRun()) {
             this.codePushPackageManager.saveFirstRunFlag();
             /* save reporting status for first install */
-            Reporting.saveStatus(Reporting.Status.STORE_VERSION, null, null, null);
+            try {
+                String appVersion = Utilities.getAppVersionName(cordova.getActivity());
+                codePushReportingManager.reportStatus(CodePushReportingManager.Status.STORE_VERSION, null, appVersion, mainWebView.getPreferences().getString(DEPLOYMENT_KEY_PREFERENCE, null), this.mainWebView);
+            } catch (PackageManager.NameNotFoundException e) {
+                // Should not happen unless the appVersion is not specified, in which case we can't report anything anyway.
+                e.printStackTrace();
+            }
         }
 
         if (this.codePushPackageManager.installNeedsConfirmation()) {
             /* save reporting status */
             CodePushPackageMetadata currentMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
-            Reporting.saveStatus(Reporting.Status.UPDATE_CONFIRMED, currentMetadata.label, currentMetadata.appVersion, currentMetadata.deploymentKey);
+            codePushReportingManager.reportStatus(CodePushReportingManager.Status.UPDATE_CONFIRMED, currentMetadata.label, currentMetadata.appVersion, currentMetadata.deploymentKey, this.mainWebView);
         }
 
         this.codePushPackageManager.clearInstallNeedsConfirmation();
@@ -300,7 +310,13 @@ public class CodePush extends CordovaPlugin {
                             this.codePushPackageManager.clearFailedUpdates();
                             this.codePushPackageManager.clearPendingInstall();
                             this.codePushPackageManager.clearInstallNeedsConfirmation();
-                            Reporting.saveStatus(Reporting.Status.STORE_VERSION, null, null, null);
+                            try {
+                                String appVersion = Utilities.getAppVersionName(cordova.getActivity());
+                                codePushReportingManager.reportStatus(CodePushReportingManager.Status.STORE_VERSION, null, appVersion, mainWebView.getPreferences().getString(DEPLOYMENT_KEY_PREFERENCE, null), this.mainWebView);
+                            } catch (PackageManager.NameNotFoundException e) {
+                                // Should not happen unless the appVersion is not specified, in which case we can't report anything anyway.
+                                e.printStackTrace();
+                            }
                         }
                     }
                 }
@@ -314,7 +330,7 @@ public class CodePush extends CordovaPlugin {
         if (this.codePushPackageManager.installNeedsConfirmation()) {
             /* save status for later reporting */
             CodePushPackageMetadata currentMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
-            Reporting.saveStatus(Reporting.Status.UPDATE_ROLLED_BACK, currentMetadata.label, currentMetadata.appVersion, currentMetadata.deploymentKey);
+            codePushReportingManager.reportStatus(CodePushReportingManager.Status.UPDATE_ROLLED_BACK, currentMetadata.label, currentMetadata.appVersion, currentMetadata.deploymentKey, this.mainWebView);
 
             /* revert application to the previous version */
             this.codePushPackageManager.clearInstallNeedsConfirmation();
@@ -403,8 +419,6 @@ public class CodePush extends CordovaPlugin {
     @Override
     public void onPause(boolean multitasking) {
         lastPausedTimeMs = new Date().getTime();
-        
-        Reporting.reportStatuses(this.mainWebView);
     }
 
     /**

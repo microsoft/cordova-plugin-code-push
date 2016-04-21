@@ -6,14 +6,15 @@
 #import "Utilities.h"
 #import "InstallOptions.h"
 #import "InstallMode.h"
-#import "Reporting.h"
+#import "CodePushReportingManager.h"
 #import "UpdateHashUtils.h"
 
 @implementation CodePush
 
 bool didUpdate = false;
 bool pendingInstall = false;
-NSDate *lastResignedDate;
+NSDate* lastResignedDate;
+const NSString* DeploymentKeyPreference = @"codepushdeploymentkey";
 
 - (void)getBinaryHash:(CDVInvokedUrlCommand *)command {
     CDVPluginResult* pluginResult = nil;
@@ -33,7 +34,7 @@ NSDate *lastResignedDate;
                                              messageAsString:binaryHash];
         }
     }
-    
+
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
@@ -41,8 +42,8 @@ NSDate *lastResignedDate;
     if ([CodePushPackageManager installNeedsConfirmation]) {
         /* save reporting status */
         CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
-        [Reporting saveStatus:UPDATE_ROLLED_BACK withLabel:currentMetadata.label version:currentMetadata.appVersion deploymentKey:currentMetadata.deploymentKey];
-        
+        [CodePushReportingManager reportStatus:UPDATE_ROLLED_BACK withLabel:currentMetadata.label version:currentMetadata.appVersion deploymentKey:currentMetadata.deploymentKey webView:self.webView];
+
         [CodePushPackageManager clearInstallNeedsConfirmation];
         [CodePushPackageManager revertToPreviousVersion];
         if (navigate) {
@@ -59,15 +60,17 @@ NSDate *lastResignedDate;
 - (void)updateSuccess:(CDVInvokedUrlCommand *)command {
     if ([CodePushPackageManager isFirstRun]) {
         [CodePushPackageManager markFirstRunFlag];
-        [Reporting saveStatus:STORE_VERSION withLabel:nil version:nil deploymentKey:nil];
+        NSString *appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+        NSString *deploymentKey = ((CDVViewController *)self.viewController).settings[DeploymentKeyPreference];
+        [CodePushReportingManager reportStatus:STORE_VERSION withLabel:nil version:appVersion deploymentKey:deploymentKey webView:self.webView];
     }
-    
+
     if ([CodePushPackageManager installNeedsConfirmation]) {
         /* save reporting status */
         CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
-        [Reporting saveStatus:UPDATE_CONFIRMED withLabel:currentMetadata.label version:currentMetadata.appVersion deploymentKey:currentMetadata.deploymentKey];
+        [CodePushReportingManager reportStatus:UPDATE_CONFIRMED withLabel:currentMetadata.label version:currentMetadata.appVersion deploymentKey:currentMetadata.deploymentKey webView:self.webView];
     }
-    
+
     [CodePushPackageManager clearInstallNeedsConfirmation];
     [CodePushPackageManager cleanOldPackage];
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
@@ -76,15 +79,15 @@ NSDate *lastResignedDate;
 
 - (void)install:(CDVInvokedUrlCommand *)command {
     CDVPluginResult* pluginResult = nil;
-    
+
     NSString* location = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
     NSString* installModeString = [command argumentAtIndex:1 withDefault:IMMEDIATE andClass:[NSString class]];
     NSString* minimumBackgroundDurationString = [command argumentAtIndex:2 withDefault:0 andClass:[NSString class]];
-    
+
     InstallOptions* options = [[InstallOptions alloc] init];
     [options setInstallMode:[installModeString intValue]];
     [options setMinimumBackgroundDuration:[minimumBackgroundDurationString intValue]];
-    
+
     if ([options installMode] == IMMEDIATE) {
         if (nil == location) {
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Cannot read the start URL."];
@@ -105,7 +108,7 @@ NSDate *lastResignedDate;
         [CodePushPackageManager savePendingInstall:options];
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     }
-    
+
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
@@ -113,7 +116,7 @@ NSDate *lastResignedDate;
     /* Callback before navigating */
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-    
+
     CodePushPackageMetadata* deployedPackageMetadata = [CodePushPackageManager getCurrentPackageMetadata];
     if (deployedPackageMetadata && deployedPackageMetadata.localPath && [self getStartPageURLForLocalPackage:deployedPackageMetadata.localPath]) {
         [self loadPackage: deployedPackageMetadata.localPath];
@@ -135,7 +138,7 @@ NSDate *lastResignedDate;
 
 - (void)preInstall:(CDVInvokedUrlCommand *)command {
     CDVPluginResult* pluginResult = nil;
-    
+
     NSString* location = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
     if (nil == location) {
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Cannot read the start URL."];
@@ -149,7 +152,7 @@ NSDate *lastResignedDate;
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Could not find start page in package."];
         }
     }
-    
+
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
@@ -158,7 +161,7 @@ NSDate *lastResignedDate;
 }
 
 - (void)getDeploymentKey:(CDVInvokedUrlCommand *)command {
-    [self sendResultForPreference:@"codepushdeploymentkey" command:command];
+    [self sendResultForPreference:DeploymentKeyPreference command:command];
 }
 
 
@@ -177,7 +180,7 @@ NSDate *lastResignedDate;
     } else {
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[NSString stringWithFormat:@"Could not find preference %@", preferenceName]];
     }
-    
+
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
@@ -191,7 +194,7 @@ NSDate *lastResignedDate;
     if (deployedPackageMetadata) {
         NSString* deployedPackageNativeBuildTime = deployedPackageMetadata.nativeBuildTime;
         NSString* applicationBuildTime = [Utilities getApplicationTimestamp];
-        
+
         if (deployedPackageNativeBuildTime != nil && applicationBuildTime != nil) {
             if ([deployedPackageNativeBuildTime isEqualToString: applicationBuildTime] ) {
                 // same version, safe to launch from local storage
@@ -205,7 +208,9 @@ NSDate *lastResignedDate;
                 [CodePushPackageManager clearFailedUpdates];
                 [CodePushPackageManager clearPendingInstall];
                 [CodePushPackageManager clearInstallNeedsConfirmation];
-                [Reporting saveStatus: STORE_VERSION withLabel:nil version:nil deploymentKey:nil];
+                NSString *appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+                NSString *deploymentKey = ((CDVViewController *)self.viewController).settings[DeploymentKeyPreference];
+                [CodePushReportingManager reportStatus:STORE_VERSION withLabel:nil version:appVersion deploymentKey:deploymentKey webView:self.webView];
             }
         }
     }
@@ -220,7 +225,7 @@ NSDate *lastResignedDate;
         [self handleUnconfirmedInstall:NO];
     }
     [self handleAppStart];
-    
+
     // handle both ON_NEXT_RESUME and ON_NEXT_RESTART - the application might have been killed after transitioning to the background
     if (pendingInstall && (pendingInstall.installMode == ON_NEXT_RESTART || pendingInstall.installMode == ON_NEXT_RESUME)) {
         [self markUpdate];
@@ -245,7 +250,6 @@ NSDate *lastResignedDate;
 }
 
 - (void)applicationWillResignActive {
-    [Reporting reportStatuses:self.webView];
     // Save the current time so that when the app is later resumed, we can detect how long it was in the background
     lastResignedDate = [NSDate date];
 }
@@ -256,7 +260,7 @@ NSDate *lastResignedDate;
         [self loadURL:URL];
         return YES;
     }
-    
+
     return NO;
 }
 
@@ -282,11 +286,11 @@ NSDate *lastResignedDate;
     CDVConfigParser* delegate = [[CDVConfigParser alloc] init];
     NSString* configPath = [[NSBundle mainBundle] pathForResource:@"config" ofType:@"xml"];
     NSURL* configUrl = [NSURL fileURLWithPath:configPath];
-    
+
     NSXMLParser* configParser = [[NSXMLParser alloc] initWithContentsOfURL:configUrl];
     [configParser setDelegate:((id < NSXMLParserDelegate >)delegate)];
     [configParser parse];
-    
+
     return delegate.startPage;
 }
 
@@ -300,7 +304,7 @@ NSDate *lastResignedDate;
             return [NSURL fileURLWithPath:realStartPageLocation];
         }
     }
-    
+
     return nil;
 }
 
@@ -321,14 +325,14 @@ NSDate *lastResignedDate;
         BOOL failedHash = [CodePushPackageManager isFailedHash:packageHash];
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:failedHash ? 1 : 0];
     }
-    
+
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
 - (void)isFirstRun:(CDVInvokedUrlCommand *)command {
     CDVPluginResult* result;
     BOOL isFirstRun = NO;
-    
+
     NSString* packageHash = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
     CodePushPackageMetadata* currentPackageMetadata = [CodePushPackageManager getCurrentPackageMetadata];
     if (currentPackageMetadata) {
@@ -337,14 +341,14 @@ NSDate *lastResignedDate;
                       && [packageHash isEqualToString:currentPackageMetadata.packageHash]
                       && didUpdate);
     }
-    
+
     result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:isFirstRun ? 1 : 0];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
 - (void)isPendingUpdate:(CDVInvokedUrlCommand *)command {
     CDVPluginResult* result;
-    
+
     InstallOptions* pendingInstall = [CodePushPackageManager getPendingInstall];
     result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:pendingInstall ? 1 : 0];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];

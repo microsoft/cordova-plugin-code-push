@@ -2,6 +2,8 @@
 
 "use strict";
 
+declare var cordova: Cordova;
+
 /**
  * XMLHttpRequest-based implementation of Http.Requester.
  */
@@ -37,6 +39,8 @@ class HttpRequester implements Http.Requester {
         if (this.contentType) {
             xhr.setRequestHeader("Content-Type", this.contentType);
         }
+
+        xhr.setRequestHeader("X-CodePush-SDK-Version", cordova.require("cordova/plugin_list").metadata["code-push"]);
         xhr.send(requestBody);
     }
 

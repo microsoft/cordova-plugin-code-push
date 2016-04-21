@@ -48,7 +48,7 @@ export class ProjectManager {
         var indexHtml = "www/index.html";
         var destinationIndexPath = path.join(projectDirectory, indexHtml);
 
-        return ProjectManager.execAndLogChildProcess("cordova create " + projectDirectory + " " + appNamespace + " " + appName + " --copy-from " + templatePath)
+        return ProjectManager.execChildProcess("cordova create " + projectDirectory + " " + appNamespace + " " + appName + " --copy-from " + templatePath)
             .then<string>(ProjectManager.replaceString.bind(undefined, destinationIndexPath, ProjectManager.CODE_PUSH_APP_VERSION_PLACEHOLDER, version));
     }
     
@@ -132,7 +132,7 @@ export class ProjectManager {
      */
     public static addPlugin(projectFolder: string, plugin: string): Q.Promise<string> {
         console.log("Adding pluging " + plugin + " to " + projectFolder);
-        return ProjectManager.execAndLogChildProcess("cordova plugin add " + plugin, { cwd: projectFolder });
+        return ProjectManager.execChildProcess("cordova plugin add " + plugin, { cwd: projectFolder });
     }  
     
     /**
@@ -140,7 +140,7 @@ export class ProjectManager {
      */
     public static removePlugin(projectFolder: string, plugin: string): Q.Promise<string> {
         console.log("Removing pluging " + plugin + " from " + projectFolder);
-        return ProjectManager.execAndLogChildProcess("cordova plugin remove " + plugin, { cwd: projectFolder });
+        return ProjectManager.execChildProcess("cordova plugin remove " + plugin, { cwd: projectFolder });
     }    
 
     /**
@@ -149,7 +149,7 @@ export class ProjectManager {
     public static buildPlatform(projectFolder: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
         console.log("Building " + targetPlatform.getCordovaName() + " project in " + projectFolder);
         // don't print output here because the iOS build process outputs so much nonsense that it buffer overflows and exits the entire test process
-        return ProjectManager.execAndLogChildProcess("cordova build " + targetPlatform.getCordovaName(), { cwd: projectFolder }, false);
+        return ProjectManager.execChildProcess("cordova build " + targetPlatform.getCordovaName(), { cwd: projectFolder }, false);
     }
     
     /**
@@ -157,57 +157,39 @@ export class ProjectManager {
      */
     public static preparePlatform(projectFolder: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
         console.log("Preparing " + targetPlatform.getCordovaName() + " project in " + projectFolder);
-        return ProjectManager.execAndLogChildProcess("cordova prepare " + targetPlatform.getCordovaName(), { cwd: projectFolder });
+        return ProjectManager.execChildProcess("cordova prepare " + targetPlatform.getCordovaName(), { cwd: projectFolder });
     }
 
     /**
      * Launch the test app on the given target / platform.
      */
-    public static launchApplication(namespace: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
-        console.log("Launching " + namespace + " on " + targetPlatform.getCordovaName());
-        var emulatorManager = targetPlatform.getEmulatorManager();
-        if (emulatorManager) {
-            return emulatorManager.launchInstalledApplication(namespace);
-        } else {
-            console.log("No emulator manager found!");
-            return null;
-        }
+    public static launchApplication(appNamespace: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
+        console.log("Launching " + appNamespace + " on " + targetPlatform.getCordovaName());
+        return targetPlatform.getEmulatorManager().launchInstalledApplication(appNamespace);
     }
 
     /**
      * Kill the test app on the given target / platform.
      */
-    public static endRunningApplication(namespace: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
-        console.log("Ending " + namespace + " on " + targetPlatform.getCordovaName());
-        var emulatorManager = targetPlatform.getEmulatorManager();
-        if (emulatorManager) {
-            return emulatorManager.endRunningApplication(namespace);
-        } else {
-            console.log("No emulator manager found!");
-            return null;
-        }
+    public static endRunningApplication(appNamespace: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
+        console.log("Ending " + appNamespace + " on " + targetPlatform.getCordovaName());
+        return targetPlatform.getEmulatorManager().endRunningApplication(appNamespace);
     }
 
     /**
      * Prepares the emulator for a test.
      */
-    public static prepareEmulatorForTest(namespace: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
-        console.log("Preparing " + targetPlatform.getCordovaName() + " emulator for " + namespace + " tests");
-        var emulatorManager = targetPlatform.getEmulatorManager();
-        if (emulatorManager) {
-            return emulatorManager.prepareEmulatorForTest(namespace);
-        } else {
-            console.log("No emulator manager found!");
-            return null;
-        }
+    public static prepareEmulatorForTest(appNamespace: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
+        console.log("Preparing " + targetPlatform.getCordovaName() + " emulator for " + appNamespace + " tests");
+        return targetPlatform.getEmulatorManager().prepareEmulatorForTest(appNamespace);
     }
     
     /**
      * Uninstalls the app from the emulator.
      */
-    public static uninstallApplication(namespace: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
-        console.log("Uninstalling " + namespace + " on " + targetPlatform.getCordovaName());
-        return targetPlatform.getEmulatorManager().uninstallApplication(namespace);
+    public static uninstallApplication(appNamespace: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
+        console.log("Uninstalling " + appNamespace + " on " + targetPlatform.getCordovaName());
+        return targetPlatform.getEmulatorManager().uninstallApplication(appNamespace);
     }
 
     /**
@@ -217,7 +199,7 @@ export class ProjectManager {
         console.log("Running project in " + projectFolder + " on " + targetPlatform.getCordovaName());
         var runTarget = target ? " --target " + target : "";
         var nobuild = skipBuild ? " --nobuild" : "";
-        return ProjectManager.execAndLogChildProcess("cordova run " + targetPlatform.getCordovaName() + runTarget + nobuild, { cwd: projectFolder });
+        return ProjectManager.execChildProcess("cordova run " + targetPlatform.getCordovaName() + runTarget + nobuild, { cwd: projectFolder });
     }
 
     /**
@@ -225,7 +207,7 @@ export class ProjectManager {
      */
     public static addPlatform(projectFolder: string, targetPlatform: platform.IPlatform, version?: string): Q.Promise<string> {
         console.log("Adding " + targetPlatform.getCordovaName() + " to project in " + projectFolder);
-        return ProjectManager.execAndLogChildProcess("cordova platform add " + targetPlatform.getCordovaName() + (version ? "@" + version : ""), { cwd: projectFolder });
+        return ProjectManager.execChildProcess("cordova platform add " + targetPlatform.getCordovaName() + (version ? "@" + version : ""), { cwd: projectFolder });
     }
 
 	/**
@@ -239,35 +221,23 @@ export class ProjectManager {
     /**
      * Stops and restarts an application specified by its namespace identifier.
      */
-    public static restartApplication(namespace: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
-        console.log("Restarting " + namespace + " on " + targetPlatform.getCordovaName());
-        var emulatorManager = targetPlatform.getEmulatorManager();
-        if (emulatorManager) {
-            return emulatorManager.restartApplication(namespace);
-        } else {
-            console.log("No emulator manager found!");
-            return null;
-        }
+    public static restartApplication(appNamespace: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
+        console.log("Restarting " + appNamespace + " on " + targetPlatform.getCordovaName());
+        return targetPlatform.getEmulatorManager().restartApplication(appNamespace);
     }
     
     /**
      * Navigates away from the application and then navigates back to it.
      */
-    public static resumeApplication(namespace: string, targetPlatform: platform.IPlatform, delayBeforeResumingMs: number = 1000): Q.Promise<string> {
-        console.log("Resuming " + namespace + " on " + targetPlatform.getCordovaName());
-        var emulatorManager = targetPlatform.getEmulatorManager();
-        if (emulatorManager) {
-            return emulatorManager.resumeApplication(namespace, delayBeforeResumingMs);
-        } else {
-            console.log("No emulator manager found!");
-            return null;
-        }
+    public static resumeApplication(appNamespace: string, targetPlatform: platform.IPlatform, delayBeforeResumingMs: number = 1000): Q.Promise<string> {
+        console.log("Resuming " + appNamespace + " on " + targetPlatform.getCordovaName());
+        return targetPlatform.getEmulatorManager().resumeApplication(appNamespace, delayBeforeResumingMs);
     }
 
     /**
      * Executes a child process and logs its output to the console and returns its output in the promise as a string
      */
-    public static execAndLogChildProcess(command: string, options?: child_process.IExecOptions, output: boolean = true): Q.Promise<string> {
+    public static execChildProcess(command: string, options?: child_process.IExecOptions, logOutput: boolean = true): Q.Promise<string> {
         var deferred = Q.defer<string>();
 
         options = options || {};
@@ -278,7 +248,7 @@ export class ProjectManager {
         console.log("Running command: " + command);
         child_process.exec(command, options, (error: Error, stdout: Buffer, stderr: Buffer) => {
 
-            if (output) stdout && console.log(stdout);
+            if (logOutput) stdout && console.log(stdout);
             stderr && console.error(stderr);
 
             if (error) {

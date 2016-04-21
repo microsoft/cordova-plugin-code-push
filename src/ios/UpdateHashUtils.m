@@ -1,4 +1,5 @@
-#include <CommonCrypto/CommonDigest.h>
+#import <CommonCrypto/CommonDigest.h>
+#import "UpdateHashUtils.h"
 
 @implementation UpdateHashUtils : NSObject
 

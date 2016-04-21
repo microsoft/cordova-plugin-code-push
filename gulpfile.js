@@ -154,13 +154,13 @@ gulp.task("default", function (callback) {
     runSequence("clean", "compile", "tslint", callback);
 });
 
-function startEmulators(callback, restartIfRunning) {
+function startEmulators(callback, restartIfRunning, android, ios) {
     // called when an emulator is initialized successfully
     var emulatorsInit = 0;
     function onEmulatorInit(emulator) {
         ++emulatorsInit;
         console.log(emulator + " emulator is ready!");
-        if (emulatorsInit === 2) {
+        if (emulatorsInit === ((android ? 1 : 0) + (ios ? 1 : 0))) {
             console.log("All emulators are ready!");
             callback(undefined);
         }
@@ -224,20 +224,24 @@ function startEmulators(callback, restartIfRunning) {
                     }
                     setTimeout(iOSEmulatorReady.bind(undefined, iOSEmulatorReadyLooper), emulatorReadyCheckDelay);
                 }
-                iOSEmulatorReadyLooper();
+                iOSEmulatorReady(iOSEmulatorReadyLooper);
             });
         }, true);
     }
     if (!restartIfRunning) {
-        androidEmulatorReady(() => {
-            killThenStartAndroid();
-        });
-        iOSEmulatorReady(() => {
-            killThenStartIOS();
-        });
+        if (android) {
+            androidEmulatorReady(() => {
+                killThenStartAndroid();
+            });
+        }
+        if (ios) {
+            iOSEmulatorReady(() => {
+                killThenStartIOS();
+            });
+        }
     } else {
-        killThenStartAndroid();
-        killThenStartIOS();
+        if (android) killThenStartAndroid();
+        if (ios) killThenStartIOS();
     }
     // This needs to be done so that the task will exit.
     // The command that creates the Android emulator persists with the life of the emulator and hangs this process unless we force it to quit.
@@ -246,26 +250,52 @@ function startEmulators(callback, restartIfRunning) {
     }
 }
 
-gulp.task("emulator", function (callback) {
-    startEmulators(callback, false);
-});
+// procedurally generate tasks for every possible testing configuration
+var cleanSuffix = "-clean";
+var fastSuffix = "-fast";
 
-gulp.task("emulator-clean", function (callback) {
-    startEmulators(callback, true);
-});
+// generate tasks for starting emulators
+function generateEmulatorTasks(taskName, android, ios) {
+    gulp.task(taskName, function (callback) {
+        startEmulators(callback, false, android, ios);
+    });
+    
+    gulp.task(taskName + cleanSuffix, function (callback) {
+        startEmulators(callback, true, android, ios);
+    });
+}
+
+function getEmulatorTaskNameSuffix(android, ios) {
+    var emulatorTaskNameSuffix = "";
+    
+    if (android) emulatorTaskNameSuffix += "-android";
+    if (ios) emulatorTaskNameSuffix += "-ios";
+    // "emulator" instead of "emulator-android-ios"
+    if (android && ios) emulatorTaskNameSuffix = "";
+    
+    return emulatorTaskNameSuffix
+}
+
+var emulatorTaskNamePrefix = "emulator";
+for (var android = 0; android < 2; android++) {
+    for (var ios = 0; ios < 4; ios++) {
+        generateEmulatorTasks(emulatorTaskNamePrefix + getEmulatorTaskNameSuffix(android, ios), android, ios);
+    }
+}
                 
-function generateTasks(taskName, options) {
+function generateTestTasks(taskName, options) {
     gulp.task(taskName + "-fast", function (callback) {
-        console.log(options);
         runTests(callback, options);
     });
     
+    var emulatorTaskName = emulatorTaskNamePrefix + getEmulatorTaskNameSuffix(options.android, options.ios);
+    
     gulp.task(taskName, function (callback) {
-        runSequence("default", "emulator", taskName + "-fast", callback);
+        runSequence("default", emulatorTaskName, taskName + fastSuffix, callback);
     });
     
     gulp.task(taskName + "-clean", function (callback) {
-        runSequence("default", "emulator-clean", taskName + "-fast", callback);
+        runSequence("default", emulatorTaskName + cleanSuffix, taskName + fastSuffix, callback);
     });
 }
 
@@ -313,10 +343,7 @@ for (var android = 0; android < 2; android++) {
                 if (core) options.core = true;
                 if (npm) options.npm = true;
                 
-                console.log(taskName);
-                console.log(options);
-                
-                generateTasks(taskName, options);
+                generateTestTasks(taskName, options);
             }
         }
     }

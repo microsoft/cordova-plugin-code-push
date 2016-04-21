@@ -16,9 +16,9 @@ var Sdk = (function () {
     }
     Sdk.getAcquisitionManager = function (callback, userDeploymentKey, contentType) {
         var resolveManager = function () {
-            if (userDeploymentKey || contentType) {
+            if (userDeploymentKey !== Sdk.DefaultConfiguration.deploymentKey || contentType) {
                 var customConfiguration = {
-                    deploymentKey: (userDeploymentKey ? userDeploymentKey : Sdk.DefaultConfiguration.deploymentKey),
+                    deploymentKey: userDeploymentKey || Sdk.DefaultConfiguration.deploymentKey,
                     serverUrl: Sdk.DefaultConfiguration.serverUrl,
                     ignoreAppVersion: Sdk.DefaultConfiguration.ignoreAppVersion,
                     appVersion: Sdk.DefaultConfiguration.appVersion,
@@ -63,16 +63,17 @@ var Sdk = (function () {
             });
         }
     };
-    Sdk.reportStatusDeploy = function (pkg, status, deploymentKey, callback) {
+    Sdk.reportStatusDeploy = function (pkg, status, currentDeploymentKey, previousLabelOrAppVersion, previousDeploymentKey, callback) {
         try {
             Sdk.getAcquisitionManager(function (error, acquisitionManager) {
                 if (error) {
                     callback && callback(error, null);
                 }
                 else {
-                    acquisitionManager.reportStatusDeploy(pkg, status, callback);
+                    console.log("Reporting status: " + status + " label: " + (pkg && pkg.label) + " appVersion: " + Sdk.DefaultConfiguration.appVersion + " previousLabelOrAppVersion: " + previousLabelOrAppVersion + " previousDeploymentKey:" + previousDeploymentKey);
+                    acquisitionManager.reportStatusDeploy(pkg, status, previousLabelOrAppVersion, previousDeploymentKey, callback);
                 }
-            }, deploymentKey, "application/json");
+            }, currentDeploymentKey, "application/json");
         }
         catch (e) {
             callback && callback(new Error("An error occured while reporting the deployment status. " + e), null);

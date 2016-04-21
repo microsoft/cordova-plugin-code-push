@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-    <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-code-push" version="1.6.0-beta">
+    <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-code-push" version="1.7.0-beta">
         <name>CodePush</name>
         <description>This plugin allows you to push code updates to your apps instantly using the CodePush service</description>
         <license>MIT</license>
@@ -7,7 +7,7 @@
         <repo>https://github.com/Microsoft/cordova-plugin-code-push.git</repo>
 
         <dependency id="code-push" version=">=1.8.0-beta" />
-        <dependency id="cordova-plugin-file" url="https://github.com/apache/cordova-plugin-file.git" commit="1e2593f42455aa78d7fff7400a834beb37a0683c" /> 
+        <dependency id="cordova-plugin-file" version=">=3.0.0" /> 
         <dependency id="cordova-plugin-file-transfer" version=">=1.3.0" /> 
         <dependency id="cordova-plugin-zip" version=">=3.0.0" />
         <dependency id="cordova-plugin-dialogs" version=">=1.1.1" />
@@ -63,9 +63,9 @@
             <source-file src="src/android/CodePushPackageManager.java" target-dir="src/com/microsoft/cordova" />
             <source-file src="src/android/CodePushPackageMetadata.java" target-dir="src/com/microsoft/cordova" />
             <source-file src="src/android/CodePushPreferences.java" target-dir="src/com/microsoft/cordova" />
+            <source-file src="src/android/CodePushReportingManager.java" target-dir="src/com/microsoft/cordova" />
             <source-file src="src/android/InstallMode.java" target-dir="src/com/microsoft/cordova" />
             <source-file src="src/android/InstallOptions.java" target-dir="src/com/microsoft/cordova" />
-            <source-file src="src/android/Reporting.java" target-dir="src/com/microsoft/cordova" />
             <source-file src="src/android/Utilities.java" target-dir="src/com/microsoft/cordova" />
             <source-file src="src/android/UpdateHashUtils.java" target-dir="src/com/microsoft/cordova" />
             <config-file target="config.xml" parent="/*">
@@ -83,13 +83,13 @@
             <source-file src="src/ios/CodePushPackageMetadata.m" />
             <header-file src="src/ios/CodePushPackageManager.h" />
             <source-file src="src/ios/CodePushPackageManager.m" />
+            <source-file src="src/ios/CodePushReportingManager.m" />
+            <header-file src="src/ios/CodePushReportingManager.h" />
             <header-file src="src/ios/Utilities.h" />
             <source-file src="src/ios/Utilities.m" />
             <header-file src="src/ios/InstallOptions.h" />
             <source-file src="src/ios/InstallOptions.m" />
             <header-file src="src/ios/InstallMode.h" />
-            <source-file src="src/ios/Reporting.m" />
-            <header-file src="src/ios/Reporting.h" />
             <source-file src="src/ios/UpdateHashUtils.m" />
             <header-file src="src/ios/UpdateHashUtils.h" />
             <config-file target="config.xml" parent="/*">

@@ -11,8 +11,8 @@ import CodePushUtil = require("./codePushUtil");
 import Sdk = require("./sdk");
 
 /**
- * Defines a local package. 
- * 
+ * Defines a local package.
+ *
  * !! THIS TYPE IS READ FROM NATIVE CODE AS WELL. ANY CHANGES TO THIS INTERFACE NEEDS TO BE UPDATED IN NATIVE CODE !!
  */
 class LocalPackage extends Package implements ILocalPackage {
@@ -29,25 +29,25 @@ class LocalPackage extends Package implements ILocalPackage {
     private static DiffManifestFile: string = "hotcodepush.json";
 
     private static DefaultInstallOptions: InstallOptions;
-    
+
     /**
      * The local storage path where this package is located.
      */
     localPath: string;
-    
+
     /**
      * Indicates if the current application run is the first one after the package was applied.
      */
     isFirstRun: boolean;
-    
+
     /**
      * Applies this package to the application. The application will be reloaded with this package and on every application launch this package will be loaded.
      * On the first run after the update, the application will wait for a codePush.notifyApplicationReady() call. Once this call is made, the install operation is considered a success.
      * Otherwise, the install operation will be marked as failed, and the application is reverted to its previous version on the next run.
-     * 
-     * @param installSuccess Callback invoked if the install operation succeeded. 
+     *
+     * @param installSuccess Callback invoked if the install operation succeeded.
      * @param installError Optional callback inovoked in case of an error.
-     * @param installOptions Optional parameter used for customizing the installation behavior. 
+     * @param installOptions Optional parameter used for customizing the installation behavior.
      */
     public install(installSuccess: SuccessCallback<void>, errorCallback?: ErrorCallback, installOptions?: InstallOptions) {
         try {
@@ -61,7 +61,7 @@ class LocalPackage extends Package implements ILocalPackage {
 
             var installError: ErrorCallback = (error: Error): void => {
                 CodePushUtil.invokeErrorCallback(error, errorCallback);
-                Sdk.reportStatusDeploy(this, AcquisitionStatus.DeploymentFailed);
+                Sdk.reportStatusDeploy(this, AcquisitionStatus.DeploymentFailed, this.deploymentKey);
             };
 
             var newPackageLocation = LocalPackage.VersionsDir + "/" + this.packageHash;
@@ -212,7 +212,7 @@ class LocalPackage extends Package implements ILocalPackage {
         var handleError = (e: Error) => {
             copyCallback && copyCallback(e, null);
         };
-        
+
         var doCopy = (currentPackagePath?: string) => {
             var getCurrentPackageDirectory: (getCurrentPackageDirectoryCallback: Callback<DirectoryEntry>) => void;
             if (currentPackagePath) {
@@ -226,7 +226,7 @@ class LocalPackage extends Package implements ILocalPackage {
                     FileUtil.getApplicationDirectory("www", getCurrentPackageDirectoryCallback);
                 };
             }
-            
+
             FileUtil.getDataDirectory(newPackageLocation, true, (deployDirError: Error, deployDir: DirectoryEntry) => {
                 if (deployDirError) {
                     handleError(new Error("Could not acquire the source/destination folders. "));
@@ -238,12 +238,12 @@ class LocalPackage extends Package implements ILocalPackage {
                     var fail = (fileSystemError: FileError) => {
                         copyCallback && copyCallback(FileUtil.fileErrorToError(fileSystemError), null);
                     };
-                    
+
                     getCurrentPackageDirectory(CodePushUtil.getNodeStyleCallbackFor(success, fail));
                 }
             });
         };
-        
+
         var packageFailure = (error: Error) => {
             doCopy();
         };
@@ -251,7 +251,7 @@ class LocalPackage extends Package implements ILocalPackage {
         var packageSuccess = (currentPackage: LocalPackage) => {
             doCopy(currentPackage.localPath);
         };
-        
+
         LocalPackage.getPackage(LocalPackage.PackageInfoFile, packageSuccess, packageFailure);
     }
 
@@ -259,7 +259,7 @@ class LocalPackage extends Package implements ILocalPackage {
         var handleError = (e: Error) => {
             diffCallback(e, null);
         };
-        
+
         /* copy old files */
         LocalPackage.copyCurrentPackage(newPackageLocation, (currentPackageError: Error) => {
             /* copy new files */
@@ -284,7 +284,7 @@ class LocalPackage extends Package implements ILocalPackage {
             });
         });
     }
-    
+
     /**
     * Writes the given local package information to the current package information file.
     * @param packageInfoMetadata The object to serialize.
@@ -294,7 +294,7 @@ class LocalPackage extends Package implements ILocalPackage {
         var content = JSON.stringify(packageInfoMetadata);
         FileUtil.writeStringToDataFile(content, LocalPackage.RootDir, LocalPackage.PackageInfoFile, true, callback);
     }
-    
+
 	/**
      * Backs up the current package information to the old package information file.
      * This file is used for recovery in case of an update going wrong.
@@ -332,20 +332,20 @@ class LocalPackage extends Package implements ILocalPackage {
 
         FileUtil.getDataFile(LocalPackage.RootDir, LocalPackage.PackageInfoFile, false, gotFile);
     }
-    
+
     /**
      * Get the previous package information.
-     * 
+     *
      * @param packageSuccess Callback invoked with the old package information.
      * @param packageError Optional callback invoked in case of an error.
      */
     public static getOldPackage(packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
         return LocalPackage.getPackage(LocalPackage.OldPackageInfoFile, packageSuccess, packageError);
     }
-    
+
     /**
      * Reads package information from a given file.
-     * 
+     *
      * @param packageFile The package file name.
      * @param packageSuccess Callback invoked with the package information.
      * @param packageError Optional callback invoked in case of an error.
@@ -408,16 +408,16 @@ class LocalPackage extends Package implements ILocalPackage {
     public static getPackageInfoOrDefault(packageFile: string, packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
         var packageFailure = (error: Error) => {
             NativeAppInfo.getApplicationVersion((appVersionError: Error, appVersion: string) => {
-                /** 
-                 * For the default package we need the app version, 
+                /**
+                 * For the default package we need the app version,
                  * and ideally the hash of the binary contents.
                  */
                 if (appVersionError) {
                     CodePushUtil.logError("Could not get application version." + appVersionError);
                     packageError(appVersionError);
                     return;
-                } 
-                
+                }
+
                 NativeAppInfo.getBinaryHash((binaryHashError: Error, binaryHash: string) => {
                     var defaultPackage: LocalPackage = new LocalPackage();
                     defaultPackage.appVersion = appVersion;
@@ -426,7 +426,7 @@ class LocalPackage extends Package implements ILocalPackage {
                     } else {
                         defaultPackage.packageHash = binaryHash;
                     }
-                    
+
                     packageSuccess(defaultPackage);
                 });
             });
@@ -438,7 +438,7 @@ class LocalPackage extends Package implements ILocalPackage {
     public static getPackageInfoOrNull(packageFile: string, packageSuccess: SuccessCallback<LocalPackage>, packageError?: ErrorCallback): void {
         LocalPackage.getPackage(packageFile, packageSuccess, packageSuccess.bind(null, null));
     }
-    
+
     /**
      * Returns the default options for the CodePush install operation.
      * If the options are not defined yet, the static DefaultInstallOptions member will be instantiated.

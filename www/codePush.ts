@@ -30,26 +30,26 @@ class CodePush implements CodePushCordovaPlugin {
     private static DefaultSyncOptions: SyncOptions;
     /**
      * The default UI for the update dialog, in case it is enabled.
-     * Please note that the update dialog is disabled by default. 
+     * Please note that the update dialog is disabled by default.
      */
     private static DefaultUpdateDialogOptions: UpdateDialogOptions;
     /**
      * Whether or not a sync is currently in progress.
      */
     private static SyncInProgress: boolean;
-    
-    /**  
+
+    /**
      * Notifies the plugin that the update operation succeeded and that the application is ready.
      * Calling this function is required on the first run after an update. On every subsequent application run, calling this function is a noop.
-     * If using sync API, calling this function is not required since sync calls it internally. 
-     * 
+     * If using sync API, calling this function is not required since sync calls it internally.
+     *
      * @param notifySucceeded Optional callback invoked if the plugin was successfully notified.
      * @param notifyFailed Optional callback invoked in case of an error during notifying the plugin.
      */
     public notifyApplicationReady(notifySucceeded?: SuccessCallback<void>, notifyFailed?: ErrorCallback): void {
         cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updateSuccess", []);
     }
-    
+
     /**
      * Reloads the application. If there is a pending update package installed using ON_NEXT_RESTART or ON_NEXT_RESUME modes, the update
      * will be immediately visible to the user. Otherwise, calling this function will simply reload the current version of the application.
@@ -57,21 +57,19 @@ class CodePush implements CodePushCordovaPlugin {
     public restartApplication(installSuccess: SuccessCallback<void>, errorCallback?: ErrorCallback): void {
         cordova.exec(installSuccess, errorCallback, "CodePush", "restartApplication", []);
     }
-    
+
     /**
      * Reports an application status back to the server.
      * !!! This function is called from the native side, please make changes accordingly. !!!
      */
-    public reportStatus(status: number, label: string, appVersion: string, deploymentKey: string) {
+    public reportStatus(status: number, label: string, appVersion: string, currentDeploymentKey: string, previousLabelOrAppVersion?: string, previousDeploymentKey?: string) {
         try {
-            console.log("Reporting status: " + status + " " + label + " " + appVersion);
-
             var createPackageForReporting = (label: string, appVersion: string): IPackage => {
                 return {
                     /* The SDK only reports the label and appVersion.
                        The rest of the properties are added for type safety. */
                     label: label, appVersion: appVersion,
-                    deploymentKey: deploymentKey, description: null,
+                    deploymentKey: currentDeploymentKey, description: null,
                     isMandatory: false, packageHash: null,
                     packageSize: null, failedInstall: false
                 };
@@ -79,23 +77,23 @@ class CodePush implements CodePushCordovaPlugin {
 
             switch (status) {
                 case ReportStatus.STORE_VERSION:
-                    Sdk.reportStatusDeploy(null, AcquisitionStatus.DeploymentSucceeded, deploymentKey);
+                    Sdk.reportStatusDeploy(null, AcquisitionStatus.DeploymentSucceeded, currentDeploymentKey, previousLabelOrAppVersion, previousDeploymentKey);
                     break;
                 case ReportStatus.UPDATE_CONFIRMED:
-                    Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentSucceeded, deploymentKey);
+                    Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentSucceeded, currentDeploymentKey, previousLabelOrAppVersion, previousDeploymentKey);
                     break;
                 case ReportStatus.UPDATE_ROLLED_BACK:
-                    Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentFailed, deploymentKey);
+                    Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentFailed, currentDeploymentKey, previousLabelOrAppVersion, previousDeploymentKey);
                     break;
             }
         } catch (e) {
             CodePushUtil.logError("An error occurred while reporting." + CodePushUtil.getErrorMessage(e));
         }
     }
-    
+
     /**
      * Get the current package information.
-     * 
+     *
      * @param packageSuccess Callback invoked with the currently deployed package information.
      * @param packageError Optional callback invoked in case of an error.
      */
@@ -152,7 +150,7 @@ class CodePush implements CodePushCordovaPlugin {
                             NativeAppInfo.isFailedUpdate(remotePackage.packageHash, (installFailed: boolean) => {
                                 var result: RemotePackage = new RemotePackage();
                                 result.appVersion = remotePackage.appVersion;
-                                result.deploymentKey = remotePackage.deploymentKey;
+                                result.deploymentKey = deploymentKey; // server does not send back the deployment key
                                 result.description = remotePackage.description;
                                 result.downloadUrl = remotePackage.downloadUrl;
                                 result.isMandatory = remotePackage.isMandatory;
@@ -171,44 +169,59 @@ class CodePush implements CodePushCordovaPlugin {
                 }
             };
 
-            Sdk.getAcquisitionManager((initError: Error, acquisitionManager: AcquisitionManager) => {
-                if (initError) {
-                    CodePushUtil.invokeErrorCallback(initError, queryError);
-                } else {
-                    LocalPackage.getCurrentOrDefaultPackage((localPackage: LocalPackage) => {
-                        CodePushUtil.logMessage("Checking for update.");
-                        acquisitionManager.queryUpdateWithCurrentPackage(localPackage, callback);
-                    }, (error: Error) => {
-                        CodePushUtil.invokeErrorCallback(error, queryError);
-                    });
-                }
-            }, deploymentKey);
+            var queryUpdate = () => {
+                Sdk.getAcquisitionManager((initError: Error, acquisitionManager: AcquisitionManager) => {
+                    if (initError) {
+                        CodePushUtil.invokeErrorCallback(initError, queryError);
+                    } else {
+                        LocalPackage.getCurrentOrDefaultPackage((localPackage: LocalPackage) => {
+                            CodePushUtil.logMessage("Checking for update.");
+                            acquisitionManager.queryUpdateWithCurrentPackage(localPackage, callback);
+                        }, (error: Error) => {
+                            CodePushUtil.invokeErrorCallback(error, queryError);
+                        });
+                    }
+                }, deploymentKey);
+            };
+
+            if (deploymentKey) {
+                queryUpdate();
+            } else {
+                NativeAppInfo.getDeploymentKey((deploymentKeyError: Error, defaultDeploymentKey: string) => {
+                    if (deploymentKeyError) {
+                        CodePushUtil.invokeErrorCallback(deploymentKeyError, queryError);
+                    } else {
+                        deploymentKey = defaultDeploymentKey;
+                        queryUpdate();
+                    }
+                });
+            }
         } catch (e) {
             CodePushUtil.invokeErrorCallback(new Error("An error occurred while querying for updates." + CodePushUtil.getErrorMessage(e)), queryError);
         }
     }
-    
+
     /**
      * Convenience method for installing updates in one method call.
      * This method is provided for simplicity, and its behavior can be replicated by using window.codePush.checkForUpdate(), RemotePackage's download() and LocalPackage's install() methods.
      * If another sync is already running, it yields SyncStatus.IN_PROGRESS.
-     *  
+     *
      * The algorithm of this method is the following:
      * - Checks for an update on the CodePush server.
      * - If an update is available
      *         - If the update is mandatory and the alertMessage is set in options, the user will be informed that the application will be updated to the latest version.
-     *           The update package will then be downloaded and applied. 
+     *           The update package will then be downloaded and applied.
      *         - If the update is not mandatory and the confirmMessage is set in options, the user will be asked if they want to update to the latest version.
-     *           If they decline, the syncCallback will be invoked with SyncStatus.UPDATE_IGNORED. 
+     *           If they decline, the syncCallback will be invoked with SyncStatus.UPDATE_IGNORED.
      *         - Otherwise, the update package will be downloaded and applied with no user interaction.
      * - If no update is available on the server, the syncCallback will be invoked with the SyncStatus.UP_TO_DATE.
      * - If an error occurs during checking for update, downloading or installing it, the syncCallback will be invoked with the SyncStatus.ERROR.
-     * 
+     *
      * @param syncCallback Optional callback to be called with the status of the sync operation.
-     *                     The callback will be called only once, and the possible statuses are defined by the SyncStatus enum. 
+     *                     The callback will be called only once, and the possible statuses are defined by the SyncStatus enum.
      * @param syncOptions Optional SyncOptions parameter configuring the behavior of the sync operation.
      * @param downloadProgress Optional callback invoked during the download process. It is called several times with one DownloadProgress parameter.
-     * 
+     *
      */
     public sync(syncCallback?: SuccessCallback<any>, syncOptions?: SyncOptions, downloadProgress?: SuccessCallback<DownloadProgress>): void {
         /* Check if a sync is already in progress */
@@ -230,34 +243,34 @@ class CodePush implements CodePushCordovaPlugin {
                     case SyncStatus.UPDATE_INSTALLED:
                         /* The sync has completed */
                         CodePush.SyncInProgress = false;
-                        
+
                     default:
                         /* The sync is not yet complete, so do nothing */
                         break;
                 }
                 syncCallback && syncCallback(result);
             };
-            
+
             /* Begin the sync */
             CodePush.SyncInProgress = true;
             this.syncInternal(syncCallbackAndUpdateSyncInProgress, syncOptions, downloadProgress);
         }
     }
-    
+
     /**
      * Convenience method for installing updates in one method call.
      * This method is provided for simplicity, and its behavior can be replicated by using window.codePush.checkForUpdate(), RemotePackage's download() and LocalPackage's install() methods.
-     *  
+     *
      * A helper function for the sync function. It does not check if another sync is ongoing.
-     * 
+     *
      * @param syncCallback Optional callback to be called with the status of the sync operation.
-     *                     The callback will be called only once, and the possible statuses are defined by the SyncStatus enum. 
+     *                     The callback will be called only once, and the possible statuses are defined by the SyncStatus enum.
      * @param syncOptions Optional SyncOptions parameter configuring the behavior of the sync operation.
      * @param downloadProgress Optional callback invoked during the download process. It is called several times with one DownloadProgress parameter.
-     * 
+     *
      */
     private syncInternal(syncCallback?: SuccessCallback<any>, syncOptions?: SyncOptions, downloadProgress?: SuccessCallback<DownloadProgress>): void {
-        
+
         /* No options were specified, use default */
         if (!syncOptions) {
             syncOptions = this.getDefaultSyncOptions();
@@ -292,12 +305,12 @@ class CodePush implements CodePushCordovaPlugin {
                 case InstallMode.ON_NEXT_RESTART:
                     CodePushUtil.logMessage("Update is installed and will be run on the next app restart.");
                     break;
-                    
+
                 case InstallMode.ON_NEXT_RESUME:
                     CodePushUtil.logMessage("Update is installed and will be run when the app next resumes.");
                     break;
             }
-            
+
             syncCallback && syncCallback(SyncStatus.UPDATE_INSTALLED);
         };
 
@@ -317,7 +330,7 @@ class CodePush implements CodePushCordovaPlugin {
                 if (updateShouldBeIgnored) {
                     CodePushUtil.logMessage("An update is available, but it is being ignored due to have been previously rolled back.");
                 }
-                
+
                 syncCallback && syncCallback(SyncStatus.UP_TO_DATE);
             } else {
                 var dlgOpts: UpdateDialogOptions = <UpdateDialogOptions>syncOptions.updateDialog;
@@ -381,7 +394,7 @@ class CodePush implements CodePushCordovaPlugin {
 
         return CodePush.DefaultSyncOptions;
     }
-    
+
     /**
      * Returns the default options for the update dialog.
      * Please note that the dialog is disabled by default.
