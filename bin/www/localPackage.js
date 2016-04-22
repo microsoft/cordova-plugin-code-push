@@ -82,7 +82,6 @@ var LocalPackage = (function (_super) {
         var _this = this;
         LocalPackage.getCurrentOrDefaultPackage(function (oldPackage) {
             LocalPackage.backupPackageInformationFile(function (backupError) {
-                backupError && CodePushUtil.logMessage("First update: back up package information skipped. ");
                 _this.writeNewPackageMetadata(deployDir, function (writeMetadataError) {
                     if (writeMetadataError) {
                         installError && installError(writeMetadataError);
