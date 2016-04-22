@@ -300,8 +300,8 @@ class CodePush implements CodePushCordovaPlugin {
             syncCallback && syncCallback(SyncStatus.ERROR);
         };
 
-        var onInstallSuccess = () => {
-            switch (syncOptions.installMode) {
+        var onInstallSuccess = (appliedWhen: InstallMode) => {
+            switch (appliedWhen) {
                 case InstallMode.ON_NEXT_RESTART:
                     CodePushUtil.logMessage("Update is installed and will be run on the next app restart.");
                     break;

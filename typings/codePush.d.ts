@@ -94,7 +94,7 @@ interface ILocalPackage extends IPackage {
      * @param installError Optional callback inovoked in case of an error.
      * @param installOptions Optional parameter used for customizing the installation behavior.
      */
-    install(installSuccess: SuccessCallback<void>, errorCallback?: ErrorCallback, installOptions?: InstallOptions): void;
+    install(installSuccess: SuccessCallback<InstallMode>, errorCallback?: ErrorCallback, installOptions?: InstallOptions): void;
 }
 
 /**
@@ -307,7 +307,7 @@ interface InstallOptions {
      * If installMode === ON_NEXT_RESUME, the minimum amount of time (in seconds) which needs to pass with the app in the background before an update install occurs when the app is resumed.
      */
     minimumBackgroundDuration?: number;
-    
+
     /**
      * Used to specify the InstallMode used for the install operation if the update is mandatory. This is optional and defaults to InstallMode.IMMEDIATE.
      */

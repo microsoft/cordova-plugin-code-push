@@ -92,12 +92,12 @@ var LocalPackage = (function (_super) {
                             CodePushUtil.logMessage("Install succeeded.");
                             var installModeToUse = _this.isMandatory ? installOptions.mandatoryInstallMode : installOptions.installMode;
                             if (installModeToUse === InstallMode.IMMEDIATE) {
-                                installSuccess && installSuccess();
+                                installSuccess && installSuccess(installModeToUse);
                                 cordova.exec(function () { }, function () { }, "CodePush", "install", [deployDir.fullPath,
                                     installModeToUse.toString(), installOptions.minimumBackgroundDuration.toString()]);
                             }
                             else {
-                                cordova.exec(function () { installSuccess && installSuccess(); }, function () { installError && installError(); }, "CodePush", "install", [deployDir.fullPath,
+                                cordova.exec(function () { installSuccess && installSuccess(installModeToUse); }, function () { installError && installError(); }, "CodePush", "install", [deployDir.fullPath,
                                     installModeToUse.toString(), installOptions.minimumBackgroundDuration.toString()]);
                             }
                         };
