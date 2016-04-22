@@ -307,7 +307,12 @@ class CodePush implements CodePushCordovaPlugin {
                     break;
 
                 case InstallMode.ON_NEXT_RESUME:
-                    CodePushUtil.logMessage("Update is installed and will be run when the app next resumes.");
+                    if (syncOptions.minimumBackgroundDuration > 0) {
+                        CodePushUtil.logMessage(`Update is installed and will be run after the app has been in the background for at least ${syncOptions.minimumBackgroundDuration} seconds.`);
+                    } else {
+                        CodePushUtil.logMessage("Update is installed and will be run when the app next resumes.");
+                    }
+
                     break;
             }
 
