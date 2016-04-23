@@ -34,7 +34,18 @@ Follow these steps to build a new version of the plugin:
 	```
 	This will compile the sources and place them in the ```bin``` folder. Any compilation errors will be displayed in the console.
 
-### Test
+## Test
+
+### Environment setup
+
+Make sure you can build the plugin by following the steps above.
+
+To run Android tests, make sure you have ```sdk\tools``` and  ```sdk\platform-tools``` in your PATH.
+
+If you would like the tests to start the emulators for you, configure an Android emulator using the AVD and name it ```emulator```.
+If you have the latest version of XCode installed, you should not have to configure anything.
+
+### Supported platforms
 
 The plugin has end to end tests for Android and iOS. Depending on your development machine OS, you can run some or all the tests.
 
@@ -42,6 +53,8 @@ OS            | Supported tests
 ------------- | -------------
 OS X          | Android, iOS
 Windows       | Android
+
+### Test descriptions
 
 The tests first build the app.
 
@@ -54,14 +67,14 @@ There is a both a full unit test suite and a "core" set of unit tests that you m
 If you would like to pull the plugin from NPM rather than running the tests on the local version, add a ```-npm``` to the end of the command you'd like to run.
 If you would like to skip building and checking for emulators, add a ```-fast``` to the end of the command you'd like to run.
 
-##### Default
+#### Default
 
 To run all of the unit tests on Android and iOS with both UIWebView and WkWebView:
 ```
 gulp test
 ```
 
-##### iOS
+#### iOS
 
 To run all of the unit tests on iOS with both the UIWebView and WkWebView:
 ```
@@ -78,14 +91,14 @@ To run all of the unit tests on iOS with the WkWebView:
 gulp test-ios-wkwebview
 ```
 
-##### Android
+#### Android
 
 To run all of the unit tests on Android:
 ```
 gulp test-android
 ```
 
-##### More examples
+#### More examples
 
 All possible testing configurations have tasks!
 The flags should be ordered as following: android, ios, uiwebview, wkwebview, core, npm, fast, clean
