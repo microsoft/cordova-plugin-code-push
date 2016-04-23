@@ -13,7 +13,7 @@ Instead, modify the sources in the ```www``` folder and compile a new version of
 
 To run Android tests, make sure you have ```sdk\tools``` and  ```sdk\platform-tools``` in your PATH.
 
-If you would like the tests to start the emulators for you, configure an Android emulator using the AVD and name it "emulator".
+If you would like the tests to start the emulators for you, configure an Android emulator using the AVD and name it ```emulator```.
 If you have the latest version of XCode installed, you should not have to configure anything.
 
 ### Compile
