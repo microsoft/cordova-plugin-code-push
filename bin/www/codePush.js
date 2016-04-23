@@ -184,13 +184,18 @@ var CodePush = (function () {
             CodePushUtil.logError("An error occurred during sync.", error);
             syncCallback && syncCallback(SyncStatus.ERROR);
         };
-        var onInstallSuccess = function () {
-            switch (syncOptions.installMode) {
+        var onInstallSuccess = function (appliedWhen) {
+            switch (appliedWhen) {
                 case InstallMode.ON_NEXT_RESTART:
                     CodePushUtil.logMessage("Update is installed and will be run on the next app restart.");
                     break;
                 case InstallMode.ON_NEXT_RESUME:
-                    CodePushUtil.logMessage("Update is installed and will be run when the app next resumes.");
+                    if (syncOptions.minimumBackgroundDuration > 0) {
+                        CodePushUtil.logMessage("Update is installed and will be run after the app has been in the background for at least " + syncOptions.minimumBackgroundDuration + " seconds.");
+                    }
+                    else {
+                        CodePushUtil.logMessage("Update is installed and will be run when the app next resumes.");
+                    }
                     break;
             }
             syncCallback && syncCallback(SyncStatus.UPDATE_INSTALLED);

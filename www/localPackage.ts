@@ -49,7 +49,7 @@ class LocalPackage extends Package implements ILocalPackage {
      * @param installError Optional callback inovoked in case of an error.
      * @param installOptions Optional parameter used for customizing the installation behavior.
      */
-    public install(installSuccess: SuccessCallback<void>, errorCallback?: ErrorCallback, installOptions?: InstallOptions) {
+    public install(installSuccess: SuccessCallback<InstallMode>, errorCallback?: ErrorCallback, installOptions?: InstallOptions) {
         try {
             CodePushUtil.logMessage("Installing update");
 
@@ -106,10 +106,9 @@ class LocalPackage extends Package implements ILocalPackage {
         }
     }
 
-    private finishInstall(deployDir: DirectoryEntry, installOptions: InstallOptions, installSuccess: SuccessCallback<void>, installError: ErrorCallback): void {
+    private finishInstall(deployDir: DirectoryEntry, installOptions: InstallOptions, installSuccess: SuccessCallback<InstallMode>, installError: ErrorCallback): void {
         LocalPackage.getCurrentOrDefaultPackage((oldPackage: LocalPackage) => {
             LocalPackage.backupPackageInformationFile((backupError: Error) => {
-                backupError && CodePushUtil.logMessage("First update: back up package information skipped. ");
                 /* continue on error, current package information is missing if this is the first update */
                 this.writeNewPackageMetadata(deployDir, (writeMetadataError: Error) => {
                     if (writeMetadataError) {
@@ -120,12 +119,12 @@ class LocalPackage extends Package implements ILocalPackage {
                             var installModeToUse: InstallMode = this.isMandatory ? installOptions.mandatoryInstallMode : installOptions.installMode;
                             if (installModeToUse === InstallMode.IMMEDIATE) {
                                 /* invoke success before navigating */
-                                installSuccess && installSuccess();
+                                installSuccess && installSuccess(installModeToUse);
                                 /* no need for callbacks, the javascript context will reload */
-                                cordova.exec(() => { }, () => { }, "CodePush", "install", [deployDir.fullPath, 
+                                cordova.exec(() => { }, () => { }, "CodePush", "install", [deployDir.fullPath,
                                     installModeToUse.toString(), installOptions.minimumBackgroundDuration.toString()]);
                             } else {
-                                cordova.exec(() => { installSuccess && installSuccess(); }, () => { installError && installError(); }, "CodePush", "install", [deployDir.fullPath, 
+                                cordova.exec(() => { installSuccess && installSuccess(installModeToUse); }, () => { installError && installError(); }, "CodePush", "install", [deployDir.fullPath,
                                     installModeToUse.toString(), installOptions.minimumBackgroundDuration.toString()]);
                             }
                         };
