@@ -22,7 +22,7 @@ const NSString* LastVersionLabelOrAppVersionKey = @"LAST_VERSION_LABEL_OR_APP_VE
         }
 
         /* JS function to call: window.codePush.reportStatus(status: number, label: String, appVersion: String, deploymentKey: String) */
-        NSString* script = [NSString stringWithFormat:@"document.addEventListener(\"deviceready\", function () { window.codePush.reportStatus(%d, %s, %s, %s, %s, %s); });", (int)status, labelParameter, appVersionParameter, deploymentKeyParameter, lastVersionLabelOrAppVersionParameter, lastVersionDeploymentKeyParameter];
+        NSString* script = [NSString stringWithFormat:@"document.addEventListener(\"deviceready\", function () { window.codePush.reportStatus(%i, %@, %@, %@, %@, %@); });", (int)status, labelParameter, appVersionParameter, deploymentKeyParameter, lastVersionLabelOrAppVersionParameter, lastVersionDeploymentKeyParameter];
         if ([webView respondsToSelector:@selector(evaluateJavaScript:completionHandler:)]) {
             [webView performSelector:@selector(evaluateJavaScript:completionHandler:) withObject:script withObject: NULL];
         } else if ([webView isKindOfClass:[UIWebView class]]) {
