@@ -48,7 +48,7 @@ public class CodePushReportingManager {
         /* JS function to call: window.codePush.reportStatus(status: number, label: String, appVersion: String, currentDeploymentKey: String, previousLabelOrAppVersion?: string, previousDeploymentKey?: string) */
         final String script = String.format(
             Locale.US,
-            "javascript:window.codePush.reportStatus(%d, %s, %s, %s, %s, %s)",
+            "javascript:document.addEventListener(\"deviceready\", reportStatus); function reportStatus() { window.codePush.reportStatus(%d, %s, %s, %s, %s, %s); }",
             status.getValue(),
             convertStringParameter(label),
             convertStringParameter(appVersion),
