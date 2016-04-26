@@ -58,13 +58,18 @@ Windows       | Android
 
 The tests first build the app.
 
-They then check if the required emulators are currently running. If running only Android tests, it checks for a running Android emulator, and if running only iOS tests, it checks for a running iOS simulator. If running both, it will check for both.
-If they are not, then it attempts to start an Android emulator named ```emulator``` (if one exists) and an iOS simulator named ```iPhone 6s (9.3)```. If these emulators don't exist on your computer, the task will exit and the tests will fail. 
+They then check if the required emulators are currently running.
+
+If they are not, then it attempts to start an Android emulator named ```emulator``` (if one exists) and an iOS simulator named ```iPhone 6s (9.3)```. If these emulators don't exist on your computer, the task will exit and the tests will fail.
+
 If you would like the tests to always restart the necessary emulators, add a ```-clean``` to the end of the command you'd like to run.
 
 The desired unit tests are then run.
+
 There is a both a full unit test suite and a "core" set of unit tests that you may run. If you would like to run only the core tests, add a ```-core``` to the end of the command you'd like to run.
+
 If you would like to pull the plugin from NPM rather than running the tests on the local version, add a ```-npm``` to the end of the command you'd like to run.
+
 If you would like to skip building and checking for emulators, add a ```-fast``` to the end of the command you'd like to run.
 
 #### Default
@@ -101,7 +106,9 @@ gulp test-android
 #### More examples
 
 All possible testing configurations have tasks!
-The flags should be ordered as following: android, ios, uiwebview, wkwebview, core, npm, fast, clean
+
+The flags should be ordered as follows:
+android, ios, uiwebview, wkwebview, core, npm, fast, clean
 
 To run the core unit tests on Android:
 ```
