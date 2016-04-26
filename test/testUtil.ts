@@ -14,7 +14,7 @@ export class TestUtil {
     public static SHOULD_USE_WKWEBVIEW: string = "--use-wkwebview";
     public static TEST_RUN_DIRECTORY: string = "--test-directory";
     public static TEST_UPDATES_DIRECTORY: string = "--updates-directory";
-    public static CORE_TESTS_ONLY: string = "--core-tests";
+    public static CORE_TESTS_ONLY: string = "--core";
     public static PULL_FROM_NPM: string = "--npm";
     
     public static IOSServerUrl = "http://127.0.0.1:3000";
@@ -88,10 +88,10 @@ export class TestUtil {
         var shouldUseWkWebView = TestUtil.readMochaCommandLineOption(TestUtil.SHOULD_USE_WKWEBVIEW);
         switch (shouldUseWkWebView) {
             case "true":
-                console.log("WkWebview");
+                console.log("WkWebView");
                 return 1;
             case "both":
-                console.log("Both WkWebview and UIWebView");
+                console.log("Both WkWebView and UIWebView");
                 return 2;
             case "false":
             default:

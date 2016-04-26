@@ -1,6 +1,7 @@
 var gulp = require("gulp");
 var path = require("path");
 var child_process = require("child_process");
+var Q = require("q");
 var runSequence = require("run-sequence");
 
 var sourcePath = "./www";
@@ -8,8 +9,6 @@ var testPath = "./test";
 var binPath = "./bin";
 var tsFiles = "/**/*.ts";
 
-var androidEmulatorName = "emulator";
-var iOSEmulatorName = "iPhone 6s Plus (9.3) [";
 var iOSSimulatorProcessName = "Simulator";
 var emulatorReadyCheckDelay = 30 * 1000;
 var emulatorMaxReadyAttempts = 5;
@@ -79,6 +78,34 @@ function execCommand(command, args, callback, silent) {
     return process;
 };
 
+/**
+ * Executes a child process and returns its output in the promise as a string
+ */
+function execCommandWithPromise(command, options, logOutput) {
+    var deferred = Q.defer();
+
+    options = options || {};
+    options.maxBuffer = 1024 * 500;
+    // abort processes that run longer than five minutes
+    options.timeout = 5 * 60 * 1000;
+
+    console.log("Running command: " + command);
+    child_process.exec(command, options, (error, stdout, stderr) => {
+
+        if (logOutput) stdout && console.log(stdout);
+        stderr && console.error(stderr);
+
+        if (error) {
+            console.error(error);
+            deferred.reject(error);
+        } else {
+            deferred.resolve(stdout.toString());
+        }
+    });
+
+    return deferred.promise;
+}
+
 function runTests(callback, options) {
     var command = "mocha";
     var args = ["./bin/test"];
@@ -88,7 +115,7 @@ function runTests(callback, options) {
         args.push("--use-wkwebview");
         args.push(options.wkwebview ? (options.uiwebview ? "both" : "true") : "false");
     }
-    if (options.core) args.push("--core-tests");
+    if (options.core) args.push("--core");
     if (options.npm) args.push("--npm");
     execCommand(command, args, callback);
 }
@@ -173,99 +200,110 @@ gulp.task("default", function (callback) {
 });
 
 function startEmulators(callback, restartIfRunning, android, ios) {
-    // called when an emulator is initialized successfully
-    var emulatorsInit = 0;
-    function onEmulatorInit(emulator) {
-        ++emulatorsInit;
-        console.log(emulator + " emulator is ready!");
-        if (emulatorsInit === ((android ? 1 : 0) + (ios ? 1 : 0))) {
-            console.log("All emulators are ready!");
-            callback(undefined);
+    if (android) {
+        var androidEmulatorOptionName = "--androidemu";
+        var androidEmulatorName = "emulator";
+        // get the Android emulator from the arguments to run tests on
+        for (var i = 0; i < process.argv.length; i++) {
+            if (process.argv[i].indexOf(androidEmulatorOptionName) === 0) {
+                if (i + 1 < process.argv.length) {
+                    androidEmulatorName = process.argv[i + 1];
+                }
+                break;
+            }
+        }
+        console.log("Using " + androidEmulatorName + " for Android tests");
+    }
+
+    if (ios) {
+        var iOSEmulatorName = "";
+        // get the most recent iOS simulator to run tests on
+        execCommandWithPromise("xcrun simctl list")
+            .then(function (listOfDevices) {
+                var phoneDevice = /iPhone (\S* )*(\(([0-9A-Z-]*)\))/g;
+                var match = listOfDevices.match(phoneDevice);
+                iOSEmulatorName = match[match.length - 1];
+                console.log("Using " + iOSEmulatorName + " for iOS tests");
+            }, function () { return null; })
+            .then(function () {
+                return startEmulatorsInternal();
+            });
+    }
+    
+    function startEmulatorsInternal() {
+        // declare platforms that serve as layer of abstraction for platform-specific commands
+        var androidPlatform = {};
+        androidPlatform.emulatorKill = spawnCommand.bind(undefined, "adb", ["emu", "kill"]);
+        androidPlatform.emulatorStart = spawnCommand.bind(undefined, "emulator", ["@" + androidEmulatorName], undefined, false, true);
+        androidPlatform.emulatorCheck = spawnCommand.bind(undefined, "adb", ["shell", "pm", "list", "packages"]);
+        androidPlatform.name = "Android";
+        androidPlatform.emulatorReadyAttempts = 0;
+        var iOSPlatform = {};
+        iOSPlatform.emulatorKill = spawnCommand.bind(undefined, "killall", [iOSSimulatorProcessName]);
+        iOSPlatform.emulatorStart = spawnCommand.bind(undefined, "xcrun", ["instruments", "-w", iOSEmulatorName], undefined);
+        iOSPlatform.emulatorCheck = spawnCommand.bind(undefined, "xcrun", ["simctl", "getenv", "booted", "asdf"]);
+        iOSPlatform.name = "iOS";
+        iOSPlatform.emulatorReadyAttempts = 0;
+        
+        // called when an emulator is initialized successfully
+        var emulatorsInit = 0;
+        function onEmulatorInit(platform) {
+            ++emulatorsInit;
+            console.log(platform.name + " emulator is ready!");
+            if (emulatorsInit === ((android ? 1 : 0) + (ios ? 1 : 0))) {
+                console.log("All emulators are ready!");
+                callback();
+            }
+        }
+        
+        // loops the check for whether or not the emulator for the platform is initialized
+        function checkEmulatorReadyLooper(platform) {
+            ++platform.emulatorReadyAttempts;
+            if (platform.emulatorReadyAttempts > emulatorMaxReadyAttempts)
+            {
+                console.log(platform.name + " emulator is not ready after " + emulatorMaxReadyAttempts + " attempts, abort.");
+                return callback(1);
+            }
+            setTimeout(checkEmulatorReady.bind(undefined, platform, checkEmulatorReadyLooper), emulatorReadyCheckDelay);
+        }
+        
+        // called to check if the emulator for the platform is initialized
+        function checkEmulatorReady(platform, onFailure) {
+            console.log("Checking if " + platform.name + " emulator is ready yet...");
+            // dummy command that succeeds if emulator is ready and fails otherwise
+            platform.emulatorCheck(function (code) {
+                if (!code) return onEmulatorInit(platform);
+                else {
+                    console.log(platform.name + " emulator is not ready yet!");
+                    return onFailure(platform);
+                }
+            }, true);
+        }
+        
+        if (android) {
+            var bootMethod = restartIfRunning ? androidPlatform.emulatorKill : checkEmulatorReady.bind(undefined, androidPlatform);
+            bootMethod(function () {
+                androidPlatform.emulatorStart();
+                return checkEmulatorReadyLooper(androidPlatform);
+            });
+        }
+        
+        if (ios) {
+            var bootMethod = restartIfRunning ? iOSPlatform.emulatorKill : checkEmulatorReady.bind(undefined, iOSPlatform);
+            bootMethod(function () {
+                iOSPlatform.emulatorStart();
+                return checkEmulatorReadyLooper(iOSPlatform);
+            });
+        }
+        
+        // This needs to be done so that the task will exit.
+        // The command that creates the Android emulator persists with the life of the emulator and hangs this process unless we force it to quit.
+        gulp.doneCallback = function (err) {
+            process.exit(err ? 1 : 0);
         }
     }
     
-    // called to check if an Android emulator is initialized
-    function androidEmulatorReady(onFailure) {
-        console.log("Checking if Android emulator is ready yet...");
-        // dummy command that succeeds if emulator is ready and fails otherwise
-        spawnCommand("adb", ["shell", "pm", "list", "packages"], (code) => {
-            if (!code) return onEmulatorInit("Android");
-            else {
-                console.log("Android emulator is not ready yet!");
-                return onFailure();
-            }
-        }, true);
-    }
-    // called to check if an iOS emulator is initialized
-    function iOSEmulatorReady(onFailure) {
-        console.log("Checking if iOS emulator is ready yet...");
-        // dummy command that succeeds if emulator is ready and fails otherwise
-        spawnCommand("xcrun", ["simctl", "getenv", "booted", "asdf"], (code) => {
-            if (!code) return onEmulatorInit("iOS");
-            else {
-                console.log("iOS emulator is not ready yet!");
-                return onFailure();
-            }
-        }, true);
-    }
-    // kills the Android emulator then starts it
-    function killThenStartAndroid() {
-        spawnCommand("adb", ["emu", "kill"], () => {
-            // emulator @emulator, which starts the android emulator, never returns, so we must check its success on another thread
-            spawnCommand("emulator", ["@emulator"], undefined, false, true);
-        
-            var emulatorReadyAttempts = 0;
-            function androidEmulatorReadyLooper() {
-                ++emulatorReadyAttempts;
-                if (emulatorReadyAttempts > emulatorMaxReadyAttempts)
-                {
-                    console.log("Android emulator is not ready after " + emulatorMaxReadyAttempts + " attempts, abort.");
-                    androidProcess.kill();
-                    return callback(1);
-                }
-                setTimeout(androidEmulatorReady.bind(undefined, androidEmulatorReadyLooper), emulatorReadyCheckDelay);
-            }
-            androidEmulatorReadyLooper();
-        }, true);
-    }
-    // kills the iOS emulator then starts it
-    function killThenStartIOS() {
-        spawnCommand("killall", ["\"" + iOSSimulatorProcessName + "\""], () => {
-            spawnCommand("xcrun", ["instruments", "-w", iOSEmulatorName], () => {
-                var emulatorReadyAttempts = 0;
-                function iOSEmulatorReadyLooper() {
-                    ++emulatorReadyAttempts;
-                    if (emulatorReadyAttempts > emulatorMaxReadyAttempts)
-                    {
-                        console.log("iOS emulator is not ready after " + emulatorMaxReadyAttempts + " attempts, abort.");
-                        return callback(1);
-                    }
-                    setTimeout(iOSEmulatorReady.bind(undefined, iOSEmulatorReadyLooper), emulatorReadyCheckDelay);
-                }
-                iOSEmulatorReady(iOSEmulatorReadyLooper);
-            });
-        }, true);
-    }
-    if (!restartIfRunning) {
-        if (android) {
-            androidEmulatorReady(() => {
-                killThenStartAndroid();
-            });
-        }
-        if (ios) {
-            iOSEmulatorReady(() => {
-                killThenStartIOS();
-            });
-        }
-    } else {
-        if (android) killThenStartAndroid();
-        if (ios) killThenStartIOS();
-    }
-    // This needs to be done so that the task will exit.
-    // The command that creates the Android emulator persists with the life of the emulator and hangs this process unless we force it to quit.
-    gulp.doneCallback = (err) => {
-        process.exit(err ? 1 : 0);
-    }
+    if (!ios) startEmulatorsInternal();
 }
 
 // procedurally generate tasks for every possible testing configuration
@@ -284,19 +322,15 @@ function generateEmulatorTasks(taskName, android, ios) {
 }
 
 function getEmulatorTaskNameSuffix(android, ios) {
-    var emulatorTaskNameSuffix = "";
-    
-    if (android) emulatorTaskNameSuffix += "-android";
-    if (ios) emulatorTaskNameSuffix += "-ios";
-    // "emulator" instead of "emulator-android-ios"
-    if (android && ios) emulatorTaskNameSuffix = "";
-    
-    return emulatorTaskNameSuffix
+    if (!!android === !!ios) return "";
+    else if (android) return "-android";
+    else return "-ios";
 }
 
 var emulatorTaskNamePrefix = "emulator";
 for (var android = 0; android < 2; android++) {
-    for (var ios = 0; ios < 4; ios++) {
+    for (var ios = 0; ios < 2; ios++) {
+        if (!android && !ios) continue;
         generateEmulatorTasks(emulatorTaskNamePrefix + getEmulatorTaskNameSuffix(android, ios), android, ios);
     }
 }
@@ -338,28 +372,27 @@ for (var android = 0; android < 2; android++) {
                 // 0 = run tests on local version of plugin
                 // 1 = run tests on version of plugin from npm
                 
+                var options = {
+                    android: !!android,
+                    ios: !!ios,
+                    uiwebview: ios % 2 == 1,
+                    wkwebview: ios >= 2,
+                    core: !!core,
+                    npm: !!npm
+                };
+                
                 var taskName = taskNamePrefix;
-                var taskNameSuffix = "";
-                if (android) taskNameSuffix += "-android";
-                if (ios) taskNameSuffix += "-ios";
-                if (ios === 1) taskNameSuffix += "-uiwebview";
-                if (ios === 2) taskNameSuffix += "-wkwebview";
+                // test instead of test-android-ios
+                if (!(options.android && options.ios && options.uiwebview && options.wkwebview)) {
+                    options.android && (taskName += "-android");
+                    options.ios && (taskName += "-ios");
+                    // test-ios instead of test-ios-uiwebview-wkwebview
+                    options.uiwebview && !options.wkwebview && (taskName += "-uiwebview");
+                    options.wkwebview && !options.uiwebview && (taskName += "-wkwebview");
+                }
                 
-                // "test" instead of "test-android-ios"
-                if (android && ios === 3) taskNameSuffix = "";
-                
-                if (core) taskNameSuffix += "-core";
-                if (npm) taskNameSuffix += "-npm";
-                
-                taskName += taskNameSuffix;
-                
-                var options = {};
-                if (android) options.android = true;
-                if (ios) options.ios = true;
-                if (ios % 2 === 1) options.uiwebview = true;
-                if (ios >= 2) options.wkwebview = true;
-                if (core) options.core = true;
-                if (npm) options.npm = true;
+                options.core && (taskName += "-core");
+                options.npm && (taskName += "-npm");
                 
                 generateTestTasks(taskName, options);
             }

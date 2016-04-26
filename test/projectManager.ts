@@ -148,7 +148,7 @@ export class ProjectManager {
      */
     public static buildPlatform(projectFolder: string, targetPlatform: platform.IPlatform): Q.Promise<string> {
         console.log("Building " + targetPlatform.getCordovaName() + " project in " + projectFolder);
-        // don't print output here because the iOS build process outputs so much nonsense that it buffer overflows and exits the entire test process
+        // don't log the iOS build output because it is too verbose and overflows the buffer
         return ProjectManager.execChildProcess("cordova build " + targetPlatform.getCordovaName(), { cwd: projectFolder }, false);
     }
     

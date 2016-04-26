@@ -11,11 +11,6 @@ Instead, modify the sources in the ```www``` folder and compile a new version of
 
 ```node.js``` and ```npm``` are needed for building this project. ```npm``` comes bundled with the ```node.js``` installer. You can download the ```node.js``` installer here: https://nodejs.org/download/. 
 
-To run Android tests, make sure you have ```sdk\tools``` and  ```sdk\platform-tools``` in your PATH.
-
-If you would like the tests to start the emulators for you, configure an Android emulator using the AVD and name it ```emulator```.
-If you have the latest version of XCode installed, you should not have to configure anything.
-
 ### Compile
 
 Follow these steps to build a new version of the plugin:
