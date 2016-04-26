@@ -71,6 +71,10 @@ function execCommand(command, args, callback, silent) {
         if (!silent) console.error("" + data);
     });
     
+    process.on('error', function (code) {
+        callback && callback(code);
+    })
+    
     process.on('exit', function (code) {
         callback && callback(code === 0 ? undefined : "Error code: " + code);
     });
