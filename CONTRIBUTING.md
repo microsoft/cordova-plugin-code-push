@@ -37,9 +37,6 @@ Make sure you can build the plugin by following the steps above.
 
 To run Android tests, make sure you have ```sdk\tools``` and  ```sdk\platform-tools``` in your PATH.
 
-If you would like the tests to start the emulators for you, configure an Android emulator using the AVD and name it ```emulator```.
-If you have the latest version of XCode installed, you should not have to configure anything.
-
 ### Supported platforms
 
 The plugin has end to end tests for Android and iOS. Depending on your development machine OS, you can run some or all the tests.
@@ -55,9 +52,9 @@ The tests first build the app.
 
 They then check if the required emulators are currently running.
 
-If they are not, then it attempts to start an Android emulator named ```emulator``` (if one exists) and an iOS simulator named ```iPhone 6s (9.3)```. If these emulators don't exist on your computer, the task will exit and the tests will fail.
+If they are not, then it attempts to start an Android emulator named ```emulator``` (or specify a name by adding ```--androidemu yourEmulatorNameHere``` as an argument to the gulp task) and/or the latest iOS iPhone simulator. If this fails, the task will exit and the tests will fail.
 
-If you would like the tests to always restart the necessary emulators, add a ```-clean``` to the end of the command you'd like to run.
+If you would like the tests to always restart the necessary emulators (killing them if they are currently running), add a ```-clean``` to the end of the command you'd like to run.
 
 The desired unit tests are then run.
 
