@@ -63,7 +63,7 @@ public class CodePush extends CordovaPlugin {
         } else if ("install".equals(action)) {
             return execInstall(args, callbackContext);
         } else if ("updateSuccess".equals(action)) {
-            return execUpdateSuccess(callbackContext);
+            return execUpdateSuccess(args, callbackContext);
         } else if ("restartApplication".equals(action)) {
             return execRestartApplication(args, callbackContext);
         } else if ("isPendingUpdate".equals(action)) {
@@ -103,13 +103,18 @@ public class CodePush extends CordovaPlugin {
         return true;
     }
 
-    private boolean execUpdateSuccess(CallbackContext callbackContext) {
+    private boolean execUpdateSuccess(CordovaArgs args, CallbackContext callbackContext) {
+        String deploymentKey = args.getString(0);
+        if (deploymentKey.equals(null) || string.equals("") || string.equals("null")) {
+            deploymentKey = mainWebView.getPreferences().getString(DEPLOYMENT_KEY_PREFERENCE, null);
+        }
+
         if (this.codePushPackageManager.isFirstRun()) {
             this.codePushPackageManager.saveFirstRunFlag();
             /* save reporting status for first install */
             try {
                 String appVersion = Utilities.getAppVersionName(cordova.getActivity());
-                codePushReportingManager.reportStatus(CodePushReportingManager.Status.STORE_VERSION, null, appVersion, mainWebView.getPreferences().getString(DEPLOYMENT_KEY_PREFERENCE, null), this.mainWebView);
+                codePushReportingManager.reportStatus(CodePushReportingManager.Status.STORE_VERSION, null, appVersion, deploymentKey, this.mainWebView);
             } catch (PackageManager.NameNotFoundException e) {
                 // Should not happen unless the appVersion is not specified, in which case we can't report anything anyway.
                 e.printStackTrace();
@@ -310,13 +315,6 @@ public class CodePush extends CordovaPlugin {
                             this.codePushPackageManager.clearFailedUpdates();
                             this.codePushPackageManager.clearPendingInstall();
                             this.codePushPackageManager.clearInstallNeedsConfirmation();
-                            try {
-                                String appVersion = Utilities.getAppVersionName(cordova.getActivity());
-                                codePushReportingManager.reportStatus(CodePushReportingManager.Status.STORE_VERSION, null, appVersion, mainWebView.getPreferences().getString(DEPLOYMENT_KEY_PREFERENCE, null), this.mainWebView);
-                            } catch (PackageManager.NameNotFoundException e) {
-                                // Should not happen unless the appVersion is not specified, in which case we can't report anything anyway.
-                                e.printStackTrace();
-                            }
                         }
                     }
                 }
