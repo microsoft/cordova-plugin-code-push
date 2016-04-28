@@ -44,6 +44,11 @@ export interface IPlatform {
  */
 export interface IEmulatorManager {
     /**
+     * Boots the target emulator
+     */
+    // bootEmulator(): Q.Promise<string>;
+    
+    /**
      * Launches an already installed application by app id.
      */
     launchInstalledApplication(appId: string): Q.Promise<string>;
@@ -80,6 +85,7 @@ export interface IEmulatorManager {
 export class Android implements IPlatform {
     private static instance: Android;
     private emulatorManager: IEmulatorManager;
+    private serverUrl: string;
     
     constructor(emulatorManager: IEmulatorManager) {
         this.emulatorManager = emulatorManager;
@@ -101,7 +107,8 @@ export class Android implements IPlatform {
      * Gets the server url used for testing.
      */
     public getServerUrl(): string {
-        return tu.TestUtil.AndroidServerUrl;
+        if (!this.serverUrl) this.serverUrl = tu.TestUtil.readAndroidServerUrl();
+        return this.serverUrl;
     }
 
     public getPlatformWwwPath(projectDirectory: string): string {
@@ -123,6 +130,7 @@ export class Android implements IPlatform {
 export class IOS implements IPlatform {
     private static instance: IOS;
     private emulatorManager: IEmulatorManager;
+    private serverUrl: string;
 
     constructor(emulatorManager: IEmulatorManager) {
         this.emulatorManager = emulatorManager;
@@ -144,7 +152,8 @@ export class IOS implements IPlatform {
      * Gets the server url used for testing.
      */
     public getServerUrl(): string {
-        return tu.TestUtil.IOSServerUrl;
+        if (!this.serverUrl) this.serverUrl = tu.TestUtil.readIOSServerUrl();
+        return this.serverUrl;
     }
 
     public getPlatformWwwPath(projectDirectory: string): string {
@@ -161,6 +170,13 @@ export class IOS implements IPlatform {
 }
 
 export class IOSEmulatorManager implements IEmulatorManager {
+    /**
+     * Boots the target emulator
+     */
+    /*bootEmulator(): Q.Promise<string> {
+        
+    }*/
+    
     /**
      * Launches an already installed application by app id.
      */
@@ -237,6 +253,13 @@ export class IOSEmulatorManager implements IEmulatorManager {
 }
 
 export class AndroidEmulatorManager implements IEmulatorManager {
+    /**
+     * Boots the target emulator
+     */
+    /*bootEmulator(): Q.Promise<string> {
+        
+    }*/
+    
     /**
      * Launches an already installed application by app id.
      */

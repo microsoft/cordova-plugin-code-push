@@ -10,15 +10,18 @@ import Q = require("q");
 
 export class TestUtil {
     public static ANDROID_PLATFORM_OPTION_NAME: string = "--android";
+    public static ANDROID_SERVER_URL: string = "--androidserver";
     public static IOS_PLATFORM_OPTION_NAME: string = "--ios";
+    public static IOS_SERVER_URL: string = "--iosserver";
     public static SHOULD_USE_WKWEBVIEW: string = "--use-wkwebview";
     public static TEST_RUN_DIRECTORY: string = "--test-directory";
     public static TEST_UPDATES_DIRECTORY: string = "--updates-directory";
     public static CORE_TESTS_ONLY: string = "--core";
     public static PULL_FROM_NPM: string = "--npm";
+    public static NO_SETUP: string = "--no-setup";
     
-    public static IOSServerUrl = "http://127.0.0.1:3000";
-    public static AndroidServerUrl = "http://10.0.2.2:3000";
+    public static defaultIOSServerUrl = "http://127.0.0.1:3000";
+    public static defaultAndroidServerUrl = "http://10.0.2.2:3001";
     
     public static templatePath = path.join(__dirname, "../../test/template");
     public static thisPluginPath = path.join(__dirname, "../..");
@@ -56,12 +59,41 @@ export class TestUtil {
     }
     
     /**
+     * Reads the Android server url to use
+     */
+    public static readAndroidServerUrl(): string {
+        var commandLineOption = TestUtil.readMochaCommandLineOption(TestUtil.ANDROID_SERVER_URL);
+        var androidServerUrl = commandLineOption ? commandLineOption : TestUtil.defaultAndroidServerUrl;
+        console.log("androidServerUrl = " + androidServerUrl);
+        return androidServerUrl;
+    }
+    
+    /**
+     * Reads the iOS server url to use
+     */
+    public static readIOSServerUrl(): string {
+        var commandLineOption = TestUtil.readMochaCommandLineOption(TestUtil.IOS_SERVER_URL);
+        var iOSServerUrl = commandLineOption ? commandLineOption : TestUtil.defaultIOSServerUrl;
+        console.log("iOSServerUrl = " + iOSServerUrl);
+        return iOSServerUrl;
+    }
+    
+    /**
      * Reads whether or not only core tests should be run.
      */
     public static readCoreTestsOnly(): boolean {
         var coreTestsOnly = TestUtil.readMochaCommandLineFlag(TestUtil.CORE_TESTS_ONLY);
         if (coreTestsOnly) console.log("only core tests");
         return coreTestsOnly;
+    }
+    
+    /**
+     * Reads whether or not to setup the test directories.
+     */
+    public static readNoSetup(): boolean {
+        var noSetup = TestUtil.readMochaCommandLineFlag(TestUtil.NO_SETUP);
+        if (noSetup) console.log("don't setup test directories");
+        return noSetup;
     }
     
     /**

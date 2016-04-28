@@ -110,6 +110,27 @@ function execCommandWithPromise(command, options, logOutput) {
     return deferred.promise;
 }
 
+function getCommandLineFlag(optionName) {
+    for (var i = 0; i < process.argv.length; i++) {
+        if (process.argv[i].indexOf(optionName) === 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function getCommandLineOption(optionName, defaultValue) {
+    for (var i = 0; i < process.argv.length; i++) {
+        if (process.argv[i].indexOf(optionName) === 0) {
+            if (i + 1 < process.argv.length) {
+                return process.argv[i + 1];
+            }
+            break;
+        }
+    }
+    return defaultValue;
+}
+
 function runTests(callback, options) {
     var command = "mocha";
     var args = ["./bin/test"];
@@ -119,8 +140,9 @@ function runTests(callback, options) {
         args.push("--use-wkwebview");
         args.push(options.wkwebview ? (options.uiwebview ? "both" : "true") : "false");
     }
-    if (options.core) args.push("--core");
-    if (options.npm) args.push("--npm");
+    if (options.core || getCommandLineFlag("--core")) args.push("--core");
+    if (options.npm || getCommandLineFlag("--npm")) args.push("--npm");
+    if (options.nosetup) args.push("--no-setup");
     execCommand(command, args, callback);
 }
 
@@ -203,35 +225,38 @@ gulp.task("default", function (callback) {
     runSequence("clean", "compile", "tslint", callback);
 });
 
-function startEmulators(callback, restartIfRunning, android, ios) {
+function startEmulators(callback, android, ios) {
+    var restartIfRunning = getCommandLineFlag("--clean");
+    
+    if (restartIfRunning) console.log("Restarting emulators");
+    
     if (android) {
-        var androidEmulatorOptionName = "--androidemu";
-        var androidEmulatorName = "emulator";
-        // get the Android emulator from the arguments to run tests on
-        for (var i = 0; i < process.argv.length; i++) {
-            if (process.argv[i].indexOf(androidEmulatorOptionName) === 0) {
-                if (i + 1 < process.argv.length) {
-                    androidEmulatorName = process.argv[i + 1];
-                }
-                break;
-            }
-        }
+        var androidEmulatorName = getCommandLineOption("--androidemu", "emulator");
         console.log("Using " + androidEmulatorName + " for Android tests");
+        if (!ios) startEmulatorsInternal();
     }
 
     if (ios) {
-        var iOSEmulatorName = "";
-        // get the most recent iOS simulator to run tests on
-        execCommandWithPromise("xcrun simctl list")
-            .then(function (listOfDevices) {
-                var phoneDevice = /iPhone (\S* )*(\(([0-9A-Z-]*)\))/g;
-                var match = listOfDevices.match(phoneDevice);
-                iOSEmulatorName = match[match.length - 1];
-                console.log("Using " + iOSEmulatorName + " for iOS tests");
-            }, function () { return null; })
-            .then(function () {
-                return startEmulatorsInternal();
-            });
+        function onReadIOSEmuName() {
+            console.log("Using " + iOSEmulatorName + " for iOS tests");
+            startEmulatorsInternal();
+        }
+        
+        var iOSEmulatorNameCommandLineOption = getCommandLineOption("--iosemu", undefined);
+        if (iOSEmulatorNameCommandLineOption) {
+            iOSEmulatorName = iOSEmulatorNameCommandLineOption;
+            onReadIOSEmuName();
+        } else {
+            var iOSEmulatorName = "";
+            // get the most recent iOS simulator to run tests on
+            execCommandWithPromise("xcrun simctl list")
+                .then(function (listOfDevices) {
+                    var phoneDevice = /iPhone (\S* )*(\(([0-9A-Z-]*)\))/g;
+                    var match = listOfDevices.match(phoneDevice);
+                    iOSEmulatorName = match[match.length - 1];
+                    onReadIOSEmuName();
+                });
+        }
     }
     
     function startEmulatorsInternal() {
@@ -306,23 +331,6 @@ function startEmulators(callback, restartIfRunning, android, ios) {
             process.exit(err ? 1 : 0);
         }
     }
-    
-    if (!ios) startEmulatorsInternal();
-}
-
-// procedurally generate tasks for every possible testing configuration
-var cleanSuffix = "-clean";
-var fastSuffix = "-fast";
-
-// generate tasks for starting emulators
-function generateEmulatorTasks(taskName, android, ios) {
-    gulp.task(taskName, function (callback) {
-        startEmulators(callback, false, android, ios);
-    });
-    
-    gulp.task(taskName + cleanSuffix, function (callback) {
-        startEmulators(callback, true, android, ios);
-    });
 }
 
 function getEmulatorTaskNameSuffix(android, ios) {
@@ -335,9 +343,137 @@ var emulatorTaskNamePrefix = "emulator";
 for (var android = 0; android < 2; android++) {
     for (var ios = 0; ios < 2; ios++) {
         if (!android && !ios) continue;
-        generateEmulatorTasks(emulatorTaskNamePrefix + getEmulatorTaskNameSuffix(android, ios), android, ios);
+        gulp.task(emulatorTaskNamePrefix + getEmulatorTaskNameSuffix(android, ios), function (callback) {
+            startEmulators(callback, android, ios);
+        });
     }
 }
+
+// Fast Test Tasks
+//
+// Runs tests but does not build or start emulators
+
+// Run on Android fast
+gulp.task("test-android-fast", function (callback) {
+    var options = {
+        android: true,
+    };
+    
+    runTests(callback, options);
+});
+
+// Run on iOS with the UiWebView fast
+gulp.task("test-ios-uiwebview-fast", function (callback) {
+    var options = {
+        ios: true,
+        uiwebview: true,
+    };
+    
+    runTests(callback, options);
+});
+
+// Run on iOS with the WkWebView fast
+gulp.task("test-ios-wkwebview-fast", function (callback) {
+    var options = {
+        ios: true,
+        wkwebview: true,
+    };
+    
+    runTests(callback, options);
+});
+
+// No-Setup Test Tasks
+//
+// Does not set up the test project directories.
+// Must be run after a test that does set up a project directory!
+
+// Run on iOS with the UiWebView with no setup
+gulp.task("test-ios-uiwebview-no-setup", function (callback) {
+    var options = {
+        ios: true,
+        uiwebview: true,
+        nosetup: true
+    };
+    
+    runTests(callback, options);
+});
+
+// Run on iOS with the WkWebView with no setup
+gulp.task("test-ios-wkwebview-no-setup", function (callback) {
+    var options = {
+        ios: true,
+        wkwebview: true,
+        nosetup: true
+    };
+    
+    runTests(callback, options);
+});
+
+// Fast Composition Test Tasks
+//
+// Runs tests on multiple platforms.
+// Does not build or start emulators.
+
+// Run on iOS with both WebViews fast
+gulp.task("test-ios-fast", function (callback) {
+    runSequence("test-ios-uiwebview-fast", "test-ios-wkwebview-no-setup", callback);
+});
+
+// Run on Android and iOS with the UiWebView fast
+gulp.task("test-android-ios-uiwebview-fast", function (callback) {
+    runSequence("test-android-fast", "test-ios-uiwebview-no-setup", callback);
+});
+
+// Run on Android and iOS with the WkWebView fast
+gulp.task("test-android-ios-wkwebview-fast", function (callback) {
+    runSequence("test-android-fast", "test-ios-wkwebview-no-setup", callback);
+});
+
+// Run on Android and iOS with both WebViews fast
+gulp.task("test-fast", function (callback) {
+    runSequence("test-android-ios-uiwebview-fast", "test-ios-wkwebview-no-setup", callback);
+});
+
+// Test Tasks
+//
+// Runs tests and builds and starts emulators
+
+// Run on Android
+gulp.task("test-android", function (callback) {
+    runSequence("default", "emulator-android", "test-android-fast", callback);
+});
+
+// Run on iOS with the UiWebView
+gulp.task("test-ios-uiwebview", function (callback) {
+    runSequence("default", "emulator-ios", "test-ios-uiwebview-fast", callback);
+});
+
+// Run on iOS with the WkWebView
+gulp.task("test-ios-wkwebview", function (callback) {
+    runSequence("default", "emulator-ios", "test-ios-wkwebview-fast", callback);
+});
+
+// Run on iOS with both WebViews
+gulp.task("test-ios", function (callback) {
+    runSequence("default", "emulator-ios", "test-ios-fast", callback);
+});
+
+// Run on Android and iOS with the UiWebView
+gulp.task("test-android-ios-uiwebview", function (callback) {
+    runSequence("default", "emulator", "test-android-ios-uiwebview-fast", callback);
+});
+
+// Run on Android and iOS with the WkWebView
+gulp.task("test-android-ios-wkwebview", function (callback) {
+    runSequence("default", "emulator", "test-android-ios-wkwebview-fast", callback);
+});
+
+// Run on Android and iOS with both WebViews
+gulp.task("test", function (callback) {
+    runSequence("default", "emulator", "test-fast", callback);
+});
+
+/* 
                 
 function generateTestTasks(taskName, options) {
     gulp.task(taskName + "-fast", function (callback) {
@@ -402,4 +538,4 @@ for (var android = 0; android < 2; android++) {
             }
         }
     }
-}
+} */

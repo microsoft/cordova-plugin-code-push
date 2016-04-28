@@ -27,7 +27,7 @@ var thisPluginPath = testUtil.readPluginPath();
 var testRunDirectory = testUtil.readTestRunDirectory();
 var updatesDirectory = testUtil.readTestUpdatesDirectory();
 var onlyRunCoreTests = testUtil.readCoreTestsOnly();
-var targetPlatforms: platform.IPlatform[] = platform.PlatformResolver.resolvePlatforms(testUtil.readTargetPlatforms()); // = platform.PlatformResolver.resolvePlatform(testUtil.readTargetPlatform());
+var targetPlatforms: platform.IPlatform[] = platform.PlatformResolver.resolvePlatforms(testUtil.readTargetPlatforms());
 var shouldUseWkWebView = testUtil.readShouldUseWkWebView();
 
 const TestAppName = "TestCodePush";
@@ -58,14 +58,12 @@ const UpdateSync = "js/updateSync.js";
 const UpdateSync2x = "js/updateSync2x.js";
 const UpdateNotifyApplicationReadyConditional = "js/updateNARConditional.js";
 
-var app: any;
-var server: any;
 var mockResponse: any;
 var testMessageResponse: any;
 var testMessageCallback: (requestBody: any) => void;
 var updateCheckCallback: (requestBody: any) => void;
 var mockUpdatePackagePath: string;
-var isTestsSetup: boolean = false;
+var isTestsSetup: boolean = testUtil.readNoSetup();
 
 // FUNCTIONS //
 
@@ -77,77 +75,12 @@ function cleanupTest(): void {
     testMessageResponse = undefined;
 }
 
-function cleanupServer(): void {
-    if (server) {
-        server.close();
-        server = undefined;
-    }
-}
-
-function createTestProject(directory: string, targetPlatforms: platform.IPlatform[]): Q.Promise<string> {
+function createTestProject(directory: string): Q.Promise<string> {
     return projectManager.setupProject(
         directory, templatePath,
         TestAppName, TestNamespace)
-        .then<string>(() => {
-            var promise: Q.Promise<string>;
-            targetPlatforms.forEach(platform => {
-                var nextPromise = projectManager.addPlatform(directory, platform);
-                if (promise) {
-                    promise.then<string>(() => { return nextPromise; });
-                } else {
-                    promise = nextPromise;
-                }
-            });
-            return promise;
-        })
         .then<string>(() => { return projectManager.addPlugin(directory, AcquisitionSDKPluginName); })
         .then<string>(() => { return projectManager.addPlugin(directory, thisPluginPath); });
-}
-
-function setupServer(targetPlatform: platform.IPlatform) {
-    console.log("Setting up server at " + targetPlatform.getServerUrl());
-    
-    app = express();
-    app.use(bodyparser.json());
-    app.use(bodyparser.urlencoded({ extended: true }));
-    
-    app.use(function(req: any, res: any, next: any) {
-        res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader("Access-Control-Allow-Methods", "*");
-        res.setHeader("Access-Control-Allow-Headers", "origin, content-type, accept");
-        next();
-    });
-
-    app.get("/updateCheck", function(req: any, res: any) {
-        updateCheckCallback && updateCheckCallback(req);
-        res.send(mockResponse);
-        console.log("Update check called from the app.");
-        console.log("Request: " + JSON.stringify(req.query));
-        console.log("Response: " + JSON.stringify(mockResponse));
-    });
-
-    app.get("/download", function(req: any, res: any) {
-        console.log("Application downloading the package.");
-        
-        res.download(mockUpdatePackagePath);
-    });
-
-    app.post("/reportTestMessage", function(req: any, res: any) {
-        console.log("Application reported a test message.");
-        console.log("Body: " + JSON.stringify(req.body));
-
-        if (!testMessageResponse) {
-            console.log("Sending OK");
-            res.sendStatus(200);
-        } else {
-            console.log("Sending body: " + testMessageResponse);
-            res.status(200).send(testMessageResponse);
-        }
-
-        testMessageCallback && testMessageCallback(req.body);
-    });
-
-    server = app.listen(3000);
 }
 
 function createDefaultResponse(): su.CheckForUpdateResponseMock {
@@ -202,6 +135,61 @@ function verifyMessages(expectedMessages: (string | su.AppMessage)[], deferred: 
 };
 
 function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): void {
+    var server: any;
+    
+    function setupServer() {
+        console.log("Setting up server at " + targetPlatform.getServerUrl());
+        
+        var app = express();
+        app.use(bodyparser.json());
+        app.use(bodyparser.urlencoded({ extended: true }));
+        
+        app.use(function(req: any, res: any, next: any) {
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            res.setHeader("Access-Control-Allow-Methods", "*");
+            res.setHeader("Access-Control-Allow-Headers", "origin, content-type, accept");
+            next();
+        });
+
+        app.get("/updateCheck", function(req: any, res: any) {
+            updateCheckCallback && updateCheckCallback(req);
+            res.send(mockResponse);
+            console.log("Update check called from the app.");
+            console.log("Request: " + JSON.stringify(req.query));
+            console.log("Response: " + JSON.stringify(mockResponse));
+        });
+
+        app.get("/download", function(req: any, res: any) {
+            console.log("Application downloading the package.");
+            
+            res.download(mockUpdatePackagePath);
+        });
+
+        app.post("/reportTestMessage", function(req: any, res: any) {
+            console.log("Application reported a test message.");
+            console.log("Body: " + JSON.stringify(req.body));
+
+            if (!testMessageResponse) {
+                console.log("Sending OK");
+                res.sendStatus(200);
+            } else {
+                console.log("Sending body: " + testMessageResponse);
+                res.status(200).send(testMessageResponse);
+            }
+
+            testMessageCallback && testMessageCallback(req.body);
+        });
+
+        var serverPortRegEx = /:([0-9]+)/;
+        server = app.listen(+targetPlatform.getServerUrl().match(serverPortRegEx)[1]);
+    }
+    
+    function cleanupServer(): void {
+        if (server) {
+            server.close();
+            server = undefined;
+        }
+    }
 
     function setupTests(): Q.Promise<string> {
         return projectManager.uninstallApplication(TestNamespace, targetPlatform)
@@ -212,10 +200,11 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                 
                 console.log("Building test project.");
                 // create the test project
-                return createTestProject(testRunDirectory, targetPlatforms)
+                return createTestProject(testRunDirectory)
                     .then(() => {
+                        console.log("Building update project.");
                         // create the update project
-                        return createTestProject(updatesDirectory, targetPlatforms);
+                        return createTestProject(updatesDirectory);
                     });
             });
     }
@@ -250,10 +239,14 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
         this.timeout(100 * 60 * 1000);
         
         before(() => {
+            setupServer();
             return setupTests()
                 .then(() => {
-                    return setupServer(targetPlatform);
+                    return projectManager.addPlatform(testRunDirectory, targetPlatform);
                 })
+                .then(() => {
+                    return projectManager.addPlatform(updatesDirectory, targetPlatform);
+                }, () => { return null; /* ignore if platform has already been added */ })
                 .then(() => {
                     return useWkWebView ? projectManager.addPlugin(testRunDirectory, WkWebViewEnginePluginName).then(() => { return projectManager.addPlugin(updatesDirectory, WkWebViewEnginePluginName); }) : null;
                 });
