@@ -3,7 +3,7 @@
 "use strict";
 
 import path = require("path");
-import ProjectManager = require("./ProjectManager");
+import ProjectManager = require("./projectManager");
 import tu = require("./testUtil");
 import Q = require("q");
 
