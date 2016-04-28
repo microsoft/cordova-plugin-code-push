@@ -261,7 +261,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
         
         after(() => {
             cleanupServer();
-            return useWkWebView ? projectManager.removePlugin(testRunDirectory, WkWebViewEnginePluginName) : null;
+            return useWkWebView ? projectManager.removePlugin(testRunDirectory, WkWebViewEnginePluginName).then(() => { return projectManager.removePlugin(updatesDirectory, WkWebViewEnginePluginName); }) : null;
         });
 
         describe("#window.codePush.checkForUpdate", function() {
