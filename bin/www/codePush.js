@@ -18,8 +18,8 @@ var SyncStatus = require("./syncStatus");
 var CodePush = (function () {
     function CodePush() {
     }
-    CodePush.prototype.notifyApplicationReady = function (notifySucceeded, notifyFailed) {
-        cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updateSuccess", []);
+    CodePush.prototype.notifyApplicationReady = function (notifySucceeded, notifyFailed, deploymentKey) {
+        cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updateSuccess", [deploymentKey]);
     };
     CodePush.prototype.restartApplication = function (installSuccess, errorCallback) {
         cordova.exec(installSuccess, errorCallback, "CodePush", "restartApplication", []);
@@ -179,7 +179,7 @@ var CodePush = (function () {
             var defaultOptions = this.getDefaultSyncOptions();
             CodePushUtil.copyUnassignedMembers(defaultOptions, syncOptions);
         }
-        window.codePush.notifyApplicationReady();
+        window.codePush.notifyApplicationReady(null, null, syncOptions.deploymentKey);
         var onError = function (error) {
             CodePushUtil.logError("An error occurred during sync.", error);
             syncCallback && syncCallback(SyncStatus.ERROR);

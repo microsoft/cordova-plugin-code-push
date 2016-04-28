@@ -187,11 +187,11 @@ interface CodePushCordovaPlugin {
      * Calling this function is required on the first run after an update. On every subsequent application run, calling this function is a noop.
      * If using sync API, calling this function is not required since sync calls it internally.
      *
-     * @param deploymentKey Optional string deployment key for this package.
      * @param notifySucceeded Optional callback invoked if the plugin was successfully notified.
      * @param notifyFailed Optional callback invoked in case of an error during notifying the plugin.
+     * @param deploymentKey Optional deployment key that overrides the config.xml setting.
      */
-    notifyApplicationReady(deploymentKey?: string, notifySucceeded?: SuccessCallback<void>, notifyFailed?: ErrorCallback): void;
+    notifyApplicationReady(notifySucceeded?: SuccessCallback<void>, notifyFailed?: ErrorCallback, deploymentKey?: string): void;
 
     /**
      * Reloads the application. If there is a pending update package installed using ON_NEXT_RESTART or ON_NEXT_RESUME modes, the update

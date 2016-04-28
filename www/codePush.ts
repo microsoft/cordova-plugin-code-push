@@ -43,11 +43,11 @@ class CodePush implements CodePushCordovaPlugin {
      * Calling this function is required on the first run after an update. On every subsequent application run, calling this function is a noop.
      * If using sync API, calling this function is not required since sync calls it internally.
      *
-     * @param deploymentKey Optional string deployment key for this package.
      * @param notifySucceeded Optional callback invoked if the plugin was successfully notified.
      * @param notifyFailed Optional callback invoked in case of an error during notifying the plugin.
+     * @param deploymentKey Optional deployment key that overrides the config.xml setting.
      */
-    public notifyApplicationReady(deploymentKey?: string, notifySucceeded?: SuccessCallback<void>, notifyFailed?: ErrorCallback): void {
+    public notifyApplicationReady(notifySucceeded?: SuccessCallback<void>, notifyFailed?: ErrorCallback, deploymentKey?: string): void {
         cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updateSuccess", [deploymentKey]);
     }
 
@@ -294,7 +294,7 @@ class CodePush implements CodePushCordovaPlugin {
             CodePushUtil.copyUnassignedMembers(defaultOptions, syncOptions);
         }
 
-        window.codePush.notifyApplicationReady(syncOptions.deploymentKey);
+        window.codePush.notifyApplicationReady(null, null, syncOptions.deploymentKey);
 
         var onError = (error: Error) => {
             CodePushUtil.logError("An error occurred during sync.", error);
