@@ -349,6 +349,10 @@ for (var android = 0; android < 2; android++) {
     }
 }
 
+////////////////////////////////////////////////////////////////////////
+// Test Tasks //////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+
 // Fast Test Tasks
 //
 // Runs tests but does not build or start emulators
@@ -472,70 +476,3 @@ gulp.task("test-android-ios-wkwebview", function (callback) {
 gulp.task("test", function (callback) {
     runSequence("default", "emulator", "test-fast", callback);
 });
-
-/* 
-                
-function generateTestTasks(taskName, options) {
-    gulp.task(taskName + "-fast", function (callback) {
-        runTests(callback, options);
-    });
-    
-    var emulatorTaskName = emulatorTaskNamePrefix + getEmulatorTaskNameSuffix(options.android, options.ios);
-    
-    gulp.task(taskName, function (callback) {
-        runSequence("default", emulatorTaskName, taskName + fastSuffix, callback);
-    });
-    
-    gulp.task(taskName + "-clean", function (callback) {
-        runSequence("default", emulatorTaskName + cleanSuffix, taskName + fastSuffix, callback);
-    });
-}
-
-// procedurally generate tasks for every possible testing configuration
-var taskNamePrefix = "test";
-for (var android = 0; android < 2; android++) {
-    // 0 = don't run android tests
-    // 1 = run android tests
-    for (var ios = 0; ios < 4; ios++) {
-        // 0 = don't run iOS tests
-        // 1 = run iOS tests on UIWebView
-        // 2 = run iOS tests on WKWebView
-        // 3 = run iOS tests on both WebViews
-        
-        // must have at least one platform to be a test
-        if (!android && !ios) continue;
-        
-        for (var core = 0; core < 2; core++) {
-            // 0 = run all tests
-            // 1 = run only core tests
-            for (var npm = 0; npm < 2; npm++) {
-                // 0 = run tests on local version of plugin
-                // 1 = run tests on version of plugin from npm
-                
-                var options = {
-                    android: !!android,
-                    ios: !!ios,
-                    uiwebview: ios % 2 == 1,
-                    wkwebview: ios >= 2,
-                    core: !!core,
-                    npm: !!npm
-                };
-                
-                var taskName = taskNamePrefix;
-                // test instead of test-android-ios
-                if (!(options.android && options.ios && options.uiwebview && options.wkwebview)) {
-                    options.android && (taskName += "-android");
-                    options.ios && (taskName += "-ios");
-                    // test-ios instead of test-ios-uiwebview-wkwebview
-                    options.uiwebview && !options.wkwebview && (taskName += "-uiwebview");
-                    options.wkwebview && !options.uiwebview && (taskName += "-wkwebview");
-                }
-                
-                options.core && (taskName += "-core");
-                options.npm && (taskName += "-npm");
-                
-                generateTestTasks(taskName, options);
-            }
-        }
-    }
-} */
