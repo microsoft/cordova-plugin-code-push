@@ -225,6 +225,9 @@ gulp.task("default", function (callback) {
     runSequence("clean", "compile", "tslint", callback);
 });
 
+////////////////////////////////////////////////////////////////////////
+// Emulator Setup Tasks ////////////////////////////////////////////////
+
 function startEmulators(callback, android, ios) {
     var restartIfRunning = getCommandLineFlag("--clean");
     
@@ -351,8 +354,8 @@ for (var android = 0; android < 2; android++) {
 
 ////////////////////////////////////////////////////////////////////////
 // Test Tasks //////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////
 // Fast Test Tasks
 //
 // Runs tests but does not build or start emulators
@@ -386,6 +389,7 @@ gulp.task("test-ios-wkwebview-fast", function (callback) {
     runTests(callback, options);
 });
 
+////////////////////////////////////////////////////////////////////////
 // No-Setup Test Tasks
 //
 // Does not set up the test project directories.
@@ -413,6 +417,7 @@ gulp.task("test-ios-wkwebview-no-setup", function (callback) {
     runTests(callback, options);
 });
 
+////////////////////////////////////////////////////////////////////////
 // Fast Composition Test Tasks
 //
 // Runs tests on multiple platforms.
@@ -438,6 +443,7 @@ gulp.task("test-fast", function (callback) {
     runSequence("test-android-ios-uiwebview-fast", "test-ios-wkwebview-no-setup", callback);
 });
 
+////////////////////////////////////////////////////////////////////////
 // Test Tasks
 //
 // Runs tests and builds and starts emulators
