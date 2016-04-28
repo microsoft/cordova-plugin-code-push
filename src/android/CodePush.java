@@ -104,8 +104,14 @@ public class CodePush extends CordovaPlugin {
     }
 
     private boolean execUpdateSuccess(CordovaArgs args, CallbackContext callbackContext) {
-        String deploymentKey = args.getString(0);
-        if (deploymentKey.equals(null) || string.equals("") || string.equals("null")) {
+        String deploymentKey = "";
+        try {
+            deploymentKey = args.getString(0);
+        } catch (JSONException e) {
+            // no-op becuase we don't care if we didn't get a deployment key from script; we will just try to use the one from preferences
+        }
+
+        if (deploymentKey.equals(null) || deploymentKey.equals("") || deploymentKey.equals("null") || deploymentKey.equals("undefined")) {
             deploymentKey = mainWebView.getPreferences().getString(DEPLOYMENT_KEY_PREFERENCE, null);
         }
 
