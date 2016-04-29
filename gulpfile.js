@@ -359,9 +359,10 @@ for (var android = 0; android < 2; android++) {
 // Test Tasks //////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////
-// Worker Tasks
+// Standalone Tasks
 //
-// Run the tests standalone
+// Run the tests without setting up the test projects.
+// Don't run these without running a setup task first!
 
 // Run on Android standalone
 gulp.task("test-run-android", function (callback) {
@@ -394,8 +395,11 @@ gulp.task("test-run-ios-wkwebview", function (callback) {
 
 ////////////////////////////////////////////////////////////////////////
 // Setup Tasks
+//
+// Sets up the test project directories that the tests use.
+// Must run before running a standalone suite of tests!
 
-// Set up the test projects
+// Sets up the test projects
 gulp.task("test-setup", function (callback) {
     var options = {
         setup: true
@@ -450,7 +454,7 @@ gulp.task("test-ios-wkwebview-fast", ["test-setup-ios"], function (callback) {
 ////////////////////////////////////////////////////////////////////////
 // Fast Composition Test Tasks
 //
-// Runs tests but doesn't build or start emulators.
+// Run tests but doesn't build or start emulators.
 
 // Run on iOS with the UiWebView fast
 gulp.task("test-android-ios-uiwebview-fast", ["test-setup-both"], function (callback) {
@@ -475,7 +479,7 @@ gulp.task("test-fast", ["test-setup-both"], function (callback) {
 ////////////////////////////////////////////////////////////////////////
 // Test Tasks
 //
-// Runs tests, builds, and starts emulators.
+// Run tests, build, and start emulators.
 
 // Run on Android
 gulp.task("test-android", ["test-setup-build-android"], function (callback) {
@@ -495,7 +499,7 @@ gulp.task("test-ios-wkwebview", ["test-setup-build-ios"], function (callback) {
 ////////////////////////////////////////////////////////////////////////
 // Composition Test Tasks
 //
-// Runs tests, builds, and starts emulators.
+// Run tests, build, and start emulators.
 
 // Run on Android and iOS with UiWebViews
 gulp.task("test-android-ios-uiwebview", ["test-setup-build-both"], function (callback) {
