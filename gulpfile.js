@@ -142,7 +142,7 @@ function runTests(callback, options) {
     }
     if (options.core || getCommandLineFlag("--core")) args.push("--core");
     if (options.npm || getCommandLineFlag("--npm")) args.push("--npm");
-    if (options.nosetup) args.push("--no-setup");
+    if (options.setup) args.push("--setup");
     execCommand(command, args, callback);
 }
 
@@ -346,9 +346,12 @@ var emulatorTaskNamePrefix = "emulator";
 for (var android = 0; android < 2; android++) {
     for (var ios = 0; ios < 2; ios++) {
         if (!android && !ios) continue;
-        gulp.task(emulatorTaskNamePrefix + getEmulatorTaskNameSuffix(android, ios), function (callback) {
-            startEmulators(callback, android, ios);
-        });
+        
+        ((android, ios) => {
+            gulp.task(emulatorTaskNamePrefix + getEmulatorTaskNameSuffix(android, ios), function (callback) {
+                startEmulators(callback, android, ios);
+            });
+        })(android, ios);
     }
 }
 
@@ -356,21 +359,21 @@ for (var android = 0; android < 2; android++) {
 // Test Tasks //////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////
-// Fast Test Tasks
+// Worker Tasks
 //
-// Runs tests but does not build or start emulators
+// Run the tests standalone
 
-// Run on Android fast
-gulp.task("test-android-fast", function (callback) {
+// Run on Android standalone
+gulp.task("test-run-android", function (callback) {
     var options = {
-        android: true,
+        android: true
     };
     
     runTests(callback, options);
 });
 
-// Run on iOS with the UiWebView fast
-gulp.task("test-ios-uiwebview-fast", function (callback) {
+// Run on iOS with the UiWebView standalone
+gulp.task("test-run-ios-uiwebview", function (callback) {
     var options = {
         ios: true,
         uiwebview: true,
@@ -379,8 +382,8 @@ gulp.task("test-ios-uiwebview-fast", function (callback) {
     runTests(callback, options);
 });
 
-// Run on iOS with the WkWebView fast
-gulp.task("test-ios-wkwebview-fast", function (callback) {
+// Run on iOS with the WkWebView standalone
+gulp.task("test-run-ios-wkwebview", function (callback) {
     var options = {
         ios: true,
         wkwebview: true,
@@ -390,95 +393,126 @@ gulp.task("test-ios-wkwebview-fast", function (callback) {
 });
 
 ////////////////////////////////////////////////////////////////////////
-// No-Setup Test Tasks
-//
-// Does not set up the test project directories.
-// Must be run after a test that does set up a project directory!
+// Setup Tasks
 
-// Run on iOS with the UiWebView with no setup
-gulp.task("test-ios-uiwebview-no-setup", function (callback) {
+// Set up the test projects
+gulp.task("test-setup", function (callback) {
     var options = {
-        ios: true,
-        uiwebview: true,
-        nosetup: true
+        setup: true
     };
     
     runTests(callback, options);
 });
 
-// Run on iOS with the WkWebView with no setup
-gulp.task("test-ios-wkwebview-no-setup", function (callback) {
-    var options = {
-        ios: true,
-        wkwebview: true,
-        nosetup: true
-    };
-    
-    runTests(callback, options);
+// Sets up test projects and starts the Android emulator
+gulp.task("test-setup-android", ["test-setup", "emulator-android"]);
+
+// Sets up test projects and starts the iOS emulator
+gulp.task("test-setup-ios", ["test-setup", "emulator-ios"]);
+
+// Sets up test projects and starts both emulators
+gulp.task("test-setup-both", ["test-setup", "emulator"]);
+
+// Builds, then sets up the test projects
+gulp.task("test-setup-build", ["default"], function (callback) {
+    runSequence("test-run-setup", callback);
+});
+
+// Builds, sets up test projects, and starts the Android emulator
+gulp.task("test-setup-build-android", ["test-setup-build", "emulator-android"]);
+
+// Builds, sets up test projects, and starts the iOS emulator
+gulp.task("test-setup-build-ios", ["test-setup-build", "emulator-ios"]);
+
+// Builds, sets up test projects, and starts both emulators
+gulp.task("test-setup-build-both", ["test-setup-build", "emulator"]);
+
+////////////////////////////////////////////////////////////////////////
+// Fast Test Tasks
+//
+// Runs tests but doesn't build or start emulators.
+
+// Run on Android fast
+gulp.task("test-android-fast", ["test-setup-android"], function (callback) {
+    runSequence("test-run-android", callback);
+});
+
+// Run on iOS with the UiWebView fast
+gulp.task("test-ios-uiwebview-fast", ["test-setup-ios"], function (callback) {
+    runSequence("test-run-ios-uiwebview", callback);
+});
+
+// Run on iOS with the WkWebView fast
+gulp.task("test-ios-wkwebview-fast", ["test-setup-ios"], function (callback) {
+    runSequence("test-run-ios-wkwebview", callback);
 });
 
 ////////////////////////////////////////////////////////////////////////
 // Fast Composition Test Tasks
 //
-// Runs tests on multiple platforms.
-// Does not build or start emulators.
+// Runs tests but doesn't build or start emulators.
+
+// Run on iOS with the UiWebView fast
+gulp.task("test-android-ios-uiwebview-fast", ["test-setup-both"], function (callback) {
+    runSequence("test-run-android", "test-run-ios-uiwebview", callback);
+});
+
+// Run on iOS with the WkWebView fast
+gulp.task("test-android-ios-wkwebview-fast", ["test-setup-both"], function (callback) {
+    runSequence("test-run-android", "test-run-ios-wkwebview", callback);
+});
 
 // Run on iOS with both WebViews fast
-gulp.task("test-ios-fast", function (callback) {
-    runSequence("test-ios-uiwebview-fast", "test-ios-wkwebview-no-setup", callback);
+gulp.task("test-ios-fast", ["test-setup-ios"], function (callback) {
+    runSequence("test-run-ios-uiwebview", "test-run-ios-wkwebview", callback);
 });
 
-// Run on Android and iOS with the UiWebView fast
-gulp.task("test-android-ios-uiwebview-fast", function (callback) {
-    runSequence("test-android-fast", "test-ios-uiwebview-no-setup", callback);
-});
-
-// Run on Android and iOS with the WkWebView fast
-gulp.task("test-android-ios-wkwebview-fast", function (callback) {
-    runSequence("test-android-fast", "test-ios-wkwebview-no-setup", callback);
-});
-
-// Run on Android and iOS with both WebViews fast
-gulp.task("test-fast", function (callback) {
-    runSequence("test-android-ios-uiwebview-fast", "test-ios-wkwebview-no-setup", callback);
+// Run on iOS with the WkWebView fast
+gulp.task("test-fast", ["test-setup-both"], function (callback) {
+    runSequence("test-run-android", "test-run-ios-uiwebview", "test-run-ios-wkwebview", callback);
 });
 
 ////////////////////////////////////////////////////////////////////////
 // Test Tasks
 //
-// Runs tests and builds and starts emulators
+// Runs tests, builds, and starts emulators.
 
 // Run on Android
-gulp.task("test-android", function (callback) {
-    runSequence("default", "emulator-android", "test-android-fast", callback);
+gulp.task("test-android", ["test-setup-build-android"], function (callback) {
+    runSequence("test-run-android", callback);
 });
 
 // Run on iOS with the UiWebView
-gulp.task("test-ios-uiwebview", function (callback) {
-    runSequence("default", "emulator-ios", "test-ios-uiwebview-fast", callback);
+gulp.task("test-ios-uiwebview", ["test-setup-build-ios"], function (callback) {
+    runSequence("test-run-ios-uiwebview", callback);
 });
 
 // Run on iOS with the WkWebView
-gulp.task("test-ios-wkwebview", function (callback) {
-    runSequence("default", "emulator-ios", "test-ios-wkwebview-fast", callback);
+gulp.task("test-ios-wkwebview", ["test-setup-build-ios"], function (callback) {
+    runSequence("test-run-ios-wkwebview", callback);
+});
+
+////////////////////////////////////////////////////////////////////////
+// Composition Test Tasks
+//
+// Runs tests, builds, and starts emulators.
+
+// Run on Android and iOS with UiWebViews
+gulp.task("test-android-ios-uiwebview", ["test-setup-build-both"], function (callback) {
+    runSequence("test-run-android", "test-run-ios-uiwebview", callback);
+});
+
+// Run on Android and iOS with WkWebViews
+gulp.task("test-android-ios-wkwebview", ["test-setup-build-both"], function (callback) {
+    runSequence("test-run-android", "test-run-ios-wkwebview", callback);
 });
 
 // Run on iOS with both WebViews
-gulp.task("test-ios", function (callback) {
-    runSequence("default", "emulator-ios", "test-ios-fast", callback);
-});
-
-// Run on Android and iOS with the UiWebView
-gulp.task("test-android-ios-uiwebview", function (callback) {
-    runSequence("default", "emulator", "test-android-ios-uiwebview-fast", callback);
-});
-
-// Run on Android and iOS with the WkWebView
-gulp.task("test-android-ios-wkwebview", function (callback) {
-    runSequence("default", "emulator", "test-android-ios-wkwebview-fast", callback);
+gulp.task("test-ios", ["test-setup-build-ios"], function (callback) {
+    runSequence("test-run-ios-uiwebview", "test-run-ios-wkwebview", callback);
 });
 
 // Run on Android and iOS with both WebViews
-gulp.task("test", function (callback) {
-    runSequence("default", "emulator", "test-fast", callback);
+gulp.task("test", ["test-setup-build-both"], function (callback) {
+    runSequence("test-run-android", "test-run-ios-uiwebview", "test-run-ios-wkwebview", callback);
 });

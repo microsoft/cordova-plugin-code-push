@@ -18,7 +18,7 @@ export class TestUtil {
     public static TEST_UPDATES_DIRECTORY: string = "--updates-directory";
     public static CORE_TESTS_ONLY: string = "--core";
     public static PULL_FROM_NPM: string = "--npm";
-    public static NO_SETUP: string = "--no-setup";
+    public static SETUP: string = "--setup";
     
     public static defaultIOSServerUrl = "http://127.0.0.1:3000";
     public static defaultAndroidServerUrl = "http://10.0.2.2:3001";
@@ -88,11 +88,11 @@ export class TestUtil {
     }
     
     /**
-     * Reads whether or not to setup the test directories.
+     * Reads whether or not to setup the test project directories.
      */
-    public static readNoSetup(): boolean {
-        var noSetup = TestUtil.readMochaCommandLineFlag(TestUtil.NO_SETUP);
-        if (noSetup) console.log("don't setup test directories");
+    public static readShouldSetup(): boolean {
+        var noSetup = TestUtil.readMochaCommandLineFlag(TestUtil.SETUP);
+        if (noSetup) console.log("set up test project directories");
         return noSetup;
     }
     

@@ -29,6 +29,7 @@ var updatesDirectory = testUtil.readTestUpdatesDirectory();
 var onlyRunCoreTests = testUtil.readCoreTestsOnly();
 var targetPlatforms: platform.IPlatform[] = platform.PlatformResolver.resolvePlatforms(testUtil.readTargetPlatforms());
 var shouldUseWkWebView = testUtil.readShouldUseWkWebView();
+var shouldSetup: boolean = testUtil.readShouldSetup();
 
 const TestAppName = "TestCodePush";
 const TestNamespace = "com.microsoft.codepush.test";
@@ -63,7 +64,6 @@ var testMessageResponse: any;
 var testMessageCallback: (requestBody: any) => void;
 var updateCheckCallback: (requestBody: any) => void;
 var mockUpdatePackagePath: string;
-var isTestsSetup: boolean = testUtil.readNoSetup();
 
 // FUNCTIONS //
 
@@ -73,6 +73,22 @@ function cleanupTest(): void {
     testMessageCallback = undefined;
     updateCheckCallback = undefined;
     testMessageResponse = undefined;
+}
+
+function setupTests(): void {
+    it("sets up tests correctly", (done) => {
+        console.log("Building test project.");
+        // create the test project
+        return createTestProject(testRunDirectory)
+            .then(() => {
+                console.log("Building update project.");
+                // create the update project
+                return createTestProject(updatesDirectory);
+            })
+            .then(() => {
+                return done();
+            });
+    });
 }
 
 function createTestProject(directory: string): Q.Promise<string> {
@@ -191,24 +207,6 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
         }
     }
 
-    function setupTests(): Q.Promise<string> {
-        return projectManager.uninstallApplication(TestNamespace, targetPlatform)
-            .then<string>(() => {
-                // only set up once
-                if (isTestsSetup) return null;
-                isTestsSetup = true;
-                
-                console.log("Building test project.");
-                // create the test project
-                return createTestProject(testRunDirectory)
-                    .then(() => {
-                        console.log("Building update project.");
-                        // create the update project
-                        return createTestProject(updatesDirectory);
-                    });
-            });
-    }
-
     function prepareTest(): Q.Promise<string> {
         return projectManager.prepareEmulatorForTest(TestNamespace, targetPlatform);
     }
@@ -235,12 +233,9 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
     };
     
     describe("window.codePush", function() {
-
-        this.timeout(100 * 60 * 1000);
-        
         before(() => {
             setupServer();
-            return setupTests()
+            return projectManager.uninstallApplication(TestNamespace, targetPlatform)
                 .then(() => {
                     return projectManager.addPlatform(testRunDirectory, targetPlatform);
                 })
@@ -1387,14 +1382,21 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
 
 // CODE THAT EXECUTES THE TESTS //
 
-targetPlatforms.forEach(platform => {
-    var prefix: string = "CodePush Cordova Plugin " + (onlyRunCoreTests ? "Core Tests " : "") + thisPluginPath + " on ";
-    if (platform.getCordovaName() === "ios") {
-        // handle UIWebView
-        if (shouldUseWkWebView === 0 || shouldUseWkWebView === 2) describe(prefix + platform.getCordovaName() + " with UIWebView", () => runTests(platform, false));
-        // handle WkWebView
-        if (shouldUseWkWebView === 1 || shouldUseWkWebView === 2) describe(prefix + platform.getCordovaName() + " with WkWebView", () => runTests(platform, true));
-    } else {
-        describe(prefix + platform.getCordovaName(), () => runTests(platform, false));
+describe("CodePush Cordova Plugin", function () {
+    this.timeout(100 * 60 * 1000);
+    
+    if (shouldSetup) describe("Setting Up For Tests", () => setupTests());
+    else {
+        targetPlatforms.forEach(platform => {
+            var prefix: string = (onlyRunCoreTests ? "Core Tests " : "Tests ") + thisPluginPath + " on ";
+            if (platform.getCordovaName() === "ios") {
+                // handle UIWebView
+                if (shouldUseWkWebView === 0 || shouldUseWkWebView === 2) describe(prefix + platform.getCordovaName() + " with UIWebView", () => runTests(platform, false));
+                // handle WkWebView
+                if (shouldUseWkWebView === 1 || shouldUseWkWebView === 2) describe(prefix + platform.getCordovaName() + " with WkWebView", () => runTests(platform, true));
+            } else {
+                describe(prefix + platform.getCordovaName(), () => runTests(platform, false));
+            }
+        });
     }
 });
