@@ -78,30 +78,22 @@ function cleanupTest(): void {
 
 function setupTests(): void {
     it("sets up tests correctly", (done) => {
-        var setupsComplete = 0;
-        var setupsToDo = 1;
-        
-        function setupCallback() {
-            setupsComplete++;
-            if (setupsComplete === setupsToDo) done();
-        }
+        var promises: Q.Promise<string>[] = [];
         
         targetPlatforms.forEach(platform => {
-            setupsToDo++;
-            platform.getEmulatorManager().bootEmulator(restartEmulators).then(setupCallback);
+            promises.push(platform.getEmulatorManager().bootEmulator(restartEmulators));
         });
         
         console.log("Building test project.");
         // create the test project
-        return createTestProject(testRunDirectory)
+        promises.push(createTestProject(testRunDirectory)
             .then(() => {
                 console.log("Building update project.");
                 // create the update project
                 return createTestProject(updatesDirectory);
-            })
-            .then(() => {
-                return setupCallback();
-            });
+            }));
+            
+        Q.all<string>(promises).then(() => { done(); }, (error) => { done(error); });
     });
 }
 

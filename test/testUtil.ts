@@ -81,7 +81,6 @@ export class TestUtil {
     public static readIOSServerUrl(): string {
         var commandLineOption = TestUtil.readMochaCommandLineOption(TestUtil.IOS_SERVER_URL);
         var iOSServerUrl = commandLineOption ? commandLineOption : TestUtil.defaultIOSServerUrl;
-        console.log("iOSServerUrl = " + iOSServerUrl);
         return iOSServerUrl;
     }
     
@@ -91,7 +90,6 @@ export class TestUtil {
     public static readAndroidEmulator(): string {
         var commandLineOption = TestUtil.readMochaCommandLineOption(TestUtil.ANDROID_EMULATOR);
         var androidEmulator = commandLineOption ? commandLineOption : TestUtil.defaultAndroidEmulator;
-        console.log("androidEmulator = " + androidEmulator);
         return androidEmulator;
     }
     

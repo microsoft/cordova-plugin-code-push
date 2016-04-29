@@ -176,7 +176,7 @@ const emulatorReadyCheckDelayMs = 30 * 1000;
 function bootEmulatorInternal(platformName: string, restartEmulators: boolean, targetEmulator: string,
     checkEmulator: () => Q.Promise<string>, startEmulator: (targetEmulator: string) => Q.Promise<string>, killEmulator: () => Q.Promise<string>): Q.Promise<string> {
     var deferred = Q.defer<string>();
-    console.log("Booting " + platformName + " emulator.");
+    console.log("Setting up " + platformName + " emulator.");
     
     function onEmulatorReady(): Q.Promise<string> {
         console.log(platformName + " emulator is ready!");
@@ -186,19 +186,19 @@ function bootEmulatorInternal(platformName: string, restartEmulators: boolean, t
 
     // Called to check if the emulator for the platform is initialized.
     function checkEmulatorReady(): Q.Promise<string> {
-        var deferred = Q.defer<string>();
+        var checkDeferred = Q.defer<string>();
         
         console.log("Checking if " + platformName + " emulator is ready yet...");
         // Dummy command that succeeds if emulator is ready and fails otherwise.
         checkEmulator()
             .then(() => {
-                deferred.resolve(undefined);
+                checkDeferred.resolve(undefined);
             }, (error) => {
                 console.log(platformName + " emulator is not ready yet!");
-                deferred.reject(error);
+                checkDeferred.reject(error);
             });
             
-        return deferred.promise;
+        return checkDeferred.promise;
     }
     
     var emulatorReadyAttempts = 0;
@@ -208,7 +208,7 @@ function bootEmulatorInternal(platformName: string, restartEmulators: boolean, t
         emulatorReadyAttempts++;
         if (emulatorReadyAttempts > emulatorMaxReadyAttempts) {
             console.log(platformName + " emulator is not ready after " + emulatorMaxReadyAttempts + " attempts, abort.");
-            deferred.reject(undefined);
+            deferred.reject(platformName + " emulator failed to boot.");
             looperDeferred.resolve(undefined);
         }
         setTimeout(() => {
@@ -225,12 +225,13 @@ function bootEmulatorInternal(platformName: string, restartEmulators: boolean, t
     
     // Starts and loops the emulator.
     function startEmulatorAndLoop(): Q.Promise<string> {
-        console.log("Starting " + platformName + " emulator.");
-        startEmulator(targetEmulator);
+        console.log("Booting " + platformName + " emulator named " + targetEmulator + ".");
+        startEmulator(targetEmulator).catch((error) => { console.log(error); deferred.reject(error); });
         return checkEmulatorReadyLooper();
     }
     var promise: Q.Promise<string>;
     if (restartEmulators) {
+        console.log("Killing " + platformName + " emulator.");
         promise = killEmulator().catch(() => { return null; }).then(startEmulatorAndLoop);
     } else {
         promise = checkEmulatorReady().then(onEmulatorReady, startEmulatorAndLoop);
@@ -250,7 +251,8 @@ export class IOSEmulatorManager implements IEmulatorManager {
             return tu.TestUtil.getProcessOutput("xcrun simctl getenv booted asdf");
         }
         function startIOSEmulator(iOSEmulatorName: string): Q.Promise<string> {
-            return tu.TestUtil.getProcessOutput("xcrun instruments -w \"" + iOSEmulatorName + "\"");
+            return tu.TestUtil.getProcessOutput("xcrun instruments -w \"" + iOSEmulatorName + "\"")
+                .catch((error) => { return undefined; /* Always fails because we do not specify a template, which is not necessary to just start the emulator */ });
         }
         function killIOSEmulator(): Q.Promise<string> {
             return tu.TestUtil.getProcessOutput("killall Simulator");
