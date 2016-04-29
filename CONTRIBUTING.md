@@ -54,15 +54,15 @@ They then check if the required emulators are currently running.
 
 If they are not, then it attempts to start an Android emulator named ```emulator``` (or specify a name by adding ```--androidemu yourEmulatorNameHere``` as an argument to the gulp task) and/or the latest iOS iPhone simulator. If this fails, the task will exit and the tests will fail.
 
-If you would like the tests to always restart the necessary emulators (killing them if they are currently running), add a ```-clean``` to the end of the command you'd like to run.
+If you would like the tests to always restart the necessary emulators (killing them if they are currently running), add a ```--clean``` flag to the command.
 
 The desired unit tests are then run.
 
-There is a both a full unit test suite and a "core" set of unit tests that you may run. If you would like to run only the core tests, add a ```-core``` to the end of the command you'd like to run.
+If you would like to skip building, add a ```-fast``` to the end of the command you'd like to run. For example, ```gulp test-ios``` becomes ```gulp test-ios-fast```.
 
-If you would like to pull the plugin from NPM rather than running the tests on the local version, add a ```-npm``` to the end of the command you'd like to run.
+There is a both a full unit test suite and a "core" set of unit tests that you may run. If you would like to run only the core tests, add a ```--core``` flag to the command.
 
-If you would like to skip building and checking for emulators, add a ```-fast``` to the end of the command you'd like to run.
+If you would like to pull the plugin from NPM rather than running the tests on the local version, add a ```--npm``` flag to the command.
 
 #### Default
 
@@ -99,17 +99,17 @@ gulp test-android
 
 All possible testing configurations have tasks!
 
-The flags should be ordered as follows:
-android, ios, uiwebview, wkwebview, core, npm, fast, clean
+The platforms are ordered as follows:
+android, ios-uiwebview, ios-wkwebview
 
 To run the core unit tests on Android:
 ```
-gulp test-android-core
+gulp test-android --core
 ```
 
 To run all of the unit tests on iOS with the UIWebView and pull the plugin from NPM:
 ```
-gulp test-ios-uiwebview-npm
+gulp test-ios-uiwebview --npm
 ```
 
 To run all of the unit tests on Android and iOS with the UIWebView without building first:
@@ -119,12 +119,12 @@ gulp test-android-ios-uiwebview-fast
 
 To run all of the unit tests on iOS with the WkWebView and restart the emulators:
 ```
-gulp test-ios-wkwebview-clean
+gulp test-ios-wkwebview --clean
 ```
 
 To run the core unit tests on Android and pull the plugin from NPM:
 ```
-gulp test-android-core-npm
+gulp test-android --core --npm
 ```
 
 ...and so on!
