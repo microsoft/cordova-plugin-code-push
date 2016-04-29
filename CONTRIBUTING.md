@@ -52,7 +52,10 @@ The tests first build the app.
 
 They then check if the required emulators are currently running.
 
-If they are not, then it attempts to start an Android emulator named ```emulator``` (or specify a name by adding ```--androidemu yourEmulatorNameHere``` as an argument to the gulp task) and/or the latest iOS iPhone simulator. If this fails, the task will exit and the tests will fail.
+If an Android emulator is not running, it attempts to boot an Android emulator named ```emulator```. You can specify an emulator by adding ```--androidemu yourEmulatorNameHere``` as a command line option to the gulp task.
+If an iOS simulator is not running, it attempts to boot the latest iOS iPhone simulator. You can specify a simulator by adding ```--iosemu yourSimulatorNameHere``` as a command line option to the gulp task.
+
+If all the required emulators are not running and the tests fail to boot them, the tests will fail.
 
 If you would like the tests to always restart the necessary emulators (killing them if they are currently running), add a ```--clean``` flag to the command.
 
@@ -80,12 +83,12 @@ gulp test-ios
 
 To run all of the unit tests on iOS with the UIWebView:
 ```
-gulp test-ios-uiwebview
+gulp test-ios-ui
 ```
 
 To run all of the unit tests on iOS with the WkWebView:
 ```
-gulp test-ios-wkwebview
+gulp test-ios-wk
 ```
 
 #### Android
@@ -99,8 +102,8 @@ gulp test-android
 
 All possible testing configurations have tasks!
 
-The platforms are ordered as follows:
-android, ios-uiwebview, ios-wkwebview
+The platforms are ordered as follows, and ran in that order:
+android, ios-ui, ios-wk
 
 To run the core unit tests on Android:
 ```
@@ -109,17 +112,17 @@ gulp test-android --core
 
 To run all of the unit tests on iOS with the UIWebView and pull the plugin from NPM:
 ```
-gulp test-ios-uiwebview --npm
+gulp test-ios-ui --npm
 ```
 
 To run all of the unit tests on Android and iOS with the UIWebView without building first:
 ```
-gulp test-android-ios-uiwebview-fast
+gulp test-android-ios-ui-fast
 ```
 
 To run all of the unit tests on iOS with the WkWebView and restart the emulators:
 ```
-gulp test-ios-wkwebview --clean
+gulp test-ios-wk --clean
 ```
 
 To run the core unit tests on Android and pull the plugin from NPM:
