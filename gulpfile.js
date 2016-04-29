@@ -140,7 +140,7 @@ function runTests(callback, options) {
     if (options.ios) {
         args.push("--ios");
         args.push("--use-wkwebview");
-        args.push(options.wkwebview ? (options.uiwebview ? "both" : "true") : "false");
+        args.push(options.wk ? (options.ui ? "both" : "true") : "false");
     }
     if (options.setup) args.push("--setup");
     
@@ -233,136 +233,6 @@ gulp.task("default", function (callback) {
 });
 
 ////////////////////////////////////////////////////////////////////////
-// Emulator Setup Tasks ////////////////////////////////////////////////
-
-function startEmulators(callback, android, ios) {
-    var restartIfRunning = getCommandLineFlag("--clean");
-    
-    if (restartIfRunning) console.log("Restarting emulators");
-    
-    if (android) {
-        var androidEmulatorName = getCommandLineOption("--androidemu", "emulator");
-        console.log("Using " + androidEmulatorName + " for Android tests");
-        if (!ios) startEmulatorsInternal();
-    }
-
-    if (ios) {
-        function onReadIOSEmuName() {
-            console.log("Using " + iOSEmulatorName + " for iOS tests");
-            startEmulatorsInternal();
-        }
-        
-        var iOSEmulatorNameCommandLineOption = getCommandLineOption("--iosemu", undefined);
-        if (iOSEmulatorNameCommandLineOption) {
-            iOSEmulatorName = iOSEmulatorNameCommandLineOption;
-            onReadIOSEmuName();
-        } else {
-            var iOSEmulatorName = "";
-            // get the most recent iOS simulator to run tests on
-            execCommandWithPromise("xcrun simctl list")
-                .then(function (listOfDevices) {
-                    var phoneDevice = /iPhone (\S* )*(\(([0-9A-Z-]*)\))/g;
-                    var match = listOfDevices.match(phoneDevice);
-                    iOSEmulatorName = match[match.length - 1];
-                    onReadIOSEmuName();
-                });
-        }
-    }
-    
-    function startEmulatorsInternal() {
-        // declare platforms that serve as layer of abstraction for platform-specific commands
-        var androidPlatform = {};
-        androidPlatform.emulatorKill = spawnCommand.bind(undefined, "adb", ["emu", "kill"]);
-        androidPlatform.emulatorStart = spawnCommand.bind(undefined, "emulator", ["@" + androidEmulatorName], undefined, false, true);
-        androidPlatform.emulatorCheck = spawnCommand.bind(undefined, "adb", ["shell", "pm", "list", "packages"]);
-        androidPlatform.name = "Android";
-        androidPlatform.emulatorReadyAttempts = 0;
-        var iOSPlatform = {};
-        iOSPlatform.emulatorKill = spawnCommand.bind(undefined, "killall", [iOSSimulatorProcessName]);
-        iOSPlatform.emulatorStart = spawnCommand.bind(undefined, "xcrun", ["instruments", "-w", iOSEmulatorName], undefined);
-        iOSPlatform.emulatorCheck = spawnCommand.bind(undefined, "xcrun", ["simctl", "getenv", "booted", "asdf"]);
-        iOSPlatform.name = "iOS";
-        iOSPlatform.emulatorReadyAttempts = 0;
-        
-        // called when an emulator is initialized successfully
-        var emulatorsInit = 0;
-        function onEmulatorInit(platform) {
-            ++emulatorsInit;
-            console.log(platform.name + " emulator is ready!");
-            if (emulatorsInit === ((android ? 1 : 0) + (ios ? 1 : 0))) {
-                console.log("All emulators are ready!");
-                callback();
-            }
-        }
-        
-        // loops the check for whether or not the emulator for the platform is initialized
-        function checkEmulatorReadyLooper(platform) {
-            ++platform.emulatorReadyAttempts;
-            if (platform.emulatorReadyAttempts > emulatorMaxReadyAttempts)
-            {
-                console.log(platform.name + " emulator is not ready after " + emulatorMaxReadyAttempts + " attempts, abort.");
-                return callback(1);
-            }
-            setTimeout(checkEmulatorReady.bind(undefined, platform, checkEmulatorReadyLooper), emulatorReadyCheckDelay);
-        }
-        
-        // called to check if the emulator for the platform is initialized
-        function checkEmulatorReady(platform, onFailure) {
-            console.log("Checking if " + platform.name + " emulator is ready yet...");
-            // dummy command that succeeds if emulator is ready and fails otherwise
-            platform.emulatorCheck(function (code) {
-                if (!code) return onEmulatorInit(platform);
-                else {
-                    console.log(platform.name + " emulator is not ready yet!");
-                    return onFailure(platform);
-                }
-            }, true);
-        }
-        
-        if (android) {
-            var bootMethod = restartIfRunning ? androidPlatform.emulatorKill : checkEmulatorReady.bind(undefined, androidPlatform);
-            bootMethod(function () {
-                androidPlatform.emulatorStart();
-                return checkEmulatorReadyLooper(androidPlatform);
-            });
-        }
-        
-        if (ios) {
-            var bootMethod = restartIfRunning ? iOSPlatform.emulatorKill : checkEmulatorReady.bind(undefined, iOSPlatform);
-            bootMethod(function () {
-                iOSPlatform.emulatorStart();
-                return checkEmulatorReadyLooper(iOSPlatform);
-            });
-        }
-        
-        // This needs to be done so that the task will exit.
-        // The command that creates the Android emulator persists with the life of the emulator and hangs this process unless we force it to quit.
-        gulp.doneCallback = function (err) {
-            process.exit(err ? 1 : 0);
-        }
-    }
-}
-
-function getEmulatorTaskNameSuffix(android, ios) {
-    if (!!android === !!ios) return "";
-    else if (android) return "-android";
-    else return "-ios";
-}
-
-var emulatorTaskNamePrefix = "emulator";
-for (var android = 0; android < 2; android++) {
-    for (var ios = 0; ios < 2; ios++) {
-        if (!android && !ios) continue;
-        
-        ((android, ios) => {
-            gulp.task(emulatorTaskNamePrefix + getEmulatorTaskNameSuffix(android, ios), function (callback) {
-                startEmulators(callback, android, ios);
-            });
-        })(android, ios);
-    }
-}
-
-////////////////////////////////////////////////////////////////////////
 // Test Tasks //////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////
@@ -381,20 +251,20 @@ gulp.task("test-run-android", function (callback) {
 });
 
 // Run on iOS with the UiWebView standalone
-gulp.task("test-run-ios-uiwebview", function (callback) {
+gulp.task("test-run-ios-ui", function (callback) {
     var options = {
         ios: true,
-        uiwebview: true,
+        ui: true,
     };
     
     runTests(callback, options);
 });
 
 // Run on iOS with the WkWebView standalone
-gulp.task("test-run-ios-wkwebview", function (callback) {
+gulp.task("test-run-ios-wk", function (callback) {
     var options = {
         ios: true,
-        wkwebview: true,
+        wk: true,
     };
     
     runTests(callback, options);
@@ -403,40 +273,54 @@ gulp.task("test-run-ios-wkwebview", function (callback) {
 ////////////////////////////////////////////////////////////////////////
 // Setup Tasks
 //
-// Sets up the test project directories that the tests use.
+// Sets up the test project directories that the tests use and starts emulators.
 // Must run before running a standalone suite of tests!
 
-// Sets up the test projects
-gulp.task("test-setup", function (callback) {
+// Sets up the test projects and starts an Android emulator
+gulp.task("test-setup-android", function (callback) {
     var options = {
-        setup: true
+        setup: true,
+        android: true
     };
     
     runTests(callback, options);
 });
 
-// Sets up test projects and starts the Android emulator
-gulp.task("test-setup-android", ["test-setup", "emulator-android"]);
+// Sets up the test projects and starts an iOS emulator
+gulp.task("test-setup-ios", function (callback) {
+    var options = {
+        setup: true,
+        ios: true
+    };
+    
+    runTests(callback, options);
+});
 
-// Sets up test projects and starts the iOS emulator
-gulp.task("test-setup-ios", ["test-setup", "emulator-ios"]);
-
-// Sets up test projects and starts both emulators
-gulp.task("test-setup-both", ["test-setup", "emulator"]);
-
-// Builds, then sets up the test projects
-gulp.task("test-setup-build", ["default"], function (callback) {
-    runSequence("test-setup", callback);
+// Sets up the test projects and starts both emulators
+gulp.task("test-setup-both", function (callback) {
+    var options = {
+        setup: true,
+        android: true,
+        ios: true
+    };
+    
+    runTests(callback, options);
 });
 
 // Builds, sets up test projects, and starts the Android emulator
-gulp.task("test-setup-build-android", ["test-setup-build", "emulator-android"]);
+gulp.task("test-setup-build-android", function (callback) {
+    runSequence("default", "test-setup-android", callback);
+});
 
 // Builds, sets up test projects, and starts the iOS emulator
-gulp.task("test-setup-build-ios", ["test-setup-build", "emulator-ios"]);
+gulp.task("test-setup-build-ios", function (callback) {
+    runSequence("default", "test-setup-ios", callback);
+});
 
 // Builds, sets up test projects, and starts both emulators
-gulp.task("test-setup-build-both", ["test-setup-build", "emulator"]);
+gulp.task("test-setup-build-both", function (callback) {
+    runSequence("default", "test-setup-both", callback);
+});
 
 ////////////////////////////////////////////////////////////////////////
 // Fast Test Tasks
@@ -449,13 +333,13 @@ gulp.task("test-android-fast", ["test-setup-android"], function (callback) {
 });
 
 // Run on iOS with the UiWebView fast
-gulp.task("test-ios-uiwebview-fast", ["test-setup-ios"], function (callback) {
-    runSequence("test-run-ios-uiwebview", callback);
+gulp.task("test-ios-ui-fast", ["test-setup-ios"], function (callback) {
+    runSequence("test-run-ios-ui", callback);
 });
 
 // Run on iOS with the WkWebView fast
-gulp.task("test-ios-wkwebview-fast", ["test-setup-ios"], function (callback) {
-    runSequence("test-run-ios-wkwebview", callback);
+gulp.task("test-ios-wk-fast", ["test-setup-ios"], function (callback) {
+    runSequence("test-run-ios-wk", callback);
 });
 
 ////////////////////////////////////////////////////////////////////////
@@ -464,23 +348,23 @@ gulp.task("test-ios-wkwebview-fast", ["test-setup-ios"], function (callback) {
 // Run tests but doesn't build or start emulators.
 
 // Run on iOS with the UiWebView fast
-gulp.task("test-android-ios-uiwebview-fast", ["test-setup-both"], function (callback) {
-    runSequence("test-run-android", "test-run-ios-uiwebview", callback);
+gulp.task("test-android-ios-ui-fast", ["test-setup-both"], function (callback) {
+    runSequence("test-run-android", "test-run-ios-ui", callback);
 });
 
 // Run on iOS with the WkWebView fast
-gulp.task("test-android-ios-wkwebview-fast", ["test-setup-both"], function (callback) {
-    runSequence("test-run-android", "test-run-ios-wkwebview", callback);
+gulp.task("test-android-ios-wk-fast", ["test-setup-both"], function (callback) {
+    runSequence("test-run-android", "test-run-ios-wk", callback);
 });
 
 // Run on iOS with both WebViews fast
 gulp.task("test-ios-fast", ["test-setup-ios"], function (callback) {
-    runSequence("test-run-ios-uiwebview", "test-run-ios-wkwebview", callback);
+    runSequence("test-run-ios-ui", "test-run-ios-wk", callback);
 });
 
 // Run on iOS with the WkWebView fast
 gulp.task("test-fast", ["test-setup-both"], function (callback) {
-    runSequence("test-run-android", "test-run-ios-uiwebview", "test-run-ios-wkwebview", callback);
+    runSequence("test-run-android", "test-run-ios-ui", "test-run-ios-wk", callback);
 });
 
 ////////////////////////////////////////////////////////////////////////
@@ -494,13 +378,13 @@ gulp.task("test-android", ["test-setup-build-android"], function (callback) {
 });
 
 // Run on iOS with the UiWebView
-gulp.task("test-ios-uiwebview", ["test-setup-build-ios"], function (callback) {
-    runSequence("test-run-ios-uiwebview", callback);
+gulp.task("test-ios-ui", ["test-setup-build-ios"], function (callback) {
+    runSequence("test-run-ios-ui", callback);
 });
 
 // Run on iOS with the WkWebView
-gulp.task("test-ios-wkwebview", ["test-setup-build-ios"], function (callback) {
-    runSequence("test-run-ios-wkwebview", callback);
+gulp.task("test-ios-wk", ["test-setup-build-ios"], function (callback) {
+    runSequence("test-run-ios-wk", callback);
 });
 
 ////////////////////////////////////////////////////////////////////////
@@ -509,21 +393,21 @@ gulp.task("test-ios-wkwebview", ["test-setup-build-ios"], function (callback) {
 // Run tests, build, and start emulators.
 
 // Run on Android and iOS with UiWebViews
-gulp.task("test-android-ios-uiwebview", ["test-setup-build-both"], function (callback) {
-    runSequence("test-run-android", "test-run-ios-uiwebview", callback);
+gulp.task("test-android-ios-ui", ["test-setup-build-both"], function (callback) {
+    runSequence("test-run-android", "test-run-ios-ui", callback);
 });
 
 // Run on Android and iOS with WkWebViews
-gulp.task("test-android-ios-wkwebview", ["test-setup-build-both"], function (callback) {
-    runSequence("test-run-android", "test-run-ios-wkwebview", callback);
+gulp.task("test-android-ios-wk", ["test-setup-build-both"], function (callback) {
+    runSequence("test-run-android", "test-run-ios-wk", callback);
 });
 
 // Run on iOS with both WebViews
 gulp.task("test-ios", ["test-setup-build-ios"], function (callback) {
-    runSequence("test-run-ios-uiwebview", "test-run-ios-wkwebview", callback);
+    runSequence("test-run-ios-ui", "test-run-ios-wk", callback);
 });
 
 // Run on Android and iOS with both WebViews
 gulp.task("test", ["test-setup-build-both"], function (callback) {
-    runSequence("test-run-android", "test-run-ios-uiwebview", "test-run-ios-wkwebview", callback);
+    runSequence("test-run-android", "test-run-ios-ui", "test-run-ios-wk", callback);
 });

@@ -30,6 +30,7 @@ var onlyRunCoreTests = testUtil.readCoreTestsOnly();
 var targetPlatforms: platform.IPlatform[] = platform.PlatformResolver.resolvePlatforms(testUtil.readTargetPlatforms());
 var shouldUseWkWebView = testUtil.readShouldUseWkWebView();
 var shouldSetup: boolean = testUtil.readShouldSetup();
+var restartEmulators: boolean = testUtil.readRestartEmulators();
 
 const TestAppName = "TestCodePush";
 const TestNamespace = "com.microsoft.codepush.test";
@@ -77,6 +78,19 @@ function cleanupTest(): void {
 
 function setupTests(): void {
     it("sets up tests correctly", (done) => {
+        var setupsComplete = 0;
+        var setupsToDo = 1;
+        
+        function setupCallback() {
+            setupsComplete++;
+            if (setupsComplete === setupsToDo) done();
+        }
+        
+        targetPlatforms.forEach(platform => {
+            setupsToDo++;
+            platform.getEmulatorManager().bootEmulator(restartEmulators).then(setupCallback);
+        });
+        
         console.log("Building test project.");
         // create the test project
         return createTestProject(testRunDirectory)
@@ -86,7 +100,7 @@ function setupTests(): void {
                 return createTestProject(updatesDirectory);
             })
             .then(() => {
-                return done();
+                return setupCallback();
             });
     });
 }

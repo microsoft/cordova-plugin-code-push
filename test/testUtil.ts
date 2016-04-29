@@ -11,8 +11,11 @@ import Q = require("q");
 export class TestUtil {
     public static ANDROID_PLATFORM_OPTION_NAME: string = "--android";
     public static ANDROID_SERVER_URL: string = "--androidserver";
+    public static ANDROID_EMULATOR: string = "--androidemu";
     public static IOS_PLATFORM_OPTION_NAME: string = "--ios";
     public static IOS_SERVER_URL: string = "--iosserver";
+    public static IOS_EMULATOR: string = "--iosemu";
+    public static RESTART_EMULATORS: string = "--clean";
     public static SHOULD_USE_WKWEBVIEW: string = "--use-wkwebview";
     public static TEST_RUN_DIRECTORY: string = "--test-directory";
     public static TEST_UPDATES_DIRECTORY: string = "--updates-directory";
@@ -20,11 +23,15 @@ export class TestUtil {
     public static PULL_FROM_NPM: string = "--npm";
     public static SETUP: string = "--setup";
     
-    public static defaultIOSServerUrl = "http://127.0.0.1:3000";
-    public static defaultAndroidServerUrl = "http://10.0.2.2:3001";
-    
     public static templatePath = path.join(__dirname, "../../test/template");
+    
     public static thisPluginPath = path.join(__dirname, "../..");
+    
+    public static defaultAndroidServerUrl = "http://10.0.2.2:3001";
+    public static defaultIOSServerUrl = "http://127.0.0.1:3000";
+    
+    public static defaultAndroidEmulator = "emulator";
+    
     private static defaultTestRunDirectory = path.join(os.tmpdir(), "cordova-plugin-code-push", "test-run");
     private static defaultUpdatesDirectory = path.join(os.tmpdir(), "cordova-plugin-code-push", "updates");
     
@@ -76,6 +83,55 @@ export class TestUtil {
         var iOSServerUrl = commandLineOption ? commandLineOption : TestUtil.defaultIOSServerUrl;
         console.log("iOSServerUrl = " + iOSServerUrl);
         return iOSServerUrl;
+    }
+    
+    /**
+     * Reads the Android emulator to use
+     */
+    public static readAndroidEmulator(): string {
+        var commandLineOption = TestUtil.readMochaCommandLineOption(TestUtil.ANDROID_EMULATOR);
+        var androidEmulator = commandLineOption ? commandLineOption : TestUtil.defaultAndroidEmulator;
+        console.log("androidEmulator = " + androidEmulator);
+        return androidEmulator;
+    }
+    
+    /**
+     * Reads the iOS emulator to use
+     */
+    public static readIOSEmulator(): Q.Promise<string> {
+        var deferred = Q.defer<string>();
+        
+        function onReadIOSEmuName(iOSEmulatorName: string) {
+            console.log("Using " + iOSEmulatorName + " for iOS tests");
+            deferred.resolve(iOSEmulatorName);
+        }
+            
+        var commandLineOption = TestUtil.readMochaCommandLineOption(TestUtil.IOS_EMULATOR);
+        if (commandLineOption) {
+            onReadIOSEmuName(commandLineOption);
+        } else {
+            // get the most recent iOS simulator to run tests on
+            this.getProcessOutput("xcrun simctl list")
+                .then(function (listOfDevices) {
+                    var phoneDevice = /iPhone (\S* )*(\(([0-9A-Z-]*)\))/g;
+                    var match = listOfDevices.match(phoneDevice);
+                    onReadIOSEmuName(match[match.length - 1]);
+                })
+                .catch(() => {
+                    deferred.reject(undefined);
+                });
+        }
+                
+        return deferred.promise;
+    }
+    
+    /**
+     * Reads whether or not emulators should be restarted.
+     */
+    public static readRestartEmulators(): boolean {
+        var restartEmulators = TestUtil.readMochaCommandLineFlag(TestUtil.RESTART_EMULATORS);
+        if (restartEmulators) console.log("restart emulators");
+        return restartEmulators;
     }
     
     /**
@@ -183,12 +239,12 @@ export class TestUtil {
                 stdout && console.log(stdout);
             }
 
-            if (stderr) {
+            if (logOutput && stderr) {
                 console.error("" + stderr);
             }
 
             if (error) {
-                console.error("" + error);
+                if (logOutput) console.error("" + error);
                 deferred.reject(error);
             } else {
                 deferred.resolve(result);
