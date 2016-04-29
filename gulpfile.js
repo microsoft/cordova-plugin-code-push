@@ -134,15 +134,22 @@ function getCommandLineOption(optionName, defaultValue) {
 function runTests(callback, options) {
     var command = "mocha";
     var args = ["./bin/test"];
+    
+    // pass arguments supplied by test tasks
     if (options.android) args.push("--android");
     if (options.ios) {
         args.push("--ios");
         args.push("--use-wkwebview");
         args.push(options.wkwebview ? (options.uiwebview ? "both" : "true") : "false");
     }
-    if (options.core || getCommandLineFlag("--core")) args.push("--core");
-    if (options.npm || getCommandLineFlag("--npm")) args.push("--npm");
     if (options.setup) args.push("--setup");
+    
+    // pass arguments from command line
+    // the fourth argument is the first argument after the task name
+    for (var i = 3; i < process.argv.length; i++) {
+        args.push(process.argv[i]);
+    }
+    
     execCommand(command, args, callback);
 }
 
