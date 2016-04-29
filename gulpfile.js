@@ -419,7 +419,7 @@ gulp.task("test-setup-both", ["test-setup", "emulator"]);
 
 // Builds, then sets up the test projects
 gulp.task("test-setup-build", ["default"], function (callback) {
-    runSequence("test-run-setup", callback);
+    runSequence("test-setup", callback);
 });
 
 // Builds, sets up test projects, and starts the Android emulator
