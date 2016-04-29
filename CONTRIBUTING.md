@@ -52,8 +52,12 @@ The tests first build the app.
 
 They then check if the required emulators are currently running.
 
-If an Android emulator is not running, it attempts to boot an Android emulator named ```emulator```. You can specify an emulator by adding ```--androidemu yourEmulatorNameHere``` as a command line option to the gulp task.
-If an iOS simulator is not running, it attempts to boot the latest iOS iPhone simulator. You can specify a simulator by adding ```--iosemu yourSimulatorNameHere``` as a command line option to the gulp task.
+If an Android emulator is not running, it attempts to boot an Android emulator named ```emulator```.
+You can specify an emulator by adding ```--androidemu yourEmulatorNameHere``` as a command line option to the gulp task.
+
+If an iOS simulator is not running, it attempts to boot the latest iOS iPhone simulator.
+
+You can specify a simulator by adding ```--iosemu yourSimulatorNameHere``` as a command line option to the gulp task.
 
 If all the required emulators are not running and the tests fail to boot them, the tests will fail.
 
