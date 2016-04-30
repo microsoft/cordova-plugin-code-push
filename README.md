@@ -8,6 +8,7 @@ This plugin provides client-side integration for the [CodePush service](http://c
 * [Plugin Usage](#plugin-usage)
 * [Releasing Updates](#releasing-updates)
 * [API Reference](#api-reference)
+* [PhoneGap Build](#phonegap-build)
 
 ## How does it work?
 
@@ -597,3 +598,11 @@ Defines the possible statuses of the [sync](#codepushsync) operation. There are 
 - __DOWNLOADING_PACKAGE__: An available update is being downloaded from the CodePush server.
 
 - __INSTALLING_UPDATE__: An available update was downloaded and is about to be installed.
+
+## PhoneGap Build
+
+This plugin is compatible with [PhoneGap Build](https://build.phonegap.com), and supports creating iOS builds out-of-the-box. However, in order to create Android builds, you need to add the following element to your app's `config.xml` file, as a child of the `<platform name="android">` element:
+
+```xml
+<preference name="android-build-tool" value="gradle" />
+```
