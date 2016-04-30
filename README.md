@@ -601,7 +601,7 @@ Defines the possible statuses of the [sync](#codepushsync) operation. There are 
 
 ## PhoneGap Build
 
-This plugin is compatible with [PhoneGap Build](https://build.phonegap.com), and supports creating iOS builds out-of-the-box. However, in order to create Android builds, you need to add the following element to your app's `config.xml` file, as a child of the `<platform name="android">` element:
+This plugin is compatible with [PhoneGap Build](https://build.phonegap.com), and supports creating Android and iOS builds out-of-the-box. However, in order for CodePush to calculate the hash of your binary contents on Android, PhoneGap Build needs to use Gradle to build your app, which isn't its default behavior (it uses Ant). To resolve this, simply add the following element to your app's `config.xml` file, as a child of the `<platform name="android">` element:
 
 ```xml
 <preference name="android-build-tool" value="gradle" />
