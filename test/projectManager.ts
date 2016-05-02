@@ -28,6 +28,7 @@ export class ProjectManager {
     public static INDEX_JS_PLACEHOLDER: string = "CODE_PUSH_INDEX_JS_PATH";
     public static CODE_PUSH_APP_VERSION_PLACEHOLDER: string = "CODE_PUSH_APP_VERSION";
     public static CODE_PUSH_APP_ID_PLACEHOLDER: string = "CODE_PUSH_TEST_APPLICATION_ID";
+    public static PLUGIN_VERSION_PLACEHOLDER: string = "CODE_PUSH_PLUGIN_VERSION";
 
     public static DEFAULT_APP_VERSION: string = "Store version";
 
@@ -68,6 +69,9 @@ export class ProjectManager {
         var templateConfigXmlPath = path.join(templatePath, configXml);
         var destinationConfigXmlPath = path.join(projectDirectory, configXml);
         
+        var packageFile = eval("(" + fs.readFileSync("./package.json", "utf8") + ")");
+        var pluginVersion = packageFile.version;
+        
         console.log("Setting up scenario " + jsPath + " in " + projectDirectory);
 
         // copy index html file and replace
@@ -87,6 +91,7 @@ export class ProjectManager {
             .then<string>(ProjectManager.replaceString.bind(undefined, destinationConfigXmlPath, ProjectManager.ANDROID_KEY_PLACEHOLDER, platform.Android.getInstance().getDefaultDeploymentKey()))
             .then<string>(ProjectManager.replaceString.bind(undefined, destinationConfigXmlPath, ProjectManager.IOS_KEY_PLACEHOLDER, platform.IOS.getInstance().getDefaultDeploymentKey()))
             .then<string>(ProjectManager.replaceString.bind(undefined, destinationConfigXmlPath, ProjectManager.SERVER_URL_PLACEHOLDER, targetPlatform.getServerUrl()))
+            .then<string>(ProjectManager.replaceString.bind(undefined, destinationConfigXmlPath, ProjectManager.PLUGIN_VERSION_PLACEHOLDER, pluginVersion))
             .then<string>(() => {
                 return build ? ProjectManager.buildPlatform(projectDirectory, targetPlatform) : ProjectManager.preparePlatform(projectDirectory, targetPlatform);
             });
