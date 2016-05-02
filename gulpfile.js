@@ -71,8 +71,8 @@ function execCommand(command, args, callback, silent) {
         if (!silent) console.error("" + data);
     });
     
-    process.on('error', function (code) {
-        callback && callback(code);
+    process.on('error', function (error) {
+        callback && callback(error);
     })
     
     process.on('exit', function (code) {
@@ -108,27 +108,6 @@ function execCommandWithPromise(command, options, logOutput) {
     });
 
     return deferred.promise;
-}
-
-function getCommandLineFlag(optionName) {
-    for (var i = 0; i < process.argv.length; i++) {
-        if (process.argv[i].indexOf(optionName) === 0) {
-            return true;
-        }
-    }
-    return false;
-}
-
-function getCommandLineOption(optionName, defaultValue) {
-    for (var i = 0; i < process.argv.length; i++) {
-        if (process.argv[i].indexOf(optionName) === 0) {
-            if (i + 1 < process.argv.length) {
-                return process.argv[i + 1];
-            }
-            break;
-        }
-    }
-    return defaultValue;
 }
 
 function runTests(callback, options) {
