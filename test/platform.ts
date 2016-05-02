@@ -17,6 +17,11 @@ export interface IPlatform {
     getCordovaName(): string;
     
     /**
+     * Gets the server url used for testing.
+     */
+    getServerUrl(): string;
+    
+    /**
      * Gets the root of the platform www folder used for creating update packages.
      */
     getPlatformWwwPath(projectDirectory: string): string;
@@ -38,6 +43,11 @@ export interface IPlatform {
  * Manages the interaction with the emulator.
  */
 export interface IEmulatorManager {
+    /**
+     * Boots the target emulator.
+     */
+    bootEmulator(restartEmulators: boolean): Q.Promise<string>;
+    
     /**
      * Launches an already installed application by app id.
      */
@@ -62,6 +72,11 @@ export interface IEmulatorManager {
      * Prepares the emulator for a test.
      */
     prepareEmulatorForTest(appId: string): Q.Promise<string>;
+    
+    /**
+     * Uninstalls the app from the emulator.
+     */
+    uninstallApplication(appId: string): Q.Promise<string>;
 }
 
 /**
@@ -70,6 +85,7 @@ export interface IEmulatorManager {
 export class Android implements IPlatform {
     private static instance: Android;
     private emulatorManager: IEmulatorManager;
+    private serverUrl: string;
     
     constructor(emulatorManager: IEmulatorManager) {
         this.emulatorManager = emulatorManager;
@@ -85,6 +101,14 @@ export class Android implements IPlatform {
 
     public getCordovaName(): string {
         return "android";
+    }
+    
+    /**
+     * Gets the server url used for testing.
+     */
+    public getServerUrl(): string {
+        if (!this.serverUrl) this.serverUrl = tu.TestUtil.readAndroidServerUrl();
+        return this.serverUrl;
     }
 
     public getPlatformWwwPath(projectDirectory: string): string {
@@ -106,6 +130,7 @@ export class Android implements IPlatform {
 export class IOS implements IPlatform {
     private static instance: IOS;
     private emulatorManager: IEmulatorManager;
+    private serverUrl: string;
 
     constructor(emulatorManager: IEmulatorManager) {
         this.emulatorManager = emulatorManager;
@@ -122,6 +147,14 @@ export class IOS implements IPlatform {
     public getCordovaName(): string {
         return "ios";
     }
+    
+    /**
+     * Gets the server url used for testing.
+     */
+    public getServerUrl(): string {
+        if (!this.serverUrl) this.serverUrl = tu.TestUtil.readIOSServerUrl();
+        return this.serverUrl;
+    }
 
     public getPlatformWwwPath(projectDirectory: string): string {
         return path.join(projectDirectory, "platforms/ios/www");
@@ -136,7 +169,101 @@ export class IOS implements IPlatform {
     }
 }
 
+// bootEmulatorInternal constants
+const emulatorMaxReadyAttempts = 5;
+const emulatorReadyCheckDelayMs = 30 * 1000;
+// Called to boot an emulator with a given platformName and check, start, and kill methods.
+function bootEmulatorInternal(platformName: string, restartEmulators: boolean, targetEmulator: string,
+    checkEmulator: () => Q.Promise<string>, startEmulator: (targetEmulator: string) => Q.Promise<string>, killEmulator: () => Q.Promise<string>): Q.Promise<string> {
+    var deferred = Q.defer<string>();
+    console.log("Setting up " + platformName + " emulator.");
+    
+    function onEmulatorReady(): Q.Promise<string> {
+        console.log(platformName + " emulator is ready!");
+        deferred.resolve(undefined);
+        return deferred.promise;
+    }
+
+    // Called to check if the emulator for the platform is initialized.
+    function checkEmulatorReady(): Q.Promise<string> {
+        var checkDeferred = Q.defer<string>();
+        
+        console.log("Checking if " + platformName + " emulator is ready yet...");
+        // Dummy command that succeeds if emulator is ready and fails otherwise.
+        checkEmulator()
+            .then(() => {
+                checkDeferred.resolve(undefined);
+            }, (error) => {
+                console.log(platformName + " emulator is not ready yet!");
+                checkDeferred.reject(error);
+            });
+            
+        return checkDeferred.promise;
+    }
+    
+    var emulatorReadyAttempts = 0;
+    // Loops checks to see if the emulator is ready and eventually fails after surpassing emulatorMaxReadyAttempts.
+    function checkEmulatorReadyLooper(): Q.Promise<string> {
+        var looperDeferred = Q.defer<string>();
+        emulatorReadyAttempts++;
+        if (emulatorReadyAttempts > emulatorMaxReadyAttempts) {
+            console.log(platformName + " emulator is not ready after " + emulatorMaxReadyAttempts + " attempts, abort.");
+            deferred.reject(platformName + " emulator failed to boot.");
+            looperDeferred.resolve(undefined);
+        }
+        setTimeout(() => {
+                checkEmulatorReady()
+                    .then(() => {
+                        looperDeferred.resolve(undefined);
+                        onEmulatorReady();
+                    }, () => {
+                        return checkEmulatorReadyLooper().then(() => { looperDeferred.resolve(undefined); }, () => { looperDeferred.reject(undefined); });
+                    });
+            }, emulatorReadyCheckDelayMs);
+        return looperDeferred.promise;
+    }
+    
+    // Starts and loops the emulator.
+    function startEmulatorAndLoop(): Q.Promise<string> {
+        console.log("Booting " + platformName + " emulator named " + targetEmulator + ".");
+        startEmulator(targetEmulator).catch((error) => { console.log(error); deferred.reject(error); });
+        return checkEmulatorReadyLooper();
+    }
+    var promise: Q.Promise<string>;
+    if (restartEmulators) {
+        console.log("Killing " + platformName + " emulator.");
+        promise = killEmulator().catch(() => { return null; }).then(startEmulatorAndLoop);
+    } else {
+        promise = checkEmulatorReady().then(onEmulatorReady, startEmulatorAndLoop);
+    }
+    
+    return deferred.promise;
+}
+
 export class IOSEmulatorManager implements IEmulatorManager {
+    /**
+     * Boots the target emulator.
+     */
+    bootEmulator(restartEmulators: boolean): Q.Promise<string> {
+        function checkIOSEmulator(): Q.Promise<string> {
+            // A command that does nothing but only succeeds if the emulator is running.
+            // Get the environment variable with the name "asdf" (return null, not an error, if not initialized).
+            return tu.TestUtil.getProcessOutput("xcrun simctl getenv booted asdf");
+        }
+        function startIOSEmulator(iOSEmulatorName: string): Q.Promise<string> {
+            return tu.TestUtil.getProcessOutput("xcrun instruments -w \"" + iOSEmulatorName + "\"")
+                .catch((error) => { return undefined; /* Always fails because we do not specify a template, which is not necessary to just start the emulator */ });
+        }
+        function killIOSEmulator(): Q.Promise<string> {
+            return tu.TestUtil.getProcessOutput("killall Simulator");
+        }
+        
+        return tu.TestUtil.readIOSEmulator()
+            .then((iOSEmulatorName: string) => {
+                return bootEmulatorInternal("iOS", restartEmulators, iOSEmulatorName, checkIOSEmulator, startIOSEmulator, killIOSEmulator);
+            });
+    }
+    
     /**
      * Launches an already installed application by app id.
      */
@@ -203,9 +330,35 @@ export class IOSEmulatorManager implements IEmulatorManager {
     prepareEmulatorForTest(appId: string): Q.Promise<string> {
         return this.endRunningApplication(appId);
     }
+    
+    /**
+     * Uninstalls the app from the emulator.
+     */
+    uninstallApplication(appId: string): Q.Promise<string> {
+        return tu.TestUtil.getProcessOutput("xcrun simctl uninstall booted " + appId, undefined);
+    }
 }
 
 export class AndroidEmulatorManager implements IEmulatorManager {
+    /**
+     * Boots the target emulator.
+     */
+    bootEmulator(restartEmulators: boolean): Q.Promise<string> {
+        function checkAndroidEmulator(): Q.Promise<string> {
+            // A command that does nothing but only succeeds if the emulator is running.
+            // List all of the packages on the device.
+            return tu.TestUtil.getProcessOutput("adb shell pm list packages");
+        }
+        function startAndroidEmulator(androidEmulatorName: string): Q.Promise<string> {
+            return tu.TestUtil.getProcessOutput("emulator @" + androidEmulatorName);
+        }
+        function killAndroidEmulator(): Q.Promise<string> {
+            return tu.TestUtil.getProcessOutput("adb emu kill");
+        }
+        
+        return bootEmulatorInternal("Android", restartEmulators, tu.TestUtil.readAndroidEmulator(), checkAndroidEmulator, startAndroidEmulator, killAndroidEmulator);
+    }
+    
     /**
      * Launches an already installed application by app id.
      */
@@ -257,6 +410,13 @@ export class AndroidEmulatorManager implements IEmulatorManager {
         return this.endRunningApplication(appId)
             .then(() => { return ProjectManager.ProjectManager.execChildProcess("adb shell pm clear " + appId); });
     }
+    
+    /**
+     * Uninstalls the app from the emulator.
+     */
+    uninstallApplication(appId: string): Q.Promise<string> {
+        return ProjectManager.ProjectManager.execChildProcess("adb uninstall " + appId);
+    }
 }
 
 /**
@@ -269,14 +429,33 @@ export class PlatformResolver {
     /**
      * Given the cordova name of a platform, this method returns the IPlatform associated with it.
      */
-    public static resolvePlatform(cordovaPlatformName: string): IPlatform {
+    public static resolvePlatforms(cordovaPlatformNames: string[]): IPlatform[] {
+        var platforms: IPlatform[] = [];
 
+        for (var i = 0; i < cordovaPlatformNames.length; i++) {
+            var resolvedPlatform: IPlatform = PlatformResolver.resolvePlatform(cordovaPlatformNames[i]);
+            if (resolvedPlatform) platforms.push(resolvedPlatform);
+            else {
+                // we could not find this platform in the list of platforms, so abort
+                console.error("Unsupported platform: " + cordovaPlatformNames[i]);
+                return undefined;
+            }
+        }
+        
+        return platforms;
+    }
+
+    /**
+     * Given the cordova name of a platform, this method returns the IPlatform associated with it.
+     */
+    public static resolvePlatform(cordovaPlatformName: string): IPlatform {
         for (var i = 0; i < this.supportedPlatforms.length; i++) {
             if (this.supportedPlatforms[i].getCordovaName() === cordovaPlatformName) {
                 return this.supportedPlatforms[i];
             }
         }
-
+        
+        // we could not find this platform in the list of platforms, so abort
         console.error("Unsupported platform: " + cordovaPlatformName);
         return undefined;
     }
