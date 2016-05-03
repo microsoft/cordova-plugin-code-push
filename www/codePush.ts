@@ -45,9 +45,10 @@ class CodePush implements CodePushCordovaPlugin {
      *
      * @param notifySucceeded Optional callback invoked if the plugin was successfully notified.
      * @param notifyFailed Optional callback invoked in case of an error during notifying the plugin.
+     * @param deploymentKey Optional deployment key that overrides the config.xml setting.
      */
-    public notifyApplicationReady(notifySucceeded?: SuccessCallback<void>, notifyFailed?: ErrorCallback): void {
-        cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updateSuccess", []);
+    public notifyApplicationReady(notifySucceeded?: SuccessCallback<void>, notifyFailed?: ErrorCallback, deploymentKey?: string): void {
+        cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updateSuccess", [deploymentKey]);
     }
 
     /**
@@ -293,7 +294,7 @@ class CodePush implements CodePushCordovaPlugin {
             CodePushUtil.copyUnassignedMembers(defaultOptions, syncOptions);
         }
 
-        window.codePush.notifyApplicationReady();
+        window.codePush.notifyApplicationReady(null, null, syncOptions.deploymentKey);
 
         var onError = (error: Error) => {
             CodePushUtil.logError("An error occurred during sync.", error);

@@ -58,10 +58,14 @@ const NSString* DeploymentKeyPreference = @"codepushdeploymentkey";
 }
 
 - (void)updateSuccess:(CDVInvokedUrlCommand *)command {
+    NSString* deploymentKey = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
+    if ([deploymentKey length] == 0) {
+        deploymentKey = ((CDVViewController *)self.viewController).settings[DeploymentKeyPreference];
+    }
+
     if ([CodePushPackageManager isFirstRun]) {
         [CodePushPackageManager markFirstRunFlag];
         NSString *appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
-        NSString *deploymentKey = ((CDVViewController *)self.viewController).settings[DeploymentKeyPreference];
         [CodePushReportingManager reportStatus:STORE_VERSION withLabel:nil version:appVersion deploymentKey:deploymentKey webView:self.webView];
     }
 
@@ -208,9 +212,6 @@ const NSString* DeploymentKeyPreference = @"codepushdeploymentkey";
                 [CodePushPackageManager clearFailedUpdates];
                 [CodePushPackageManager clearPendingInstall];
                 [CodePushPackageManager clearInstallNeedsConfirmation];
-                NSString *appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
-                NSString *deploymentKey = ((CDVViewController *)self.viewController).settings[DeploymentKeyPreference];
-                [CodePushReportingManager reportStatus:STORE_VERSION withLabel:nil version:appVersion deploymentKey:deploymentKey webView:self.webView];
             }
         }
     }
