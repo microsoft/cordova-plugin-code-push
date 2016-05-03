@@ -46,6 +46,10 @@ public class CodePushReportingManager {
      */
     public void reportStatus(Status status, String label, String appVersion, String deploymentKey, final CordovaWebView webView) {
         /* JS function to call: window.codePush.reportStatus(status: number, label: String, appVersion: String, currentDeploymentKey: String, previousLabelOrAppVersion?: string, previousDeploymentKey?: string) */
+        if (deploymentKey == null || deploymentKey.isEmpty()) {
+            return;
+        }
+
         final String script = String.format(
             Locale.US,
             "javascript:document.addEventListener(\"deviceready\", function () { window.codePush.reportStatus(%d, %s, %s, %s, %s, %s); });",
