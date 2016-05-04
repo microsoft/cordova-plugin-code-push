@@ -33,7 +33,15 @@ Follow these steps to build a new version of the plugin:
 
 ### Environment setup
 
-Make sure you can build the plugin by following the steps above.
+First, make sure you can build the plugin by following the steps above.
+
+Then, make sure you have installed ```Gulp```, ```Mocha```, and ```Mocha JUnit Reporter``` through npm.
+
+```
+npm install -g gulp
+npm install -g mocha
+npm install -g mocha-junit-reporter
+```
 
 To run Android tests, make sure you have ```sdk\tools``` and  ```sdk\platform-tools``` in your PATH.
 
@@ -67,6 +75,8 @@ If you would like to skip building, add a ```-fast``` to the end of the command 
 There is a both a full unit test suite and a "core" set of unit tests that you may run. If you would like to run only the core tests, add a ```--core``` flag to the command.
 
 If you would like to pull the plugin from NPM rather than running the tests on the local version, add a ```--npm``` flag to the command.
+
+The mocha reporter outputs individual results files for each platform. These are ```./test_android.xml```, ```./test-ios-ui.xml```, and ```./test-ios-wk.xml```.
 
 #### Default
 

@@ -114,17 +114,31 @@ function runTests(callback, options) {
     var command = "mocha";
     var args = ["./bin/test"];
     
-    // pass arguments supplied by test tasks
-    if (options.android) args.push("--android");
+    // Set up the mocha junit reporter.
+    args.push("--reporter");
+    args.push("mocha-junit-reporter");
+    
+    // Pass arguments supplied by test tasks.
+    if (options.android) {
+        args.push("--android");
+        
+        // Set the mocha reporter to the correct output file.
+        args.push("--reporter-options");
+        args.push("mochaFile=./test-android.xml");
+    }
     if (options.ios) {
         args.push("--ios");
         args.push("--use-wkwebview");
         args.push(options.wk ? (options.ui ? "both" : "true") : "false");
+        
+        // Set the mocha reporter to the correct output file.
+        args.push("--reporter-options");
+        args.push("mochaFile=./test-ios" + options.wk ? (options.ui ? "" : "-wk") : "-ui" + ".xml");
     }
     if (options.setup) args.push("--setup");
     
-    // pass arguments from command line
-    // the fourth argument is the first argument after the task name
+    // Pass arguments from command line.
+    // The fourth argument is the first argument after the task name.
     for (var i = 3; i < process.argv.length; i++) {
         args.push(process.argv[i]);
     }
