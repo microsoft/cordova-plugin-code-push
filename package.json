@@ -30,7 +30,7 @@
     "cordova-plugin-device": ">=1.1.0"
   },
   "author": "Microsoft Corporation",
-  "license": "Licensed under the MIT license.",
+  "license": "MIT",
   "devDependencies": {
     "gulp": "latest",
     "gulp-typescript": "latest",
