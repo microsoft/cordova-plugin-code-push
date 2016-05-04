@@ -146,7 +146,7 @@ export class ProjectManager {
     public static removePlugin(projectFolder: string, plugin: string): Q.Promise<string> {
         console.log("Removing plugin " + plugin + " from " + projectFolder);
         return ProjectManager.execChildProcess("cordova plugin remove " + plugin, { cwd: projectFolder });
-    }    
+    }
 
     /**
      * Builds a specific platform of a Cordova project. 
