@@ -495,6 +495,11 @@ declare module PluginTestingFramework {
     function getMockResponse(targetPlatform: IPlatform, mandatory?: boolean, randomHash?: boolean): CheckForUpdateResponseMock;
     
     /**
+     * Wrapper for ProjectManager.setupScenario
+     */
+    function setupScenario(projectManager: ProjectManager, targetPlatform: IPlatform, scenarioJsPath: string, version?: string): Q.Promise<string>;
+    
+    /**
      * Creates an update and zip for the test app using the specified scenario and version
      */
     function createUpdate(projectManager: ProjectManager, targetPlatform: IPlatform, scenarioJsPath: string, version: string): Q.Promise<string>;

@@ -994,196 +994,169 @@ var testBuilderDescribes: PluginTestingFramework.TestBuilderDescribe[] = [
                                 .done(() => { done(); }, () => { done(); });
                         }, true)
                 ], ScenarioSync2x)
+        ]),
+    
+    new PluginTestingFramework.TestBuilderDescribe("#window.codePush.sync minimum background duration tests",
+    
+        [
+            new PluginTestingFramework.TestBuilderIt("defaults to no minimum",
+                (projectManager: ProjectManager, targetPlatform: IPlatform, done: MochaDone) => {
+                    PluginTestingFramework.updateResponse = { updateInfo: PluginTestingFramework.getMockResponse(targetPlatform) };
+
+                    PluginTestingFramework.setupScenario(projectManager, targetPlatform, ScenarioSyncResume).then<string>(() => {
+                            return PluginTestingFramework.createUpdate(projectManager, targetPlatform, UpdateSync, "Update 1 (good update)");
+                        })
+                        .then<void>((updatePath: string) => {
+                            var deferred = Q.defer<void>();
+                            PluginTestingFramework.updatePackagePath = updatePath;
+                            PluginTestingFramework.testMessageCallback = PluginTestingFramework.verifyMessages([
+                                new AppMessage(TestMessage.SYNC_STATUS, [TestMessage.SYNC_UPDATE_INSTALLED])], deferred);
+                            projectManager.runPlatform(PluginTestingFramework.testRunDirectory, targetPlatform).done();
+                            return deferred.promise;
+                        })
+                        .then<void>(() => {
+                            var deferred = Q.defer<void>();
+                            var noUpdateResponse = PluginTestingFramework.createDefaultResponse();
+                            noUpdateResponse.isAvailable = false;
+                            noUpdateResponse.appVersion = "0.0.1";
+                            PluginTestingFramework.updateResponse = { updateInfo: noUpdateResponse };
+                            PluginTestingFramework.testMessageCallback = PluginTestingFramework.verifyMessages([
+                                TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
+                            projectManager.resumeApplication(PluginTestingFramework.TestNamespace, targetPlatform).done();
+                            return deferred.promise;
+                        })
+                        .done(() => { done(); }, () => { done(); });
+                }, false),
+            
+            new PluginTestingFramework.TestBuilderIt("min background duration 5s",
+                (projectManager: ProjectManager, targetPlatform: IPlatform, done: MochaDone) => {
+                    PluginTestingFramework.updateResponse = { updateInfo: PluginTestingFramework.getMockResponse(targetPlatform) };
+
+                    PluginTestingFramework.setupScenario(projectManager, targetPlatform, ScenarioSyncResumeDelay).then<string>(() => {
+                            return PluginTestingFramework.createUpdate(projectManager, targetPlatform, UpdateSync, "Update 1 (good update)");
+                        })
+                        .then<void>((updatePath: string) => {
+                            var deferred = Q.defer<void>();
+                            PluginTestingFramework.updatePackagePath = updatePath;
+                            PluginTestingFramework.testMessageCallback = PluginTestingFramework.verifyMessages([
+                                new AppMessage(TestMessage.SYNC_STATUS, [TestMessage.SYNC_UPDATE_INSTALLED])], deferred);
+                            projectManager.runPlatform(PluginTestingFramework.testRunDirectory, targetPlatform).done();
+                            return deferred.promise;
+                        })
+                        .then<string>(() => {
+                            var noUpdateResponse = PluginTestingFramework.createDefaultResponse();
+                            noUpdateResponse.isAvailable = false;
+                            noUpdateResponse.appVersion = "0.0.1";
+                            PluginTestingFramework.updateResponse = { updateInfo: noUpdateResponse };
+                            return projectManager.resumeApplication(PluginTestingFramework.TestNamespace, targetPlatform, 3 * 1000);
+                        })
+                        .then<void>(() => {
+                            var deferred = Q.defer<void>();
+                            PluginTestingFramework.testMessageCallback = PluginTestingFramework.verifyMessages([
+                                TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
+                            projectManager.resumeApplication(PluginTestingFramework.TestNamespace, targetPlatform, 6 * 1000).done();
+                            return deferred.promise;
+                        })
+                        .done(() => { done(); }, () => { done(); });
+                }, false),
+                
+            new PluginTestingFramework.TestBuilderIt("has no effect on restart",
+                (projectManager: ProjectManager, targetPlatform: IPlatform, done: MochaDone) => {
+                    PluginTestingFramework.updateResponse = { updateInfo: PluginTestingFramework.getMockResponse(targetPlatform) };
+
+                    PluginTestingFramework.setupScenario(projectManager, targetPlatform, ScenarioSyncRestartDelay).then<string>(() => {
+                            return PluginTestingFramework.createUpdate(projectManager, targetPlatform, UpdateSync, "Update 1 (good update)");
+                        })
+                        .then<void>((updatePath: string) => {
+                            var deferred = Q.defer<void>();
+                            PluginTestingFramework.updatePackagePath = updatePath;
+                            PluginTestingFramework.testMessageCallback = PluginTestingFramework.verifyMessages([
+                                new AppMessage(TestMessage.SYNC_STATUS, [TestMessage.SYNC_UPDATE_INSTALLED])], deferred);
+                            projectManager.runPlatform(PluginTestingFramework.testRunDirectory, targetPlatform).done();
+                            return deferred.promise;
+                        })
+                        .then<void>(() => {
+                            var deferred = Q.defer<void>();
+                            var noUpdateResponse = PluginTestingFramework.createDefaultResponse();
+                            noUpdateResponse.isAvailable = false;
+                            noUpdateResponse.appVersion = "0.0.1";
+                            PluginTestingFramework.updateResponse = { updateInfo: noUpdateResponse };
+                            PluginTestingFramework.testMessageCallback = PluginTestingFramework.verifyMessages([TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
+                            projectManager.restartApplication(PluginTestingFramework.TestNamespace, targetPlatform).done();
+                            return deferred.promise;
+                        })
+                        .done(() => { done(); }, () => { done(); });
+                }, false)
+        ]),
+        
+    new PluginTestingFramework.TestBuilderDescribe("#window.codePush.sync mandatory install mode tests",
+    
+        [
+            new PluginTestingFramework.TestBuilderIt("defaults to IMMEDIATE",
+                (projectManager: ProjectManager, targetPlatform: IPlatform, done: MochaDone) => {
+                    PluginTestingFramework.updateResponse = { updateInfo: PluginTestingFramework.getMockResponse(targetPlatform, true) };
+
+                    PluginTestingFramework.setupScenario(projectManager, targetPlatform, ScenarioSyncMandatoryDefault).then<string>(() => {
+                            return PluginTestingFramework.createUpdate(projectManager, targetPlatform, UpdateDeviceReady, "Update 1 (good update)");
+                        })
+                        .then<void>((updatePath: string) => {
+                            var deferred = Q.defer<void>();
+                            PluginTestingFramework.updatePackagePath = updatePath;
+                            PluginTestingFramework.testMessageCallback = PluginTestingFramework.verifyMessages([
+                                new AppMessage(TestMessage.SYNC_STATUS, [TestMessage.SYNC_UPDATE_INSTALLED]),
+                                TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
+                            projectManager.runPlatform(PluginTestingFramework.testRunDirectory, targetPlatform).done();
+                            return deferred.promise;
+                        })
+                        .done(() => { done(); }, () => { done(); });
+                }, false),
+                
+            new PluginTestingFramework.TestBuilderIt("works correctly when update is mandatory and mandatory install mode is specified",
+                (projectManager: ProjectManager, targetPlatform: IPlatform, done: MochaDone) => {
+                    PluginTestingFramework.updateResponse = { updateInfo: PluginTestingFramework.getMockResponse(targetPlatform, true) };
+
+                    PluginTestingFramework.setupScenario(projectManager, targetPlatform, ScenarioSyncMandatoryResume).then<string>(() => {
+                            return PluginTestingFramework.createUpdate(projectManager, targetPlatform, UpdateDeviceReady, "Update 1 (good update)");
+                        })
+                        .then<void>((updatePath: string) => {
+                            var deferred = Q.defer<void>();
+                            PluginTestingFramework.updatePackagePath = updatePath;
+                            PluginTestingFramework.testMessageCallback = PluginTestingFramework.verifyMessages([
+                                new AppMessage(TestMessage.SYNC_STATUS, [TestMessage.SYNC_UPDATE_INSTALLED])], deferred);
+                            projectManager.runPlatform(PluginTestingFramework.testRunDirectory, targetPlatform).done();
+                            return deferred.promise;
+                        })
+                        .then<void>(() => {
+                            var deferred = Q.defer<void>();
+                            var noUpdateResponse = PluginTestingFramework.createDefaultResponse();
+                            noUpdateResponse.isAvailable = false;
+                            noUpdateResponse.appVersion = "0.0.1";
+                            PluginTestingFramework.updateResponse = { updateInfo: noUpdateResponse };
+                            PluginTestingFramework.testMessageCallback = PluginTestingFramework.verifyMessages([
+                                TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
+                            projectManager.resumeApplication(PluginTestingFramework.TestNamespace, targetPlatform, 5 * 1000).done();
+                            return deferred.promise;
+                        })
+                        .done(() => { done(); }, () => { done(); });
+                }, false),
+                
+            new PluginTestingFramework.TestBuilderIt("has no effect on updates that are not mandatory",
+                (projectManager: ProjectManager, targetPlatform: IPlatform, done: MochaDone) => {
+                    PluginTestingFramework.updateResponse = { updateInfo: PluginTestingFramework.getMockResponse(targetPlatform) };
+
+                    PluginTestingFramework.setupScenario(projectManager, targetPlatform, ScenarioSyncMandatoryRestart).then<string>(() => {
+                            return PluginTestingFramework.createUpdate(projectManager, targetPlatform, UpdateDeviceReady, "Update 1 (good update)");
+                        })
+                        .then<void>((updatePath: string) => {
+                            var deferred = Q.defer<void>();
+                            PluginTestingFramework.updatePackagePath = updatePath;
+                            PluginTestingFramework.testMessageCallback = PluginTestingFramework.verifyMessages([
+                                new AppMessage(TestMessage.SYNC_STATUS, [TestMessage.SYNC_UPDATE_INSTALLED]),
+                                TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
+                            projectManager.runPlatform(PluginTestingFramework.testRunDirectory, targetPlatform).done();
+                            return deferred.promise;
+                        })
+                        .done(() => { done(); }, () => { done(); });
+                }, false)
         ])
 ];
-
-
-
-
-
-
-            
-//             if (!onlyRunCoreTests) {
-//                 describe("#window.codePush.sync minimum background duration tests", function() {
-
-//                     afterEach(() => {
-//                         cleanupTest();
-//                     });
-                
-//                     beforeEach(() => {
-//                         return prepareTest();
-//                     });
-                    
-//                     it("defaults to no minimum", function(done) {
-//                         PluginTestingFramework.updateResponse = { updateInfo: PluginTestingFramework.getMockResponse(targetPlatform)) };
-
-//                         setupScenario(ScenarioSyncResume).then<string>(() => {
-//                                 return setupUpdateScenario(UpdateSync, "Update 1 (good update)");
-//                             })
-//                             .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
-//                             .then<void>((updatePath: string) => {
-//                                 var deferred = Q.defer<void>();
-//                                 PluginTestingFramework.updateResponsePackagePath = updatePath;
-//                                 testMessageCallback = verifyMessages([
-//                                     new AppMessage(TestMessage.SYNC_STATUS, [TestMessage.SYNC_UPDATE_INSTALLED])], deferred);
-//                                 projectManager.runPlatform(testRunDirectory, targetPlatform).done();
-//                                 return deferred.promise;
-//                             })
-//                             .then<void>(() => {
-//                                 var deferred = Q.defer<void>();
-//                                 var noUpdateResponse = createDefaultResponse();
-//                                 noUpdateResponse.isAvailable = false;
-//                                 noUpdateResponse.appVersion = "0.0.1";
-//                                 PluginTestingFramework.updateResponse = { updateInfo: noUpdateResponse };
-//                                 testMessageCallback = verifyMessages([
-//                                     TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
-//                                 projectManager.resumeApplication(TestNamespace, targetPlatform).done();
-//                                 return deferred.promise;
-//                             })
-//                             .done(done, done);
-//                     });
-                    
-//                     it("min background duration 5s", function(done) {
-//                         PluginTestingFramework.updateResponse = { updateInfo: PluginTestingFramework.getMockResponse(targetPlatform)) };
-
-//                         setupScenario(ScenarioSyncResumeDelay).then<string>(() => {
-//                                 return setupUpdateScenario(UpdateSync, "Update 1 (good update)");
-//                             })
-//                             .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
-//                             .then<void>((updatePath: string) => {
-//                                 var deferred = Q.defer<void>();
-//                                 PluginTestingFramework.updateResponsePackagePath = updatePath;
-//                                 testMessageCallback = verifyMessages([
-//                                     new AppMessage(TestMessage.SYNC_STATUS, [TestMessage.SYNC_UPDATE_INSTALLED])], deferred);
-//                                 projectManager.runPlatform(testRunDirectory, targetPlatform).done();
-//                                 return deferred.promise;
-//                             })
-//                             .then<string>(() => {
-//                                 var noUpdateResponse = createDefaultResponse();
-//                                 noUpdateResponse.isAvailable = false;
-//                                 noUpdateResponse.appVersion = "0.0.1";
-//                                 PluginTestingFramework.updateResponse = { updateInfo: noUpdateResponse };
-//                                 return projectManager.resumeApplication(TestNamespace, targetPlatform, 3 * 1000);
-//                             })
-//                             .then<void>(() => {
-//                                 var deferred = Q.defer<void>();
-//                                 testMessageCallback = verifyMessages([
-//                                     TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
-//                                 projectManager.resumeApplication(TestNamespace, targetPlatform, 6 * 1000).done();
-//                                 return deferred.promise;
-//                             })
-//                             .done(done, done);
-//                     });
-                    
-//                     it("has no effect on restart", function(done) {
-//                         PluginTestingFramework.updateResponse = { updateInfo: PluginTestingFramework.getMockResponse(targetPlatform)) };
-
-//                         setupScenario(ScenarioSyncRestartDelay).then<string>(() => {
-//                                 return setupUpdateScenario(UpdateSync, "Update 1 (good update)");
-//                             })
-//                             .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
-//                             .then<void>((updatePath: string) => {
-//                                 var deferred = Q.defer<void>();
-//                                 PluginTestingFramework.updateResponsePackagePath = updatePath;
-//                                 testMessageCallback = verifyMessages([
-//                                     new AppMessage(TestMessage.SYNC_STATUS, [TestMessage.SYNC_UPDATE_INSTALLED])], deferred);
-//                                 projectManager.runPlatform(testRunDirectory, targetPlatform).done();
-//                                 return deferred.promise;
-//                             })
-//                             .then<void>(() => {
-//                                 var deferred = Q.defer<void>();
-//                                 var noUpdateResponse = createDefaultResponse();
-//                                 noUpdateResponse.isAvailable = false;
-//                                 noUpdateResponse.appVersion = "0.0.1";
-//                                 PluginTestingFramework.updateResponse = { updateInfo: noUpdateResponse };
-//                                 testMessageCallback = verifyMessages([TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
-//                                 projectManager.restartApplication(TestNamespace, targetPlatform).done();
-//                                 return deferred.promise;
-//                             })
-//                             .done(done, done);
-//                     });
-                    
-//                 });
-                
-//                 describe("#window.codePush.sync mandatory install mode tests", function() {
-
-//                     afterEach(() => {
-//                         cleanupTest();
-//                     });
-                
-//                     beforeEach(() => {
-//                         return prepareTest();
-//                     });
-                    
-//                     it("defaults to IMMEDIATE", function(done) {
-//                         PluginTestingFramework.updateResponse = { updateInfo: PluginTestingFramework.getMockResponse(targetPlatform)true) };
-
-//                         setupScenario(ScenarioSyncMandatoryDefault).then<string>(() => {
-//                                 return setupUpdateScenario(UpdateDeviceReady, "Update 1 (good update)");
-//                             })
-//                             .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
-//                             .then<void>((updatePath: string) => {
-//                                 var deferred = Q.defer<void>();
-//                                 PluginTestingFramework.updateResponsePackagePath = updatePath;
-//                                 testMessageCallback = verifyMessages([
-//                                     new AppMessage(TestMessage.SYNC_STATUS, [TestMessage.SYNC_UPDATE_INSTALLED]),
-//                                     TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
-//                                 projectManager.runPlatform(testRunDirectory, targetPlatform).done();
-//                                 return deferred.promise;
-//                             })
-//                             .done(done, done);
-//                     });
-                    
-//                     it("works correctly when update is mandatory and mandatory install mode is specified", function(done) {
-//                         PluginTestingFramework.updateResponse = { updateInfo: PluginTestingFramework.getMockResponse(targetPlatform)true) };
-
-//                         setupScenario(ScenarioSyncMandatoryResume).then<string>(() => {
-//                                 return setupUpdateScenario(UpdateDeviceReady, "Update 1 (good update)");
-//                             })
-//                             .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
-//                             .then<void>((updatePath: string) => {
-//                                 var deferred = Q.defer<void>();
-//                                 PluginTestingFramework.updateResponsePackagePath = updatePath;
-//                                 testMessageCallback = verifyMessages([
-//                                     new AppMessage(TestMessage.SYNC_STATUS, [TestMessage.SYNC_UPDATE_INSTALLED])], deferred);
-//                                 projectManager.runPlatform(testRunDirectory, targetPlatform).done();
-//                                 return deferred.promise;
-//                             })
-//                             .then<void>(() => {
-//                                 var deferred = Q.defer<void>();
-//                                 var noUpdateResponse = createDefaultResponse();
-//                                 noUpdateResponse.isAvailable = false;
-//                                 noUpdateResponse.appVersion = "0.0.1";
-//                                 PluginTestingFramework.updateResponse = { updateInfo: noUpdateResponse };
-//                                 testMessageCallback = verifyMessages([
-//                                     TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
-//                                 projectManager.resumeApplication(TestNamespace, targetPlatform, 5 * 1000).done();
-//                                 return deferred.promise;
-//                             })
-//                             .done(done, done);
-//                     });
-                    
-//                     it("has no effect on updates that are not mandatory", function(done) {
-//                         PluginTestingFramework.updateResponse = { updateInfo: PluginTestingFramework.getMockResponse(targetPlatform)) };
-
-//                         setupScenario(ScenarioSyncMandatoryRestart).then<string>(() => {
-//                                 return setupUpdateScenario(UpdateDeviceReady, "Update 1 (good update)");
-//                             })
-//                             .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
-//                             .then<void>((updatePath: string) => {
-//                                 var deferred = Q.defer<void>();
-//                                 PluginTestingFramework.updateResponsePackagePath = updatePath;
-//                                 testMessageCallback = verifyMessages([
-//                                     new AppMessage(TestMessage.SYNC_STATUS, [TestMessage.SYNC_UPDATE_INSTALLED]),
-//                                     TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
-//                                 projectManager.runPlatform(testRunDirectory, targetPlatform).done();
-//                                 return deferred.promise;
-//                             })
-//                             .done(done, done);
-//                     });
-                    
-//                 });
-//             }
-//         });
-//     });
-// }
