@@ -13,6 +13,7 @@ import path = require("path");
 var del = require("del");
 var archiver = require("archiver");
 
+// Create the ProjectManager to use for the tests.
 class CordovaProjectManager extends ProjectManager {
     
     /**
@@ -170,6 +171,7 @@ class CordovaProjectManager extends ProjectManager {
     }
 };
 
+// Scenarios used in the tests.
 const ScenarioCheckForUpdatePath = "js/scenarioCheckForUpdate.js";
 const ScenarioCheckForUpdateCustomKey = "js/scenarioCheckForUpdateCustomKey.js";
 const ScenarioDownloadUpdate = "js/scenarioDownloadUpdate.js";
@@ -193,6 +195,7 @@ const UpdateSync = "js/updateSync.js";
 const UpdateSync2x = "js/updateSync2x.js";
 const UpdateNotifyApplicationReadyConditional = "js/updateNARConditional.js";
 
+// Describe the tests.
 var testBuilderDescribes: PluginTestingFramework.TestBuilderDescribe[] = [
     
     new PluginTestingFramework.TestBuilderDescribe("#window.codePush.checkForUpdate",
@@ -1160,3 +1163,6 @@ var testBuilderDescribes: PluginTestingFramework.TestBuilderDescribe[] = [
                 }, false)
         ])
 ];
+
+// Create tests.
+PluginTestingFramework.initializeTests(new CordovaProjectManager(), testBuilderDescribes);
