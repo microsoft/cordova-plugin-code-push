@@ -120,7 +120,7 @@ function runTests(callback, options) {
     // Set the mocha reporter to the correct output file.
     args.push("--reporter-options");
     if (options.android && !options.ios) args.push("mochaFile=./test-android.xml");
-    else if (options.ios) args.push("mochaFile=./test-ios" + (options.wk ? (options.ui ? "" : "-wk") : "-ui") + ".xml");
+    else if (options.ios && !options.android) args.push("mochaFile=./test-ios" + (options.wk ? (options.ui ? "" : "-wk") : "-ui") + ".xml");
     else args.push("mochaFile=./test-results.xml");
     
     // Pass arguments supplied by test tasks.
