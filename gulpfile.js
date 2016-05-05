@@ -111,29 +111,24 @@ function execCommandWithPromise(command, options, logOutput) {
 }
 
 function runTests(callback, options) {
-    var command = "mocha";
+    var command = "node_modules/.bin/mocha";
     var args = ["./bin/test"];
     
     // Set up the mocha junit reporter.
     args.push("--reporter");
     args.push("mocha-junit-reporter");
+    // Set the mocha reporter to the correct output file.
+    args.push("--reporter-options");
+    if (options.android && !options.ios) args.push("mochaFile=./test-android.xml");
+    else if (options.ios) args.push("mochaFile=./test-ios" + (options.wk ? (options.ui ? "" : "-wk") : "-ui") + ".xml");
+    else args.push("mochaFile=./test-results.xml");
     
     // Pass arguments supplied by test tasks.
-    if (options.android) {
-        args.push("--android");
-        
-        // Set the mocha reporter to the correct output file.
-        args.push("--reporter-options");
-        args.push("mochaFile=./test-android.xml");
-    }
+    if (options.android) args.push("--android");
     if (options.ios) {
         args.push("--ios");
         args.push("--use-wkwebview");
         args.push(options.wk ? (options.ui ? "both" : "true") : "false");
-        
-        // Set the mocha reporter to the correct output file.
-        args.push("--reporter-options");
-        args.push("mochaFile=./test-ios" + (options.wk ? (options.ui ? "" : "-wk") : "-ui") + ".xml");
     }
     if (options.setup) args.push("--setup");
     

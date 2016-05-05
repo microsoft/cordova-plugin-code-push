@@ -9,7 +9,13 @@ Instead, modify the sources in the ```www``` folder and compile a new version of
 
 ### Environment setup
 
-```node.js``` and ```npm``` are needed for building this project. ```npm``` comes bundled with the ```node.js``` installer. You can download the ```node.js``` installer here: https://nodejs.org/download/. 
+```node.js``` and ```npm``` are needed for building this project. ```npm``` comes bundled with the ```node.js``` installer. You can download the ```node.js``` installer here: https://nodejs.org/download/.
+
+Once you have installed ```node.js``` and ```npm```, install the dev dependencies for the project.
+
+```
+npm install
+```
 
 ### Compile
 
@@ -35,12 +41,10 @@ Follow these steps to build a new version of the plugin:
 
 First, make sure you can build the plugin by following the steps above.
 
-Then, make sure you have installed ```Gulp```, ```Mocha```, and ```Mocha JUnit Reporter``` through npm.
+Then, make sure you have installed ```Gulp```.
 
 ```
 npm install -g gulp
-npm install -g mocha
-npm install -g mocha-junit-reporter
 ```
 
 To run Android tests, make sure you have ```sdk\tools``` and  ```sdk\platform-tools``` in your PATH.
