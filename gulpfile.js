@@ -133,7 +133,7 @@ function runTests(callback, options) {
         
         // Set the mocha reporter to the correct output file.
         args.push("--reporter-options");
-        args.push("mochaFile=./test-ios" + options.wk ? (options.ui ? "" : "-wk") : "-ui" + ".xml");
+        args.push("mochaFile=./test-ios" + (options.wk ? (options.ui ? "" : "-wk") : "-ui") + ".xml");
     }
     if (options.setup) args.push("--setup");
     
