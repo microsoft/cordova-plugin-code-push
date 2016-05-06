@@ -8,6 +8,7 @@
 
 "use strict";
 
+import assert = require("assert");
 import fs = require("fs");
 import mkdirp = require("mkdirp");
 import path = require("path");
@@ -21,6 +22,8 @@ var archiver = require("archiver");
 
 // Create the ProjectManager to use for the tests.
 class CordovaProjectManager extends ProjectManager {
+    public static AcquisitionSDKPluginName = "code-push";
+    public static WkWebViewEnginePluginName = "cordova-plugin-wkwebview-engine";
     
     /**
      * Returns the name of the plugin being tested, ie Cordova or React-Native
@@ -44,7 +47,8 @@ class CordovaProjectManager extends ProjectManager {
 
         return ProjectManager.execChildProcess("cordova create " + projectDirectory + " " + appNamespace + " " + appName + " --copy-from " + templatePath)
             .then<string>(ProjectManager.replaceString.bind(undefined, destinationIndexPath, ProjectManager.CODE_PUSH_APP_VERSION_PLACEHOLDER, version))
-            .then<string>(this.addCordovaPlugin.bind(undefined, projectDirectory, PluginTestingFramework.thisPluginPath));
+            .then<string>(this.addCordovaPlugin.bind(this, projectDirectory, CordovaProjectManager.AcquisitionSDKPluginName))
+            .then<string>(this.addCordovaPlugin.bind(this, projectDirectory, PluginTestingFramework.thisPluginPath));
     }
     
     /**
@@ -85,7 +89,8 @@ class CordovaProjectManager extends ProjectManager {
             .then<string>(ProjectManager.replaceString.bind(undefined, destinationConfigXmlPath, ProjectManager.ANDROID_KEY_PLACEHOLDER, Platform.Android.getInstance().getDefaultDeploymentKey()))
             .then<string>(ProjectManager.replaceString.bind(undefined, destinationConfigXmlPath, ProjectManager.IOS_KEY_PLACEHOLDER, Platform.IOS.getInstance().getDefaultDeploymentKey()))
             .then<string>(ProjectManager.replaceString.bind(undefined, destinationConfigXmlPath, ProjectManager.SERVER_URL_PLACEHOLDER, targetPlatform.getServerUrl()))
-            .then<string>(ProjectManager.replaceString.bind(undefined, destinationConfigXmlPath, ProjectManager.PLUGIN_VERSION_PLACEHOLDER, pluginVersion));
+            .then<string>(ProjectManager.replaceString.bind(undefined, destinationConfigXmlPath, ProjectManager.PLUGIN_VERSION_PLACEHOLDER, pluginVersion))
+            .then<string>(this.prepareCordovaPlatform.bind(this, projectDirectory, targetPlatform));
     }
 
     /**
@@ -143,6 +148,14 @@ class CordovaProjectManager extends ProjectManager {
     public runPlatform(projectFolder: string, targetPlatform: Platform.IPlatform): Q.Promise<string> {
         console.log("Running project in " + projectFolder + " on " + targetPlatform.getName());
         return ProjectManager.execChildProcess("cordova run " + targetPlatform.getName(), { cwd: projectFolder });
+    }
+
+    /**
+     * Prepares the Cordova project for the test app on the given target / platform.
+     */
+    public prepareCordovaPlatform(projectFolder: string, targetPlatform: Platform.IPlatform): Q.Promise<string> {
+        console.log("Preparing project in " + projectFolder + " for " + targetPlatform.getName());
+        return ProjectManager.execChildProcess("cordova prepare " + targetPlatform.getName(), { cwd: projectFolder });
     }
 
     /**
