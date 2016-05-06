@@ -32,18 +32,18 @@
   "author": "Microsoft Corporation",
   "license": "Licensed under the MIT license.",
   "devDependencies": {
+    "archiver": "latest",
+    "body-parser": "latest",
+    "del": "latest",
     "gulp": "latest",
-    "gulp-typescript": "latest",
+    "express": "latest",
+    "gulp-typescript": "2.12.2",
     "gulp-insert": "latest",
     "gulp-tslint": "latest",
-    "tslint": "latest",
-    "del": "latest",
-    "run-sequence": "latest",
-    "q": "latest",
-    "replace": "latest",
     "mkdirp": "latest",
-    "express": "latest",
-    "body-parser": "latest",
-    "archiver": "latest"
+    "q": "latest",
+    "run-sequence": "latest",
+    "tslint": "latest",
+    "typescript": "1.8.7"
   }
 }
