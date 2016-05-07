@@ -273,7 +273,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
             });
             
             if (!onlyRunCoreTests) {
-                it("window.codePush.checkForUpdate.noUpdate", function(done) {
+                it.only("window.codePush.checkForUpdate.noUpdate", function(done) {
                     var noUpdateResponse = createDefaultResponse();
                     noUpdateResponse.isAvailable = false;
                     noUpdateResponse.appVersion = "0.0.1";

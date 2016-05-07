@@ -1,6 +1,7 @@
+var child_process = require("child_process");
+var del = require("del");
 var gulp = require("gulp");
 var path = require("path");
-var child_process = require("child_process");
 var Q = require("q");
 var runSequence = require("run-sequence");
 
@@ -117,11 +118,15 @@ function runTests(callback, options) {
     // Set up the mocha junit reporter.
     args.push("--reporter");
     args.push("mocha-junit-reporter");
+    
     // Set the mocha reporter to the correct output file.
     args.push("--reporter-options");
-    if (options.android && !options.ios) args.push("mochaFile=./test-android.xml");
-    else if (options.ios && !options.android) args.push("mochaFile=./test-ios" + (options.wk ? (options.ui ? "" : "-wk") : "-ui") + ".xml");
-    else args.push("mochaFile=./test-results.xml");
+    var filename = "./test-results.xml";
+    if (options.android && !options.ios) filename = "./test-android.xml";
+    else if (options.ios && !options.android) filename = "./test-ios" + (options.wk ? (options.ui ? "" : "-wk") : "-ui") + ".xml";
+    args.push("mochaFile=" + filename);
+    // Delete previous test result file so TFS doesn't read the old file
+    del(filename);
     
     // Pass arguments supplied by test tasks.
     if (options.android) args.push("--android");
