@@ -147,7 +147,8 @@ class CordovaProjectManager extends ProjectManager {
      */
     public runPlatform(projectFolder: string, targetPlatform: Platform.IPlatform): Q.Promise<string> {
         console.log("Running project in " + projectFolder + " on " + targetPlatform.getName());
-        return ProjectManager.execChildProcess("cordova run " + targetPlatform.getName(), { cwd: projectFolder });
+        // Don't log the build output because iOS's build output is too verbose and overflows the buffer!
+        return ProjectManager.execChildProcess("cordova run " + targetPlatform.getName(), { cwd: projectFolder }, false);
     }
 
     /**
