@@ -128,18 +128,49 @@ class CordovaProjectManager extends ProjectManager {
         return deferred.promise;
     }
     
+    /** Used by preparePlatform to determine which WebView to use if both will be run */
+    private whichWebView: boolean = true;
+    
     /**
      * Prepares a specific platform for tests.
      */
     public preparePlatform(projectFolder: string, targetPlatform: Platform.IPlatform): Q.Promise<string> {
-        return this.addCordovaPlatform(projectFolder, targetPlatform);
+        return this.addCordovaPlatform(projectFolder, targetPlatform)
+            .then(() => {
+                switch (PluginTestingFramework.shouldUseWkWebView) {
+                    case 0:
+                        break;
+                    case 1:
+                        return this.addCordovaPlugin(projectFolder, CordovaProjectManager.WkWebViewEnginePluginName);
+                    case 2:
+                        this.whichWebView = !this.whichWebView;
+                        if (this.whichWebView) return this.addCordovaPlugin(projectFolder, CordovaProjectManager.WkWebViewEnginePluginName);
+                    default:
+                        break;
+                }
+                return null;
+            });
     }
     
     /**
      * Cleans up a specific platform after tests.
      */
     public cleanupAfterPlatform(projectFolder: string, targetPlatform: Platform.IPlatform): Q.Promise<string> {
-        return this.removeCordovaPlatform(projectFolder, targetPlatform);
+        return this.removeCordovaPlatform(projectFolder, targetPlatform)
+            .then(() => {
+                switch (PluginTestingFramework.shouldUseWkWebView) {
+                    case 0:
+                        break;
+                    case 1:
+                        return this.removeCordovaPlugin(projectFolder, CordovaProjectManager.WkWebViewEnginePluginName);
+                    case 2:
+                        this.whichWebView = !this.whichWebView;
+                        if (!this.whichWebView) return this.removeCordovaPlugin(projectFolder, CordovaProjectManager.WkWebViewEnginePluginName);
+                    default:
+                        break;
+                }
+                return null;
+            });
     }
 
     /**
