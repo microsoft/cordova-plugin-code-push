@@ -3,3 +3,6 @@ node_modules/*
 
 #ignore the compiled test files
 bin/test/*
+
+#ignore the test output files
+test-*

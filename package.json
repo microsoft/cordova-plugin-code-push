@@ -42,6 +42,8 @@
     "q": "latest",
     "replace": "latest",
     "mkdirp": "latest",
+    "mocha" : "latest",
+    "mocha-junit-reporter" : "latest",
     "express": "latest",
     "body-parser": "latest",
     "archiver": "latest"
