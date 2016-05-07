@@ -125,7 +125,7 @@ function runTests(callback, options) {
     if (options.android && !options.ios) filename = "./test-android.xml";
     else if (options.ios && !options.android) filename = "./test-ios" + (options.wk ? (options.ui ? "" : "-wk") : "-ui") + ".xml";
     args.push("mochaFile=" + filename);
-    // Delete previous test result file so TFS doesn't read the old file
+    // Delete previous test result file so TFS doesn't read the old file if the tests exit before saving
     del(filename);
     
     // Pass arguments supplied by test tasks.
