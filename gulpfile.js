@@ -1,6 +1,7 @@
+var child_process = require("child_process");
+var del = require("del");
 var gulp = require("gulp");
 var path = require("path");
-var child_process = require("child_process");
 var Q = require("q");
 var runSequence = require("run-sequence");
 
@@ -111,10 +112,23 @@ function execCommandWithPromise(command, options, logOutput) {
 }
 
 function runTests(callback, options) {
-    var command = "mocha";
+    var command = "node_modules/.bin/mocha";
     var args = ["./bin/test"];
     
-    // pass arguments supplied by test tasks
+    // Set up the mocha junit reporter.
+    args.push("--reporter");
+    args.push("mocha-junit-reporter");
+    
+    // Set the mocha reporter to the correct output file.
+    args.push("--reporter-options");
+    var filename = "./test-results.xml";
+    if (options.android && !options.ios) filename = "./test-android.xml";
+    else if (options.ios && !options.android) filename = "./test-ios" + (options.wk ? (options.ui ? "" : "-wk") : "-ui") + ".xml";
+    args.push("mochaFile=" + filename);
+    // Delete previous test result file so TFS doesn't read the old file if the tests exit before saving
+    del(filename);
+    
+    // Pass arguments supplied by test tasks.
     if (options.android) args.push("--android");
     if (options.ios) {
         args.push("--ios");
@@ -123,8 +137,8 @@ function runTests(callback, options) {
     }
     if (options.setup) args.push("--setup");
     
-    // pass arguments from command line
-    // the fourth argument is the first argument after the task name
+    // Pass arguments from command line.
+    // The fourth argument is the first argument after the task name.
     for (var i = 3; i < process.argv.length; i++) {
         args.push(process.argv[i]);
     }

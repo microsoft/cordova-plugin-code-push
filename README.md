@@ -409,8 +409,11 @@ function syncStatus(status) {
     }
 }
 
-function downloadProgress(totalBytes, receivedBytes) {
-    // Update "downloading" modal with current download %
+function downloadProgress(downloadProgress) {
+    if (downloadProgress) {
+    	// Update "downloading" modal with current download %
+        //console.log("Downloading " + downloadProgress.receivedBytes + " of " + downloadProgress);
+    }
 }
 ```
 

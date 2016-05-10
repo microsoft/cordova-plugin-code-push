@@ -8,6 +8,10 @@ const NSString* LastVersionLabelOrAppVersionKey = @"LAST_VERSION_LABEL_OR_APP_VE
 
 + (void)reportStatus:(ReportingStatus)status withLabel:(NSString*)label version:(NSString*)version deploymentKey:(NSString*)deploymentKey webView:(UIView*)webView {
     @synchronized(self) {
+        if (!deploymentKey) {
+            return;
+        }
+
         NSString* labelParameter = [CodePushReportingManager convertStringParameter:label];
         NSString* appVersionParameter = [CodePushReportingManager convertStringParameter:version];
         NSString* deploymentKeyParameter = [CodePushReportingManager convertStringParameter:deploymentKey];
