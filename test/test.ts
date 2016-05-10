@@ -137,12 +137,18 @@ class CordovaProjectManager extends ProjectManager {
     public preparePlatform(projectFolder: string, targetPlatform: Platform.IPlatform): Q.Promise<string> {
         return this.addCordovaPlatform(projectFolder, targetPlatform)
             .then(() => {
+                if (targetPlatform !== Platform.IOS.getInstance()) return null;
+                // Determine which WebView to use
                 switch (PluginTestingFramework.shouldUseWkWebView) {
                     case 0:
+                        // UIWebView only
                         break;
                     case 1:
+                        // WkWebView only
                         return this.addCordovaPlugin(projectFolder, CordovaProjectManager.WkWebViewEnginePluginName);
                     case 2:
+                        // Both WebViews
+                        // Toggle which WebView we are using
                         this.whichWebView = !this.whichWebView;
                         if (this.whichWebView) return this.addCordovaPlugin(projectFolder, CordovaProjectManager.WkWebViewEnginePluginName);
                     default:
@@ -158,13 +164,17 @@ class CordovaProjectManager extends ProjectManager {
     public cleanupAfterPlatform(projectFolder: string, targetPlatform: Platform.IPlatform): Q.Promise<string> {
         return this.removeCordovaPlatform(projectFolder, targetPlatform)
             .then(() => {
+                if (targetPlatform !== Platform.IOS.getInstance()) return null;
+                // Determine which WebView to use
                 switch (PluginTestingFramework.shouldUseWkWebView) {
                     case 0:
+                        // UIWebView only
                         break;
                     case 1:
+                        // WkWebView only
                         return this.removeCordovaPlugin(projectFolder, CordovaProjectManager.WkWebViewEnginePluginName);
                     case 2:
-                        this.whichWebView = !this.whichWebView;
+                        // Both WebViews
                         if (!this.whichWebView) return this.removeCordovaPlugin(projectFolder, CordovaProjectManager.WkWebViewEnginePluginName);
                     default:
                         break;
@@ -202,7 +212,7 @@ class CordovaProjectManager extends ProjectManager {
      * Adds a platform to a Cordova project. 
      */
     public removeCordovaPlatform(projectFolder: string, targetPlatform: Platform.IPlatform, version?: string): Q.Promise<string> {
-        console.log("Adding " + targetPlatform.getName() + " to project in " + projectFolder);
+        console.log("Removing " + targetPlatform.getName() + " to project in " + projectFolder);
         return ProjectManager.execChildProcess("cordova platform remove " + targetPlatform.getName() + (version ? "@" + version : ""), { cwd: projectFolder });
     }
     
