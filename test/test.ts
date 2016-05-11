@@ -169,7 +169,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
         app.use(function(req: any, res: any, next: any) {
             res.setHeader("Access-Control-Allow-Origin", "*");
             res.setHeader("Access-Control-Allow-Methods", "*");
-            res.setHeader("Access-Control-Allow-Headers", "origin, content-type, accept");
+            res.setHeader("Access-Control-Allow-Headers", "origin, content-type, accept, X-CodePush-SDK-Version");
             next();
         });
 
