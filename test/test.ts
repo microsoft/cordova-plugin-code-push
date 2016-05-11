@@ -893,7 +893,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             new su.AppMessage(su.TestMessage.SYNC_STATUS, [su.TestMessage.SYNC_UPDATE_INSTALLED]),
                             new su.AppMessage(su.TestMessage.PENDING_PACKAGE, [mockResponse.updateInfo.packageHash]),
                             new su.AppMessage(su.TestMessage.CURRENT_PACKAGE, [null]),
-                            su.TestMessage.RESTART_SUCCEEDED,
+                            // su.TestMessage.RESTART_SUCCEEDED,
                             su.TestMessage.DEVICE_READY_AFTER_UPDATE,
                             su.TestMessage.NOTIFY_APP_READY_SUCCESS
                         ], deferred);
