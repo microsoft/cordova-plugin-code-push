@@ -41,17 +41,11 @@
     "gulp-insert": "latest",
     "gulp-tslint": "latest",
     "mkdirp": "latest",
-<<<<<<< HEAD
     "q": "latest",
     "run-sequence": "latest",
     "tslint": "latest",
-    "typescript": "1.8.7"
-=======
+    "typescript": "1.8.7",
     "mocha" : "latest",
-    "mocha-junit-reporter" : "latest",
-    "express": "latest",
-    "body-parser": "latest",
-    "archiver": "latest"
->>>>>>> master
+    "mocha-junit-reporter" : "latest"
   }
 }

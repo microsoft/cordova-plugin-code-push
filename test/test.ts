@@ -1228,3 +1228,11 @@ var testBuilderDescribes: PluginTestingFramework.TestBuilderDescribe[] = [
 
 // Create tests.
 PluginTestingFramework.initializeTests(new CordovaProjectManager(), testBuilderDescribes);
+
+/* describe("run server", function() {
+    this.timeout(60 * 60 * 1000);
+    
+    it("runs server", (done: MochaDone) => {
+        PluginTestingFramework.setupServer(Platform.IOS.getInstance());
+    });
+}); */ 
