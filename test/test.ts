@@ -97,35 +97,7 @@ class CordovaProjectManager extends ProjectManager {
      * Creates a CodePush update package zip for a project.
      */
     public createUpdateArchive(projectDirectory: string, targetPlatform: Platform.IPlatform, isDiff?: boolean): Q.Promise<string> {
-        var deferred = Q.defer<string>();
-        var archive = archiver.create("zip", {});
-        var archivePath = path.join(projectDirectory, "update.zip");
-        
-        console.log("Creating an update archive at: " + archivePath);
-
-        if (fs.existsSync(archivePath)) {
-            fs.unlinkSync(archivePath);
-        }
-        var writeStream = fs.createWriteStream(archivePath);
-        var targetFolder = targetPlatform.getPlatformWwwPath(projectDirectory);
-
-        writeStream.on("close", function() {
-            deferred.resolve(archivePath);
-        });
-
-        archive.on("error", function(e: Error) {
-            deferred.reject(e);
-        });
-
-        if (isDiff) {
-            archive.append(`{"deletedFiles":[]}`, { name: "hotcodepush.json" });
-        }
-        
-        archive.directory(targetFolder, "www");
-        archive.pipe(writeStream);
-        archive.finalize();
-
-        return deferred.promise;
+        return ProjectManager.archiveFolder(targetPlatform.getPlatformWwwPath(projectDirectory), path.join(projectDirectory, "update.zip"), isDiff);
     }
     
     /** Used by preparePlatform to determine which WebView to use if both will be run */
@@ -1235,4 +1207,4 @@ PluginTestingFramework.initializeTests(new CordovaProjectManager(), testBuilderD
     it("runs server", (done: MochaDone) => {
         PluginTestingFramework.setupServer(Platform.IOS.getInstance());
     });
-}); */ 
+}); */

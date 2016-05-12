@@ -273,7 +273,11 @@ declare module 'code-push-plugin-testing-framework/script/projectManager' {
 	    /**
 	     * Copies a file from a given location to another.
 	     */
-	    static copyFile(source: string, destination: string, overwrite: boolean): Q.Promise<void>;
+	    static copyFile(source: string, destination: string, overwrite: boolean): Q.Promise<string>;
+	    /**
+	     * Archives the contents of targetFolder and puts it in an archive at archivePath.
+	     */
+	    static archiveFolder(targetFolder: string, archivePath: string, isDiff: boolean): Q.Promise<string>;
 	}
 
 }
