@@ -374,6 +374,10 @@ declare module 'code-push-plugin-testing-framework/script/testUtil' {
 	        maxBuffer?: number;
 	        killSignal?: string;
 	    }, logOutput?: boolean): Q.Promise<string>;
+	    /**
+	     * Returns the name of the plugin that is being tested.
+	     */
+	    static getPluginName(): string;
 	}
 
 }
