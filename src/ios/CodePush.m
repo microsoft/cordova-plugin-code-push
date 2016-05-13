@@ -7,6 +7,7 @@
 #import "InstallOptions.h"
 #import "InstallMode.h"
 #import "CodePushReportingManager.h"
+#import "StatusReport.h"
 #import "UpdateHashUtils.h"
 
 @implementation CodePush
@@ -14,7 +15,7 @@
 bool didUpdate = false;
 bool pendingInstall = false;
 NSDate* lastResignedDate;
-const NSString* DeploymentKeyPreference = @"codepushdeploymentkey";
+NSString* const DeploymentKeyPreference = @"codepushdeploymentkey";
 
 - (void)getBinaryHash:(CDVInvokedUrlCommand *)command {
     CDVPluginResult* pluginResult = nil;
@@ -42,7 +43,8 @@ const NSString* DeploymentKeyPreference = @"codepushdeploymentkey";
     if ([CodePushPackageManager installNeedsConfirmation]) {
         /* save reporting status */
         CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
-        [CodePushReportingManager reportStatus:UPDATE_ROLLED_BACK withLabel:currentMetadata.label version:currentMetadata.appVersion deploymentKey:currentMetadata.deploymentKey webView:self.webView];
+        StatusReport* statusReport = [[StatusReport alloc] initWithStatus:UPDATE_ROLLED_BACK andLabel:currentMetadata.label andAppVersion:currentMetadata.appVersion andDeploymentKey:currentMetadata.deploymentKey];
+        [CodePushReportingManager reportStatus:statusReport withWebView:self.webView];
 
         [CodePushPackageManager clearInstallNeedsConfirmation];
         [CodePushPackageManager revertToPreviousVersion];
@@ -60,15 +62,17 @@ const NSString* DeploymentKeyPreference = @"codepushdeploymentkey";
 - (void)updateSuccess:(CDVInvokedUrlCommand *)command {
     if ([CodePushPackageManager isFirstRun]) {
         [CodePushPackageManager markFirstRunFlag];
-        NSString *appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
-        NSString *deploymentKey = ((CDVViewController *)self.viewController).settings[DeploymentKeyPreference];
-        [CodePushReportingManager reportStatus:STORE_VERSION withLabel:nil version:appVersion deploymentKey:deploymentKey webView:self.webView];
-    }
-
-    if ([CodePushPackageManager installNeedsConfirmation]) {
+        NSString* appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+        NSString* deploymentKey = ((CDVViewController *)self.viewController).settings[DeploymentKeyPreference];
+        StatusReport* statusReport = [[StatusReport alloc] initWithStatus:STORE_VERSION andLabel:nil andAppVersion:appVersion andDeploymentKey:deploymentKey];
+        [CodePushReportingManager reportStatus:statusReport withWebView:self.webView];
+    } else if ([CodePushPackageManager installNeedsConfirmation]) {
         /* save reporting status */
         CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
-        [CodePushReportingManager reportStatus:UPDATE_CONFIRMED withLabel:currentMetadata.label version:currentMetadata.appVersion deploymentKey:currentMetadata.deploymentKey webView:self.webView];
+        StatusReport* statusReport = [[StatusReport alloc] initWithStatus:UPDATE_CONFIRMED andLabel:currentMetadata.label andAppVersion:currentMetadata.appVersion andDeploymentKey:currentMetadata.deploymentKey];
+        [CodePushReportingManager reportStatus:statusReport withWebView:self.webView];
+    } else if ([CodePushReportingManager hasFailedReport]) {
+        [CodePushReportingManager reportStatus:[CodePushReportingManager getAndClearFailedReport] withWebView:self.webView];
     }
 
     [CodePushPackageManager clearInstallNeedsConfirmation];
@@ -110,6 +114,20 @@ const NSString* DeploymentKeyPreference = @"codepushdeploymentkey";
     }
 
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)reportFailed:(CDVInvokedUrlCommand *)command {
+    NSDictionary* statusReportDict = [command argumentAtIndex:0 withDefault:nil andClass:[NSDictionary class]];
+    if (statusReportDict) {
+        [CodePushReportingManager saveFailedReport:[[StatusReport alloc] initWithDictionary:statusReportDict]];
+    }
+}
+
+- (void)reportSucceeded:(CDVInvokedUrlCommand *)command {
+    NSDictionary* statusReportDict = [command argumentAtIndex:0 withDefault:nil andClass:[NSDictionary class]];
+    if (statusReportDict) {
+        [CodePushReportingManager saveSuccessfulReport:[[StatusReport alloc] initWithDictionary:statusReportDict]];
+    }
 }
 
 - (void)restartApplication:(CDVInvokedUrlCommand *)command {
@@ -164,7 +182,6 @@ const NSString* DeploymentKeyPreference = @"codepushdeploymentkey";
     [self sendResultForPreference:DeploymentKeyPreference command:command];
 }
 
-
 - (void)getNativeBuildTime:(CDVInvokedUrlCommand *)command {
     NSString* timeStamp = [Utilities getApplicationTimestamp];
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:timeStamp];
@@ -208,9 +225,10 @@ const NSString* DeploymentKeyPreference = @"codepushdeploymentkey";
                 [CodePushPackageManager clearFailedUpdates];
                 [CodePushPackageManager clearPendingInstall];
                 [CodePushPackageManager clearInstallNeedsConfirmation];
-                NSString *appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
-                NSString *deploymentKey = ((CDVViewController *)self.viewController).settings[DeploymentKeyPreference];
-                [CodePushReportingManager reportStatus:STORE_VERSION withLabel:nil version:appVersion deploymentKey:deploymentKey webView:self.webView];
+                NSString* appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+                NSString* deploymentKey = ((CDVViewController *)self.viewController).settings[DeploymentKeyPreference];
+                StatusReport* statusReport = [[StatusReport alloc] initWithStatus:STORE_VERSION andLabel:nil andAppVersion:appVersion andDeploymentKey:deploymentKey];
+                [CodePushReportingManager reportStatus:statusReport withWebView:self.webView];
             }
         }
     }
@@ -246,6 +264,8 @@ const NSString* DeploymentKeyPreference = @"codepushdeploymentkey";
                 [CodePushPackageManager clearPendingInstall];
             }
         }
+    } else if ([CodePushReportingManager hasFailedReport]) {
+        [CodePushReportingManager reportStatus:[CodePushReportingManager getAndClearFailedReport] withWebView:self.webView];
     }
 }
 

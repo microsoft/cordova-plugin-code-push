@@ -1,42 +1,41 @@
 #import "CodePushReportingManager.h"
+#import "StatusReport.h"
 
 @implementation CodePushReportingManager
 
-const NSString* LastVersionPreference = @"CODE_PUSH_LAST_VERSION";
-const NSString* LastVersionDeploymentKeyKey = @"LAST_VERSION_DEPLOYMENT_KEY_KEY";
-const NSString* LastVersionLabelOrAppVersionKey = @"LAST_VERSION_LABEL_OR_APP_VERSION_KEY";
+int HasFailedReport = -1; // -1 = unset, 0 = false, 1 = true
 
-+ (void)reportStatus:(ReportingStatus)status withLabel:(NSString*)label version:(NSString*)version deploymentKey:(NSString*)deploymentKey webView:(UIView*)webView {
+NSString* const FailedStatusReportKey = @"CODE_PUSH_FAILED_STATUS_REPORT_KEY";
+NSString* const LastVersionPreference = @"CODE_PUSH_LAST_VERSION";
+NSString* const LastVersionPreferenceDeploymentKeyKey = @"LAST_VERSION_DEPLOYMENT_KEY_KEY";
+NSString* const LastVersionPreferenceLabelOrAppVersionKey = @"LAST_VERSION_LABEL_OR_APP_VERSION_KEY";
+
++ (void)reportStatus:(StatusReport*)statusReport withWebView:(UIView*)webView {
     @synchronized(self) {
-        if (!deploymentKey) {
+        if (!statusReport.deploymentKey) {
             return;
         }
 
-        NSString* labelParameter = [CodePushReportingManager convertStringParameter:label];
-        NSString* appVersionParameter = [CodePushReportingManager convertStringParameter:version];
-        NSString* deploymentKeyParameter = [CodePushReportingManager convertStringParameter:deploymentKey];
-        NSString* lastVersionLabelOrAppVersionParameter = nil;
-        NSString* lastVersionDeploymentKeyParameter = nil;
-
-        NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
-        NSDictionary* lastVersion = [preferences objectForKey:LastVersionPreference];
-        if (lastVersion) {
-            lastVersionLabelOrAppVersionParameter = [CodePushReportingManager convertStringParameter:[lastVersion objectForKey:LastVersionLabelOrAppVersionKey]];
-            lastVersionDeploymentKeyParameter = [CodePushReportingManager convertStringParameter:[lastVersion objectForKey:LastVersionDeploymentKeyKey]];
+        NSString* labelParameter = [CodePushReportingManager convertStringParameter:statusReport.label];
+        NSString* appVersionParameter = [CodePushReportingManager convertStringParameter:statusReport.appVersion];
+        NSString* deploymentKeyParameter = [CodePushReportingManager convertStringParameter:statusReport.deploymentKey];
+        NSString* lastVersionLabelOrAppVersionParameter = statusReport.lastVersionLabelOrAppVersion;
+        NSString* lastVersionDeploymentKeyParameter = statusReport.lastVersionDeploymentKey;
+        if (!lastVersionLabelOrAppVersionParameter || !lastVersionDeploymentKeyParameter) {
+            NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
+            NSDictionary* lastVersion = [preferences objectForKey:LastVersionPreference];
+            if (lastVersion) {
+                lastVersionLabelOrAppVersionParameter = [CodePushReportingManager convertStringParameter:[lastVersion objectForKey:LastVersionPreferenceLabelOrAppVersionKey]];
+                lastVersionDeploymentKeyParameter = [CodePushReportingManager convertStringParameter:[lastVersion objectForKey:LastVersionPreferenceDeploymentKeyKey]];
+            }
         }
 
         /* JS function to call: window.codePush.reportStatus(status: number, label: String, appVersion: String, deploymentKey: String) */
-        NSString* script = [NSString stringWithFormat:@"document.addEventListener(\"deviceready\", function () { window.codePush.reportStatus(%i, %@, %@, %@, %@, %@); });", (int)status, labelParameter, appVersionParameter, deploymentKeyParameter, lastVersionLabelOrAppVersionParameter, lastVersionDeploymentKeyParameter];
+        NSString* script = [NSString stringWithFormat:@"document.addEventListener(\"deviceready\", function () { window.codePush.reportStatus(%i, %@, %@, %@, %@, %@); });", (int)statusReport.status, labelParameter, appVersionParameter, deploymentKeyParameter, lastVersionLabelOrAppVersionParameter, lastVersionDeploymentKeyParameter];
         if ([webView respondsToSelector:@selector(evaluateJavaScript:completionHandler:)]) {
             [webView performSelector:@selector(evaluateJavaScript:completionHandler:) withObject:script withObject: NULL];
         } else if ([webView isKindOfClass:[UIWebView class]]) {
             [(UIWebView*)webView stringByEvaluatingJavaScriptFromString:script];
-        }
-
-        if (status == STORE_VERSION || status == UPDATE_CONFIRMED) {
-            NSDictionary* newLastVersion = @{LastVersionLabelOrAppVersionKey:(label ? label : version), LastVersionDeploymentKeyKey:deploymentKey};
-            [preferences setObject:newLastVersion forKey:LastVersionPreference];
-            [preferences synchronize];
         }
     }
 }
@@ -46,6 +45,58 @@ const NSString* LastVersionLabelOrAppVersionKey = @"LAST_VERSION_LABEL_OR_APP_VE
         return @"undefined";
     } else {
         return [NSString stringWithFormat:@"'%@'", input];
+    }
+}
+
++ (BOOL)hasFailedReport {
+    if (HasFailedReport == -1) {
+        HasFailedReport = [self getFailedReport] != nil;
+    }
+    
+    return HasFailedReport;
+}
+
++ (StatusReport*)getFailedReport {
+    NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
+    NSDictionary* failedReportDict = [preferences objectForKey:FailedStatusReportKey];
+    if (!failedReportDict) {
+        return nil;
+    }
+    
+    return [[StatusReport alloc] initWithDictionary:failedReportDict];
+}
+
++ (StatusReport*)getAndClearFailedReport {
+    StatusReport* failedReport = [self getFailedReport];
+    [self clearFailedReport];
+    HasFailedReport = 0;
+    return failedReport;
+}
+
++ (void)clearFailedReport {
+    NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
+    [preferences removeObjectForKey:FailedStatusReportKey];
+    [preferences synchronize];
+}
+
++ (void)saveFailedReport:(StatusReport*)statusReport {
+    NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
+    [preferences setObject:[statusReport toDictionary] forKey:FailedStatusReportKey];
+    [preferences synchronize];
+    HasFailedReport = 1;
+}
+
++ (void)saveSuccessfulReport:(StatusReport*)statusReport {
+    if (statusReport.status == STORE_VERSION || statusReport.status == UPDATE_CONFIRMED) {
+        NSDictionary* newLastVersion = @{
+                                         LastVersionPreferenceLabelOrAppVersionKey:(statusReport.label ? statusReport.label : statusReport.appVersion),
+                                         LastVersionPreferenceDeploymentKeyKey:statusReport.deploymentKey
+                                        };
+        NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
+        [preferences setObject:newLastVersion forKey:LastVersionPreference];
+        [preferences synchronize];
+        [self clearFailedReport];
+        HasFailedReport = 0;
     }
 }
 

@@ -1,4 +1,4 @@
-#include "InstallMode.h"
+#import "InstallMode.h"
 
 @interface InstallOptions : NSObject
 

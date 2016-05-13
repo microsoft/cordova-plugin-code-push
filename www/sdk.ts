@@ -77,12 +77,11 @@ class Sdk {
                     callback && callback(error, null);
                 }
                 else {
-                    console.log(`Reporting status: ${status} label: ${pkg && pkg.label} appVersion: ${Sdk.DefaultConfiguration.appVersion} previousLabelOrAppVersion: ${previousLabelOrAppVersion} previousDeploymentKey:${previousDeploymentKey}`);
                     acquisitionManager.reportStatusDeploy(pkg, status, previousLabelOrAppVersion, previousDeploymentKey, callback);
                 }
             }, currentDeploymentKey, "application/json");
         } catch (e) {
-            callback && callback(new Error("An error occured while reporting the deployment status. " + e), null);
+            callback && callback(e, null);
         }
     }
 
