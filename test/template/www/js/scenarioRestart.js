@@ -35,9 +35,6 @@ var app = {
     tryRestart: function (callback) {
         window.codePush.restartApplication(
             function () {
-                /* success */
-                // does not always send...rely on RESTART_FAILED to provide failure state instead of checking for RESTART_SUCCEEDED
-                // app.sendTestMessage("RESTART_SUCCEEDED");
                 callback && callback();
             },
             function () {
