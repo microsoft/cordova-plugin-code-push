@@ -19,35 +19,48 @@ var CodePush = (function () {
     function CodePush() {
     }
     CodePush.prototype.notifyApplicationReady = function (notifySucceeded, notifyFailed) {
-        cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updateSuccess", []);
+        cordova.exec(notifySucceeded, notifyFailed, "CodePush", "notifyApplicationReady", []);
     };
     CodePush.prototype.restartApplication = function (installSuccess, errorCallback) {
         cordova.exec(installSuccess, errorCallback, "CodePush", "restartApplication", []);
     };
-    CodePush.prototype.reportStatus = function (status, label, appVersion, currentDeploymentKey, previousLabelOrAppVersion, previousDeploymentKey) {
-        try {
-            var createPackageForReporting = function (label, appVersion) {
-                return {
-                    label: label, appVersion: appVersion,
-                    deploymentKey: currentDeploymentKey, description: null,
-                    isMandatory: false, packageHash: null,
-                    packageSize: null, failedInstall: false
-                };
+    CodePush.prototype.reportStatus = function (status, label, appVersion, deploymentKey, previousLabelOrAppVersion, previousDeploymentKey) {
+        var createPackageForReporting = function (label, appVersion) {
+            return {
+                label: label, appVersion: appVersion, deploymentKey: deploymentKey,
+                description: null, isMandatory: false,
+                packageHash: null, packageSize: null,
+                failedInstall: false
             };
-            switch (status) {
-                case ReportStatus.STORE_VERSION:
-                    Sdk.reportStatusDeploy(null, AcquisitionStatus.DeploymentSucceeded, currentDeploymentKey, previousLabelOrAppVersion, previousDeploymentKey);
-                    break;
-                case ReportStatus.UPDATE_CONFIRMED:
-                    Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentSucceeded, currentDeploymentKey, previousLabelOrAppVersion, previousDeploymentKey);
-                    break;
-                case ReportStatus.UPDATE_ROLLED_BACK:
-                    Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentFailed, currentDeploymentKey, previousLabelOrAppVersion, previousDeploymentKey);
-                    break;
+        };
+        var reportDone = function (error) {
+            var reportArgs = {
+                status: status,
+                label: label,
+                appVersion: appVersion,
+                deploymentKey: deploymentKey,
+                previousLabelOrAppVersion: previousLabelOrAppVersion,
+                previousDeploymentKey: previousDeploymentKey
+            };
+            if (error) {
+                CodePushUtil.logError("An error occurred while reporting status: " + JSON.stringify(reportArgs), error);
+                cordova.exec(null, null, "CodePush", "reportFailed", [reportArgs]);
             }
-        }
-        catch (e) {
-            CodePushUtil.logError("An error occurred while reporting." + CodePushUtil.getErrorMessage(e));
+            else {
+                CodePushUtil.logMessage("Reported status: " + JSON.stringify(reportArgs));
+                cordova.exec(null, null, "CodePush", "reportSucceeded", [reportArgs]);
+            }
+        };
+        switch (status) {
+            case ReportStatus.STORE_VERSION:
+                Sdk.reportStatusDeploy(null, AcquisitionStatus.DeploymentSucceeded, deploymentKey, previousLabelOrAppVersion, previousDeploymentKey, reportDone);
+                break;
+            case ReportStatus.UPDATE_CONFIRMED:
+                Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentSucceeded, deploymentKey, previousLabelOrAppVersion, previousDeploymentKey, reportDone);
+                break;
+            case ReportStatus.UPDATE_ROLLED_BACK:
+                Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentFailed, deploymentKey, previousLabelOrAppVersion, previousDeploymentKey, reportDone);
+                break;
         }
     };
     CodePush.prototype.getCurrentPackage = function (packageSuccess, packageError) {

@@ -47,7 +47,7 @@ class CodePush implements CodePushCordovaPlugin {
      * @param notifyFailed Optional callback invoked in case of an error during notifying the plugin.
      */
     public notifyApplicationReady(notifySucceeded?: SuccessCallback<void>, notifyFailed?: ErrorCallback): void {
-        cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updateSuccess", []);
+        cordova.exec(notifySucceeded, notifyFailed, "CodePush", "notifyApplicationReady", []);
     }
 
     /**
@@ -62,32 +62,47 @@ class CodePush implements CodePushCordovaPlugin {
      * Reports an application status back to the server.
      * !!! This function is called from the native side, please make changes accordingly. !!!
      */
-    public reportStatus(status: number, label: string, appVersion: string, currentDeploymentKey: string, previousLabelOrAppVersion?: string, previousDeploymentKey?: string) {
-        try {
-            var createPackageForReporting = (label: string, appVersion: string): IPackage => {
-                return {
-                    /* The SDK only reports the label and appVersion.
-                       The rest of the properties are added for type safety. */
-                    label: label, appVersion: appVersion,
-                    deploymentKey: currentDeploymentKey, description: null,
-                    isMandatory: false, packageHash: null,
-                    packageSize: null, failedInstall: false
-                };
+    public reportStatus(status: number, label: string, appVersion: string, deploymentKey: string, previousLabelOrAppVersion?: string, previousDeploymentKey?: string) {
+       var createPackageForReporting = (label: string, appVersion: string): IPackage => {
+            return {
+                /* The SDK only reports the label and appVersion.
+                   The rest of the properties are added for type safety. */
+                label, appVersion, deploymentKey,
+                description: null, isMandatory: false,
+                packageHash: null, packageSize: null,
+                failedInstall: false
+            };
+        };
+
+        var reportDone = (error: Error) => {
+            var reportArgs = {
+                status,
+                label,
+                appVersion,
+                deploymentKey,
+                previousLabelOrAppVersion,
+                previousDeploymentKey
             };
 
-            switch (status) {
-                case ReportStatus.STORE_VERSION:
-                    Sdk.reportStatusDeploy(null, AcquisitionStatus.DeploymentSucceeded, currentDeploymentKey, previousLabelOrAppVersion, previousDeploymentKey);
-                    break;
-                case ReportStatus.UPDATE_CONFIRMED:
-                    Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentSucceeded, currentDeploymentKey, previousLabelOrAppVersion, previousDeploymentKey);
-                    break;
-                case ReportStatus.UPDATE_ROLLED_BACK:
-                    Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentFailed, currentDeploymentKey, previousLabelOrAppVersion, previousDeploymentKey);
-                    break;
+            if (error) {
+                CodePushUtil.logError(`An error occurred while reporting status: ${JSON.stringify(reportArgs)}`, error);
+                cordova.exec(null, null, "CodePush", "reportFailed", [reportArgs]);
+            } else {
+                CodePushUtil.logMessage(`Reported status: ${JSON.stringify(reportArgs)}`);
+                cordova.exec(null, null, "CodePush", "reportSucceeded", [reportArgs]);
             }
-        } catch (e) {
-            CodePushUtil.logError("An error occurred while reporting." + CodePushUtil.getErrorMessage(e));
+        };
+
+        switch (status) {
+            case ReportStatus.STORE_VERSION:
+                Sdk.reportStatusDeploy(null, AcquisitionStatus.DeploymentSucceeded, deploymentKey, previousLabelOrAppVersion, previousDeploymentKey, reportDone);
+                break;
+            case ReportStatus.UPDATE_CONFIRMED:
+                Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentSucceeded, deploymentKey, previousLabelOrAppVersion, previousDeploymentKey, reportDone);
+                break;
+            case ReportStatus.UPDATE_ROLLED_BACK:
+                Sdk.reportStatusDeploy(createPackageForReporting(label, appVersion), AcquisitionStatus.DeploymentFailed, deploymentKey, previousLabelOrAppVersion, previousDeploymentKey, reportDone);
+                break;
         }
     }
 
@@ -420,7 +435,6 @@ class CodePush implements CodePushCordovaPlugin {
 
         return CodePush.DefaultUpdateDialogOptions;
     }
-
 }
 
 /**

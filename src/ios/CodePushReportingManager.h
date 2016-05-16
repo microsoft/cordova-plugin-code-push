@@ -1,11 +1,12 @@
-enum {
-    STORE_VERSION = 0,
-    UPDATE_CONFIRMED = 1,
-    UPDATE_ROLLED_BACK = 2
-};
-typedef NSInteger ReportingStatus;
+#import "StatusReport.h"
 
 @interface CodePushReportingManager : NSObject
-+ (void)reportStatus:(ReportingStatus)status withLabel:(NSString*)label version:(NSString*)version deploymentKey:(NSString*)deploymentKey webView:(UIView*)webView;
-@end
 
++ (void)reportStatus:(StatusReport*)statusReport withWebView:(UIView*)webView;
++ (BOOL)hasFailedReport;
++ (StatusReport*)getFailedReport;
++ (StatusReport*)getAndClearFailedReport;
++ (void)saveFailedReport:(StatusReport*)statusReport;
++ (void)saveSuccessfulReport:(StatusReport*)statusReport;
+
+@end
