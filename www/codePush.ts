@@ -47,7 +47,7 @@ class CodePush implements CodePushCordovaPlugin {
      * @param notifyFailed Optional callback invoked in case of an error during notifying the plugin.
      */
     public notifyApplicationReady(notifySucceeded?: SuccessCallback<void>, notifyFailed?: ErrorCallback): void {
-        cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updateSuccess", []);
+        cordova.exec(notifySucceeded, notifyFailed, "CodePush", "notifyApplicationReady", []);
     }
 
     /**

@@ -21,7 +21,7 @@ NSString* const LastVersionPreferenceLabelOrAppVersionKey = @"LAST_VERSION_LABEL
         NSString* deploymentKeyParameter = [CodePushReportingManager convertStringParameter:statusReport.deploymentKey];
         NSString* lastVersionLabelOrAppVersionParameter = statusReport.lastVersionLabelOrAppVersion;
         NSString* lastVersionDeploymentKeyParameter = statusReport.lastVersionDeploymentKey;
-        if (!lastVersionLabelOrAppVersionParameter || !lastVersionDeploymentKeyParameter) {
+        if (!lastVersionLabelOrAppVersionParameter && !lastVersionDeploymentKeyParameter) {
             NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
             NSDictionary* lastVersion = [preferences objectForKey:LastVersionPreference];
             if (lastVersion) {

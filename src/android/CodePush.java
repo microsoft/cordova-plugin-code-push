@@ -66,6 +66,8 @@ public class CodePush extends CordovaPlugin {
             return execIsFirstRun(args, callbackContext);
         } else if ("isPendingUpdate".equals(action)) {
             return execIsPendingUpdate(args, callbackContext);
+        } else if ("notifyApplicationReady".equals(action)) {
+            return execNotifyApplicationReady(callbackContext);
         } else if ("preInstall".equals(action)) {
             return execPreInstall(args, callbackContext);
         } else if ("reportFailed".equals(action)) {
@@ -74,8 +76,6 @@ public class CodePush extends CordovaPlugin {
             return execReportSucceeded(args, callbackContext);
         } else if ("restartApplication".equals(action)) {
             return execRestartApplication(args, callbackContext);
-        } else if ("updateSuccess".equals(action)) {
-            return execUpdateSuccess(callbackContext);
         } else {
             return false;
         }
@@ -107,10 +107,11 @@ public class CodePush extends CordovaPlugin {
         return true;
     }
 
-    private boolean execUpdateSuccess(CallbackContext callbackContext) {
+    private boolean execNotifyApplicationReady(CallbackContext callbackContext) {
+        // Report the current installation to metrics if it has not yet been reported.
         if (this.codePushPackageManager.isFirstRun()) {
+            // Report first run of a store version app
             this.codePushPackageManager.saveFirstRunFlag();
-            /* save reporting status for first install */
             try {
                 String appVersion = Utilities.getAppVersionName(cordova.getActivity());
                 codePushReportingManager.reportStatus(new StatusReport(ReportingStatus.STORE_VERSION, null, appVersion, mainWebView.getPreferences().getString(DEPLOYMENT_KEY_PREFERENCE, null)), this.mainWebView);
@@ -119,17 +120,18 @@ public class CodePush extends CordovaPlugin {
                 e.printStackTrace();
             }
         } else if (this.codePushPackageManager.installNeedsConfirmation()) {
-            /* save reporting status */
+            // Report CodePush update installation that has not been confirmed yet
             CodePushPackageMetadata currentMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
             codePushReportingManager.reportStatus(new StatusReport(ReportingStatus.UPDATE_CONFIRMED, currentMetadata.label, currentMetadata.appVersion, currentMetadata.deploymentKey), this.mainWebView);
         } else if (codePushReportingManager.hasFailedReport()) {
+            // Previous status report failed, so try it again
             codePushReportingManager.reportStatus(codePushReportingManager.getAndClearFailedReport(), this.mainWebView);
         }
 
+        // Mark the update as confirmed and not requiring a rollback
         this.codePushPackageManager.clearInstallNeedsConfirmation();
         this.cleanOldPackageSilently();
         callbackContext.success();
-
         return true;
     }
 

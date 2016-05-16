@@ -3,6 +3,9 @@ package com.microsoft.cordova;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * Represents a status report to be sent to metrics.
+ */
 public class StatusReport {
 
     private static final String STATUS_KEY = "status";
@@ -16,6 +19,8 @@ public class StatusReport {
     String label;
     String appVersion;
     String deploymentKey;
+
+    // Optional fields.
     String lastVersionLabelOrAppVersion;
     String lastVersionDeploymentKey;
 

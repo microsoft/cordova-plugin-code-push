@@ -19,7 +19,7 @@ var CodePush = (function () {
     function CodePush() {
     }
     CodePush.prototype.notifyApplicationReady = function (notifySucceeded, notifyFailed) {
-        cordova.exec(notifySucceeded, notifyFailed, "CodePush", "updateSuccess", []);
+        cordova.exec(notifySucceeded, notifyFailed, "CodePush", "notifyApplicationReady", []);
     };
     CodePush.prototype.restartApplication = function (installSuccess, errorCallback) {
         cordova.exec(installSuccess, errorCallback, "CodePush", "restartApplication", []);

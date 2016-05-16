@@ -11,6 +11,8 @@ typedef NSInteger ReportingStatus;
 @property NSString* label;
 @property NSString* appVersion;
 @property NSString* deploymentKey;
+
+// Optional properties.
 @property NSString* lastVersionLabelOrAppVersion;
 @property NSString* lastVersionDeploymentKey;
 

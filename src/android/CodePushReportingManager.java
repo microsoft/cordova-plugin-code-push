@@ -47,11 +47,11 @@ public class CodePushReportingManager {
     }
 
     public boolean hasFailedReport() {
-        if (this.hasFailedReport == null) {
-            this.hasFailedReport = codePushPreferences.getFailedReport() != null;
+        if (hasFailedReport == null) {
+            hasFailedReport = codePushPreferences.getFailedReport() != null;
         }
 
-        return this.hasFailedReport;
+        return hasFailedReport;
     }
 
     public StatusReport getAndClearFailedReport() {
