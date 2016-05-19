@@ -30,6 +30,7 @@ public class CodePush extends CordovaPlugin {
     private CordovaWebView mainWebView;
     private CodePushPackageManager codePushPackageManager;
     private CodePushReportingManager codePushReportingManager;
+    private StatusReport rollbackStatusReport;
     private boolean pluginDestroyed = false;
     private boolean didUpdate = false;
     private boolean didStartApp = false;
@@ -108,7 +109,6 @@ public class CodePush extends CordovaPlugin {
     }
 
     private boolean execNotifyApplicationReady(CallbackContext callbackContext) {
-        // Report the current installation to metrics if it has not yet been reported.
         if (this.codePushPackageManager.isFirstRun()) {
             // Report first run of a store version app
             this.codePushPackageManager.saveFirstRunFlag();
@@ -123,6 +123,10 @@ public class CodePush extends CordovaPlugin {
             // Report CodePush update installation that has not been confirmed yet
             CodePushPackageMetadata currentMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
             codePushReportingManager.reportStatus(new StatusReport(ReportingStatus.UPDATE_CONFIRMED, currentMetadata.label, currentMetadata.appVersion, currentMetadata.deploymentKey), this.mainWebView);
+        } else if (rollbackStatusReport != null) {
+            // Report a CodePush update that has been rolled back
+            codePushReportingManager.reportStatus(rollbackStatusReport, this.mainWebView);
+            rollbackStatusReport = null;
         } else if (codePushReportingManager.hasFailedReport()) {
             // Previous status report failed, so try it again
             codePushReportingManager.reportStatus(codePushReportingManager.getAndClearFailedReport(), this.mainWebView);
@@ -358,7 +362,7 @@ public class CodePush extends CordovaPlugin {
         if (this.codePushPackageManager.installNeedsConfirmation()) {
             /* save status for later reporting */
             CodePushPackageMetadata currentMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
-            codePushReportingManager.reportStatus(new StatusReport(ReportingStatus.UPDATE_ROLLED_BACK, currentMetadata.label, currentMetadata.appVersion, currentMetadata.deploymentKey), this.mainWebView);
+            rollbackStatusReport = new StatusReport(ReportingStatus.UPDATE_ROLLED_BACK, currentMetadata.label, currentMetadata.appVersion, currentMetadata.deploymentKey);
 
             /* revert application to the previous version */
             this.codePushPackageManager.clearInstallNeedsConfirmation();
