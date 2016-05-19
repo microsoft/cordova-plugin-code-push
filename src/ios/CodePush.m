@@ -16,6 +16,7 @@ bool didUpdate = false;
 bool pendingInstall = false;
 NSDate* lastResignedDate;
 NSString* const DeploymentKeyPreference = @"codepushdeploymentkey";
+StatusReport* rollbackStatusReport = nil;
 
 - (void)getBinaryHash:(CDVInvokedUrlCommand *)command {
     CDVPluginResult* pluginResult = nil;
@@ -43,9 +44,10 @@ NSString* const DeploymentKeyPreference = @"codepushdeploymentkey";
     if ([CodePushPackageManager installNeedsConfirmation]) {
         /* save reporting status */
         CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
-        StatusReport* statusReport = [[StatusReport alloc] initWithStatus:UPDATE_ROLLED_BACK andLabel:currentMetadata.label andAppVersion:currentMetadata.appVersion andDeploymentKey:currentMetadata.deploymentKey];
-        [CodePushReportingManager reportStatus:statusReport withWebView:self.webView];
-
+        rollbackStatusReport = [[StatusReport alloc] initWithStatus:UPDATE_ROLLED_BACK
+                                                           andLabel:currentMetadata.label
+                                                      andAppVersion:currentMetadata.appVersion
+                                                   andDeploymentKey:currentMetadata.deploymentKey];
         [CodePushPackageManager clearInstallNeedsConfirmation];
         [CodePushPackageManager revertToPreviousVersion];
         if (navigate) {
@@ -60,22 +62,35 @@ NSString* const DeploymentKeyPreference = @"codepushdeploymentkey";
 }
 
 - (void)notifyApplicationReady:(CDVInvokedUrlCommand *)command {
-    // Report the current installation to metrics if it has not yet been reported.
     if ([CodePushPackageManager isFirstRun]) {
         // Report first run of a store version app
         [CodePushPackageManager markFirstRunFlag];
         NSString* appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
         NSString* deploymentKey = ((CDVViewController *)self.viewController).settings[DeploymentKeyPreference];
-        StatusReport* statusReport = [[StatusReport alloc] initWithStatus:STORE_VERSION andLabel:nil andAppVersion:appVersion andDeploymentKey:deploymentKey];
-        [CodePushReportingManager reportStatus:statusReport withWebView:self.webView];
+        StatusReport* statusReport = [[StatusReport alloc] initWithStatus:STORE_VERSION
+                                                                 andLabel:nil
+                                                            andAppVersion:appVersion
+                                                         andDeploymentKey:deploymentKey];
+        [CodePushReportingManager reportStatus:statusReport
+                                   withWebView:self.webView];
     } else if ([CodePushPackageManager installNeedsConfirmation]) {
         // Report CodePush update installation that has not been confirmed yet
         CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
-        StatusReport* statusReport = [[StatusReport alloc] initWithStatus:UPDATE_CONFIRMED andLabel:currentMetadata.label andAppVersion:currentMetadata.appVersion andDeploymentKey:currentMetadata.deploymentKey];
-        [CodePushReportingManager reportStatus:statusReport withWebView:self.webView];
+        StatusReport* statusReport = [[StatusReport alloc] initWithStatus:UPDATE_CONFIRMED
+                                                                 andLabel:currentMetadata.label
+                                                            andAppVersion:currentMetadata.appVersion
+                                                         andDeploymentKey:currentMetadata.deploymentKey];
+        [CodePushReportingManager reportStatus:statusReport
+                                   withWebView:self.webView];
+    } else if (rollbackStatusReport) {
+        // Report a CodePush update that rolled back
+        [CodePushReportingManager reportStatus:rollbackStatusReport
+                                   withWebView:self.webView];
+        rollbackStatusReport = nil;
     } else if ([CodePushReportingManager hasFailedReport]) {
         // Previous status report failed, so try it again
-        [CodePushReportingManager reportStatus:[CodePushReportingManager getAndClearFailedReport] withWebView:self.webView];
+        [CodePushReportingManager reportStatus:[CodePushReportingManager getAndClearFailedReport]
+                                   withWebView:self.webView];
     }
     
     // Mark the update as confirmed and not requiring a rollback
