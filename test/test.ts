@@ -43,6 +43,7 @@ const ScenarioDownloadUpdate = "js/scenarioDownloadUpdate.js";
 const ScenarioInstall = "js/scenarioInstall.js";
 const ScenarioInstallOnResumeWithRevert = "js/scenarioInstallOnResumeWithRevert.js";
 const ScenarioInstallOnRestartWithRevert = "js/scenarioInstallOnRestartWithRevert.js";
+const ScenarioInstallOnRestart2xWithRevert = "js/scenarioInstallOnRestart2xWithRevert.js";
 const ScenarioInstallWithRevert = "js/scenarioInstallWithRevert.js";
 const ScenarioSync1x = "js/scenarioSync.js";
 const ScenarioSyncResume = "js/scenarioSyncResume.js";
@@ -79,11 +80,11 @@ function cleanupTest(): void {
 function setupTests(): void {
     it("sets up tests correctly", (done) => {
         var promises: Q.Promise<string>[] = [];
-        
+
         targetPlatforms.forEach(platform => {
             promises.push(platform.getEmulatorManager().bootEmulator(restartEmulators));
         });
-        
+
         console.log("Building test project.");
         // create the test project
         promises.push(createTestProject(testRunDirectory)
@@ -92,7 +93,7 @@ function setupTests(): void {
                 // create the update project
                 return createTestProject(updatesDirectory);
             }));
-            
+
         Q.all<string>(promises).then(() => { done(); }, (error) => { done(error); });
     });
 }
@@ -158,14 +159,14 @@ function verifyMessages(expectedMessages: (string | su.AppMessage)[], deferred: 
 
 function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): void {
     var server: any;
-    
+
     function setupServer() {
         console.log("Setting up server at " + targetPlatform.getServerUrl());
-        
+
         var app = express();
         app.use(bodyparser.json());
         app.use(bodyparser.urlencoded({ extended: true }));
-        
+
         app.use(function(req: any, res: any, next: any) {
             res.setHeader("Access-Control-Allow-Origin", "*");
             res.setHeader("Access-Control-Allow-Methods", "*");
@@ -183,7 +184,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
 
         app.get("/download", function(req: any, res: any) {
             console.log("Application downloading the package.");
-            
+
             res.download(mockUpdatePackagePath);
         });
 
@@ -205,7 +206,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
         var serverPortRegEx = /:([0-9]+)/;
         server = app.listen(+targetPlatform.getServerUrl().match(serverPortRegEx)[1]);
     }
-    
+
     function cleanupServer(): void {
         if (server) {
             server.close();
@@ -216,7 +217,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
     function prepareTest(): Q.Promise<string> {
         return projectManager.prepareEmulatorForTest(TestNamespace, targetPlatform);
     }
-    
+
     function getMockResponse(mandatory: boolean = false, randomHash: boolean = true): su.CheckForUpdateResponseMock {
         var updateResponse = createMockResponse(mandatory);
         updateResponse.downloadURL = targetPlatform.getServerUrl() + "/download";
@@ -237,7 +238,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
         console.log("Creating an update at location: " + updatesDirectory);
         return projectManager.setupScenario(updatesDirectory, TestNamespace, templatePath, updateScenarioPath, targetPlatform, false, version);
     };
-    
+
     describe("window.codePush", function() {
         before(() => {
             setupServer();
@@ -252,7 +253,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                     return useWkWebView ? projectManager.addPlugin(testRunDirectory, WkWebViewEnginePluginName).then(() => { return projectManager.addPlugin(updatesDirectory, WkWebViewEnginePluginName); }) : null;
                 });
         });
-        
+
         after(() => {
             cleanupServer();
             return useWkWebView ? projectManager.removePlugin(testRunDirectory, WkWebViewEnginePluginName).then(() => { return projectManager.removePlugin(updatesDirectory, WkWebViewEnginePluginName); }) : null;
@@ -267,11 +268,11 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
             before(() => {
                 return setupScenario(ScenarioCheckForUpdatePath);
             });
-            
+
             beforeEach(() => {
                 return prepareTest();
             });
-            
+
             if (!onlyRunCoreTests) {
                 it("window.codePush.checkForUpdate.noUpdate", function(done) {
                     var noUpdateResponse = createDefaultResponse();
@@ -304,7 +305,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             done(e);
                         }
                     };
-                    
+
                     mockResponse = { updateInfo: noUpdateResponse };
 
                     testMessageCallback = (requestBody: any) => {
@@ -318,7 +319,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
 
                     projectManager.runPlatform(testRunDirectory, targetPlatform);
                 });
-                
+
                 it("window.codePush.checkForUpdate.noUpdate.updateAppVersion", function(done) {
                     var updateAppVersionResponse = createDefaultResponse();
                     updateAppVersionResponse.updateAppVersion = true;
@@ -372,7 +373,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
 
                 projectManager.runPlatform(testRunDirectory, targetPlatform);
             });
-            
+
             if (!onlyRunCoreTests) {
                 it("window.codePush.checkForUpdate.error", function(done) {
                     mockResponse = "invalid {{ json";
@@ -401,7 +402,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                 before(() => {
                     return setupScenario(ScenarioCheckForUpdateCustomKey);
                 });
-                
+
                 beforeEach(() => {
                     return prepareTest();
                 });
@@ -433,7 +434,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                 before(() => {
                     return setupScenario(ScenarioDownloadUpdate);
                 });
-                
+
                 beforeEach(() => {
                     return prepareTest();
                 });
@@ -490,7 +491,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                 before(() => {
                     return setupScenario(ScenarioInstall);
                 });
-                
+
                 beforeEach(() => {
                     return prepareTest();
                 });
@@ -543,7 +544,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                         })
                         .done(done, done);
                 });
-                
+
                 it("localPackage.install.immediately", function(done) {
 
                     mockResponse = { updateInfo: getMockResponse() };
@@ -578,7 +579,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                 before(() => {
                     return setupScenario(ScenarioInstallWithRevert);
                 });
-                
+
                 beforeEach(() => {
                     return prepareTest();
                 });
@@ -658,7 +659,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
             before(() => {
                 return setupScenario(ScenarioInstallOnResumeWithRevert);
             });
-            
+
             beforeEach(() => {
                 return prepareTest();
             });
@@ -737,11 +738,11 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
             before(() => {
                 return setupScenario(ScenarioInstallOnRestartWithRevert);
             });
-            
+
             beforeEach(() => {
                 return prepareTest();
             });
-            
+
             if (!onlyRunCoreTests) {
                 it("localPackage.installOnNextRestart.dorevert", function(done) {
 
@@ -807,7 +808,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                     })
                     .done(done, done);
             });
-            
+
             if (!onlyRunCoreTests) {
                 it("localPackage.installOnNextRestart.revertToPrevious", function(done) {
 
@@ -861,6 +862,60 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
             }
         });
 
+        describe("#localPackage.installOnNextRestart2x", function() {
+
+            afterEach(() => {
+                cleanupTest();
+            });
+
+            before(() => {
+                return setupScenario(ScenarioInstallOnRestart2xWithRevert);
+            });
+
+            beforeEach(() => {
+                return prepareTest();
+            });
+
+            it("localPackage.installOnNextRestart.revertToFirst", function(done) {
+                mockResponse = { updateInfo: getMockResponse() };
+                updateCheckCallback = () => {
+                    // Update the packageHash so we can install the same update twice.
+                    mockResponse.packageHash = "randomHash-" + Math.floor(Math.random() * 10000);
+                };
+
+                /* create an update */
+                setupUpdateScenario(UpdateDeviceReady, "Bad Update")
+                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                    .then<void>((updatePath: string) => {
+                        var deferred = Q.defer<void>();
+                        mockUpdatePackagePath = updatePath;
+                        testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED, su.TestMessage.UPDATE_INSTALLED], deferred);
+                        projectManager.runPlatform(testRunDirectory, targetPlatform);
+                        return deferred.promise;
+                    })
+                    .then<void>(() => {
+                        /* run bad update */
+                        return projectManager.restartApplication(TestNamespace, targetPlatform)
+                            .then(() => {});
+                    })
+                    .then<void>(() => {
+                        /* verify that the bad update is run, then restart it */
+                        var deferred = Q.defer<void>();
+                        testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
+                        projectManager.restartApplication(TestNamespace, targetPlatform);
+                        return deferred.promise;
+                    })
+                    .then<void>(() => {
+                        /* verify the app rolls back to the binary, ignoring the first unconfirmed version */
+                        var deferred = Q.defer<void>();
+                        testMessageCallback = verifyMessages([su.TestMessage.UPDATE_FAILED_PREVIOUSLY], deferred);
+                        projectManager.runPlatform(testRunDirectory, targetPlatform);
+                        return deferred.promise;
+                    })
+                    .done(done, done);
+            });
+        });
+
         describe("#codePush.restartApplication", function() {
 
             afterEach(() => {
@@ -870,7 +925,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
             before(() => {
                 return setupScenario(ScenarioRestart);
             });
-            
+
             beforeEach(() => {
                 return prepareTest();
             });
@@ -913,10 +968,10 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
         });
 
         describe("#window.codePush.sync", function() {
-            
+
             /* We test the functionality with sync twice--first, with sync only called one,
-            * then, with sync called again while the first sync is still running 
-            
+            * then, with sync called again while the first sync is still running
+
             /* Tests where sync is called just once */
             if (!onlyRunCoreTests) {
                 describe("#window.codePush.sync 1x", function() {
@@ -928,7 +983,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                     before(() => {
                         return setupScenario(ScenarioSync1x);
                     });
-                
+
                     beforeEach(() => {
                         return prepareTest();
                     });
@@ -990,7 +1045,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                     it("window.codePush.sync.dorevert", function(done) {
 
                         mockResponse = { updateInfo: getMockResponse() };
-                    
+
                         /* create an update */
                         setupUpdateScenario(UpdateDeviceReady, "Update 1 (bad update)")
                             .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
@@ -1051,7 +1106,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                     });
                 });
             }
-            
+
             /* Tests where sync is called again before the first sync finishes */
             describe("#window.codePush.sync 2x", function() {
 
@@ -1062,7 +1117,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                 before(() => {
                     return setupScenario(ScenarioSync2x);
                 });
-            
+
                 beforeEach(() => {
                     return prepareTest();
                 });
@@ -1128,7 +1183,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                     it("window.codePush.sync.2x.dorevert", function(done) {
 
                         mockResponse = { updateInfo: getMockResponse() };
-                    
+
                         /* create an update */
                         setupUpdateScenario(UpdateDeviceReady, "Update 1 (bad update)")
                             .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
@@ -1199,18 +1254,18 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                         .done(done, done);
                 });
             });
-            
+
             if (!onlyRunCoreTests) {
                 describe("#window.codePush.sync minimum background duration tests", function() {
 
                     afterEach(() => {
                         cleanupTest();
                     });
-                
+
                     beforeEach(() => {
                         return prepareTest();
                     });
-                    
+
                     it("defaults to no minimum", function(done) {
                         mockResponse = { updateInfo: getMockResponse() };
 
@@ -1239,7 +1294,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             })
                             .done(done, done);
                     });
-                    
+
                     it("min background duration 5s", function(done) {
                         mockResponse = { updateInfo: getMockResponse() };
 
@@ -1271,7 +1326,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             })
                             .done(done, done);
                     });
-                    
+
                     it("has no effect on restart", function(done) {
                         mockResponse = { updateInfo: getMockResponse() };
 
@@ -1299,19 +1354,19 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             })
                             .done(done, done);
                     });
-                    
+
                 });
-                
+
                 describe("#window.codePush.sync mandatory install mode tests", function() {
 
                     afterEach(() => {
                         cleanupTest();
                     });
-                
+
                     beforeEach(() => {
                         return prepareTest();
                     });
-                    
+
                     it("defaults to IMMEDIATE", function(done) {
                         mockResponse = { updateInfo: getMockResponse(true) };
 
@@ -1330,7 +1385,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             })
                             .done(done, done);
                     });
-                    
+
                     it("works correctly when update is mandatory and mandatory install mode is specified", function(done) {
                         mockResponse = { updateInfo: getMockResponse(true) };
 
@@ -1359,7 +1414,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             })
                             .done(done, done);
                     });
-                    
+
                     it("has no effect on updates that are not mandatory", function(done) {
                         mockResponse = { updateInfo: getMockResponse() };
 
@@ -1378,7 +1433,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             })
                             .done(done, done);
                     });
-                    
+
                 });
             }
         });
@@ -1389,7 +1444,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
 
 describe("CodePush Cordova Plugin", function () {
     this.timeout(100 * 60 * 1000);
-    
+
     if (shouldSetup) describe("Setting Up For Tests", () => setupTests());
     else {
         targetPlatforms.forEach(platform => {
