@@ -876,7 +876,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                 return prepareTest();
             });
 
-            it("localPackage.installOnNextRestart.revertToFirst", function(done) {
+            it("localPackage.installOnNextRestart2x.revertToFirst", function(done) {
                 mockResponse = { updateInfo: getMockResponse() };
                 updateCheckCallback = () => {
                     // Update the packageHash so we can install the same update twice.
