@@ -27,7 +27,7 @@ var CodePush = (function () {
     CodePush.prototype.reportStatus = function (status, label, appVersion, deploymentKey, previousLabelOrAppVersion, previousDeploymentKey) {
         if ((!label || label === previousLabelOrAppVersion) &&
             appVersion === previousLabelOrAppVersion &&
-            deploymentKey == previousDeploymentKey) {
+            deploymentKey === previousDeploymentKey) {
             return;
         }
         var createPackageForReporting = function (label, appVersion) {

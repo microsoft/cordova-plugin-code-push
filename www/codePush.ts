@@ -65,7 +65,7 @@ class CodePush implements CodePushCordovaPlugin {
     public reportStatus(status: number, label: string, appVersion: string, deploymentKey: string, previousLabelOrAppVersion?: string, previousDeploymentKey?: string) {
        if ((!label || label === previousLabelOrAppVersion) &&
            appVersion === previousLabelOrAppVersion &&
-           deploymentKey == previousDeploymentKey) {
+           deploymentKey === previousDeploymentKey) {
            // No-op since the new appVersion and label is exactly the same as the previous
            // (the app might have been updated via a direct or HockeyApp deployment).
            return;
