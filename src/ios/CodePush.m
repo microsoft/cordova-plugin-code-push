@@ -62,9 +62,9 @@ StatusReport* rollbackStatusReport = nil;
 }
 
 - (void)notifyApplicationReady:(CDVInvokedUrlCommand *)command {
-    if ([CodePushPackageManager isFirstRun]) {
+    if ([CodePushPackageManager isBinaryFirstRun]) {
         // Report first run of a store version app
-        [CodePushPackageManager markFirstRunFlag];
+        [CodePushPackageManager markBinaryFirstRunFlag];
         NSString* appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
         NSString* deploymentKey = ((CDVViewController *)self.viewController).settings[DeploymentKeyPreference];
         StatusReport* statusReport = [[StatusReport alloc] initWithStatus:STORE_VERSION
@@ -92,7 +92,7 @@ StatusReport* rollbackStatusReport = nil;
         [CodePushReportingManager reportStatus:[CodePushReportingManager getAndClearFailedReport]
                                    withWebView:self.webView];
     }
-    
+
     // Mark the update as confirmed and not requiring a rollback
     [CodePushPackageManager clearInstallNeedsConfirmation];
     [CodePushPackageManager cleanOldPackage];
@@ -224,7 +224,7 @@ StatusReport* rollbackStatusReport = nil;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
-- (void)handleAppStart {
+- (void)clearDeploymentsIfBinaryUpdated {
     // check if we have a deployed package
     CodePushPackageMetadata* deployedPackageMetadata = [CodePushPackageManager getCurrentPackageMetadata];
     if (deployedPackageMetadata) {
@@ -232,37 +232,37 @@ StatusReport* rollbackStatusReport = nil;
         NSString* applicationBuildTime = [Utilities getApplicationTimestamp];
 
         if (deployedPackageNativeBuildTime != nil && applicationBuildTime != nil) {
-            if ([deployedPackageNativeBuildTime isEqualToString: applicationBuildTime] ) {
-                // same version, safe to launch from local storage
-                if (deployedPackageMetadata.localPath) {
-                    [self redirectStartPageToURL: deployedPackageMetadata.localPath];
-                }
-            }
-            else {
-                // installed native version is different from package version => clean up deployed package and do not modify start page
+            if (![deployedPackageNativeBuildTime isEqualToString: applicationBuildTime]) {
+                // installed native version is different from package version
                 [CodePushPackageManager cleanDeployments];
                 [CodePushPackageManager clearFailedUpdates];
                 [CodePushPackageManager clearPendingInstall];
                 [CodePushPackageManager clearInstallNeedsConfirmation];
-                NSString* appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
-                NSString* deploymentKey = ((CDVViewController *)self.viewController).settings[DeploymentKeyPreference];
-                StatusReport* statusReport = [[StatusReport alloc] initWithStatus:STORE_VERSION andLabel:nil andAppVersion:appVersion andDeploymentKey:deploymentKey];
-                [CodePushReportingManager reportStatus:statusReport withWebView:self.webView];
+                [CodePushPackageManager clearBinaryFirstRunFlag];
             }
         }
     }
 }
 
+- (void)navigateToLocalDeploymentIfExists {
+    // check if we have a deployed package
+    CodePushPackageMetadata* deployedPackageMetadata = [CodePushPackageManager getCurrentPackageMetadata];
+    if (deployedPackageMetadata && deployedPackageMetadata.localPath) {
+        [self redirectStartPageToURL: deployedPackageMetadata.localPath];
+    }
+}
+
 - (void)pluginInitialize {
     // register for "on resume", "on pause" notifications
+    [self clearDeploymentsIfBinaryUpdated];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillEnterForeground) name:UIApplicationWillEnterForegroundNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillResignActive) name:UIApplicationWillResignActiveNotification object:nil];
     InstallOptions* pendingInstall = [CodePushPackageManager getPendingInstall];
     if (!pendingInstall) {
         [self handleUnconfirmedInstall:NO];
     }
-    [self handleAppStart];
 
+    [self navigateToLocalDeploymentIfExists];
     // handle both ON_NEXT_RESUME and ON_NEXT_RESTART - the application might have been killed after transitioning to the background
     if (pendingInstall && (pendingInstall.installMode == ON_NEXT_RESTART || pendingInstall.installMode == ON_NEXT_RESUME)) {
         [self markUpdate];

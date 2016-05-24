@@ -8,7 +8,7 @@ NSString* const BinaryHashKey = @"BINARY_HASH";
 NSString* const FailedUpdatesKey = @"FAILED_UPDATES";
 NSString* const PendingInstallKey = @"PENDING_INSTALL";
 NSString* const NotConfirmedInstallKey = @"NOT_CONFIRMED_INSTALL";
-NSString* const IsFirstRunKey = @"FIRST_RUN";
+NSString* const IsBinaryFirstRunKey = @"FIRST_RUN";
 NSString* const OldPackageManifestName = @"oldPackage.json";
 NSString* const CurrentPackageManifestName = @"currentPackage.json";
 
@@ -120,15 +120,21 @@ NSString* const CurrentPackageManifestName = @"currentPackage.json";
     [preferences removeObjectForKey:PendingInstallKey];
 }
 
-+ (void)markFirstRunFlag {
++ (void)clearBinaryFirstRunFlag {
     NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
-    [preferences setBool:YES forKey:IsFirstRunKey];
+    [preferences removeObjectForKey:IsBinaryFirstRunKey];
     [preferences synchronize];
 }
 
-+ (BOOL)isFirstRun {
++ (void)markBinaryFirstRunFlag {
     NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
-    BOOL firstRunFlagSet = [preferences boolForKey:IsFirstRunKey];
+    [preferences setBool:YES forKey:IsBinaryFirstRunKey];
+    [preferences synchronize];
+}
+
++ (BOOL)isBinaryFirstRun {
+    NSUserDefaults* preferences = [NSUserDefaults standardUserDefaults];
+    BOOL firstRunFlagSet = [preferences boolForKey:IsBinaryFirstRunKey];
     return !firstRunFlagSet;
 }
 

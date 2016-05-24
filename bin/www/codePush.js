@@ -25,6 +25,11 @@ var CodePush = (function () {
         cordova.exec(installSuccess, errorCallback, "CodePush", "restartApplication", []);
     };
     CodePush.prototype.reportStatus = function (status, label, appVersion, deploymentKey, previousLabelOrAppVersion, previousDeploymentKey) {
+        if ((!label || label === previousLabelOrAppVersion) &&
+            appVersion === previousLabelOrAppVersion &&
+            deploymentKey == previousDeploymentKey) {
+            return;
+        }
         var createPackageForReporting = function (label, appVersion) {
             return {
                 label: label, appVersion: appVersion, deploymentKey: deploymentKey,
