@@ -12,7 +12,7 @@ var app = {
     },
     // Update DOM on a Received Event
     receivedDeviceReady: function () {
-        document.getElementById("deviceready").innerText = "Device is ready (scenario - install on next restart)";
+        document.getElementById("deviceready").innerText = "Device is ready (scenario - install on next restart 2x)";
         console.log('Received Event: deviceready');
     },
     checkForUpdates: function () {

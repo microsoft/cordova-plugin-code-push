@@ -894,11 +894,6 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                         return deferred.promise;
                     })
                     .then<void>(() => {
-                        /* run bad update */
-                        return projectManager.restartApplication(TestNamespace, targetPlatform)
-                            .then(() => {});
-                    })
-                    .then<void>(() => {
                         /* verify that the bad update is run, then restart it */
                         var deferred = Q.defer<void>();
                         testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
@@ -909,7 +904,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                         /* verify the app rolls back to the binary, ignoring the first unconfirmed version */
                         var deferred = Q.defer<void>();
                         testMessageCallback = verifyMessages([su.TestMessage.UPDATE_FAILED_PREVIOUSLY], deferred);
-                        projectManager.runPlatform(testRunDirectory, targetPlatform);
+                        projectManager.restartApplication(TestNamespace, targetPlatform);
                         return deferred.promise;
                     })
                     .done(done, done);
