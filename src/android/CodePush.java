@@ -278,14 +278,12 @@ public class CodePush extends CordovaPlugin {
             long nativeBuildTime = Utilities.getApkEntryBuildTime(RESOURCES_BUNDLE, this.cordova.getActivity());
             if (nativeBuildTime != -1) {
                 String currentAppTimeStamp = String.valueOf(nativeBuildTime);
-                if ((deployedPackageTimeStamp != null) && (currentAppTimeStamp != null)) {
-                    if (!deployedPackageTimeStamp.equals(currentAppTimeStamp)) {
-                        this.codePushPackageManager.cleanDeployments();
-                        this.codePushPackageManager.clearFailedUpdates();
-                        this.codePushPackageManager.clearPendingInstall();
-                        this.codePushPackageManager.clearInstallNeedsConfirmation();
-                        this.codePushPackageManager.clearBinaryFirstRunFlag();
-                    }
+                if (deployedPackageTimeStamp != null && !deployedPackageTimeStamp.equals(currentAppTimeStamp)) {
+                    this.codePushPackageManager.cleanDeployments();
+                    this.codePushPackageManager.clearFailedUpdates();
+                    this.codePushPackageManager.clearPendingInstall();
+                    this.codePushPackageManager.clearInstallNeedsConfirmation();
+                    this.codePushPackageManager.clearBinaryFirstRunFlag();
                 }
             }
         }
@@ -293,16 +291,14 @@ public class CodePush extends CordovaPlugin {
 
     private void navigateToLocalDeploymentIfExists() {
         CodePushPackageMetadata deployedPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
-        if (deployedPackageMetadata != null) {
-            if (deployedPackageMetadata.localPath != null) {
-                File startPage = this.getStartPageForPackage(deployedPackageMetadata.localPath);
-                if (startPage != null) {
-                    /* file exists */
-                    try {
-                        navigateToFile(startPage);
-                    } catch (MalformedURLException e) {
-                    /* empty - if there is an exception, the app will launch with the bundled content */
-                    }
+        if (deployedPackageMetadata != null && deployedPackageMetadata.localPath != null) {
+            File startPage = this.getStartPageForPackage(deployedPackageMetadata.localPath);
+            if (startPage != null) {
+                /* file exists */
+                try {
+                    navigateToFile(startPage);
+                } catch (MalformedURLException e) {
+                /* empty - if there is an exception, the app will launch with the bundled content */
                 }
             }
         }
