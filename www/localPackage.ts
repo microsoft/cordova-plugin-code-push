@@ -107,8 +107,19 @@ class LocalPackage extends Package implements ILocalPackage {
     }
 
     private finishInstall(deployDir: DirectoryEntry, installOptions: InstallOptions, installSuccess: SuccessCallback<InstallMode>, installError: ErrorCallback): void {
+        function backupPackageInformationFileIfNeeded(backupIfNeededDone: Callback<void>) {
+            NativeAppInfo.isPendingUpdate((pendingUpdate: boolean) => {
+                if (pendingUpdate) {
+                    // Don't back up the  currently installed update since it hasn't been "confirmed"
+                    backupIfNeededDone(null, null);
+                } else {
+                    LocalPackage.backupPackageInformationFile(backupIfNeededDone);
+                }
+            });
+        }
+
         LocalPackage.getCurrentOrDefaultPackage((oldPackage: LocalPackage) => {
-            LocalPackage.backupPackageInformationFile((backupError: Error) => {
+            backupPackageInformationFileIfNeeded((backupError: Error) => {
                 /* continue on error, current package information is missing if this is the first update */
                 this.writeNewPackageMetadata(deployDir, (writeMetadataError: Error) => {
                     if (writeMetadataError) {

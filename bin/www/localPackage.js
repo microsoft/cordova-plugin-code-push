@@ -80,8 +80,18 @@ var LocalPackage = (function (_super) {
     };
     LocalPackage.prototype.finishInstall = function (deployDir, installOptions, installSuccess, installError) {
         var _this = this;
+        function backupPackageInformationFileIfNeeded(backupIfNeededDone) {
+            NativeAppInfo.isPendingUpdate(function (pendingUpdate) {
+                if (pendingUpdate) {
+                    backupIfNeededDone(null, null);
+                }
+                else {
+                    LocalPackage.backupPackageInformationFile(backupIfNeededDone);
+                }
+            });
+        }
         LocalPackage.getCurrentOrDefaultPackage(function (oldPackage) {
-            LocalPackage.backupPackageInformationFile(function (backupError) {
+            backupPackageInformationFileIfNeeded(function (backupError) {
                 _this.writeNewPackageMetadata(deployDir, function (writeMetadataError) {
                     if (writeMetadataError) {
                         installError && installError(writeMetadataError);
