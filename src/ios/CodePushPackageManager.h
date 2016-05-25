@@ -17,7 +17,8 @@
 + (void)markInstallNeedsConfirmation;
 + (BOOL)installNeedsConfirmation;
 + (void)clearInstallNeedsConfirmation;
-+ (void)markFirstRunFlag;
-+ (BOOL)isFirstRun;
++ (void)clearBinaryFirstRunFlag;
++ (void)markBinaryFirstRunFlag;
++ (BOOL)isBinaryFirstRun;
 
 @end

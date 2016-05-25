@@ -116,11 +116,15 @@ public class CodePushPackageManager {
         return this.codePushPreferences.installNeedsConfirmation();
     }
 
-    public boolean isFirstRun() {
-        return this.codePushPreferences.isFirstRun();
+    public boolean isBinaryFirstRun() {
+        return this.codePushPreferences.isBinaryFirstRun();
     }
 
-    public void saveFirstRunFlag() {
-        this.codePushPreferences.saveFirstRunFlag();
+    public void clearBinaryFirstRunFlag() {
+        this.codePushPreferences.clearBinaryFirstRunFlag();
+    }
+
+    public void saveBinaryFirstRunFlag() {
+        this.codePushPreferences.saveBinaryFirstRunFlag();
     }
 }

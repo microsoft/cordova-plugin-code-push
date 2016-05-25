@@ -118,14 +118,21 @@ public class CodePushPreferences {
         return notConfirmedInstall;
     }
 
-    public void saveFirstRunFlag() {
+    public void clearBinaryFirstRunFlag() {
+        SharedPreferences preferences = context.getSharedPreferences(CodePushPreferences.FIRST_RUN_PREFERENCE, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.remove(CodePushPreferences.FIRST_RUN_PREFERENCE_KEY);
+        editor.commit();
+    }
+
+    public void saveBinaryFirstRunFlag() {
         SharedPreferences preferences = context.getSharedPreferences(CodePushPreferences.FIRST_RUN_PREFERENCE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean(CodePushPreferences.FIRST_RUN_PREFERENCE_KEY, false);
         editor.commit();
     }
 
-    public boolean isFirstRun() {
+    public boolean isBinaryFirstRun() {
         SharedPreferences preferences = context.getSharedPreferences(CodePushPreferences.FIRST_RUN_PREFERENCE, Context.MODE_PRIVATE);
         boolean isFirstRun = preferences.getBoolean(CodePushPreferences.FIRST_RUN_PREFERENCE_KEY, true);
         return isFirstRun;

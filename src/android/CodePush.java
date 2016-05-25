@@ -109,9 +109,9 @@ public class CodePush extends CordovaPlugin {
     }
 
     private boolean execNotifyApplicationReady(CallbackContext callbackContext) {
-        if (this.codePushPackageManager.isFirstRun()) {
+        if (this.codePushPackageManager.isBinaryFirstRun()) {
             // Report first run of a store version app
-            this.codePushPackageManager.saveFirstRunFlag();
+            this.codePushPackageManager.saveBinaryFirstRunFlag();
             try {
                 String appVersion = Utilities.getAppVersionName(cordova.getActivity());
                 codePushReportingManager.reportStatus(new StatusReport(ReportingStatus.STORE_VERSION, null, appVersion, mainWebView.getPreferences().getString(DEPLOYMENT_KEY_PREFERENCE, null)), this.mainWebView);
@@ -270,6 +270,40 @@ public class CodePush extends CordovaPlugin {
         }
     }
 
+    private void clearDeploymentsIfBinaryUpdated() {
+        /* check if we have a deployed package already */
+        CodePushPackageMetadata deployedPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
+        if (deployedPackageMetadata != null) {
+            String deployedPackageTimeStamp = deployedPackageMetadata.nativeBuildTime;
+            long nativeBuildTime = Utilities.getApkEntryBuildTime(RESOURCES_BUNDLE, this.cordova.getActivity());
+            if (nativeBuildTime != -1) {
+                String currentAppTimeStamp = String.valueOf(nativeBuildTime);
+                if (!currentAppTimeStamp.equals(deployedPackageTimeStamp)) {
+                    this.codePushPackageManager.cleanDeployments();
+                    this.codePushPackageManager.clearFailedUpdates();
+                    this.codePushPackageManager.clearPendingInstall();
+                    this.codePushPackageManager.clearInstallNeedsConfirmation();
+                    this.codePushPackageManager.clearBinaryFirstRunFlag();
+                }
+            }
+        }
+    }
+
+    private void navigateToLocalDeploymentIfExists() {
+        CodePushPackageMetadata deployedPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
+        if (deployedPackageMetadata != null && deployedPackageMetadata.localPath != null) {
+            File startPage = this.getStartPageForPackage(deployedPackageMetadata.localPath);
+            if (startPage != null) {
+                /* file exists */
+                try {
+                    navigateToFile(startPage);
+                } catch (MalformedURLException e) {
+                    /* empty - if there is an exception, the app will launch with the bundled content */
+                }
+            }
+        }
+    }
+
     private boolean execPreInstall(CordovaArgs args, CallbackContext callbackContext) {
     /* check if package is valid */
         try {
@@ -314,47 +348,6 @@ public class CodePush extends CordovaPlugin {
             callbackContext.success(result);
         } else {
             callbackContext.error("Could not get preference: " + preferenceName);
-        }
-    }
-
-    private void handleAppStart() {
-        try {
-            /* check if we have a deployed package already */
-            CodePushPackageMetadata deployedPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
-            if (deployedPackageMetadata != null) {
-                String deployedPackageTimeStamp = deployedPackageMetadata.nativeBuildTime;
-                long nativeBuildTime = Utilities.getApkEntryBuildTime(RESOURCES_BUNDLE, this.cordova.getActivity());
-                if (nativeBuildTime != -1) {
-                    String currentAppTimeStamp = String.valueOf(nativeBuildTime);
-                    if ((deployedPackageTimeStamp != null) && (currentAppTimeStamp != null)) {
-                        if (deployedPackageTimeStamp.equals(currentAppTimeStamp)) {
-                            /* same native version, safe to launch from local storage */
-                            if (deployedPackageMetadata.localPath != null) {
-                                File startPage = this.getStartPageForPackage(deployedPackageMetadata.localPath);
-                                if (startPage != null) {
-                                    /* file exists */
-                                    navigateToFile(startPage);
-                                }
-                            }
-                        } else {
-                            /* application updated in the store or via local deployment */
-                            this.codePushPackageManager.cleanDeployments();
-                            this.codePushPackageManager.clearFailedUpdates();
-                            this.codePushPackageManager.clearPendingInstall();
-                            this.codePushPackageManager.clearInstallNeedsConfirmation();
-                            try {
-                                String appVersion = Utilities.getAppVersionName(cordova.getActivity());
-                                codePushReportingManager.reportStatus(new StatusReport(ReportingStatus.STORE_VERSION, null, appVersion, mainWebView.getPreferences().getString(DEPLOYMENT_KEY_PREFERENCE, null)), this.mainWebView);
-                            } catch (PackageManager.NameNotFoundException e) {
-                                // Should not happen unless the appVersion is not specified, in which case we can't report anything anyway.
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            /* empty - if there is an exception, the app will launch with the bundled content */
         }
     }
 
@@ -468,6 +461,7 @@ public class CodePush extends CordovaPlugin {
      */
     @Override
     public void onStart() {
+        clearDeploymentsIfBinaryUpdated();
         if (!didStartApp) {
             /* The application was just started. */
             didStartApp = true;
@@ -478,7 +472,7 @@ public class CodePush extends CordovaPlugin {
                 handleUnconfirmedInstall(false);
             }
 
-            handleAppStart();
+            navigateToLocalDeploymentIfExists();
             /* Handle ON_NEXT_RESUME and ON_NEXT_RESTART pending installations */
             if (pendingInstall != null && (InstallMode.ON_NEXT_RESUME.equals(pendingInstall.installMode) || InstallMode.ON_NEXT_RESTART.equals(pendingInstall.installMode))) {
                 this.markUpdate();
@@ -490,7 +484,7 @@ public class CodePush extends CordovaPlugin {
             InstallOptions pendingInstall = this.codePushPackageManager.getPendingInstall();
             long durationInBackground = (new Date().getTime() - lastPausedTimeMs) / 1000;
             if (pendingInstall != null && InstallMode.ON_NEXT_RESUME.equals(pendingInstall.installMode) && durationInBackground >= pendingInstall.minimumBackgroundDuration) {
-                handleAppStart();
+                navigateToLocalDeploymentIfExists();
                 this.markUpdate();
                 this.codePushPackageManager.clearPendingInstall();
             } else if (codePushReportingManager.hasFailedReport()) {
