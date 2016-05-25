@@ -258,29 +258,29 @@ var testBuilderDescribes: PluginTestingFramework.TestBuilderDescribe[] = [
             new PluginTestingFramework.TestBuilderIt("window.codePush.checkForUpdate.sendsBinaryHash",
                 (projectManager: ProjectManager, targetPlatform: Platform.IPlatform, done: MochaDone) => {
                     var noUpdateResponse = PluginTestingFramework.createDefaultResponse();
-                        noUpdateResponse.isAvailable = false;
-                        noUpdateResponse.appVersion = "0.0.1";
+                    noUpdateResponse.isAvailable = false;
+                    noUpdateResponse.appVersion = "0.0.1";
 
-                        PluginTestingFramework.updateCheckCallback = (request: any) => {
-                            try {
-                                assert(request.query.packageHash);
-                            } catch (e) {
-                                done(e);
-                            }
-                        };
-                        
-                        PluginTestingFramework.updateResponse = { updateInfo: noUpdateResponse };
+                    PluginTestingFramework.updateCheckCallback = (request: any) => {
+                        try {
+                            assert(request.query.packageHash);
+                        } catch (e) {
+                            done(e);
+                        }
+                    };
+                    
+                    PluginTestingFramework.updateResponse = { updateInfo: noUpdateResponse };
 
-                        PluginTestingFramework.testMessageCallback = (requestBody: any) => {
-                            try {
-                                assert.equal(ServerUtil.TestMessage.CHECK_UP_TO_DATE, requestBody.message);
-                                done();
-                            } catch (e) {
-                                done(e);
-                            }
-                        };
+                    PluginTestingFramework.testMessageCallback = (requestBody: any) => {
+                        try {
+                            assert.equal(ServerUtil.TestMessage.CHECK_UP_TO_DATE, requestBody.message);
+                            done();
+                        } catch (e) {
+                            done(e);
+                        }
+                    };
 
-                        projectManager.runPlatform(PluginTestingFramework.testRunDirectory, targetPlatform);
+                    projectManager.runPlatform(PluginTestingFramework.testRunDirectory, targetPlatform);
                 }, false),
             
             new PluginTestingFramework.TestBuilderIt("window.codePush.checkForUpdate.noUpdate.updateAppVersion", 
