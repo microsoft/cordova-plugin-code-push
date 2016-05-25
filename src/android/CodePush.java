@@ -278,7 +278,7 @@ public class CodePush extends CordovaPlugin {
             long nativeBuildTime = Utilities.getApkEntryBuildTime(RESOURCES_BUNDLE, this.cordova.getActivity());
             if (nativeBuildTime != -1) {
                 String currentAppTimeStamp = String.valueOf(nativeBuildTime);
-                if (deployedPackageTimeStamp != null && !deployedPackageTimeStamp.equals(currentAppTimeStamp)) {
+                if (!currentAppTimeStamp.equals(deployedPackageTimeStamp)) {
                     this.codePushPackageManager.cleanDeployments();
                     this.codePushPackageManager.clearFailedUpdates();
                     this.codePushPackageManager.clearPendingInstall();
@@ -298,7 +298,7 @@ public class CodePush extends CordovaPlugin {
                 try {
                     navigateToFile(startPage);
                 } catch (MalformedURLException e) {
-                /* empty - if there is an exception, the app will launch with the bundled content */
+                    /* empty - if there is an exception, the app will launch with the bundled content */
                 }
             }
         }

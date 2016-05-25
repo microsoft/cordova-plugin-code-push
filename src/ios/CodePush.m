@@ -233,7 +233,7 @@ StatusReport* rollbackStatusReport = nil;
 
         if (deployedPackageNativeBuildTime != nil && applicationBuildTime != nil) {
             if (![deployedPackageNativeBuildTime isEqualToString: applicationBuildTime]) {
-                // installed native version is different from package version
+                // package version is incompatible with installed native version
                 [CodePushPackageManager cleanDeployments];
                 [CodePushPackageManager clearFailedUpdates];
                 [CodePushPackageManager clearPendingInstall];
@@ -245,7 +245,6 @@ StatusReport* rollbackStatusReport = nil;
 }
 
 - (void)navigateToLocalDeploymentIfExists {
-    // check if we have a deployed package
     CodePushPackageMetadata* deployedPackageMetadata = [CodePushPackageManager getCurrentPackageMetadata];
     if (deployedPackageMetadata && deployedPackageMetadata.localPath) {
         [self redirectStartPageToURL: deployedPackageMetadata.localPath];
