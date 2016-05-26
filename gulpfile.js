@@ -130,11 +130,11 @@ function runTests(callback, options) {
     
     // Pass arguments supplied by test tasks.
     if (options.android) args.push("--android");
-    if (options.ios) {
-        args.push("--ios");
-        args.push("--use-wkwebview");
-        args.push(options.wk ? (options.ui ? "both" : "true") : "false");
-    }
+    
+    if (options.ios) args.push("--ios");
+    if (options.ui) args.push("--ui");
+    if (options.wk) args.push("--wk");
+    
     if (options.setup) args.push("--setup");
     
     // Pass arguments from command line.
