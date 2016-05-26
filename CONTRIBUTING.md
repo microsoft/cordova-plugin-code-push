@@ -80,7 +80,7 @@ There is a both a full unit test suite and a "core" set of unit tests that you m
 
 If you would like to pull the plugin from NPM rather than running the tests on the local version, add a `--npm` flag to the command.
 
-The mocha reporter outputs individual results files for each platform. These are `./test_android.xml`, `./test-ios-ui.xml`, and `./test-ios-wk.xml`.
+If you add a `--report` flag to the command, the mocha reporter outputs individual results files for each platform. These are `./test_android.xml`, `./test-ios-ui.xml`, and `./test-ios-wk.xml`.
 
 #### Default
 

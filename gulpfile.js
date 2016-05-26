@@ -115,32 +115,31 @@ function runTests(callback, options) {
     var command = "node_modules/.bin/mocha";
     var args = ["./bin/test"];
     
-    // Set up the mocha junit reporter.
-    args.push("--reporter");
-    args.push("mocha-junit-reporter");
-    
-    // Set the mocha reporter to the correct output file.
-    args.push("--reporter-options");
-    var filename = "./test-results.xml";
-    if (options.android && !options.ios) filename = "./test-android.xml";
-    else if (options.ios && !options.android) filename = "./test-ios" + (options.wk ? (options.ui ? "" : "-wk") : "-ui") + ".xml";
-    args.push("mochaFile=" + filename);
-    // Delete previous test result file so TFS doesn't read the old file if the tests exit before saving
-    del(filename);
-    
     // Pass arguments supplied by test tasks.
     if (options.android) args.push("--android");
     
     if (options.ios) args.push("--ios");
-    if (options.ui) args.push("--ui");
-    if (options.wk) args.push("--wk");
+    if (options.ios && options.wk) args.push("--ios-wk");
     
     if (options.setup) args.push("--setup");
     
     // Pass arguments from command line.
     // The fourth argument is the first argument after the task name.
     for (var i = 3; i < process.argv.length; i++) {
-        args.push(process.argv[i]);
+        if (process.argv[i] === "--report") {
+            // Set up the mocha junit reporter.
+            args.push("--reporter");
+            args.push("mocha-junit-reporter");
+            
+            // Set the mocha reporter to the correct output file.
+            args.push("--reporter-options");
+            var filename = "./test-results.xml";
+            if (options.android && !options.ios) filename = "./test-android.xml";
+            else if (options.ios && !options.android) filename = "./test-ios" + (options.wk ? (options.ui ? "" : "-wk") : "-ui") + ".xml";
+            args.push("mochaFile=" + filename);
+            // Delete previous test result file so TFS doesn't read the old file if the tests exit before saving
+            del(filename);
+        } else args.push(process.argv[i]);
     }
     
     execCommand(command, args, callback);

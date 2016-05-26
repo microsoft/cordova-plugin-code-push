@@ -24,6 +24,11 @@ var del = require("del");
 
 interface CordovaPlatform {
     /**
+     * Returns the name of the platform used in Cordova CLI methods.
+     */
+    getCordovaName(): string;
+    
+    /**
      * Called when the platform is prepared.
      */
     onPreparePlatform(projectManager: CordovaProjectManager, projectDirectory: string): Q.Promise<string>;
@@ -45,6 +50,13 @@ interface CordovaPlatform {
 class CordovaAndroid extends Platform.Android implements CordovaPlatform {
     constructor() {
         super(new Platform.AndroidEmulatorManager());
+    }
+    
+    /**
+     * Returns the name of the platform used in Cordova CLI methods.
+     */
+    getCordovaName(): string {
+        return "android";
     }
     
     /**
@@ -78,13 +90,19 @@ class CordovaIOSUI extends Platform.IOS implements CordovaPlatform {
     constructor() {
         super(new Platform.IOSEmulatorManager());
     }
+
+    /**
+     * Gets the platform name. (e.g. "android" for the Android platform).
+     */
+    public getName(): string {
+        return "ios (uiwebview)";
+    }
     
     /**
-     * The command line flag used to determine whether or not this platform should run.
-     * Runs when the flag is present, doesn't run otherwise.
+     * Returns the name of the platform used in Cordova CLI methods.
      */
-    getCommandLineFlagName(): string {
-        return "--ios-ui";
+    getCordovaName(): string {
+        return "ios";
     }
     
     /**
@@ -115,8 +133,17 @@ class CordovaIOSUI extends Platform.IOS implements CordovaPlatform {
  * Platform used for running tests on iOS using the WkWebView
  */
 class CordovaIOSWK extends CordovaIOSUI {
+    public static WkWebViewEnginePluginName = "cordova-plugin-wkwebview-engine";
+    
     constructor() {
         super();
+    }
+
+    /**
+     * Gets the platform name. (e.g. "android" for the Android platform).
+     */
+    public getName(): string {
+        return "ios (wkwebview)";
     }
     
     /**
@@ -131,14 +158,14 @@ class CordovaIOSWK extends CordovaIOSUI {
      * Called when the platform is prepared.
      */
     onPreparePlatform(projectManager: CordovaProjectManager, projectDirectory: string): Q.Promise<string> {
-        return projectManager.addCordovaPlugin(projectDirectory, CordovaProjectManager.WkWebViewEnginePluginName);
+        return projectManager.addCordovaPlugin(projectDirectory, CordovaIOSWK.WkWebViewEnginePluginName);
     }
     
     /**
      * Called when the platform is cleaned up.
      */
     onCleanupPlatform(projectManager: CordovaProjectManager, projectDirectory: string): Q.Promise<string> {
-        return projectManager.removeCordovaPlugin(projectDirectory, CordovaProjectManager.WkWebViewEnginePluginName);
+        return projectManager.removeCordovaPlugin(projectDirectory, CordovaIOSWK.WkWebViewEnginePluginName);
     }
 }
 
@@ -149,7 +176,6 @@ var supportedPlatforms: Platform.IPlatform[] = [new CordovaAndroid(), new Cordov
 
 class CordovaProjectManager extends ProjectManager {
     public static AcquisitionSDKPluginName = "code-push";
-    public static WkWebViewEnginePluginName = "cordova-plugin-wkwebview-engine";
     
     /**
      * Returns the name of the plugin being tested, ie Cordova or React-Native
@@ -252,7 +278,7 @@ class CordovaProjectManager extends ProjectManager {
     public runApplication(projectDirectory: string, targetPlatform: Platform.IPlatform): Q.Promise<string> {
         console.log("Running project in " + projectDirectory + " on " + targetPlatform.getName());
         // Don't log the build output because iOS's build output is too verbose and overflows the buffer!
-        return TestUtil.getProcessOutput("cordova run " + targetPlatform.getName(), { cwd: projectDirectory }, false);
+        return TestUtil.getProcessOutput("cordova run " + (<CordovaPlatform><any>targetPlatform).getCordovaName(), { cwd: projectDirectory }, false);
     }
 
     /**
@@ -260,7 +286,7 @@ class CordovaProjectManager extends ProjectManager {
      */
     public prepareCordovaPlatform(projectDirectory: string, targetPlatform: Platform.IPlatform): Q.Promise<string> {
         console.log("Preparing project in " + projectDirectory + " for " + targetPlatform.getName());
-        return TestUtil.getProcessOutput("cordova prepare " + targetPlatform.getName(), { cwd: projectDirectory });
+        return TestUtil.getProcessOutput("cordova prepare " + (<CordovaPlatform><any>targetPlatform).getCordovaName(), { cwd: projectDirectory });
     }
 
     /**
@@ -268,7 +294,7 @@ class CordovaProjectManager extends ProjectManager {
      */
     public addCordovaPlatform(projectDirectory: string, targetPlatform: Platform.IPlatform, version?: string): Q.Promise<string> {
         console.log("Adding " + targetPlatform.getName() + " to project in " + projectDirectory);
-        return TestUtil.getProcessOutput("cordova platform add " + targetPlatform.getName() + (version ? "@" + version : ""), { cwd: projectDirectory });
+        return TestUtil.getProcessOutput("cordova platform add " + (<CordovaPlatform><any>targetPlatform).getCordovaName() + (version ? "@" + version : ""), { cwd: projectDirectory });
     }
 
     /**
@@ -276,7 +302,7 @@ class CordovaProjectManager extends ProjectManager {
      */
     public removeCordovaPlatform(projectDirectory: string, targetPlatform: Platform.IPlatform, version?: string): Q.Promise<string> {
         console.log("Removing " + targetPlatform.getName() + " to project in " + projectDirectory);
-        return TestUtil.getProcessOutput("cordova platform remove " + targetPlatform.getName() + (version ? "@" + version : ""), { cwd: projectDirectory });
+        return TestUtil.getProcessOutput("cordova platform remove " + (<CordovaPlatform><any>targetPlatform).getCordovaName() + (version ? "@" + version : ""), { cwd: projectDirectory });
     }
     
     /**
