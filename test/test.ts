@@ -862,54 +862,56 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
             }
         });
 
-        describe("#localPackage.installOnNextRestart2x", function() {
+        if (!onlyRunCoreTests) {
+            describe("#localPackage.installOnNextRestart2x", function() {
 
-            afterEach(() => {
-                cleanupTest();
+                afterEach(() => {
+                    cleanupTest();
+                });
+
+                before(() => {
+                    return setupScenario(ScenarioInstallOnRestart2xWithRevert);
+                });
+
+                beforeEach(() => {
+                    return prepareTest();
+                });
+
+                it("localPackage.installOnNextRestart2x.revertToFirst", function(done) {
+                    mockResponse = { updateInfo: getMockResponse() };
+                    updateCheckCallback = () => {
+                        // Update the packageHash so we can install the same update twice.
+                        mockResponse.packageHash = "randomHash-" + Math.floor(Math.random() * 10000);
+                    };
+
+                    /* create an update */
+                    setupUpdateScenario(UpdateDeviceReady, "Bad Update")
+                        .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
+                        .then<void>((updatePath: string) => {
+                            var deferred = Q.defer<void>();
+                            mockUpdatePackagePath = updatePath;
+                            testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED, su.TestMessage.UPDATE_INSTALLED], deferred);
+                            projectManager.runPlatform(testRunDirectory, targetPlatform);
+                            return deferred.promise;
+                        })
+                        .then<void>(() => {
+                            /* verify that the bad update is run, then restart it */
+                            var deferred = Q.defer<void>();
+                            testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
+                            projectManager.restartApplication(TestNamespace, targetPlatform);
+                            return deferred.promise;
+                        })
+                        .then<void>(() => {
+                            /* verify the app rolls back to the binary, ignoring the first unconfirmed version */
+                            var deferred = Q.defer<void>();
+                            testMessageCallback = verifyMessages([su.TestMessage.UPDATE_FAILED_PREVIOUSLY], deferred);
+                            projectManager.restartApplication(TestNamespace, targetPlatform);
+                            return deferred.promise;
+                        })
+                        .done(done, done);
+                });
             });
-
-            before(() => {
-                return setupScenario(ScenarioInstallOnRestart2xWithRevert);
-            });
-
-            beforeEach(() => {
-                return prepareTest();
-            });
-
-            it("localPackage.installOnNextRestart2x.revertToFirst", function(done) {
-                mockResponse = { updateInfo: getMockResponse() };
-                updateCheckCallback = () => {
-                    // Update the packageHash so we can install the same update twice.
-                    mockResponse.packageHash = "randomHash-" + Math.floor(Math.random() * 10000);
-                };
-
-                /* create an update */
-                setupUpdateScenario(UpdateDeviceReady, "Bad Update")
-                    .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
-                    .then<void>((updatePath: string) => {
-                        var deferred = Q.defer<void>();
-                        mockUpdatePackagePath = updatePath;
-                        testMessageCallback = verifyMessages([su.TestMessage.UPDATE_INSTALLED, su.TestMessage.UPDATE_INSTALLED], deferred);
-                        projectManager.runPlatform(testRunDirectory, targetPlatform);
-                        return deferred.promise;
-                    })
-                    .then<void>(() => {
-                        /* verify that the bad update is run, then restart it */
-                        var deferred = Q.defer<void>();
-                        testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
-                        projectManager.restartApplication(TestNamespace, targetPlatform);
-                        return deferred.promise;
-                    })
-                    .then<void>(() => {
-                        /* verify the app rolls back to the binary, ignoring the first unconfirmed version */
-                        var deferred = Q.defer<void>();
-                        testMessageCallback = verifyMessages([su.TestMessage.UPDATE_FAILED_PREVIOUSLY], deferred);
-                        projectManager.restartApplication(TestNamespace, targetPlatform);
-                        return deferred.promise;
-                    })
-                    .done(done, done);
-            });
-        });
+        }
 
         describe("#codePush.restartApplication", function() {
 
