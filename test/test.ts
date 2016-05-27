@@ -1,6 +1,6 @@
 /// <reference path="../typings/assert.d.ts" />
 /// <reference path="../typings/codePush.d.ts" />
-/// <reference path="../typings/code-push-plugin-testing-framework.d.ts" />
+/// <reference path="../node_modules/code-push-plugin-testing-framework/typings/code-push-plugin-testing-framework.d.ts" />
 /// <reference path="../typings/mocha.d.ts" />
 /// <reference path="../typings/mkdirp.d.ts" />
 /// <reference path="../typings/node.d.ts" />
@@ -257,6 +257,7 @@ class CordovaProjectManager extends ProjectManager {
      */
     public preparePlatform(projectDirectory: string, targetPlatform: Platform.IPlatform): Q.Promise<string> {
         return this.addCordovaPlatform(projectDirectory, targetPlatform)
+            .catch<string>(() => { /* If the platform is already added, there's no issue, so ignore. */ return null; })
             .then<string>(() => {
                 return (<CordovaPlatform><any>targetPlatform).onPreparePlatform(this, projectDirectory);
             });
@@ -278,7 +279,7 @@ class CordovaProjectManager extends ProjectManager {
     public runApplication(projectDirectory: string, targetPlatform: Platform.IPlatform): Q.Promise<string> {
         console.log("Running project in " + projectDirectory + " on " + targetPlatform.getName());
         // Don't log the build output because iOS's build output is too verbose and overflows the buffer!
-        return TestUtil.getProcessOutput("cordova run " + (<CordovaPlatform><any>targetPlatform).getCordovaName(), { cwd: projectDirectory }, false);
+        return TestUtil.getProcessOutput("cordova run " + (<CordovaPlatform><any>targetPlatform).getCordovaName(), { cwd: projectDirectory, noLogStdOut: true });
     }
 
     /**
@@ -372,8 +373,7 @@ var testBuilderDescribes: PluginTestingFramework.TestBuilderDescribe[] = [
                     };
 
                     projectManager.runApplication(PluginTestingFramework.testRunDirectory, targetPlatform);
-                },
-                false),
+                }, false),
             
             new PluginTestingFramework.TestBuilderIt("window.codePush.checkForUpdate.sendsBinaryHash",
                 (projectManager: ProjectManager, targetPlatform: Platform.IPlatform, done: MochaDone) => {
@@ -1232,13 +1232,9 @@ var testBuilderDescribes: PluginTestingFramework.TestBuilderDescribe[] = [
         ])
 ];
 
-// Create tests.
-PluginTestingFramework.initializeTests(new CordovaProjectManager(), testBuilderDescribes, supportedPlatforms);
+var rootTestBuilder = new PluginTestingFramework.TestBuilderDescribe("CodePush", testBuilderDescribes);
 
-/* describe("run server", function() {
-    this.timeout(60 * 60 * 1000);
-    
-    it("runs server", (done: MochaDone) => {
-        PluginTestingFramework.setupServer(Platform.IOS.getInstance());
-    });
-}); */
+//////////////////////////////////////////////////////////////////////////////////////////
+// Initialize the tests.
+
+PluginTestingFramework.initializeTests(new CordovaProjectManager(), rootTestBuilder, supportedPlatforms);
