@@ -3,6 +3,8 @@ package com.microsoft.cordova;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import org.json.JSONException;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -20,6 +22,8 @@ public class CodePushPreferences {
     private static final String INSTALL_MIN_BACKGROUND_DURATION = "INSTALL_MINIMUM_BACKGROUND_DURATION";
     private static final String INSTALL_NEEDS_CONFIRMATION = "INSTALL_NEEDS_CONFIRMATION";
     private static final String INSTALL_NEEDS_CONFIRMATION_KEY = "INSTALL_NEEDS_CONFIRMATION_KEY";
+    private static final String FAILED_STATUS_REPORT_PREFERENCE = "CODE_PUSH_FAILED_STATUS_REPORT_PREFERENCE";
+    private static final String FAILED_STATUS_REPORT_PREFERENCE_KEY = "CODE_PUSH_FAILED_STATUS_REPORT_PREFERENCE_KEY";
     private static final String FIRST_RUN_PREFERENCE = "CODE_PUSH_FIRST_RUN";
     private static final String FIRST_RUN_PREFERENCE_KEY = "CODE_PUSH_FIRST_RUN_KEY";
     private static final String LAST_VERSION_PREFERENCE = "CODE_PUSH_LAST_VERSION";
@@ -114,14 +118,21 @@ public class CodePushPreferences {
         return notConfirmedInstall;
     }
 
-    public void saveFirstRunFlag() {
+    public void clearBinaryFirstRunFlag() {
+        SharedPreferences preferences = context.getSharedPreferences(CodePushPreferences.FIRST_RUN_PREFERENCE, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.remove(CodePushPreferences.FIRST_RUN_PREFERENCE_KEY);
+        editor.commit();
+    }
+
+    public void saveBinaryFirstRunFlag() {
         SharedPreferences preferences = context.getSharedPreferences(CodePushPreferences.FIRST_RUN_PREFERENCE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean(CodePushPreferences.FIRST_RUN_PREFERENCE_KEY, false);
         editor.commit();
     }
 
-    public boolean isFirstRun() {
+    public boolean isBinaryFirstRun() {
         SharedPreferences preferences = context.getSharedPreferences(CodePushPreferences.FIRST_RUN_PREFERENCE, Context.MODE_PRIVATE);
         boolean isFirstRun = preferences.getBoolean(CodePushPreferences.FIRST_RUN_PREFERENCE_KEY, true);
         return isFirstRun;
@@ -131,6 +142,29 @@ public class CodePushPreferences {
         SharedPreferences preferences = context.getSharedPreferences(preferencesId, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.clear();
+        editor.commit();
+    }
+
+    public void clearFailedReport() {
+        this.clearPreferences(CodePushPreferences.FAILED_STATUS_REPORT_PREFERENCE);
+    }
+
+    public StatusReport getFailedReport() {
+        SharedPreferences preferences = context.getSharedPreferences(CodePushPreferences.FAILED_STATUS_REPORT_PREFERENCE, Context.MODE_PRIVATE);
+        String statusReportJson = preferences.getString(CodePushPreferences.FAILED_STATUS_REPORT_PREFERENCE_KEY, null);
+        try {
+            return statusReportJson == null ? null : StatusReport.deserialize(statusReportJson);
+        } catch (JSONException e) {
+            // Should not happen
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public void saveFailedReport(StatusReport statusReport) {
+        SharedPreferences preferences = context.getSharedPreferences(CodePushPreferences.FAILED_STATUS_REPORT_PREFERENCE, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString(CodePushPreferences.FAILED_STATUS_REPORT_PREFERENCE_KEY, statusReport.serialize());
         editor.commit();
     }
 

@@ -35,8 +35,6 @@ var app = {
     tryRestart: function (callback) {
         window.codePush.restartApplication(
             function () {
-                /* success */
-                app.sendTestMessage("RESTART_SUCCEEDED");
                 callback && callback();
             },
             function () {

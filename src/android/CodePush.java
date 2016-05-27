@@ -30,6 +30,7 @@ public class CodePush extends CordovaPlugin {
     private CordovaWebView mainWebView;
     private CodePushPackageManager codePushPackageManager;
     private CodePushReportingManager codePushReportingManager;
+    private StatusReport rollbackStatusReport;
     private boolean pluginDestroyed = false;
     private boolean didUpdate = false;
     private boolean didStartApp = false;
@@ -46,32 +47,36 @@ public class CodePush extends CordovaPlugin {
 
     @Override
     public boolean execute(String action, CordovaArgs args, final CallbackContext callbackContext) {
-        if ("getServerURL".equals(action)) {
-            this.returnStringPreference("codepushserverurl", callbackContext);
-            return true;
+        if ("getAppVersion".equals(action)) {
+            return execGetAppVersion(callbackContext);
+        } else if ("getBinaryHash".equals(action)) {
+            return execGetBinaryHash(callbackContext);
         } else if ("getDeploymentKey".equals(action)) {
             this.returnStringPreference(DEPLOYMENT_KEY_PREFERENCE, callbackContext);
             return true;
         } else if ("getNativeBuildTime".equals(action)) {
             return execGetNativeBuildTime(callbackContext);
-        } else if ("getAppVersion".equals(action)) {
-            return execGetAppVersion(callbackContext);
-        } else if ("getBinaryHash".equals(action)) {
-            return execGetBinaryHash(callbackContext);
-        } else if ("preInstall".equals(action)) {
-            return execPreInstall(args, callbackContext);
+        } else if ("getServerURL".equals(action)) {
+            this.returnStringPreference("codepushserverurl", callbackContext);
+            return true;
         } else if ("install".equals(action)) {
             return execInstall(args, callbackContext);
-        } else if ("updateSuccess".equals(action)) {
-            return execUpdateSuccess(callbackContext);
-        } else if ("restartApplication".equals(action)) {
-            return execRestartApplication(args, callbackContext);
-        } else if ("isPendingUpdate".equals(action)) {
-            return execIsPendingUpdate(args, callbackContext);
         } else if ("isFailedUpdate".equals(action)) {
             return execIsFailedUpdate(args, callbackContext);
         } else if ("isFirstRun".equals(action)) {
             return execIsFirstRun(args, callbackContext);
+        } else if ("isPendingUpdate".equals(action)) {
+            return execIsPendingUpdate(args, callbackContext);
+        } else if ("notifyApplicationReady".equals(action)) {
+            return execNotifyApplicationReady(callbackContext);
+        } else if ("preInstall".equals(action)) {
+            return execPreInstall(args, callbackContext);
+        } else if ("reportFailed".equals(action)) {
+            return execReportFailed(args, callbackContext);
+        } else if ("reportSucceeded".equals(action)) {
+            return execReportSucceeded(args, callbackContext);
+        } else if ("restartApplication".equals(action)) {
+            return execRestartApplication(args, callbackContext);
         } else {
             return false;
         }
@@ -103,29 +108,34 @@ public class CodePush extends CordovaPlugin {
         return true;
     }
 
-    private boolean execUpdateSuccess(CallbackContext callbackContext) {
-        if (this.codePushPackageManager.isFirstRun()) {
-            this.codePushPackageManager.saveFirstRunFlag();
-            /* save reporting status for first install */
+    private boolean execNotifyApplicationReady(CallbackContext callbackContext) {
+        if (this.codePushPackageManager.isBinaryFirstRun()) {
+            // Report first run of a store version app
+            this.codePushPackageManager.saveBinaryFirstRunFlag();
             try {
                 String appVersion = Utilities.getAppVersionName(cordova.getActivity());
-                codePushReportingManager.reportStatus(CodePushReportingManager.Status.STORE_VERSION, null, appVersion, mainWebView.getPreferences().getString(DEPLOYMENT_KEY_PREFERENCE, null), this.mainWebView);
+                codePushReportingManager.reportStatus(new StatusReport(ReportingStatus.STORE_VERSION, null, appVersion, mainWebView.getPreferences().getString(DEPLOYMENT_KEY_PREFERENCE, null)), this.mainWebView);
             } catch (PackageManager.NameNotFoundException e) {
                 // Should not happen unless the appVersion is not specified, in which case we can't report anything anyway.
                 e.printStackTrace();
             }
-        }
-
-        if (this.codePushPackageManager.installNeedsConfirmation()) {
-            /* save reporting status */
+        } else if (this.codePushPackageManager.installNeedsConfirmation()) {
+            // Report CodePush update installation that has not been confirmed yet
             CodePushPackageMetadata currentMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
-            codePushReportingManager.reportStatus(CodePushReportingManager.Status.UPDATE_CONFIRMED, currentMetadata.label, currentMetadata.appVersion, currentMetadata.deploymentKey, this.mainWebView);
+            codePushReportingManager.reportStatus(new StatusReport(ReportingStatus.UPDATE_CONFIRMED, currentMetadata.label, currentMetadata.appVersion, currentMetadata.deploymentKey), this.mainWebView);
+        } else if (rollbackStatusReport != null) {
+            // Report a CodePush update that has been rolled back
+            codePushReportingManager.reportStatus(rollbackStatusReport, this.mainWebView);
+            rollbackStatusReport = null;
+        } else if (codePushReportingManager.hasFailedReport()) {
+            // Previous status report failed, so try it again
+            codePushReportingManager.reportStatus(codePushReportingManager.getAndClearFailedReport(), this.mainWebView);
         }
 
+        // Mark the update as confirmed and not requiring a rollback
         this.codePushPackageManager.clearInstallNeedsConfirmation();
         this.cleanOldPackageSilently();
         callbackContext.success();
-
         return true;
     }
 
@@ -197,6 +207,28 @@ public class CodePush extends CordovaPlugin {
         return true;
     }
 
+    private boolean execReportFailed(CordovaArgs args, CallbackContext callbackContext) {
+        try {
+            StatusReport statusReport = StatusReport.deserialize(args.optJSONObject(0));
+            codePushReportingManager.saveFailedReport(statusReport);
+        } catch (JSONException e) {
+            Utilities.logException(e);
+        }
+
+        return true;
+    }
+
+    private boolean execReportSucceeded(CordovaArgs args, CallbackContext callbackContext) {
+        try {
+            StatusReport statusReport = StatusReport.deserialize(args.optJSONObject(0));
+            codePushReportingManager.saveSuccessfulReport(statusReport);
+        } catch (JSONException e) {
+            Utilities.logException(e);
+        }
+
+        return true;
+    }
+
     private boolean execRestartApplication(CordovaArgs args, CallbackContext callbackContext) {
         try {
             /* check if we have a deployed package already */
@@ -235,6 +267,40 @@ public class CodePush extends CordovaPlugin {
         } catch (Exception e) {
             /* silently fail if there was an error during cleanup */
             Utilities.logException(e);
+        }
+    }
+
+    private void clearDeploymentsIfBinaryUpdated() {
+        /* check if we have a deployed package already */
+        CodePushPackageMetadata deployedPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
+        if (deployedPackageMetadata != null) {
+            String deployedPackageTimeStamp = deployedPackageMetadata.nativeBuildTime;
+            long nativeBuildTime = Utilities.getApkEntryBuildTime(RESOURCES_BUNDLE, this.cordova.getActivity());
+            if (nativeBuildTime != -1) {
+                String currentAppTimeStamp = String.valueOf(nativeBuildTime);
+                if (!currentAppTimeStamp.equals(deployedPackageTimeStamp)) {
+                    this.codePushPackageManager.cleanDeployments();
+                    this.codePushPackageManager.clearFailedUpdates();
+                    this.codePushPackageManager.clearPendingInstall();
+                    this.codePushPackageManager.clearInstallNeedsConfirmation();
+                    this.codePushPackageManager.clearBinaryFirstRunFlag();
+                }
+            }
+        }
+    }
+
+    private void navigateToLocalDeploymentIfExists() {
+        CodePushPackageMetadata deployedPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
+        if (deployedPackageMetadata != null && deployedPackageMetadata.localPath != null) {
+            File startPage = this.getStartPageForPackage(deployedPackageMetadata.localPath);
+            if (startPage != null) {
+                /* file exists */
+                try {
+                    navigateToFile(startPage);
+                } catch (MalformedURLException e) {
+                    /* empty - if there is an exception, the app will launch with the bundled content */
+                }
+            }
         }
     }
 
@@ -285,52 +351,11 @@ public class CodePush extends CordovaPlugin {
         }
     }
 
-    private void handleAppStart() {
-        try {
-            /* check if we have a deployed package already */
-            CodePushPackageMetadata deployedPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
-            if (deployedPackageMetadata != null) {
-                String deployedPackageTimeStamp = deployedPackageMetadata.nativeBuildTime;
-                long nativeBuildTime = Utilities.getApkEntryBuildTime(RESOURCES_BUNDLE, this.cordova.getActivity());
-                if (nativeBuildTime != -1) {
-                    String currentAppTimeStamp = String.valueOf(nativeBuildTime);
-                    if ((deployedPackageTimeStamp != null) && (currentAppTimeStamp != null)) {
-                        if (deployedPackageTimeStamp.equals(currentAppTimeStamp)) {
-                            /* same native version, safe to launch from local storage */
-                            if (deployedPackageMetadata.localPath != null) {
-                                File startPage = this.getStartPageForPackage(deployedPackageMetadata.localPath);
-                                if (startPage != null) {
-                                    /* file exists */
-                                    navigateToFile(startPage);
-                                }
-                            }
-                        } else {
-                            /* application updated in the store or via local deployment */
-                            this.codePushPackageManager.cleanDeployments();
-                            this.codePushPackageManager.clearFailedUpdates();
-                            this.codePushPackageManager.clearPendingInstall();
-                            this.codePushPackageManager.clearInstallNeedsConfirmation();
-                            try {
-                                String appVersion = Utilities.getAppVersionName(cordova.getActivity());
-                                codePushReportingManager.reportStatus(CodePushReportingManager.Status.STORE_VERSION, null, appVersion, mainWebView.getPreferences().getString(DEPLOYMENT_KEY_PREFERENCE, null), this.mainWebView);
-                            } catch (PackageManager.NameNotFoundException e) {
-                                // Should not happen unless the appVersion is not specified, in which case we can't report anything anyway.
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            /* empty - if there is an exception, the app will launch with the bundled content */
-        }
-    }
-
     private void handleUnconfirmedInstall(boolean navigate) {
         if (this.codePushPackageManager.installNeedsConfirmation()) {
             /* save status for later reporting */
             CodePushPackageMetadata currentMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
-            codePushReportingManager.reportStatus(CodePushReportingManager.Status.UPDATE_ROLLED_BACK, currentMetadata.label, currentMetadata.appVersion, currentMetadata.deploymentKey, this.mainWebView);
+            rollbackStatusReport = new StatusReport(ReportingStatus.UPDATE_ROLLED_BACK, currentMetadata.label, currentMetadata.appVersion, currentMetadata.deploymentKey);
 
             /* revert application to the previous version */
             this.codePushPackageManager.clearInstallNeedsConfirmation();
@@ -436,6 +461,7 @@ public class CodePush extends CordovaPlugin {
      */
     @Override
     public void onStart() {
+        clearDeploymentsIfBinaryUpdated();
         if (!didStartApp) {
             /* The application was just started. */
             didStartApp = true;
@@ -446,7 +472,7 @@ public class CodePush extends CordovaPlugin {
                 handleUnconfirmedInstall(false);
             }
 
-            handleAppStart();
+            navigateToLocalDeploymentIfExists();
             /* Handle ON_NEXT_RESUME and ON_NEXT_RESTART pending installations */
             if (pendingInstall != null && (InstallMode.ON_NEXT_RESUME.equals(pendingInstall.installMode) || InstallMode.ON_NEXT_RESTART.equals(pendingInstall.installMode))) {
                 this.markUpdate();
@@ -458,9 +484,11 @@ public class CodePush extends CordovaPlugin {
             InstallOptions pendingInstall = this.codePushPackageManager.getPendingInstall();
             long durationInBackground = (new Date().getTime() - lastPausedTimeMs) / 1000;
             if (pendingInstall != null && InstallMode.ON_NEXT_RESUME.equals(pendingInstall.installMode) && durationInBackground >= pendingInstall.minimumBackgroundDuration) {
-                handleAppStart();
+                navigateToLocalDeploymentIfExists();
                 this.markUpdate();
                 this.codePushPackageManager.clearPendingInstall();
+            } else if (codePushReportingManager.hasFailedReport()) {
+                codePushReportingManager.reportStatus(codePushReportingManager.getAndClearFailedReport(), this.mainWebView);
             }
         }
     }

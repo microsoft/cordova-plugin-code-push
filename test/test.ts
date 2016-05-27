@@ -333,6 +333,7 @@ const ScenarioDownloadUpdate = "js/scenarioDownloadUpdate.js";
 const ScenarioInstall = "js/scenarioInstall.js";
 const ScenarioInstallOnResumeWithRevert = "js/scenarioInstallOnResumeWithRevert.js";
 const ScenarioInstallOnRestartWithRevert = "js/scenarioInstallOnRestartWithRevert.js";
+const ScenarioInstallOnRestart2xWithRevert = "js/scenarioInstallOnRestart2xWithRevert"
 const ScenarioInstallWithRevert = "js/scenarioInstallWithRevert.js";
 const ScenarioSync1x = "js/scenarioSync.js";
 const ScenarioSyncResume = "js/scenarioSyncResume.js";
@@ -827,6 +828,40 @@ var testBuilderDescribes: PluginTestingFramework.TestBuilderDescribe[] = [
                         .done(() => { done(); }, () => { done(); });
                 }, false)
         ], ScenarioInstallOnRestartWithRevert),
+        
+    new PluginTestingFramework.TestBuilderDescribe("#localPackage.installOnNextRestart2x",
+        [
+            new PluginTestingFramework.TestBuilderIt("localPackage.installOnNextRestart2x.revertToFirst",
+                (projectManager: ProjectManager, targetPlatform: Platform.IPlatform, done: MochaDone) => {
+                    PluginTestingFramework.updateResponse = { updateInfo: PluginTestingFramework.createUpdateResponse(false, targetPlatform) };
+                    
+                    PluginTestingFramework.updateCheckCallback = () => {
+                        // Update the packageHash so we can install the same update twice.
+                        PluginTestingFramework.updateResponse.packageHash = "randomHash-" + Math.floor(Math.random() * 10000);
+                    };
+
+                    /* create an update */
+                    PluginTestingFramework.createUpdate(projectManager, targetPlatform, UpdateDeviceReady, "Bad Update")
+                        .then<void>((updatePath: string) => {
+                            PluginTestingFramework.updatePackagePath = updatePath;
+                            projectManager.runPlatform(PluginTestingFramework.testRunDirectory, targetPlatform);
+                            return PluginTestingFramework.expectTestMessages([
+                                ServerUtil.TestMessage.UPDATE_INSTALLED, 
+                                ServerUtil.TestMessage.UPDATE_INSTALLED]);
+                        })
+                        .then<void>(() => {
+                            /* verify that the bad update is run, then restart it */
+                            targetPlatform.getEmulatorManager().restartApplication(PluginTestingFramework.TestNamespace);
+                            return PluginTestingFramework.expectTestMessages([ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE]);
+                        })
+                        .then<void>(() => {
+                            /* verify the app rolls back to the binary, ignoring the first unconfirmed version */
+                            targetPlatform.getEmulatorManager().restartApplication(PluginTestingFramework.TestNamespace);
+                            return PluginTestingFramework.expectTestMessages([ServerUtil.TestMessage.UPDATE_FAILED_PREVIOUSLY]);
+                        })
+                        .done(done, done);
+                }, false)
+        ], ScenarioInstallOnRestart2xWithRevert),
         
     new PluginTestingFramework.TestBuilderDescribe("#codePush.restartApplication",
     
