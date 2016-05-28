@@ -522,8 +522,8 @@ var testBuilderDescribes: PluginTestingFramework.TestBuilderDescribe[] = [
                 (projectManager: ProjectManager, targetPlatform: Platform.IPlatform, done: MochaDone) => {
                     PluginTestingFramework.updateResponse = { updateInfo: PluginTestingFramework.createUpdateResponse(false, targetPlatform) };
 
-                    /* pass an invalid path */
-                    PluginTestingFramework.updatePackagePath = path.join(PluginTestingFramework.templatePath, "invalid_path.zip");
+                    /* pass an invalid update url */
+                    PluginTestingFramework.updateResponse.updateInfo.downloadURL = "invalid_url";
 
                     PluginTestingFramework.testMessageCallback = (requestBody: any) => {
                         try {
