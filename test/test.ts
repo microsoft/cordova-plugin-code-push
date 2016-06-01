@@ -883,7 +883,6 @@ var testBuilders = [
                                 new ServerUtil.AppMessage(ServerUtil.TestMessage.SYNC_STATUS, [ServerUtil.TestMessage.SYNC_UPDATE_INSTALLED]),
                                 new ServerUtil.AppMessage(ServerUtil.TestMessage.PENDING_PACKAGE, [ServerUtil.updateResponse.updateInfo.packageHash]),
                                 new ServerUtil.AppMessage(ServerUtil.TestMessage.CURRENT_PACKAGE, [null]),
-                                ServerUtil.TestMessage.RESTART_SUCCEEDED,
                                 ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE,
                                 ServerUtil.TestMessage.NOTIFY_APP_READY_SUCCESS]);
                         })
