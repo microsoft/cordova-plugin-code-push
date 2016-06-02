@@ -80,7 +80,7 @@ function runTests(callback, options) {
     // Pass arguments supplied by test tasks.
     if (options.android) args.push("--android");
     
-    if (options.ios) args.push("--ios");
+    if (options.ios && options.ui) args.push("--ios");
     if (options.ios && options.wk) args.push("--ios-wk");
     
     if (options.setup) args.push("--setup");
@@ -244,7 +244,8 @@ gulp.task("test-setup-android", function (callback) {
 gulp.task("test-setup-ios", function (callback) {
     var options = {
         setup: true,
-        ios: true
+        ios: true,
+        ui: true
     };
     
     runTests(callback, options);
@@ -255,7 +256,8 @@ gulp.task("test-setup-both", function (callback) {
     var options = {
         setup: true,
         android: true,
-        ios: true
+        ios: true,
+        ui: true
     };
     
     runTests(callback, options);
