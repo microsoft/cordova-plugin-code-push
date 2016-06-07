@@ -31,12 +31,12 @@ interface CordovaPlatform {
     /**
      * Called when the platform is prepared.
      */
-    onPreparePlatform(projectManager: CordovaProjectManager, projectDirectory: string): Q.Promise<string>;
+    onPreparePlatform(projectManager: CordovaProjectManager, projectDirectory: string): Q.Promise<void>;
     
     /**
      * Called when the platform is cleaned up.
      */
-    onCleanupPlatform(projectManager: CordovaProjectManager, projectDirectory: string): Q.Promise<string>;
+    onCleanupPlatform(projectManager: CordovaProjectManager, projectDirectory: string): Q.Promise<void>;
     
     /**
      * Returns the path to this platform's www folder
@@ -62,17 +62,17 @@ class CordovaAndroid extends Platform.Android implements CordovaPlatform {
     /**
      * Called when the platform is prepared.
      */
-    onPreparePlatform(projectManager: CordovaProjectManager, projectDirectory: string): Q.Promise<string> {
+    onPreparePlatform(projectManager: CordovaProjectManager, projectDirectory: string): Q.Promise<void> {
         // Noop
-        return null;
+        return Q<void>(null);
     }
     
     /**
      * Called when the platform is cleaned up.
      */
-    onCleanupPlatform(projectManager: CordovaProjectManager, projectDirectory: string): Q.Promise<string> {
+    onCleanupPlatform(projectManager: CordovaProjectManager, projectDirectory: string): Q.Promise<void> {
         // Noop
-        return null;
+        return Q<void>(null);
     }
     
     /**
@@ -108,17 +108,17 @@ class CordovaIOSUI extends Platform.IOS implements CordovaPlatform {
     /**
      * Called when the platform is prepared.
      */
-    onPreparePlatform(projectManager: CordovaProjectManager, projectDirectory: string): Q.Promise<string> {
+    onPreparePlatform(projectManager: CordovaProjectManager, projectDirectory: string): Q.Promise<void> {
         // Noop
-        return null;
+        return Q<void>(null);
     }
     
     /**
      * Called when the platform is cleaned up.
      */
-    onCleanupPlatform(projectManager: CordovaProjectManager, projectDirectory: string): Q.Promise<string> {
+    onCleanupPlatform(projectManager: CordovaProjectManager, projectDirectory: string): Q.Promise<void> {
         // Noop
-        return null;
+        return Q<void>(null);
     }
     
     /**
@@ -157,14 +157,14 @@ class CordovaIOSWK extends CordovaIOSUI {
     /**
      * Called when the platform is prepared.
      */
-    onPreparePlatform(projectManager: CordovaProjectManager, projectDirectory: string): Q.Promise<string> {
+    onPreparePlatform(projectManager: CordovaProjectManager, projectDirectory: string): Q.Promise<void> {
         return projectManager.addCordovaPlugin(projectDirectory, CordovaIOSWK.WkWebViewEnginePluginName);
     }
     
     /**
      * Called when the platform is cleaned up.
      */
-    onCleanupPlatform(projectManager: CordovaProjectManager, projectDirectory: string): Q.Promise<string> {
+    onCleanupPlatform(projectManager: CordovaProjectManager, projectDirectory: string): Q.Promise<void> {
         return projectManager.removeCordovaPlugin(projectDirectory, CordovaIOSWK.WkWebViewEnginePluginName);
     }
 }
@@ -188,7 +188,7 @@ class CordovaProjectManager extends ProjectManager {
 	 * Creates a new test application at the specified path, and configures it
 	 * with the given server URL, android and ios deployment keys.
 	 */
-    public setupProject(projectDirectory: string, templatePath: string, appName: string, appNamespace: string, version?: string): Q.Promise<string> {
+    public setupProject(projectDirectory: string, templatePath: string, appName: string, appNamespace: string, version?: string): Q.Promise<void> {
         if (fs.existsSync(projectDirectory)) {
             del.sync([projectDirectory], { force: true });
         }
@@ -200,13 +200,13 @@ class CordovaProjectManager extends ProjectManager {
         return TestUtil.getProcessOutput("cordova create " + projectDirectory + " " + appNamespace + " " + appName + " --copy-from " + templatePath)
             .then<string>(TestUtil.replaceString.bind(undefined, destinationIndexPath, TestUtil.CODE_PUSH_APP_VERSION_PLACEHOLDER, version))
             .then<string>(this.addCordovaPlugin.bind(this, projectDirectory, CordovaProjectManager.AcquisitionSDKPluginName))
-            .then<string>(this.addCordovaPlugin.bind(this, projectDirectory, TestConfig.thisPluginPath));
+            .then<void>(this.addCordovaPlugin.bind(this, projectDirectory, TestConfig.thisPluginPath));
     }
     
     /**
      * Sets up the scenario for a test in an already existing project.
      */
-    public setupScenario(projectDirectory: string, appId: string, templatePath: string, jsPath: string, targetPlatform: Platform.IPlatform, version?: string): Q.Promise<string> {
+    public setupScenario(projectDirectory: string, appId: string, templatePath: string, jsPath: string, targetPlatform: Platform.IPlatform, version?: string): Q.Promise<void> {
         var indexHtml = "www/index.html";
         var templateIndexPath = path.join(templatePath, indexHtml);
         var destinationIndexPath = path.join(projectDirectory, indexHtml);
@@ -242,7 +242,7 @@ class CordovaProjectManager extends ProjectManager {
             .then(TestUtil.replaceString.bind(undefined, destinationConfigXmlPath, TestUtil.IOS_KEY_PLACEHOLDER, targetPlatform.getDefaultDeploymentKey()))
             .then(TestUtil.replaceString.bind(undefined, destinationConfigXmlPath, TestUtil.SERVER_URL_PLACEHOLDER, targetPlatform.getServerUrl()))
             .then(TestUtil.replaceString.bind(undefined, destinationConfigXmlPath, TestUtil.PLUGIN_VERSION_PLACEHOLDER, pluginVersion))
-            .then<string>(this.prepareCordovaPlatform.bind(this, projectDirectory, targetPlatform));
+            .then<void>(this.prepareCordovaPlatform.bind(this, projectDirectory, targetPlatform));
     }
 
     /**
@@ -255,10 +255,10 @@ class CordovaProjectManager extends ProjectManager {
     /**
      * Prepares a specific platform for tests.
      */
-    public preparePlatform(projectDirectory: string, targetPlatform: Platform.IPlatform): Q.Promise<string> {
+    public preparePlatform(projectDirectory: string, targetPlatform: Platform.IPlatform): Q.Promise<void> {
         return this.addCordovaPlatform(projectDirectory, targetPlatform)
-            .catch<string>(() => { /* If the platform is already added, there's no issue, so ignore. */ return null; })
-            .then<string>(() => {
+            .catch<void>(() => { /* If the platform is already added, there's no issue, so ignore. */ return undefined; })
+            .then<void>(() => {
                 return (<CordovaPlatform><any>targetPlatform).onPreparePlatform(this, projectDirectory);
             });
     }
@@ -266,9 +266,9 @@ class CordovaProjectManager extends ProjectManager {
     /**
      * Cleans up a specific platform after tests.
      */
-    public cleanupAfterPlatform(projectDirectory: string, targetPlatform: Platform.IPlatform): Q.Promise<string> {
+    public cleanupAfterPlatform(projectDirectory: string, targetPlatform: Platform.IPlatform): Q.Promise<void> {
         return this.removeCordovaPlatform(projectDirectory, targetPlatform)
-            .then<string>(() => {
+            .then<void>(() => {
                 return (<CordovaPlatform><any>targetPlatform).onCleanupPlatform(this, projectDirectory);
             });
     }
@@ -276,50 +276,50 @@ class CordovaProjectManager extends ProjectManager {
     /**
      * Runs the test app on the given target / platform.
      */
-    public runApplication(projectDirectory: string, targetPlatform: Platform.IPlatform): Q.Promise<string> {
+    public runApplication(projectDirectory: string, targetPlatform: Platform.IPlatform): Q.Promise<void> {
         console.log("Running project in " + projectDirectory + " on " + targetPlatform.getName());
         // Don't log the build output because iOS's build output is too verbose and overflows the buffer!
-        return TestUtil.getProcessOutput("cordova run " + (<CordovaPlatform><any>targetPlatform).getCordovaName(), { cwd: projectDirectory, noLogStdOut: true });
+        return TestUtil.getProcessOutput("cordova run " + (<CordovaPlatform><any>targetPlatform).getCordovaName(), { cwd: projectDirectory, noLogStdOut: true }).then(() => { return null; });
     }
 
     /**
      * Prepares the Cordova project for the test app on the given target / platform.
      */
-    public prepareCordovaPlatform(projectDirectory: string, targetPlatform: Platform.IPlatform): Q.Promise<string> {
+    public prepareCordovaPlatform(projectDirectory: string, targetPlatform: Platform.IPlatform): Q.Promise<void> {
         console.log("Preparing project in " + projectDirectory + " for " + targetPlatform.getName());
-        return TestUtil.getProcessOutput("cordova prepare " + (<CordovaPlatform><any>targetPlatform).getCordovaName(), { cwd: projectDirectory });
+        return TestUtil.getProcessOutput("cordova prepare " + (<CordovaPlatform><any>targetPlatform).getCordovaName(), { cwd: projectDirectory }).then(() => { return null; });
     }
 
     /**
      * Adds a platform to a Cordova project. 
      */
-    public addCordovaPlatform(projectDirectory: string, targetPlatform: Platform.IPlatform, version?: string): Q.Promise<string> {
+    public addCordovaPlatform(projectDirectory: string, targetPlatform: Platform.IPlatform, version?: string): Q.Promise<void> {
         console.log("Adding " + targetPlatform.getName() + " to project in " + projectDirectory);
-        return TestUtil.getProcessOutput("cordova platform add " + (<CordovaPlatform><any>targetPlatform).getCordovaName() + (version ? "@" + version : ""), { cwd: projectDirectory });
+        return TestUtil.getProcessOutput("cordova platform add " + (<CordovaPlatform><any>targetPlatform).getCordovaName() + (version ? "@" + version : ""), { cwd: projectDirectory }).then(() => { return null; });
     }
 
     /**
      * Adds a platform to a Cordova project. 
      */
-    public removeCordovaPlatform(projectDirectory: string, targetPlatform: Platform.IPlatform, version?: string): Q.Promise<string> {
+    public removeCordovaPlatform(projectDirectory: string, targetPlatform: Platform.IPlatform, version?: string): Q.Promise<void> {
         console.log("Removing " + targetPlatform.getName() + " to project in " + projectDirectory);
-        return TestUtil.getProcessOutput("cordova platform remove " + (<CordovaPlatform><any>targetPlatform).getCordovaName() + (version ? "@" + version : ""), { cwd: projectDirectory });
+        return TestUtil.getProcessOutput("cordova platform remove " + (<CordovaPlatform><any>targetPlatform).getCordovaName() + (version ? "@" + version : ""), { cwd: projectDirectory }).then(() => { return null; });
     }
     
     /**
      * Adds a plugin to a Cordova project.
      */
-    public addCordovaPlugin(projectDirectory: string, plugin: string): Q.Promise<string> {
+    public addCordovaPlugin(projectDirectory: string, plugin: string): Q.Promise<void> {
         console.log("Adding plugin " + plugin + " to " + projectDirectory);
-        return TestUtil.getProcessOutput("cordova plugin add " + plugin, { cwd: projectDirectory });
+        return TestUtil.getProcessOutput("cordova plugin add " + plugin, { cwd: projectDirectory }).then(() => { return null; });
     }  
     
     /**
      * Removes a plugin from a Cordova project.
      */
-    public removeCordovaPlugin(projectDirectory: string, plugin: string): Q.Promise<string> {
+    public removeCordovaPlugin(projectDirectory: string, plugin: string): Q.Promise<void> {
         console.log("Removing plugin " + plugin + " from " + projectDirectory);
-        return TestUtil.getProcessOutput("cordova plugin remove " + plugin, { cwd: projectDirectory });
+        return TestUtil.getProcessOutput("cordova plugin remove " + plugin, { cwd: projectDirectory }).then(() => { return null; });
     }
 };
 
