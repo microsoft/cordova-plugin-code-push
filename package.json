@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-code-push",
-  "version": "1.7.1-beta",
+  "version": "1.8.0-beta",
   "description": "CodePush Plugin for Apache Cordova",
   "cordova": {
     "id": "cordova-plugin-code-push",
@@ -36,8 +36,6 @@
     "q": "latest",
     "run-sequence": "latest",
     "tslint": "latest",
-    "typescript": "1.8.7",
-    "mocha" : "latest",
-    "mocha-junit-reporter" : "latest"
+    "typescript": "1.8.7"
   }
 }

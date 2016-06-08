@@ -1,3 +1,4 @@
+var shouldNotInstallAgain = false;
 var app = {
     // Application Constructor
     initialize: function () {
@@ -50,7 +51,8 @@ var app = {
     installSuccess: function () {
         console.log("Update installed.");
         app.sendTestMessage("UPDATE_INSTALLED");
-        window.codePush.checkForUpdate(app.checkSuccess, app.checkError);
+        if (!shouldNotInstallAgain) window.codePush.checkForUpdate(app.checkSuccess, app.checkError);
+        shouldNotInstallAgain = true;
     },
     installError: function (error) {
         console.log("Install error.");

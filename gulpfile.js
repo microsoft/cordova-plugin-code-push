@@ -36,7 +36,7 @@ var tsCompileOptions = {
 };
 
 function spawnCommand(command, args, callback, silent, detached) {
-    var options = {};
+    var options = { maxBuffer: 1024 * 1024 };
     if (detached) {
         options.detached = true;
         options.stdio = ["ignore"];
@@ -57,7 +57,7 @@ function spawnCommand(command, args, callback, silent, detached) {
 };
 
 function execCommand(command, args, callback, silent) {
-    var execProcess = child_process.exec(command + " " + args.join(" "));
+    var execProcess = child_process.exec(command + " " + args.join(" "), { maxBuffer: 1024 * 1024 });
         
     if (!silent) execProcess.stdout.pipe(process.stdout);
     if (!silent) execProcess.stderr.pipe(process.stderr);
@@ -80,7 +80,7 @@ function runTests(callback, options) {
     // Pass arguments supplied by test tasks.
     if (options.android) args.push("--android");
     
-    if (options.ios) args.push("--ios");
+    if (options.ios && options.ui) args.push("--ios");
     if (options.ios && options.wk) args.push("--ios-wk");
     
     if (options.setup) args.push("--setup");
@@ -244,7 +244,8 @@ gulp.task("test-setup-android", function (callback) {
 gulp.task("test-setup-ios", function (callback) {
     var options = {
         setup: true,
-        ios: true
+        ios: true,
+        ui: true
     };
     
     runTests(callback, options);
@@ -255,7 +256,8 @@ gulp.task("test-setup-both", function (callback) {
     var options = {
         setup: true,
         android: true,
-        ios: true
+        ios: true,
+        ui: true
     };
     
     runTests(callback, options);
