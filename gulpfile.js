@@ -217,7 +217,6 @@ gulp.task("tslint", function () {
 });
 
 gulp.task("clean", function () {
-    var del = require("del");
     return del([binPath + "/**"], { force: true });
 });
 
