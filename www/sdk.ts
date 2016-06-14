@@ -44,7 +44,9 @@ class Sdk {
             NativeAppInfo.getServerURL((serverError: Error, serverURL: string) => {
                 NativeAppInfo.getDeploymentKey((depolymentKeyError: Error, deploymentKey: string) => {
                     NativeAppInfo.getApplicationVersion((appVersionError: Error, appVersion: string) => {
-                        if (!serverURL || !appVersion) {
+                        if (!appVersion) {
+                            callback(new Error("Could not get the app version. Please check your config.xml file."), null);
+                        } else if (!serverURL) {
                             callback(new Error("Could not get the CodePush configuration. Please check your config.xml file."), null);
                         } else {
                             Sdk.DefaultConfiguration = {
