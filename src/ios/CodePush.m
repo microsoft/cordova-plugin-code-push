@@ -19,25 +19,27 @@ NSString* const DeploymentKeyPreference = @"codepushdeploymentkey";
 StatusReport* rollbackStatusReport = nil;
 
 - (void)getBinaryHash:(CDVInvokedUrlCommand *)command {
-    CDVPluginResult* pluginResult = nil;
-    NSString* binaryHash = [CodePushPackageManager getCachedBinaryHash];
-    if (binaryHash) {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
-                                         messageAsString:binaryHash];
-    } else {
-        NSError* error;
-        binaryHash = [UpdateHashUtils getBinaryHash:&error];
-        if (error) {
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
-                                             messageAsString:[@"An error occurred when trying to get the hash of the binary contents. " stringByAppendingString:error.description]];
-        } else {
-            [CodePushPackageManager saveBinaryHash:binaryHash];
+    [self.commandDelegate runInBackground:^{
+        CDVPluginResult* pluginResult = nil;
+        NSString* binaryHash = [CodePushPackageManager getCachedBinaryHash];
+        if (binaryHash) {
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
-                                             messageAsString:binaryHash];
+                                            messageAsString:binaryHash];
+        } else {
+            NSError* error;
+            binaryHash = [UpdateHashUtils getBinaryHash:&error];
+            if (error) {
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
+                                                messageAsString:[@"An error occurred when trying to get the hash of the binary contents. " stringByAppendingString:error.description]];
+            } else {
+                [CodePushPackageManager saveBinaryHash:binaryHash];
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                                messageAsString:binaryHash];
+            }
         }
-    }
 
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
 }
 
 - (void)handleUnconfirmedInstall:(BOOL)navigate {
@@ -62,77 +64,81 @@ StatusReport* rollbackStatusReport = nil;
 }
 
 - (void)notifyApplicationReady:(CDVInvokedUrlCommand *)command {
-    if ([CodePushPackageManager isBinaryFirstRun]) {
-        // Report first run of a store version app
-        [CodePushPackageManager markBinaryFirstRunFlag];
-        NSString* appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
-        NSString* deploymentKey = ((CDVViewController *)self.viewController).settings[DeploymentKeyPreference];
-        StatusReport* statusReport = [[StatusReport alloc] initWithStatus:STORE_VERSION
-                                                                 andLabel:nil
-                                                            andAppVersion:appVersion
-                                                         andDeploymentKey:deploymentKey];
-        [CodePushReportingManager reportStatus:statusReport
-                                   withWebView:self.webView];
-    } else if ([CodePushPackageManager installNeedsConfirmation]) {
-        // Report CodePush update installation that has not been confirmed yet
-        CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
-        StatusReport* statusReport = [[StatusReport alloc] initWithStatus:UPDATE_CONFIRMED
-                                                                 andLabel:currentMetadata.label
-                                                            andAppVersion:currentMetadata.appVersion
-                                                         andDeploymentKey:currentMetadata.deploymentKey];
-        [CodePushReportingManager reportStatus:statusReport
-                                   withWebView:self.webView];
-    } else if (rollbackStatusReport) {
-        // Report a CodePush update that rolled back
-        [CodePushReportingManager reportStatus:rollbackStatusReport
-                                   withWebView:self.webView];
-        rollbackStatusReport = nil;
-    } else if ([CodePushReportingManager hasFailedReport]) {
-        // Previous status report failed, so try it again
-        [CodePushReportingManager reportStatus:[CodePushReportingManager getAndClearFailedReport]
-                                   withWebView:self.webView];
-    }
+    [self.commandDelegate runInBackground:^{
+        if ([CodePushPackageManager isBinaryFirstRun]) {
+            // Report first run of a store version app
+            [CodePushPackageManager markBinaryFirstRunFlag];
+            NSString* appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+            NSString* deploymentKey = ((CDVViewController *)self.viewController).settings[DeploymentKeyPreference];
+            StatusReport* statusReport = [[StatusReport alloc] initWithStatus:STORE_VERSION
+                                                                    andLabel:nil
+                                                                andAppVersion:appVersion
+                                                            andDeploymentKey:deploymentKey];
+            [CodePushReportingManager reportStatus:statusReport
+                                    withWebView:self.webView];
+        } else if ([CodePushPackageManager installNeedsConfirmation]) {
+            // Report CodePush update installation that has not been confirmed yet
+            CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
+            StatusReport* statusReport = [[StatusReport alloc] initWithStatus:UPDATE_CONFIRMED
+                                                                    andLabel:currentMetadata.label
+                                                                andAppVersion:currentMetadata.appVersion
+                                                            andDeploymentKey:currentMetadata.deploymentKey];
+            [CodePushReportingManager reportStatus:statusReport
+                                    withWebView:self.webView];
+        } else if (rollbackStatusReport) {
+            // Report a CodePush update that rolled back
+            [CodePushReportingManager reportStatus:rollbackStatusReport
+                                    withWebView:self.webView];
+            rollbackStatusReport = nil;
+        } else if ([CodePushReportingManager hasFailedReport]) {
+            // Previous status report failed, so try it again
+            [CodePushReportingManager reportStatus:[CodePushReportingManager getAndClearFailedReport]
+                                    withWebView:self.webView];
+        }
 
-    // Mark the update as confirmed and not requiring a rollback
-    [CodePushPackageManager clearInstallNeedsConfirmation];
-    [CodePushPackageManager cleanOldPackage];
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        // Mark the update as confirmed and not requiring a rollback
+        [CodePushPackageManager clearInstallNeedsConfirmation];
+        [CodePushPackageManager cleanOldPackage];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
 }
 
 - (void)install:(CDVInvokedUrlCommand *)command {
-    CDVPluginResult* pluginResult = nil;
+    [self.commandDelegate runInBackground:^{
+        CDVPluginResult* pluginResult = nil;
 
-    NSString* location = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
-    NSString* installModeString = [command argumentAtIndex:1 withDefault:IMMEDIATE andClass:[NSString class]];
-    NSString* minimumBackgroundDurationString = [command argumentAtIndex:2 withDefault:0 andClass:[NSString class]];
+        NSString* location = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
+        NSString* installModeString = [command argumentAtIndex:1 withDefault:IMMEDIATE andClass:[NSString class]];
+        NSString* minimumBackgroundDurationString = [command argumentAtIndex:2 withDefault:0 andClass:[NSString class]];
 
-    InstallOptions* options = [[InstallOptions alloc] init];
-    [options setInstallMode:[installModeString intValue]];
-    [options setMinimumBackgroundDuration:[minimumBackgroundDurationString intValue]];
+        InstallOptions* options = [[InstallOptions alloc] init];
+        [options setInstallMode:[installModeString intValue]];
+        [options setMinimumBackgroundDuration:[minimumBackgroundDurationString intValue]];
 
-    if ([options installMode] == IMMEDIATE) {
-        if (nil == location) {
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Cannot read the start URL."];
-        }
-        else {
-            bool applied = [self loadPackage: location];
-            if (applied) {
-                [self markUpdate];
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        if ([options installMode] == IMMEDIATE) {
+            if (nil == location) {
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Cannot read the start URL."];
             }
             else {
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"An error happened during package install."];
+                bool applied = [self loadPackage: location];
+                if (applied) {
+                    [self markUpdate];
+                    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+                }
+                else {
+                    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"An error happened during package install."];
+                }
             }
         }
-    }
-    else {
-        /* install on restart or on resume */
-        [CodePushPackageManager savePendingInstall:options];
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-    }
+        else {
+            /* install on restart or on resume */
+            [CodePushPackageManager savePendingInstall:options];
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        }
 
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
 }
 
 - (void)reportFailed:(CDVInvokedUrlCommand *)command {
@@ -174,23 +180,25 @@ StatusReport* rollbackStatusReport = nil;
 }
 
 - (void)preInstall:(CDVInvokedUrlCommand *)command {
-    CDVPluginResult* pluginResult = nil;
+    [self.commandDelegate runInBackground:^{
+        CDVPluginResult* pluginResult = nil;
 
-    NSString* location = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
-    if (nil == location) {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Cannot read the start URL."];
-    }
-    else {
-        NSURL* URL = [self getStartPageURLForLocalPackage:location];
-        if (URL) {
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        NSString* location = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
+        if (nil == location) {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Cannot read the start URL."];
         }
         else {
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Could not find start page in package."];
+            NSURL* URL = [self getStartPageURLForLocalPackage:location];
+            if (URL) {
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+            }
+            else {
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Could not find start page in package."];
+            }
         }
-    }
 
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
 }
 
 - (void)getServerURL:(CDVInvokedUrlCommand *)command {
