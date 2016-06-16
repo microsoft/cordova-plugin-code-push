@@ -24,17 +24,17 @@ StatusReport* rollbackStatusReport = nil;
         NSString* binaryHash = [CodePushPackageManager getCachedBinaryHash];
         if (binaryHash) {
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
-                                            messageAsString:binaryHash];
+                                             messageAsString:binaryHash];
         } else {
             NSError* error;
             binaryHash = [UpdateHashUtils getBinaryHash:&error];
             if (error) {
                 pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
-                                                messageAsString:[@"An error occurred when trying to get the hash of the binary contents. " stringByAppendingString:error.description]];
+                                                 messageAsString:[@"An error occurred when trying to get the hash of the binary contents. " stringByAppendingString:error.description]];
             } else {
                 [CodePushPackageManager saveBinaryHash:binaryHash];
                 pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
-                                                messageAsString:binaryHash];
+                                                 messageAsString:binaryHash];
             }
         }
 
@@ -71,29 +71,29 @@ StatusReport* rollbackStatusReport = nil;
             NSString* appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
             NSString* deploymentKey = ((CDVViewController *)self.viewController).settings[DeploymentKeyPreference];
             StatusReport* statusReport = [[StatusReport alloc] initWithStatus:STORE_VERSION
-                                                                    andLabel:nil
+                                                                     andLabel:nil
                                                                 andAppVersion:appVersion
-                                                            andDeploymentKey:deploymentKey];
+                                                             andDeploymentKey:deploymentKey];
             [CodePushReportingManager reportStatus:statusReport
-                                    withWebView:self.webView];
+                                       withWebView:self.webView];
         } else if ([CodePushPackageManager installNeedsConfirmation]) {
             // Report CodePush update installation that has not been confirmed yet
             CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
             StatusReport* statusReport = [[StatusReport alloc] initWithStatus:UPDATE_CONFIRMED
-                                                                    andLabel:currentMetadata.label
+                                                                     andLabel:currentMetadata.label
                                                                 andAppVersion:currentMetadata.appVersion
-                                                            andDeploymentKey:currentMetadata.deploymentKey];
+                                                             andDeploymentKey:currentMetadata.deploymentKey];
             [CodePushReportingManager reportStatus:statusReport
                                     withWebView:self.webView];
         } else if (rollbackStatusReport) {
             // Report a CodePush update that rolled back
             [CodePushReportingManager reportStatus:rollbackStatusReport
-                                    withWebView:self.webView];
+                                       withWebView:self.webView];
             rollbackStatusReport = nil;
         } else if ([CodePushReportingManager hasFailedReport]) {
             // Previous status report failed, so try it again
             [CodePushReportingManager reportStatus:[CodePushReportingManager getAndClearFailedReport]
-                                    withWebView:self.webView];
+                                       withWebView:self.webView];
         }
 
         // Mark the update as confirmed and not requiring a rollback
