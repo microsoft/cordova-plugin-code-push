@@ -35,7 +35,11 @@ NSString* const LastVersionPreferenceLabelOrAppVersionKey = @"LAST_VERSION_LABEL
         if ([webView respondsToSelector:@selector(evaluateJavaScript:completionHandler:)]) {
             [webView performSelector:@selector(evaluateJavaScript:completionHandler:) withObject:script withObject: NULL];
         } else if ([webView isKindOfClass:[UIWebView class]]) {
-            [(UIWebView*)webView stringByEvaluatingJavaScriptFromString:script];
+            // The UIWebView requires JS evaluation to occur on the main
+            // thread, so ensure that we dispatch to it before executing.
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [(UIWebView*)webView stringByEvaluatingJavaScriptFromString:script];
+            });
         }
     }
 }
