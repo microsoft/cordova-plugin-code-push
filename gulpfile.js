@@ -42,105 +42,66 @@ function spawnCommand(command, args, callback, silent, detached) {
         options.stdio = ["ignore"];
     }
     
-    var process = child_process.spawn(command, args, options);
-
-    process.stdout.on('data', function (data) {
-        if (!silent) console.log("" + data);
-    });
-
-    process.stderr.on('data', function (data) {
-        if (!silent) console.error("" + data);
-    });
+    var spawnProcess = child_process.spawn(command, args, options);
+        
+    if (!silent) spawnProcess.stdout.pipe(process.stdout);
+    if (!silent) spawnProcess.stderr.pipe(process.stderr);
 
     if (!detached) {
-        process.on('exit', function (code) {
+        spawnProcess.on('exit', function (code) {
             callback && callback(code === 0 ? undefined : "Error code: " + code);
         });
     }
     
-    return process;
+    return spawnProcess;
 };
 
 function execCommand(command, args, callback, silent) {
-    var process = child_process.exec(command + " " + args.join(" "));
-
-    process.stdout.on('data', function (data) {
-        if (!silent) console.log("" + data);
-    });
-
-    process.stderr.on('data', function (data) {
-        if (!silent) console.error("" + data);
-    });
+    var execProcess = child_process.exec(command + " " + args.join(" "));
+        
+    if (!silent) execProcess.stdout.pipe(process.stdout);
+    if (!silent) execProcess.stderr.pipe(process.stderr);
     
-    process.on('error', function (error) {
+    execProcess.on('error', function (error) {
         callback && callback(error);
     })
     
-    process.on('exit', function (code) {
+    execProcess.on('exit', function (code) {
         callback && callback(code === 0 ? undefined : "Error code: " + code);
     });
     
-    return process;
+    return execProcess;
 };
-
-/**
- * Executes a child process and returns its output in the promise as a string
- */
-function execCommandWithPromise(command, options, logOutput) {
-    var deferred = Q.defer();
-
-    options = options || {};
-    options.maxBuffer = 1024 * 500;
-    // abort processes that run longer than five minutes
-    options.timeout = 5 * 60 * 1000;
-
-    console.log("Running command: " + command);
-    child_process.exec(command, options, (error, stdout, stderr) => {
-
-        if (logOutput) stdout && console.log(stdout);
-        stderr && console.error(stderr);
-
-        if (error) {
-            console.error(error);
-            deferred.reject(error);
-        } else {
-            deferred.resolve(stdout.toString());
-        }
-    });
-
-    return deferred.promise;
-}
 
 function runTests(callback, options) {
     var command = "node_modules/.bin/mocha";
     var args = ["./bin/test"];
     
-    // Set up the mocha junit reporter.
-    args.push("--reporter");
-    args.push("mocha-junit-reporter");
-    
-    // Set the mocha reporter to the correct output file.
-    args.push("--reporter-options");
-    var filename = "./test-results.xml";
-    if (options.android && !options.ios) filename = "./test-android.xml";
-    else if (options.ios && !options.android) filename = "./test-ios" + (options.wk ? (options.ui ? "" : "-wk") : "-ui") + ".xml";
-    args.push("mochaFile=" + filename);
-    // Delete previous test result file so TFS doesn't read the old file if the tests exit before saving
-    del(filename);
-    
     // Pass arguments supplied by test tasks.
     if (options.android) args.push("--android");
-    if (options.ios) {
-        args.push("--ios");
-        args.push("--use-wkwebview");
-        args.push(options.wk ? (options.ui ? "both" : "true") : "false");
-    }
+    
+    if (options.ios) args.push("--ios");
+    if (options.ios && options.wk) args.push("--ios-wk");
+    
     if (options.setup) args.push("--setup");
     
     // Pass arguments from command line.
     // The fourth argument is the first argument after the task name.
     for (var i = 3; i < process.argv.length; i++) {
-        args.push(process.argv[i]);
+        if (process.argv[i] === "--report") {
+            // Set up the mocha junit reporter.
+            args.push("--reporter");
+            args.push("mocha-junit-reporter");
+            
+            // Set the mocha reporter to the correct output file.
+            args.push("--reporter-options");
+            var filename = "./test-results.xml";
+            if (options.android && !options.ios) filename = "./test-android.xml";
+            else if (options.ios && !options.android) filename = "./test-ios" + (options.wk ? (options.ui ? "" : "-wk") : "-ui") + ".xml";
+            args.push("mochaFile=" + filename);
+            // Delete previous test result file so TFS doesn't read the old file if the tests exit before saving
+            del(filename);
+        } else args.push(process.argv[i]);
     }
     
     execCommand(command, args, callback);
