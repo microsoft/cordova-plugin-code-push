@@ -311,9 +311,12 @@ StatusReport* rollbackStatusReport = nil;
 }
 
 - (void)loadURL:(NSURL*)url {
-    // Cast to a UIWebView here to enable call to loadRequest.
-    // Both UIWebView and WKWebview share this call, so regardless of which type the returned webview is, this will work.
-    [(UIWebView*)self.webView loadRequest:[NSURLRequest requestWithURL:url]];
+    if ([self respondsToSelector:@selector(webViewEngine)]) {
+        id webViewEngine = [self performSelector:@selector(webViewEngine)];
+        [webViewEngine performSelector:@selector(loadRequest:) withObject:[NSURLRequest requestWithURL:url]];
+    } else {
+        [(UIWebView*)self.webView loadRequest:[NSURLRequest requestWithURL:url]];
+    }
 }
 
 - (void)loadStoreVersion {
