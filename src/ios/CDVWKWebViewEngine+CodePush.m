@@ -14,7 +14,7 @@
     
     // If the app is attempting to load a CodePush update, then we can lock the WebView down to
     // just the CodePush "versions" directory. This prevents non-CodePush assets from being accessible,
-    // while stll allowing us to navigate to a future update, as well as to the binary if a rollback is needed.
+    // while still allowing us to navigate to a future update, as well as to the binary if a rollback is needed.
     if ([request.URL.absoluteString containsString:@"codepush"]) {
         NSString *libraryPath = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES)[0];
         readAccessURL = [NSURL fileURLWithPathComponents:@[libraryPath, @"NoCloud", @"codepush", @"deploy", @"versions"]];
