@@ -79,6 +79,7 @@
         </platform>
 
         <platform name="ios">
+            <source-file src="src/ios/CDVWKWebViewEngine+CodePush.m" />
             <header-file src="src/ios/CodePush.h" />
             <source-file src="src/ios/CodePush.m" />
             <header-file src="src/ios/CodePushPackageMetadata.h" />
