@@ -110,7 +110,8 @@ export class TestUtil {
         } else {
             // get the most recent iOS simulator to run tests on
             this.getProcessOutput("xcrun simctl list")
-                .then(function (listOfDevices) {
+                .then(function (listOfDevicesWithDevicePairs) {
+                    var listOfDevices: string = listOfDevicesWithDevicePairs.slice(listOfDevicesWithDevicePairs.indexOf("-- iOS"), listOfDevicesWithDevicePairs.indexOf("-- tvOS"));
                     var phoneDevice = /iPhone (\S* )*(\(([0-9A-Z-]*)\))/g;
                     var match = listOfDevices.match(phoneDevice);
                     onReadIOSEmuName(match[match.length - 1]);
