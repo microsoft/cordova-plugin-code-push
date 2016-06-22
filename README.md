@@ -653,3 +653,5 @@ The Cordova community has graciously created some awesome open source apps that 
 * [PGDay CodePush Demo](https://github.com/rangle/pgdays-codepush-demo) - Demo app created by [Rangle.io](http://rangle.io) used for [PhoneGap Day Europe 2016](http://pgday.phonegap.com/eu2016/).
 
 *Note: If you've developed a Cordova app using CodePush, that is also open-source, please let us know. We would love to add it to this list!*
+
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
