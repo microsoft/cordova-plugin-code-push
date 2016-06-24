@@ -311,12 +311,15 @@ StatusReport* rollbackStatusReport = nil;
 }
 
 - (void)loadURL:(NSURL*)url {
-    if ([self respondsToSelector:@selector(webViewEngine)]) {
-        id webViewEngine = [self performSelector:@selector(webViewEngine)];
-        [webViewEngine performSelector:@selector(loadRequest:) withObject:[NSURLRequest requestWithURL:url]];
-    } else {
-        [(UIWebView*)self.webView loadRequest:[NSURLRequest requestWithURL:url]];
-    }
+    // In order to make use of the "modern" Cordova platform, while still
+    // maintaining back-compat with Cordova iOS 3.9.0, we need to conditionally
+    // use the WebViewEngine for performing navigations only if the host app
+    // is running 4.0.0+, and fallback to directly using the WebView otherwise.
+#ifdef __CORDOVA_4_0_0
+    [self.webViewEngine loadRequest:[NSURLRequest requestWithURL:url]];
+#else
+    [(UIWebView*)self.webView loadRequest:[NSURLRequest requestWithURL:url]];
+#endif
 }
 
 - (void)loadStoreVersion {
