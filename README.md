@@ -71,6 +71,7 @@ With the CodePush plugin installed, configure your app to use it via the followi
     ```xml
     <access origin="https://codepush.azurewebsites.net" />
     <access origin="https://codepush.blob.core.windows.net" />
+    <access origin="https://codepushupdates.azureedge.net />
     ```
     
 3. To ensure that your app can access the CodePush server on [CSP](https://developer.mozilla.org/en-US/docs/Web/Security/CSP/Introducing_Content_Security_Policy)-compliant platforms, add `https://codepush.azurewebsites.net` to the `Content-Security-Policy` `meta` tag in your `index.html` file:
