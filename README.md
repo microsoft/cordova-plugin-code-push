@@ -448,7 +448,7 @@ function syncStatus(status) {
 function downloadProgress(downloadProgress) {
     if (downloadProgress) {
     	// Update "downloading" modal with current download %
-        //console.log("Downloading " + downloadProgress.receivedBytes + " of " + downloadProgress);
+        //console.log("Downloading " + downloadProgress.receivedBytes + " of " + downloadProgress.totalBytes);
     }
 }
 ```
