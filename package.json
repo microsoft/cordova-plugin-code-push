@@ -9,6 +9,18 @@
       "ios"
     ]
   },
+  "engines": {
+    "cordovaDependencies": {
+      "1.8.x": {
+        "cordova": ">=5.0.0",
+        "cordova-android": ">=4.0.0",
+        "cordova-ios": ">=3.9.0"
+      },
+      "2.0.0": {
+        "cordova": ">=100"
+      }
+    }
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/Microsoft/cordova-plugin-code-push"
