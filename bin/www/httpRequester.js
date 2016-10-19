@@ -33,6 +33,8 @@ var HttpRequester = (function () {
         if (this.contentType) {
             xhr.setRequestHeader("Content-Type", this.contentType);
         }
+        xhr.setRequestHeader("X-CodePush-Plugin-Name", "cordova-plugin-code-push");
+        xhr.setRequestHeader("X-CodePush-Plugin-Version", cordova.require("cordova/plugin_list").metadata["cordova-plugin-code-push"]);
         xhr.setRequestHeader("X-CodePush-SDK-Version", cordova.require("cordova/plugin_list").metadata["code-push"]);
         xhr.send(requestBody);
     };
