@@ -42,7 +42,10 @@ var Sdk = (function () {
             NativeAppInfo.getServerURL(function (serverError, serverURL) {
                 NativeAppInfo.getDeploymentKey(function (depolymentKeyError, deploymentKey) {
                     NativeAppInfo.getApplicationVersion(function (appVersionError, appVersion) {
-                        if (!serverURL || !appVersion) {
+                        if (!appVersion) {
+                            callback(new Error("Could not get the app version. Please check your config.xml file."), null);
+                        }
+                        else if (!serverURL) {
                             callback(new Error("Could not get the CodePush configuration. Please check your config.xml file."), null);
                         }
                         else {

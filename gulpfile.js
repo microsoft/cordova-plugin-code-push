@@ -18,9 +18,8 @@ var emulatorMaxReadyAttempts = 5;
 var compiledSourceWarningMessage = "\n \
 /******************************************************************************************** \n \
 	 THIS FILE HAS BEEN COMPILED FROM TYPESCRIPT SOURCES. \n \
-	 PLEASE DO NOT MODIFY THIS FILE AS YOU WILL LOSE YOUR CHANGES WHEN RECOMPILING. \n \
-	 ALSO, PLEASE DO NOT SUBMIT PULL REQUESTS WITH CHANGES TO THIS FILE. \n \
-	 INSTEAD, EDIT THE TYPESCRIPT SOURCES UNDER THE WWW FOLDER. \n \
+	 PLEASE DO NOT MODIFY THIS FILE DIRECTLY AS YOU WILL LOSE YOUR CHANGES WHEN RECOMPILING. \n \
+	 INSTEAD, EDIT THE TYPESCRIPT SOURCES UNDER THE WWW FOLDER, AND THEN RUN GULP. \n \
 	 FOR MORE INFORMATION, PLEASE SEE CONTRIBUTING.md. \n \
 *********************************************************************************************/ \n\n\n";
 
@@ -31,7 +30,6 @@ var tsCompileOptions = {
     "target": "ES5",
     "module": "commonjs",
     "sourceMap": false,
-    "sortOutput": true,
     "removeComments": true
 };
 
@@ -41,7 +39,7 @@ function spawnCommand(command, args, callback, silent, detached) {
         options.detached = true;
         options.stdio = ["ignore"];
     }
-    
+
     var process = child_process.spawn(command, args, options);
 
     process.stdout.on('data', function (data) {
@@ -57,7 +55,7 @@ function spawnCommand(command, args, callback, silent, detached) {
             callback && callback(code === 0 ? undefined : "Error code: " + code);
         });
     }
-    
+
     return process;
 };
 
@@ -71,15 +69,15 @@ function execCommand(command, args, callback, silent) {
     process.stderr.on('data', function (data) {
         if (!silent) console.error("" + data);
     });
-    
+
     process.on('error', function (error) {
         callback && callback(error);
     })
-    
+
     process.on('exit', function (code) {
         callback && callback(code === 0 ? undefined : "Error code: " + code);
     });
-    
+
     return process;
 };
 
@@ -114,11 +112,11 @@ function execCommandWithPromise(command, options, logOutput) {
 function runTests(callback, options) {
     var command = "node_modules/.bin/mocha";
     var args = ["./bin/test"];
-    
+
     // Set up the mocha junit reporter.
     args.push("--reporter");
     args.push("mocha-junit-reporter");
-    
+
     // Set the mocha reporter to the correct output file.
     args.push("--reporter-options");
     var filename = "./test-results.xml";
@@ -127,7 +125,7 @@ function runTests(callback, options) {
     args.push("mochaFile=" + filename);
     // Delete previous test result file so TFS doesn't read the old file if the tests exit before saving
     del(filename);
-    
+
     // Pass arguments supplied by test tasks.
     if (options.android) args.push("--android");
     if (options.ios) {
@@ -136,13 +134,13 @@ function runTests(callback, options) {
         args.push(options.wk ? (options.ui ? "both" : "true") : "false");
     }
     if (options.setup) args.push("--setup");
-    
+
     // Pass arguments from command line.
     // The fourth argument is the first argument after the task name.
     for (var i = 3; i < process.argv.length; i++) {
         args.push(process.argv[i]);
     }
-    
+
     execCommand(command, args, callback);
 }
 
@@ -212,8 +210,8 @@ gulp.task("tslint", function () {
     }
 
     return gulp.src([sourcePath + tsFiles, testPath + tsFiles])
-        .pipe(tslint({ configuration: config }))
-        .pipe(tslint.report("verbose"));
+        .pipe(tslint({ configuration: config, formatter: "verbose" }))
+        .pipe(tslint.report());
 });
 
 gulp.task("clean", function () {
@@ -238,7 +236,7 @@ gulp.task("test-run-android", function (callback) {
     var options = {
         android: true
     };
-    
+
     runTests(callback, options);
 });
 
@@ -248,7 +246,7 @@ gulp.task("test-run-ios-ui", function (callback) {
         ios: true,
         ui: true,
     };
-    
+
     runTests(callback, options);
 });
 
@@ -258,7 +256,7 @@ gulp.task("test-run-ios-wk", function (callback) {
         ios: true,
         wk: true,
     };
-    
+
     runTests(callback, options);
 });
 
@@ -274,7 +272,7 @@ gulp.task("test-setup-android", function (callback) {
         setup: true,
         android: true
     };
-    
+
     runTests(callback, options);
 });
 
@@ -284,7 +282,7 @@ gulp.task("test-setup-ios", function (callback) {
         setup: true,
         ios: true
     };
-    
+
     runTests(callback, options);
 });
 
@@ -295,7 +293,7 @@ gulp.task("test-setup-both", function (callback) {
         android: true,
         ios: true
     };
-    
+
     runTests(callback, options);
 });
 
