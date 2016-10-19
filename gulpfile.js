@@ -18,9 +18,8 @@ var emulatorMaxReadyAttempts = 5;
 var compiledSourceWarningMessage = "\n \
 /******************************************************************************************** \n \
 	 THIS FILE HAS BEEN COMPILED FROM TYPESCRIPT SOURCES. \n \
-	 PLEASE DO NOT MODIFY THIS FILE AS YOU WILL LOSE YOUR CHANGES WHEN RECOMPILING. \n \
-	 ALSO, PLEASE DO NOT SUBMIT PULL REQUESTS WITH CHANGES TO THIS FILE. \n \
-	 INSTEAD, EDIT THE TYPESCRIPT SOURCES UNDER THE WWW FOLDER. \n \
+	 PLEASE DO NOT MODIFY THIS FILE DIRECTLY AS YOU WILL LOSE YOUR CHANGES WHEN RECOMPILING. \n \
+	 INSTEAD, EDIT THE TYPESCRIPT SOURCES UNDER THE WWW FOLDER, AND THEN RUN GULP. \n \
 	 FOR MORE INFORMATION, PLEASE SEE CONTRIBUTING.md. \n \
 *********************************************************************************************/ \n\n\n";
 
