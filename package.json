@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-code-push",
-  "version": "1.8.2-beta",
+  "version": "1.9.0-beta",
   "description": "CodePush Plugin for Apache Cordova",
   "cordova": {
     "id": "cordova-plugin-code-push",
@@ -12,6 +12,11 @@
   "engines": {
     "cordovaDependencies": {
       "1.8.x": {
+        "cordova": ">=5.0.0",
+        "cordova-android": ">=4.0.0",
+        "cordova-ios": ">=3.9.0"
+      },
+      "1.9.x": {
         "cordova": ">=5.0.0",
         "cordova-android": ">=4.0.0",
         "cordova-ios": ">=3.9.0"
