@@ -36,20 +36,21 @@
   "author": "Microsoft Corporation",
   "license": "MIT",
   "devDependencies": {
+    "archiver": "latest",
+    "body-parser": "latest",
+    "del": "latest",
+    "express": "latest",
     "gulp": "latest",
-    "gulp-typescript": "latest",
     "gulp-insert": "latest",
     "gulp-tslint": "latest",
-    "tslint": "latest",
-    "del": "latest",
-    "run-sequence": "latest",
+    "gulp-typescript": "latest",
+    "mkdirp": "latest",
+    "mocha": "latest",
+    "mocha-junit-reporter": "latest",
     "q": "latest",
     "replace": "latest",
-    "mkdirp": "latest",
-    "mocha" : "latest",
-    "mocha-junit-reporter" : "latest",
-    "express": "latest",
-    "body-parser": "latest",
-    "archiver": "latest"
+    "run-sequence": "latest",
+    "tslint": "latest",
+    "typescript": "latest"
   }
 }
