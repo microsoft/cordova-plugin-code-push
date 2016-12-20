@@ -128,8 +128,13 @@ var CodePush = (function () {
                     }
                     else {
                         LocalPackage.getCurrentOrDefaultPackage(function (localPackage) {
-                            CodePushUtil.logMessage("Checking for update.");
-                            acquisitionManager.queryUpdateWithCurrentPackage(localPackage, callback);
+                            NativeAppInfo.getApplicationVersion(function(appVersionError, currentBinaryVersion) {
+                                if (!appVersionError) {
+                                    localPackage.appVersion = currentBinaryVersion;
+                                }
+                                CodePushUtil.logMessage("Checking for update.");
+                                acquisitionManager.queryUpdateWithCurrentPackage(localPackage, callback);
+                            });
                         }, function (error) {
                             CodePushUtil.invokeErrorCallback(error, queryError);
                         });
