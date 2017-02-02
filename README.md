@@ -418,7 +418,7 @@ codePush.sync(null, { mandatoryInstallMode: InstallMode.ON_NEXT_RESUME });
 
 // Changing the title displayed in the
 // confirmation dialog of an "active" update
-codePush.sync(null, { updateDialog: { title: "An update is available!" } });
+codePush.sync(null, { updateDialog: { updateTitle: "An update is available!" } });
 
 // Displaying an update prompt which includes the
 // description associated with the CodePush release
