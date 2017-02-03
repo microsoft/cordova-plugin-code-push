@@ -68,7 +68,7 @@ StatusReport* rollbackStatusReport = nil;
         if ([CodePushPackageManager isBinaryFirstRun]) {
             // Report first run of a store version app
             [CodePushPackageManager markBinaryFirstRunFlag];
-            NSString* appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+            NSString* appVersion = [Utilities getAppVersion];
             NSString* deploymentKey = ((CDVViewController *)self.viewController).settings[DeploymentKeyPreference];
             StatusReport* statusReport = [[StatusReport alloc] initWithStatus:STORE_VERSION
                                                                      andLabel:nil
@@ -239,8 +239,13 @@ StatusReport* rollbackStatusReport = nil;
         NSString* deployedPackageNativeBuildTime = deployedPackageMetadata.nativeBuildTime;
         NSString* applicationBuildTime = [Utilities getApplicationTimestamp];
 
-        if (deployedPackageNativeBuildTime != nil && applicationBuildTime != nil) {
-            if (![deployedPackageNativeBuildTime isEqualToString: applicationBuildTime]) {
+        NSString* deployedPackageVersion = deployedPackageMetadata.appVersion;
+        NSString* applicationVersion = [Utilities getAppVersion];
+
+        if (deployedPackageNativeBuildTime != nil && applicationBuildTime != nil &&
+            deployedPackageVersion != nil && applicationVersion != nil) {
+            if (![deployedPackageNativeBuildTime isEqualToString: applicationBuildTime] ||
+                ![deployedPackageVersion isEqualToString: applicationVersion]) {
                 // package version is incompatible with installed native version
                 [CodePushPackageManager cleanDeployments];
                 [CodePushPackageManager clearFailedUpdates];
@@ -407,7 +412,7 @@ StatusReport* rollbackStatusReport = nil;
 }
 
 - (void)getAppVersion:(CDVInvokedUrlCommand *)command {
-    NSString* version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+    NSString* version = [Utilities getAppVersion];
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:version];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
