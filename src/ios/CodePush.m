@@ -68,7 +68,7 @@ StatusReport* rollbackStatusReport = nil;
         if ([CodePushPackageManager isBinaryFirstRun]) {
             // Report first run of a store version app
             [CodePushPackageManager markBinaryFirstRunFlag];
-            NSString* appVersion = [Utilities getAppVersion];
+            NSString* appVersion = [Utilities getApplicationVersion];
             NSString* deploymentKey = ((CDVViewController *)self.viewController).settings[DeploymentKeyPreference];
             StatusReport* statusReport = [[StatusReport alloc] initWithStatus:STORE_VERSION
                                                                      andLabel:nil
@@ -240,7 +240,7 @@ StatusReport* rollbackStatusReport = nil;
         NSString* applicationBuildTime = [Utilities getApplicationTimestamp];
 
         NSString* deployedPackageVersion = deployedPackageMetadata.appVersion;
-        NSString* applicationVersion = [Utilities getAppVersion];
+        NSString* applicationVersion = [Utilities getApplicationVersion];
 
         if (deployedPackageNativeBuildTime != nil && applicationBuildTime != nil &&
             deployedPackageVersion != nil && applicationVersion != nil) {
@@ -412,7 +412,7 @@ StatusReport* rollbackStatusReport = nil;
 }
 
 - (void)getAppVersion:(CDVInvokedUrlCommand *)command {
-    NSString* version = [Utilities getAppVersion];
+    NSString* version = [Utilities getApplicationVersion];
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:version];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
