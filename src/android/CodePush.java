@@ -23,7 +23,7 @@ import java.util.Date;
  */
 public class CodePush extends CordovaPlugin {
 
-    public static final String RESOURCES_BUNDLE = "resources.arsc";
+    public static final String CODE_FILE = "classes.dex";
     private static final String DEPLOYMENT_KEY_PREFERENCE = "codepushdeploymentkey";
     private static final String WWW_ASSET_PATH_PREFIX = "file:///android_asset/www/";
     private static boolean ShouldClearHistoryOnLoad = false;
@@ -275,7 +275,7 @@ public class CodePush extends CordovaPlugin {
         CodePushPackageMetadata deployedPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
         if (deployedPackageMetadata != null) {
             String deployedPackageTimeStamp = deployedPackageMetadata.nativeBuildTime;
-            long nativeBuildTime = Utilities.getApkEntryBuildTime(RESOURCES_BUNDLE, this.cordova.getActivity());
+            long nativeBuildTime = Utilities.getApkEntryBuildTime(CODE_FILE, this.cordova.getActivity());
             if (nativeBuildTime != -1) {
                 String currentAppTimeStamp = String.valueOf(nativeBuildTime);
                 if (!currentAppTimeStamp.equals(deployedPackageTimeStamp)) {
@@ -332,7 +332,7 @@ public class CodePush extends CordovaPlugin {
     }
 
     private boolean execGetNativeBuildTime(CallbackContext callbackContext) {
-        long millis = Utilities.getApkEntryBuildTime(RESOURCES_BUNDLE, this.cordova.getActivity());
+        long millis = Utilities.getApkEntryBuildTime(CODE_FILE, this.cordova.getActivity());
         if (millis == -1) {
             callbackContext.error("Could not get the application buildstamp.");
         } else {
