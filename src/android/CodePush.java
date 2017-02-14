@@ -23,7 +23,6 @@ import java.util.Date;
  */
 public class CodePush extends CordovaPlugin {
 
-    public static final String CODE_FILE = "classes.dex";
     private static final String DEPLOYMENT_KEY_PREFERENCE = "codepushdeploymentkey";
     private static final String WWW_ASSET_PATH_PREFIX = "file:///android_asset/www/";
     private static boolean ShouldClearHistoryOnLoad = false;
