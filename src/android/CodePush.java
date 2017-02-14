@@ -275,7 +275,7 @@ public class CodePush extends CordovaPlugin {
         CodePushPackageMetadata deployedPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
         if (deployedPackageMetadata != null) {
             String deployedPackageTimeStamp = deployedPackageMetadata.nativeBuildTime;
-            long nativeBuildTime = Utilities.getApkEntryBuildTime(CODE_FILE, this.cordova.getActivity());
+            long nativeBuildTime = Utilities.getApkBuildTime(this.cordova.getActivity());
             if (nativeBuildTime != -1) {
                 String currentAppTimeStamp = String.valueOf(nativeBuildTime);
                 if (!currentAppTimeStamp.equals(deployedPackageTimeStamp)) {
@@ -332,7 +332,7 @@ public class CodePush extends CordovaPlugin {
     }
 
     private boolean execGetNativeBuildTime(CallbackContext callbackContext) {
-        long millis = Utilities.getApkEntryBuildTime(CODE_FILE, this.cordova.getActivity());
+        long millis = Utilities.getApkBuildTime(this.cordova.getActivity());
         if (millis == -1) {
             callbackContext.error("Could not get the application buildstamp.");
         } else {
