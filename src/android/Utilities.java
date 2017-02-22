@@ -1,17 +1,17 @@
 package com.microsoft.cordova;
 
 import android.content.Context;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+
+import static java.lang.Long.parseLong;
 
 /**
  * Utilities class used for file and other common native operations.
@@ -54,21 +54,19 @@ public class Utilities {
         return packageInfo.versionName;
     }
 
-    public static long getApkEntryBuildTime(String entryName, Context context) {
-        ZipFile applicationFile;
-        long result = -1;
+    public static long getApkBuildTime(Context context) {
+
+        Long millis;
 
         try {
-            ApplicationInfo ai = context.getPackageManager().getApplicationInfo(context.getPackageName(), 0);
-            applicationFile = new ZipFile(ai.sourceDir);
-            ZipEntry classesDexEntry = applicationFile.getEntry(entryName);
-            result = classesDexEntry.getTime();
-            applicationFile.close();
-        } catch (Exception e) {
-            /* empty, will return -1 */
+            millis = parseLong(context.getString(
+                context.getResources().getIdentifier("CODE_PUSH_APK_BUILD_TIME", "string", context.getPackageName())
+            ));
+        } catch(Resources.NotFoundException e) {
+            return -1;
         }
 
-        return result;
+        return millis;
     }
 
     public static void logException(Throwable e) {
