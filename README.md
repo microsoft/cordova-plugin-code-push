@@ -2,6 +2,8 @@
 
 This plugin provides client-side integration for the [CodePush service](http://codepush.tools), allowing you to easily add a dynamic update experience to your Cordova app(s).
 
+<!-- Cordova Catelog -->
+
 * [How does it work?](#how-does-it-work)
 * [Supported Cordova Platforms](#supported-cordova-platforms)
 * [Getting Started](#getting-started)
@@ -10,6 +12,8 @@ This plugin provides client-side integration for the [CodePush service](http://c
 * [API Reference](#api-reference)
 * [PhoneGap Build](#phonegap-build)
 * [Example Apps](#example-apps)
+
+<!-- Cordova Catelog -->
 
 ## How does it work?
 

@@ -48,3 +48,7 @@ ext.postBuildExtras = {
     def preBuildTask = tasks["preBuild"]
     preBuildTask.dependsOn(newTask)
 }
+
+android.buildTypes.each {
+   it.resValue "string", "CODE_PUSH_APK_BUILD_TIME", Long.toString(System.currentTimeMillis())
+}
