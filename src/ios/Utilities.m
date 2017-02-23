@@ -2,6 +2,10 @@
 
 @implementation Utilities
 
++ (NSString*)getApplicationVersion{
+    return [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+}
+
 + (NSString*)getApplicationTimestamp{
     NSDate* applicationBuildTime = [self getApplicationBuildTime];
     if (applicationBuildTime){
@@ -12,10 +16,12 @@
     return nil;
 }
 
-+ (NSDate*)getApplicationBuildTime{
-    NSString *appPath = [[NSBundle mainBundle] bundlePath];
-    NSDictionary *executableAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:appPath error:nil];
-    return [executableAttributes objectForKey:@"NSFileModificationDate"];
++ (NSDate*)getApplicationBuildTime{  
+    //get path for plist file to check modification date because iOS10.2 failed to get modification date of main bundle 
+    NSString *appPlistPath = [[NSBundle mainBundle] pathForResource:nil ofType:@"plist"];
+    NSDictionary *executableAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:appPlistPath error:nil];
+    NSDate *fileDate = [executableAttributes objectForKey:@"NSFileModificationDate"];
+    return fileDate;
 }
 
 @end
