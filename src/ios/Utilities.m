@@ -16,18 +16,12 @@
     return nil;
 }
 
-+ (NSDate*)getApplicationBuildTime{   
-    NSString *dateStr = [NSString stringWithUTF8String:__DATE__];
-    NSString *timeStr = [NSString stringWithUTF8String:__TIME__];
-
-    NSString *dateTimeStr = [NSString stringWithFormat:@"%@ %@", dateStr, timeStr];
-
-    // Convert to date
-    NSDateFormatter *dateFormat = [[NSDateFormatter alloc] init];
-    [dateFormat setDateFormat:@"LLL d yyyy HH:mm:ss"];
-    NSDate *date = [dateFormat dateFromString:dateTimeStr];
-
-    return date;
++ (NSDate*)getApplicationBuildTime{  
+    //get path for plist file to check modification date because iOS10.2 failed to get modification date of main bundle 
+    NSString *appPlistPath = [[NSBundle mainBundle] pathForResource:nil ofType:@"plist"];
+    NSDictionary *executableAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:appPlistPath error:nil];
+    NSDate *fileDate = [executableAttributes objectForKEy:@"NSFileModificationDate"];
+    return fileDate;
 }
 
 @end
