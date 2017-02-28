@@ -275,9 +275,19 @@ public class CodePush extends CordovaPlugin {
         if (deployedPackageMetadata != null) {
             String deployedPackageTimeStamp = deployedPackageMetadata.nativeBuildTime;
             long nativeBuildTime = Utilities.getApkBuildTime(this.cordova.getActivity());
-            if (nativeBuildTime != -1) {
+
+            String deployedPackageVersion = deployedPackageMetadata.appVersion;
+            String applicationVersion = null;
+            try {
+                applicationVersion = Utilities.getAppVersionName(this.cordova.getActivity());
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+            }
+
+            if (nativeBuildTime != -1 && applicationVersion != null) {
                 String currentAppTimeStamp = String.valueOf(nativeBuildTime);
-                if (!currentAppTimeStamp.equals(deployedPackageTimeStamp)) {
+                if (!currentAppTimeStamp.equals(deployedPackageTimeStamp) ||
+                        !(applicationVersion.equals(deployedPackageVersion))) {
                     this.codePushPackageManager.cleanDeployments();
                     this.codePushPackageManager.clearFailedUpdates();
                     this.codePushPackageManager.clearPendingInstall();
