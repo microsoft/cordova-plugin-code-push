@@ -12,7 +12,7 @@ NSString* const MinimumBackgroundDurationKey = @"minimumBackgroundDuration";
 
 -(id)initWithCoder:(NSCoder*)decoder {    
     self.installMode = [decoder decodeIntegerForKey:InstallModeKey];
-    self.minimumBackgroundDuration = [decoder decodeIntegerForKey:MinimumBackgroundDurationKey];
+    self.minimumBackgroundDuration = (int)[decoder decodeIntegerForKey:MinimumBackgroundDurationKey];
     return self;
 }
 
