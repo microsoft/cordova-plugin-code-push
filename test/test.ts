@@ -78,7 +78,7 @@ function cleanupTest(): void {
 }
 
 function setupTests(): void {
-    it("sets up tests correctly", (done) => {
+    it("sets up tests correctly", (done: any) => {
         var promises: Q.Promise<string>[] = [];
 
         targetPlatforms.forEach(platform => {
@@ -274,7 +274,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
             });
 
             if (!onlyRunCoreTests) {
-                it("window.codePush.checkForUpdate.noUpdate", function(done) {
+                it("window.codePush.checkForUpdate.noUpdate", function(done: any) {
                     var noUpdateResponse = createDefaultResponse();
                     noUpdateResponse.isAvailable = false;
                     noUpdateResponse.appVersion = "0.0.1";
@@ -293,7 +293,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                     projectManager.runPlatform(testRunDirectory, targetPlatform);
                 });
 
-                it("window.codePush.checkForUpdate.sendsBinaryHash", function(done) {
+                it("window.codePush.checkForUpdate.sendsBinaryHash", function(done: any) {
                     var noUpdateResponse = createDefaultResponse();
                     noUpdateResponse.isAvailable = false;
                     noUpdateResponse.appVersion = "0.0.1";
@@ -320,7 +320,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                     projectManager.runPlatform(testRunDirectory, targetPlatform);
                 });
 
-                it("window.codePush.checkForUpdate.noUpdate.updateAppVersion", function(done) {
+                it("window.codePush.checkForUpdate.noUpdate.updateAppVersion", function(done: any) {
                     var updateAppVersionResponse = createDefaultResponse();
                     updateAppVersionResponse.updateAppVersion = true;
                     updateAppVersionResponse.appVersion = "2.0.0";
@@ -341,7 +341,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
             }
 
             // CORE TEST
-            it("window.codePush.checkForUpdate.update", function(done) {
+            it("window.codePush.checkForUpdate.update", function(done: any) {
                 var updateResponse = createMockResponse();
                 mockResponse = { updateInfo: updateResponse };
 
@@ -375,7 +375,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
             });
 
             if (!onlyRunCoreTests) {
-                it("window.codePush.checkForUpdate.error", function(done) {
+                it("window.codePush.checkForUpdate.error", function(done: any) {
                     mockResponse = "invalid {{ json";
 
                     testMessageCallback = (requestBody: any) => {
@@ -407,7 +407,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                     return prepareTest();
                 });
 
-                it("window.codePush.checkForUpdate.customKey.update", function(done) {
+                it("window.codePush.checkForUpdate.customKey.update", function(done: any) {
                     var updateResponse = createMockResponse();
                     mockResponse = { updateInfo: updateResponse };
 
@@ -445,7 +445,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                     return updateResponse;
                 };
 
-                it("remotePackage.download.success", function(done) {
+                it("remotePackage.download.success", function(done: any) {
                     mockResponse = { updateInfo: getMockResponse() };
 
                     /* pass the path to any file for download (here, config.xml) to make sure the download completed callback is invoked */
@@ -463,7 +463,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                     projectManager.runPlatform(testRunDirectory, targetPlatform);
                 });
 
-                it("remotePackage.download.error", function(done) {
+                it("remotePackage.download.error", function(done: any) {
                     mockResponse = { updateInfo: getMockResponse() };
 
                     /* pass an invalid path */
@@ -502,7 +502,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                     return updateResponse;
                 };
 
-                it("localPackage.install.unzip.error", function(done) {
+                it("localPackage.install.unzip.error", function(done: any) {
 
                     mockResponse = { updateInfo: getMockResponse() };
 
@@ -521,7 +521,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                     projectManager.runPlatform(testRunDirectory, targetPlatform);
                 });
 
-                it("localPackage.install.handlesDiff.againstBinary", function(done) {
+                it("localPackage.install.handlesDiff.againstBinary", function(done: any) {
 
                     mockResponse = { updateInfo: getMockResponse() };
 
@@ -545,7 +545,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                         .done(done, done);
                 });
 
-                it("localPackage.install.immediately", function(done) {
+                it("localPackage.install.immediately", function(done: any) {
 
                     mockResponse = { updateInfo: getMockResponse() };
 
@@ -584,7 +584,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                     return prepareTest();
                 });
 
-                it("localPackage.install.revert.dorevert", function(done) {
+                it("localPackage.install.revert.dorevert", function(done: any) {
 
                     mockResponse = { updateInfo: getMockResponse() };
 
@@ -624,7 +624,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                         .done(done, done);
                 });
 
-                it("localPackage.install.revert.norevert", function(done) {
+                it("localPackage.install.revert.norevert", function(done: any) {
 
                     mockResponse = { updateInfo: getMockResponse() };
 
@@ -665,7 +665,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
             });
 
             // CORE TEST
-            it("localPackage.installOnNextResume.dorevert", function(done) {
+            it("localPackage.installOnNextResume.dorevert", function(done: any) {
 
                 mockResponse = { updateInfo: getMockResponse() };
 
@@ -696,7 +696,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
             });
 
             if (!onlyRunCoreTests) {
-                it("localPackage.installOnNextResume.norevert", function(done) {
+                it("localPackage.installOnNextResume.norevert", function(done: any) {
 
                     mockResponse = { updateInfo: getMockResponse() };
 
@@ -744,7 +744,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
             });
 
             if (!onlyRunCoreTests) {
-                it("localPackage.installOnNextRestart.dorevert", function(done) {
+                it("localPackage.installOnNextRestart.dorevert", function(done: any) {
 
                     mockResponse = { updateInfo: getMockResponse() };
 
@@ -778,7 +778,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
             }
 
             // CORE TEST
-            it("localPackage.installOnNextRestart.norevert", function(done) {
+            it("localPackage.installOnNextRestart.norevert", function(done: any) {
 
                 mockResponse = { updateInfo: getMockResponse() };
 
@@ -810,7 +810,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
             });
 
             if (!onlyRunCoreTests) {
-                it("localPackage.installOnNextRestart.revertToPrevious", function(done) {
+                it("localPackage.installOnNextRestart.revertToPrevious", function(done: any) {
 
                     mockResponse = { updateInfo: getMockResponse() };
 
@@ -877,7 +877,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                     return prepareTest();
                 });
 
-                it("localPackage.installOnNextRestart2x.revertToFirst", function(done) {
+                it("localPackage.installOnNextRestart2x.revertToFirst", function(done: any) {
                     mockResponse = { updateInfo: getMockResponse() };
                     updateCheckCallback = () => {
                         // Update the packageHash so we can install the same update twice.
@@ -927,7 +927,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                 return prepareTest();
             });
 
-            it("codePush.restartApplication.checkPackages", function(done) {
+            it("codePush.restartApplication.checkPackages", function(done: any) {
 
                 mockResponse = { updateInfo: getMockResponse() };
 
@@ -985,7 +985,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                         return prepareTest();
                     });
 
-                    it("window.codePush.sync.noupdate", function(done) {
+                    it("window.codePush.sync.noupdate", function(done: any) {
                         var noUpdateResponse = createDefaultResponse();
                         noUpdateResponse.isAvailable = false;
                         noUpdateResponse.appVersion = "0.0.1";
@@ -1004,7 +1004,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             .done(done, done);
                     });
 
-                    it("window.codePush.sync.checkerror", function(done) {
+                    it("window.codePush.sync.checkerror", function(done: any) {
                         mockResponse = "invalid {{ json";
 
                         Q({})
@@ -1020,7 +1020,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             .done(done, done);
                     });
 
-                    it("window.codePush.sync.downloaderror", function(done) {
+                    it("window.codePush.sync.downloaderror", function(done: any) {
                         var invalidUrlResponse = createMockResponse();
                         invalidUrlResponse.downloadURL = path.join(templatePath, "invalid_path.zip");
                         mockResponse = { updateInfo: invalidUrlResponse };
@@ -1039,7 +1039,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             .done(done, done);
                     });
 
-                    it("window.codePush.sync.dorevert", function(done) {
+                    it("window.codePush.sync.dorevert", function(done: any) {
 
                         mockResponse = { updateInfo: getMockResponse() };
 
@@ -1069,7 +1069,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             .done(done, done);
                     });
 
-                    it("window.codePush.sync.update", function(done) {
+                    it("window.codePush.sync.update", function(done: any) {
                         mockResponse = { updateInfo: getMockResponse() };
 
                         /* create an update */
@@ -1120,7 +1120,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                 });
 
                 if (!onlyRunCoreTests) {
-                    it("window.codePush.sync.2x.noupdate", function(done) {
+                    it("window.codePush.sync.2x.noupdate", function(done: any) {
                         var noUpdateResponse = createDefaultResponse();
                         noUpdateResponse.isAvailable = false;
                         noUpdateResponse.appVersion = "0.0.1";
@@ -1140,7 +1140,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             .done(done, done);
                     });
 
-                    it("window.codePush.sync.2x.checkerror", function(done) {
+                    it("window.codePush.sync.2x.checkerror", function(done: any) {
                         mockResponse = "invalid {{ json";
 
                         Q({})
@@ -1157,7 +1157,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             .done(done, done);
                     });
 
-                    it("window.codePush.sync.2x.downloaderror", function(done) {
+                    it("window.codePush.sync.2x.downloaderror", function(done: any) {
                         var invalidUrlResponse = createMockResponse();
                         invalidUrlResponse.downloadURL = path.join(templatePath, "invalid_path.zip");
                         mockResponse = { updateInfo: invalidUrlResponse };
@@ -1177,7 +1177,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             .done(done, done);
                     });
 
-                    it("window.codePush.sync.2x.dorevert", function(done) {
+                    it("window.codePush.sync.2x.dorevert", function(done: any) {
 
                         mockResponse = { updateInfo: getMockResponse() };
 
@@ -1212,7 +1212,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                     });
                 }
 
-                it("window.codePush.sync.2x.update", function(done) {
+                it("window.codePush.sync.2x.update", function(done: any) {
                     mockResponse = { updateInfo: getMockResponse() };
 
                     /* create an update */
@@ -1263,7 +1263,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                         return prepareTest();
                     });
 
-                    it("defaults to no minimum", function(done) {
+                    it("defaults to no minimum", function(done: any) {
                         mockResponse = { updateInfo: getMockResponse() };
 
                         setupScenario(ScenarioSyncResume).then<string>(() => {
@@ -1292,7 +1292,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             .done(done, done);
                     });
 
-                    it("min background duration 5s", function(done) {
+                    it("min background duration 5s", function(done: any) {
                         mockResponse = { updateInfo: getMockResponse() };
 
                         setupScenario(ScenarioSyncResumeDelay).then<string>(() => {
@@ -1324,7 +1324,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             .done(done, done);
                     });
 
-                    it("has no effect on restart", function(done) {
+                    it("has no effect on restart", function(done: any) {
                         mockResponse = { updateInfo: getMockResponse() };
 
                         setupScenario(ScenarioSyncRestartDelay).then<string>(() => {
@@ -1364,7 +1364,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                         return prepareTest();
                     });
 
-                    it("defaults to IMMEDIATE", function(done) {
+                    it("defaults to IMMEDIATE", function(done: any) {
                         mockResponse = { updateInfo: getMockResponse(true) };
 
                         setupScenario(ScenarioSyncMandatoryDefault).then<string>(() => {
@@ -1383,7 +1383,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             .done(done, done);
                     });
 
-                    it("works correctly when update is mandatory and mandatory install mode is specified", function(done) {
+                    it("works correctly when update is mandatory and mandatory install mode is specified", function(done: any) {
                         mockResponse = { updateInfo: getMockResponse(true) };
 
                         setupScenario(ScenarioSyncMandatoryResume).then<string>(() => {
@@ -1412,7 +1412,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             .done(done, done);
                     });
 
-                    it("has no effect on updates that are not mandatory", function(done) {
+                    it("has no effect on updates that are not mandatory", function(done: any) {
                         mockResponse = { updateInfo: getMockResponse() };
 
                         setupScenario(ScenarioSyncMandatoryRestart).then<string>(() => {
