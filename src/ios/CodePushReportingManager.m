@@ -1,6 +1,8 @@
 #import "CodePushReportingManager.h"
 #import "StatusReport.h"
 
+#pragma GCC diagnostic ignored "-Wundeclared-selector"
+
 @implementation CodePushReportingManager
 
 int HasFailedReport = -1; // -1 = unset, 0 = false, 1 = true
