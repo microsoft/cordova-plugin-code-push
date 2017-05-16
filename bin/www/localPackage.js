@@ -8,11 +8,16 @@
 
 
 "use strict";
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var Package = require("./package");
 var NativeAppInfo = require("./nativeAppInfo");
 var FileUtil = require("./fileUtil");
@@ -21,7 +26,7 @@ var Sdk = require("./sdk");
 var LocalPackage = (function (_super) {
     __extends(LocalPackage, _super);
     function LocalPackage() {
-        _super.apply(this, arguments);
+        return _super !== null && _super.apply(this, arguments) || this;
     }
     LocalPackage.prototype.install = function (installSuccess, errorCallback, installOptions) {
         var _this = this;
@@ -372,15 +377,15 @@ var LocalPackage = (function (_super) {
         }
         return LocalPackage.DefaultInstallOptions;
     };
-    LocalPackage.RootDir = "codepush";
-    LocalPackage.DownloadDir = LocalPackage.RootDir + "/download";
-    LocalPackage.DownloadUnzipDir = LocalPackage.DownloadDir + "/unzipped";
-    LocalPackage.DeployDir = LocalPackage.RootDir + "/deploy";
-    LocalPackage.VersionsDir = LocalPackage.DeployDir + "/versions";
-    LocalPackage.PackageUpdateFileName = "update.zip";
-    LocalPackage.PackageInfoFile = "currentPackage.json";
-    LocalPackage.OldPackageInfoFile = "oldPackage.json";
-    LocalPackage.DiffManifestFile = "hotcodepush.json";
     return LocalPackage;
 }(Package));
+LocalPackage.RootDir = "codepush";
+LocalPackage.DownloadDir = LocalPackage.RootDir + "/download";
+LocalPackage.DownloadUnzipDir = LocalPackage.DownloadDir + "/unzipped";
+LocalPackage.DeployDir = LocalPackage.RootDir + "/deploy";
+LocalPackage.VersionsDir = LocalPackage.DeployDir + "/versions";
+LocalPackage.PackageUpdateFileName = "update.zip";
+LocalPackage.PackageInfoFile = "currentPackage.json";
+LocalPackage.OldPackageInfoFile = "oldPackage.json";
+LocalPackage.DiffManifestFile = "hotcodepush.json";
 module.exports = LocalPackage;
