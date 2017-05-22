@@ -394,6 +394,7 @@ class LocalPackage extends Package implements ILocalPackage {
                     localPackage.appVersion = metadata.appVersion;
                     localPackage.deploymentKey = metadata.deploymentKey;
                     localPackage.description = metadata.description;
+                    localPackage.isMandatory = metadata.isMandatory;
                     localPackage.failedInstall = installFailed;
                     localPackage.isFirstRun = isFirstRun;
                     localPackage.label = metadata.label;
