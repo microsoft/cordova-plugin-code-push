@@ -2,8 +2,7 @@
 .gitignore
 gulpfile.js
 node_modules/*
-sample/*
+samples/*
 test/*
 www/*
 bin/test/*
-typings/*
