@@ -50,5 +50,7 @@ ext.postBuildExtras = {
 }
 
 android.buildTypes.each {
-   it.resValue "string", "CODE_PUSH_APK_BUILD_TIME", Long.toString(System.currentTimeMillis())
+   // to prevent incorrect long value restoration from strings.xml we need to wrap it with double quotes
+   // https://github.com/Microsoft/cordova-plugin-code-push/issues/264
+   it.resValue "string", "CODE_PUSH_APK_BUILD_TIME", String.format("\"%d\"", System.currentTimeMillis())
 }

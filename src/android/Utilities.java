@@ -59,9 +59,11 @@ public class Utilities {
         Long millis;
 
         try {
+            //replace double quotes needed for correct restoration of long value from strings.xml
+            //https://github.com/Microsoft/cordova-plugin-code-push/issues/264
             millis = parseLong(context.getString(
                 context.getResources().getIdentifier("CODE_PUSH_APK_BUILD_TIME", "string", context.getPackageName())
-            ));
+            ).replaceAll("\"",""));
         } catch(Resources.NotFoundException e) {
             return -1;
         }
