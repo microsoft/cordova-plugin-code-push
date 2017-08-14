@@ -197,8 +197,13 @@ class CodePush implements CodePushCordovaPlugin {
                         CodePushUtil.invokeErrorCallback(initError, queryError);
                     } else {
                         LocalPackage.getCurrentOrDefaultPackage((localPackage: LocalPackage) => {
-                            CodePushUtil.logMessage("Checking for update.");
-                            acquisitionManager.queryUpdateWithCurrentPackage(localPackage, callback);
+                            NativeAppInfo.getApplicationVersion((appVersionError: Error, currentBinaryVersion: string) => {
+                                if (!appVersionError) {
+                                     localPackage.appVersion = currentBinaryVersion;
+                                }
+                                CodePushUtil.logMessage("Checking for update.");
+                                acquisitionManager.queryUpdateWithCurrentPackage(localPackage, callback);
+                            });
                         }, (error: Error) => {
                             CodePushUtil.invokeErrorCallback(error, queryError);
                         });
