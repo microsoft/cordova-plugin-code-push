@@ -324,6 +324,7 @@ var LocalPackage = (function (_super) {
                     localPackage.appVersion = metadata.appVersion;
                     localPackage.deploymentKey = metadata.deploymentKey;
                     localPackage.description = metadata.description;
+                    localPackage.isMandatory = metadata.isMandatory;
                     localPackage.failedInstall = installFailed;
                     localPackage.isFirstRun = isFirstRun;
                     localPackage.label = metadata.label;
@@ -377,15 +378,15 @@ var LocalPackage = (function (_super) {
         }
         return LocalPackage.DefaultInstallOptions;
     };
+    LocalPackage.RootDir = "codepush";
+    LocalPackage.DownloadDir = LocalPackage.RootDir + "/download";
+    LocalPackage.DownloadUnzipDir = LocalPackage.DownloadDir + "/unzipped";
+    LocalPackage.DeployDir = LocalPackage.RootDir + "/deploy";
+    LocalPackage.VersionsDir = LocalPackage.DeployDir + "/versions";
+    LocalPackage.PackageUpdateFileName = "update.zip";
+    LocalPackage.PackageInfoFile = "currentPackage.json";
+    LocalPackage.OldPackageInfoFile = "oldPackage.json";
+    LocalPackage.DiffManifestFile = "hotcodepush.json";
     return LocalPackage;
 }(Package));
-LocalPackage.RootDir = "codepush";
-LocalPackage.DownloadDir = LocalPackage.RootDir + "/download";
-LocalPackage.DownloadUnzipDir = LocalPackage.DownloadDir + "/unzipped";
-LocalPackage.DeployDir = LocalPackage.RootDir + "/deploy";
-LocalPackage.VersionsDir = LocalPackage.DeployDir + "/versions";
-LocalPackage.PackageUpdateFileName = "update.zip";
-LocalPackage.PackageInfoFile = "currentPackage.json";
-LocalPackage.OldPackageInfoFile = "oldPackage.json";
-LocalPackage.DiffManifestFile = "hotcodepush.json";
 module.exports = LocalPackage;
