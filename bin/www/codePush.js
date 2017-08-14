@@ -128,7 +128,7 @@ var CodePush = (function () {
                     }
                     else {
                         LocalPackage.getCurrentOrDefaultPackage(function (localPackage) {
-                            NativeAppInfo.getApplicationVersion(function(appVersionError, currentBinaryVersion) {
+                            NativeAppInfo.getApplicationVersion(function (appVersionError, currentBinaryVersion) {
                                 if (!appVersionError) {
                                     localPackage.appVersion = currentBinaryVersion;
                                 }

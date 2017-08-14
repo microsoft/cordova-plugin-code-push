@@ -38,11 +38,11 @@ var CodePushUtil = (function () {
         var errorMessage = message || "" + " " + CodePushUtil.getErrorMessage(error);
         console.error(CodePushUtil.TAG + " " + errorMessage);
     };
+    CodePushUtil.TAG = "[CodePush]";
+    CodePushUtil.invokeErrorCallback = function (error, errorCallback) {
+        CodePushUtil.logError(null, error);
+        errorCallback && errorCallback(error);
+    };
     return CodePushUtil;
 }());
-CodePushUtil.TAG = "[CodePush]";
-CodePushUtil.invokeErrorCallback = function (error, errorCallback) {
-    CodePushUtil.logError(null, error);
-    errorCallback && errorCallback(error);
-};
 module.exports = CodePushUtil;

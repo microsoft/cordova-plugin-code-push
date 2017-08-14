@@ -104,31 +104,36 @@ var FileUtil = (function () {
             var copyOne = function () {
                 if (i < entries.length) {
                     var nextEntry = entries[i++];
-                    var entryAlreadyInDestination = function (destinationEntry) {
-                        var replaceError = function (fileError) {
-                            callback(new Error("Error during entry replacement. Error code: " + fileError.code), null);
+                    if (nextEntry.name === ".DS_Store" || nextEntry.name === "__MACOSX") {
+                        copyOne();
+                    }
+                    else {
+                        var entryAlreadyInDestination = function (destinationEntry) {
+                            var replaceError = function (fileError) {
+                                callback(new Error("Error during entry replacement. Error code: " + fileError.code), null);
+                            };
+                            if (destinationEntry.isDirectory) {
+                                FileUtil.copyDirectoryEntriesTo(nextEntry, destinationEntry, function (error) {
+                                    if (error) {
+                                        callback(error, null);
+                                    }
+                                    else {
+                                        copyOne();
+                                    }
+                                });
+                            }
+                            else {
+                                var fileEntry = destinationEntry;
+                                fileEntry.remove(function () {
+                                    nextEntry.copyTo(destinationDir, nextEntry.name, copyOne, fail);
+                                }, replaceError);
+                            }
                         };
-                        if (destinationEntry.isDirectory) {
-                            FileUtil.copyDirectoryEntriesTo(nextEntry, destinationEntry, function (error) {
-                                if (error) {
-                                    callback(error, null);
-                                }
-                                else {
-                                    copyOne();
-                                }
-                            });
-                        }
-                        else {
-                            var fileEntry = destinationEntry;
-                            fileEntry.remove(function () {
-                                nextEntry.copyTo(destinationDir, nextEntry.name, copyOne, fail);
-                            }, replaceError);
-                        }
-                    };
-                    var entryNotInDestination = function (error) {
-                        nextEntry.copyTo(destinationDir, nextEntry.name, copyOne, fail);
-                    };
-                    FileUtil.entryExistsInDirectory(nextEntry, destinationDir, entryAlreadyInDestination, entryNotInDestination);
+                        var entryNotInDestination = function (error) {
+                            nextEntry.copyTo(destinationDir, nextEntry.name, copyOne, fail);
+                        };
+                        FileUtil.entryExistsInDirectory(nextEntry, destinationDir, entryAlreadyInDestination, entryNotInDestination);
+                    }
                 }
                 else {
                     callback(null, null);
