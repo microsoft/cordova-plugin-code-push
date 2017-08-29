@@ -104,7 +104,7 @@ var FileUtil = (function () {
             var copyOne = function () {
                 if (i < entries.length) {
                     var nextEntry = entries[i++];
-                    if (nextEntry.name === ".DS_Store" || nextEntry.name === "__MACOSX") {
+                    if (nextEntry.name === ".DS_Store" || nextEntry.name === "__MACOSX" || nextEntry.name === ".codepushrelease") {
                         copyOne();
                     }
                     else {
