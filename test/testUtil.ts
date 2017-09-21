@@ -1,5 +1,5 @@
-/// <reference path="../typings/mocha.d.ts" />
-/// <reference path="../typings/node.d.ts" />
+/// <reference types="mocha" />
+/// <reference types="node" />
 
 "use strict";
 
@@ -219,7 +219,7 @@ export class TestUtil {
     /**
      * Executes a child process returns its output as a string.
      */
-    public static getProcessOutput(command: string, options?: child_process.IExecOptions, logOutput: boolean = false): Q.Promise<string> {
+    public static getProcessOutput(command: string, options?: child_process.ExecOptions, logOutput: boolean = false): Q.Promise<string> {
         var deferred = Q.defer<string>();
         var result = "";
 

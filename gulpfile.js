@@ -186,7 +186,6 @@ gulp.task("tslint", function () {
             "one-line": [true,
                 "check-open-brace"
             ],
-            "no-unreachable": true,
             "no-unused-variable": true,
             "no-use-before-declare": true,
             "quotemark": [true,
@@ -199,13 +198,23 @@ gulp.task("tslint", function () {
                 "check-separator",
                 "check-type"
             ],
-            "typedef-whitespace": [true, {
-                "call-signature": "nospace",
-                "index-signature": "nospace",
-                "parameter": "nospace",
-                "property-declaration": "nospace",
-                "variable-declaration": "nospace"
-            }]
+            "typedef-whitespace": [
+                true,
+                {
+                    "call-signature": "nospace",
+                    "index-signature": "nospace",
+                    "parameter": "nospace",
+                    "property-declaration": "nospace",
+                    "variable-declaration": "nospace"
+                },
+                {
+                    "call-signature": "onespace",
+                    "index-signature": "onespace",
+                    "parameter": "onespace",
+                    "property-declaration": "onespace",
+                    "variable-declaration": "onespace"
+                }
+            ],
         }
     }
 

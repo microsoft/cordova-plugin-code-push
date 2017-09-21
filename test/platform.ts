@@ -1,4 +1,4 @@
-/// <reference path="../typings/node.d.ts" />
+/// <reference types="node" />
 
 "use strict";
 

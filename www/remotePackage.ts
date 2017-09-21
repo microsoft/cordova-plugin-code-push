@@ -1,5 +1,5 @@
 /// <reference path="../typings/codePush.d.ts" />
-/// <reference path="../typings/fileTransfer.d.ts" />
+/// <reference types="cordova-plugin-file-transfer" />
 
 "use strict";
 

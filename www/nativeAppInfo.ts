@@ -1,5 +1,5 @@
 /// <reference path="../typings/codePush.d.ts" />
-/// <reference path="../typings/cordova.d.ts" />
+/// <reference types="cordova" />
 
 "use strict";
 

@@ -1,6 +1,6 @@
-/// <reference path="../typings/mocha.d.ts" />
-/// <reference path="../typings/node.d.ts" />
-/// <reference path="../typings/assert.d.ts" />
+/// <reference types="mocha" />
+/// <reference types="node" />
+/// <reference types="power-assert" />
 /// <reference path="../typings/codePush.d.ts" />
 
 "use strict";

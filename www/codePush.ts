@@ -1,8 +1,8 @@
 /// <reference path="../typings/codePush.d.ts" />
-/// <reference path="../typings/fileSystem.d.ts" />
-/// <reference path="../typings/fileTransfer.d.ts" />
-/// <reference path="../typings/cordova.d.ts" />
-/// <reference path="../typings/dialogs.d.ts" />
+/// <reference types="cordova-plugin-file" />
+/// <reference types="cordova-plugin-file-transfer" />
+/// <reference types="cordova" />
+/// <reference types="cordova-plugin-dialogs" />
 
 "use strict";
 

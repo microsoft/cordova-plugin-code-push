@@ -1,8 +1,8 @@
 /// <reference path="../typings/codePush.d.ts" />
-/// <reference path="../typings/q.d.ts" />
-/// <reference path="../typings/node.d.ts" />
+/// <reference types="q" />
+/// <reference types="node" />
 /// <reference path="../typings/replace.d.ts" />
-/// <reference path="../typings/mkdirp.d.ts" />
+/// <reference types="mkdirp" />
 
 "use strict";
 
@@ -242,7 +242,7 @@ export class ProjectManager {
     /**
      * Executes a child process and logs its output to the console and returns its output in the promise as a string
      */
-    public static execChildProcess(command: string, options?: child_process.IExecOptions, logOutput: boolean = true): Q.Promise<string> {
+    public static execChildProcess(command: string, options?: child_process.ExecOptions, logOutput: boolean = true): Q.Promise<string> {
         var deferred = Q.defer<string>();
 
         options = options || {};
