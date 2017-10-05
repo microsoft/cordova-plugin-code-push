@@ -3,6 +3,13 @@
 
 @implementation UpdateHashUtils : NSObject
 
++ (NSArray *)ignoredFilenames {
+    return @[
+            @".codepushrelease",
+            @".DS_Store"
+    ];
+}
+
 + (NSString*)binaryAssetsPath
 {
     return [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"www"];
@@ -14,13 +21,16 @@
                              error:(NSError**)error
 {
     NSArray* folderFiles = [[NSFileManager defaultManager]
-                            contentsOfDirectoryAtPath:folderPath
-                            error:error];
+            contentsOfDirectoryAtPath:folderPath
+                                error:error];
     if (*error) {
         return;
     }
-    
+
     for (NSString* fileName in folderFiles) {
+        if ([[self ignoredFilenames] containsObject:fileName]) {
+            continue;
+        }
         NSString* fullFilePath = [folderPath stringByAppendingPathComponent:fileName];
         NSString* relativePath = [pathPrefix stringByAppendingPathComponent:fileName];
         BOOL isDir = NO;
@@ -51,7 +61,7 @@
     if (*error) {
         return nil;
     }
-    
+
     NSString* manifestString = [[NSString alloc] initWithData:manifestData
                                                      encoding:NSUTF8StringEncoding];
     // The JSON serialization turns path separators into "\/", e.g. "www\/images\/image.png"
@@ -68,14 +78,19 @@
     for (int i = 0; i < CC_SHA256_DIGEST_LENGTH; i++) {
         [inputHash appendFormat:@"%02x", digest[i]];
     }
-    
+
     return inputHash;
 }
 
 + (NSString*)getBinaryHash:(NSError**)error
 {
+    return [self getHashForPath:[self binaryAssetsPath] error:error];
+}
+
++ (NSString*)getHashForPath:(NSString*)path error:(NSError**)error
+{
     NSMutableArray* manifestEntries = [NSMutableArray array];
-    [self addFolderEntriesToManifest:[self binaryAssetsPath]
+    [self addFolderEntriesToManifest:path
                           pathPrefix:@"www"
                      manifestEntries:manifestEntries
                                error:error];

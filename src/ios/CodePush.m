@@ -9,6 +9,7 @@
 #import "CodePushReportingManager.h"
 #import "StatusReport.h"
 #import "UpdateHashUtils.h"
+#import <JWT.h>
 
 @implementation CodePush
 
@@ -16,6 +17,7 @@ bool didUpdate = false;
 bool pendingInstall = false;
 NSDate* lastResignedDate;
 NSString* const DeploymentKeyPreference = @"codepushdeploymentkey";
+NSString* const PublicKeyPreference = @"codepushpublickey";
 StatusReport* rollbackStatusReport = nil;
 
 - (void)getBinaryHash:(CDVInvokedUrlCommand *)command {
@@ -38,6 +40,62 @@ StatusReport* rollbackStatusReport = nil;
             }
         }
 
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
+}
+
+- (void)getPackageHash:(CDVInvokedUrlCommand *)command {
+    [self.commandDelegate runInBackground:^{
+        NSString *path = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
+        CDVPluginResult *pluginResult = nil;
+        if (!path) {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
+                                             messageAsString:@"No path supplied"];
+        } else {
+            path = [[[NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES)[0]
+                    stringByAppendingPathComponent:@"NoCloud"]
+                    stringByAppendingPathComponent:path]
+                    stringByAppendingPathComponent:@"www"];
+            NSError *error;
+            NSString *hash = [UpdateHashUtils getHashForPath:path error:&error];
+            if (error) {
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
+                                                 messageAsString:[NSString stringWithFormat:@"An error occured when trying to get the hash of %@. %@", path, error.description]];
+            } else {
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                                 messageAsString:hash];
+            }
+        }
+
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
+}
+
+- (void)verifySignature:(CDVInvokedUrlCommand *)command {
+    [self.commandDelegate runInBackground:^{
+        NSString *jwt = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
+        NSString *publicKey = ((CDVViewController *) self.viewController).settings[PublicKeyPreference];
+
+        // bail out early if no public key was configured in config.xml
+        if (!publicKey) {
+            [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
+            return;
+        }
+
+        id <JWTAlgorithmDataHolderProtocol> verifyDataHolder = [JWTAlgorithmRSFamilyDataHolder new]
+                .keyExtractorType([JWTCryptoKeyExtractor publicKeyWithPEMBase64].type)
+                .algorithmName(@"RS256")
+                .secret(publicKey);
+        JWTCodingBuilder *verifyBuilder = [JWTDecodingBuilder decodeMessage:jwt].addHolder(verifyDataHolder);
+        JWTCodingResultType *verifyResult = verifyBuilder.result;
+        CDVPluginResult *pluginResult;
+        if (verifyResult.successResult) {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                             messageAsString:verifyResult.successResult.payload[@"contentHash"]];
+        } else {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
+                                             messageAsString:[@"Signature verification failed: " stringByAppendingString:verifyResult.errorResult.error.description]];
+        }
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     }];
 }

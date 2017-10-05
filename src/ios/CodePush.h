@@ -12,6 +12,9 @@
 - (void)isFirstRun:(CDVInvokedUrlCommand *)command;
 - (void)isPendingUpdate:(CDVInvokedUrlCommand *)command;
 - (void)restartApplication:(CDVInvokedUrlCommand *)command;
+- (void)getBinaryHash:(CDVInvokedUrlCommand *)command;
+- (void)getPackageHash:(CDVInvokedUrlCommand *)command;
+- (void)verifySignature:(CDVInvokedUrlCommand *)command;
 - (void)pluginInitialize;
 
 @end
