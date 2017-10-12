@@ -82,6 +82,16 @@ StatusReport* rollbackStatusReport = nil;
             return;
         }
 
+        // no .codepushrelease file in the update (or it couldn't be read)
+        if (!jwt || [jwt isEqualToString:@""]) {
+            [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
+                                                                     messageAsString:@"\"Error! Public key was provided but there is no JWT signature within app bundle to verify.\n"
+                                                                             @"Possible reasons, why that might happen: \n"
+                                                                             @"You've released a CodePush bundle update using a version of CodePush CLI that does not support code signing.\n"
+                                                                             @"You've released a CodePush bundle update without providing the --privateKeyPath option."]
+                                        callbackId:command.callbackId];
+        }
+
         id <JWTAlgorithmDataHolderProtocol> verifyDataHolder = [JWTAlgorithmRSFamilyDataHolder new]
                 .keyExtractorType([JWTCryptoKeyExtractor publicKeyWithPEMBase64].type)
                 .algorithmName(@"RS256")

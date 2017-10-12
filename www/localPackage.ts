@@ -115,6 +115,7 @@ class LocalPackage extends Package implements ILocalPackage {
 
     private verifyPackage(unzipDir: DirectoryEntry, installError: ErrorCallback, callback: Callback<boolean>): void {
         var packageHashSuccess = (localHash: string) => {
+            CodePushUtil.logMessage("Expected hash: " + this.packageHash + ", actual hash: " + localHash);
             FileUtil.readFile(cordova.file.dataDirectory, unzipDir.fullPath + '/www', '.codepushrelease', (error, contents) => {
                 var verifySignatureSuccess = (expectedHash?: string) => {
                     // first, we always compare the hash we just calculated to the packageHash reported from the server
@@ -126,27 +127,37 @@ class LocalPackage extends Package implements ILocalPackage {
                     // this happens if (and only if) no public key is available in config.xml
                     // -> no code signing
                     if (!expectedHash) {
+                        CodePushUtil.logMessage("The update contents succeeded the data integrity check.");
                         callback(null, false);
+
+                        // .codepushrelease was read but there is no public key in config.xml
+                        if (contents != null) {
+                            CodePushUtil.logMessage("Warning! JWT signature exists in codepush update but code integrity check couldn't be performed because there is no public key configured. \n" +
+                                "Please ensure that a public key is properly configured within your application.");
+                        }
                         return;
                     }
 
                     // code signing is active, only proceed if the locally computed hash is the same as the one decoded from the JWT
                     if (localHash === expectedHash) {
+                        CodePushUtil.logMessage("The update contents succeeded the code signing check.");
                         callback(null, true);
                         return;
                     }
 
-                    installError(new Error("package hash verification failed"));
+                    installError(new Error("The update contents failed the code signing check."));
                 };
                 var verifySignatureFail = (error: string) => {
-                    installError && installError(new Error("signature verification error: " + error));
+                    installError && installError(new Error("The update contents failed the code signing check. " + error));
                 };
+                CodePushUtil.logMessage("Verifying signature for folder path: " + unzipDir.fullPath);
                 cordova.exec(verifySignatureSuccess, verifySignatureFail, "CodePush", "verifySignature", [contents]);
             });
         };
         var packageHashFail = (error: string) => {
             installError && installError(new Error("unable to compute hash for package: " + error));
         };
+        CodePushUtil.logMessage("Verifying hash for folder path: " + unzipDir.fullPath);
         cordova.exec(packageHashSuccess, packageHashFail,"CodePush","getPackageHash",[unzipDir.fullPath]);
     }
 
