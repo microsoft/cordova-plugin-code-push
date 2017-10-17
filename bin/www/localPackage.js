@@ -47,40 +47,83 @@ var LocalPackage = (function (_super) {
                 _this.localPath = deployDir.fullPath;
                 _this.finishInstall(deployDir, installOptions, installSuccess, installError);
             };
-            var newPackageUnzipped = function (unzipError) {
-                if (unzipError) {
-                    installError && installError(new Error("Could not unzip package. " + CodePushUtil.getErrorMessage(unzipError)));
+            var newPackageUnzippedAndVerified = function (error) {
+                if (error) {
+                    installError && installError(new Error("Could not unzip and verify package. " + CodePushUtil.getErrorMessage(error)));
                 }
                 else {
                     LocalPackage.handleDeployment(newPackageLocation, CodePushUtil.getNodeStyleCallbackFor(donePackageFileCopy, installError));
                 }
             };
             FileUtil.getDataDirectory(LocalPackage.DownloadUnzipDir, false, function (error, directoryEntry) {
-                var unzipPackage = function () {
+                var unzipAndVerifyPackage = function () {
                     FileUtil.getDataDirectory(LocalPackage.DownloadUnzipDir, true, function (innerError, unzipDir) {
                         if (innerError) {
                             installError && installError(innerError);
+                            return;
                         }
-                        else {
-                            zip.unzip(_this.localPath, unzipDir.toInternalURL(), newPackageUnzipped);
-                        }
+                        zip.unzip(_this.localPath, unzipDir.toInternalURL(), function (unzipError) {
+                            if (unzipError) {
+                                installError && installError(new Error("Could not unzip package. " + CodePushUtil.getErrorMessage(unzipError)));
+                            }
+                            _this.verifyPackage(unzipDir, installError, newPackageUnzippedAndVerified);
+                        });
                     });
                 };
                 if (!error && !!directoryEntry) {
                     directoryEntry.removeRecursively(function () {
-                        unzipPackage();
+                        unzipAndVerifyPackage();
                     }, function (cleanupError) {
                         installError && installError(FileUtil.fileErrorToError(cleanupError));
                     });
                 }
                 else {
-                    unzipPackage();
+                    unzipAndVerifyPackage();
                 }
             });
         }
         catch (e) {
             installError && installError(new Error("An error occured while installing the package. " + CodePushUtil.getErrorMessage(e)));
         }
+    };
+    LocalPackage.prototype.verifyPackage = function (unzipDir, installError, callback) {
+        var _this = this;
+        var packageHashSuccess = function (localHash) {
+            CodePushUtil.logMessage("Expected hash: " + _this.packageHash + ", actual hash: " + localHash);
+            FileUtil.readFile(cordova.file.dataDirectory, unzipDir.fullPath + '/www', '.codepushrelease', function (error, contents) {
+                var verifySignatureSuccess = function (expectedHash) {
+                    if (localHash !== _this.packageHash) {
+                        installError(new Error("package hash verification failed"));
+                        return;
+                    }
+                    if (!expectedHash) {
+                        CodePushUtil.logMessage("The update contents succeeded the data integrity check.");
+                        callback(null, false);
+                        if (contents != null) {
+                            CodePushUtil.logMessage("Warning! JWT signature exists in codepush update but code integrity check couldn't be performed because there is no public key configured. \n" +
+                                "Please ensure that a public key is properly configured within your application.");
+                        }
+                        return;
+                    }
+                    if (localHash === expectedHash) {
+                        CodePushUtil.logMessage("The update contents succeeded the code signing check.");
+                        callback(null, true);
+                        return;
+                    }
+                    installError(new Error("The update contents failed the code signing check."));
+                };
+                var verifySignatureFail = function (error) {
+                    installError && installError(new Error("The update contents failed the code signing check. " + error));
+                };
+                CodePushUtil.logMessage("Verifying signature for folder path: " + unzipDir.fullPath);
+                cordova.exec(verifySignatureSuccess, verifySignatureFail, "CodePush", "verifySignature", [contents]);
+            });
+        };
+        var packageHashFail = function (error) {
+            installError && installError(new Error("unable to compute hash for package: " + error));
+        };
+        CodePushUtil.logMessage("Verifying hash for folder path: " + unzipDir.fullPath);
+        cordova.exec(packageHashSuccess, packageHashFail, "CodePush", "getPackageHash", [unzipDir.fullPath]);
     };
     LocalPackage.prototype.finishInstall = function (deployDir, installOptions, installSuccess, installError) {
         var _this = this;

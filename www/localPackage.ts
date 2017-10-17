@@ -71,39 +71,94 @@ class LocalPackage extends Package implements ILocalPackage {
                 this.finishInstall(deployDir, installOptions, installSuccess, installError);
             };
 
-            var newPackageUnzipped = (unzipError: any) => {
-                if (unzipError) {
-                    installError && installError(new Error("Could not unzip package. " + CodePushUtil.getErrorMessage(unzipError)));
+            var newPackageUnzippedAndVerified: Callback<boolean> = (error) => {
+                if (error) {
+                    installError && installError(new Error("Could not unzip and verify package. " + CodePushUtil.getErrorMessage(error)));
                 } else {
                     LocalPackage.handleDeployment(newPackageLocation, CodePushUtil.getNodeStyleCallbackFor<DirectoryEntry>(donePackageFileCopy, installError));
                 }
             };
 
             FileUtil.getDataDirectory(LocalPackage.DownloadUnzipDir, false, (error: Error, directoryEntry: DirectoryEntry) => {
-                var unzipPackage = () => {
+                var unzipAndVerifyPackage = () => {
                     FileUtil.getDataDirectory(LocalPackage.DownloadUnzipDir, true, (innerError: Error, unzipDir: DirectoryEntry) => {
                         if (innerError) {
                             installError && installError(innerError);
-                        } else {
-                            zip.unzip(this.localPath, unzipDir.toInternalURL(), newPackageUnzipped);
+                            return;
                         }
+
+                        zip.unzip(this.localPath, unzipDir.toInternalURL(), (unzipError: any) => {
+                            if (unzipError) {
+                                installError && installError(new Error("Could not unzip package. " + CodePushUtil.getErrorMessage(unzipError)));
+                            }
+                           this.verifyPackage(unzipDir, installError, newPackageUnzippedAndVerified);
+                        });
+
                     });
                 };
 
                 if (!error && !!directoryEntry) {
                     /* Unzip directory not clean */
                     directoryEntry.removeRecursively(() => {
-                        unzipPackage();
+                        unzipAndVerifyPackage();
                     }, (cleanupError: FileError) => {
                         installError && installError(FileUtil.fileErrorToError(cleanupError));
                     });
                 } else {
-                    unzipPackage();
+                    unzipAndVerifyPackage();
                 }
             });
         } catch (e) {
             installError && installError(new Error("An error occured while installing the package. " + CodePushUtil.getErrorMessage(e)));
         }
+    }
+
+    private verifyPackage(unzipDir: DirectoryEntry, installError: ErrorCallback, callback: Callback<boolean>): void {
+        var packageHashSuccess = (localHash: string) => {
+            CodePushUtil.logMessage("Expected hash: " + this.packageHash + ", actual hash: " + localHash);
+            FileUtil.readFile(cordova.file.dataDirectory, unzipDir.fullPath + '/www', '.codepushrelease', (error, contents) => {
+                var verifySignatureSuccess = (expectedHash?: string) => {
+                    // first, we always compare the hash we just calculated to the packageHash reported from the server
+                    if (localHash !== this.packageHash) {
+                        installError(new Error("package hash verification failed"));
+                        return;
+                    }
+
+                    // this happens if (and only if) no public key is available in config.xml
+                    // -> no code signing
+                    if (!expectedHash) {
+                        CodePushUtil.logMessage("The update contents succeeded the data integrity check.");
+                        callback(null, false);
+
+                        // .codepushrelease was read but there is no public key in config.xml
+                        if (contents != null) {
+                            CodePushUtil.logMessage("Warning! JWT signature exists in codepush update but code integrity check couldn't be performed because there is no public key configured. \n" +
+                                "Please ensure that a public key is properly configured within your application.");
+                        }
+                        return;
+                    }
+
+                    // code signing is active, only proceed if the locally computed hash is the same as the one decoded from the JWT
+                    if (localHash === expectedHash) {
+                        CodePushUtil.logMessage("The update contents succeeded the code signing check.");
+                        callback(null, true);
+                        return;
+                    }
+
+                    installError(new Error("The update contents failed the code signing check."));
+                };
+                var verifySignatureFail = (error: string) => {
+                    installError && installError(new Error("The update contents failed the code signing check. " + error));
+                };
+                CodePushUtil.logMessage("Verifying signature for folder path: " + unzipDir.fullPath);
+                cordova.exec(verifySignatureSuccess, verifySignatureFail, "CodePush", "verifySignature", [contents]);
+            });
+        };
+        var packageHashFail = (error: string) => {
+            installError && installError(new Error("unable to compute hash for package: " + error));
+        };
+        CodePushUtil.logMessage("Verifying hash for folder path: " + unzipDir.fullPath);
+        cordova.exec(packageHashSuccess, packageHashFail,"CodePush","getPackageHash",[unzipDir.fullPath]);
     }
 
     private finishInstall(deployDir: DirectoryEntry, installOptions: InstallOptions, installSuccess: SuccessCallback<InstallMode>, installError: ErrorCallback): void {

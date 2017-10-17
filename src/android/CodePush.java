@@ -76,9 +76,25 @@ public class CodePush extends CordovaPlugin {
             return execReportSucceeded(args, callbackContext);
         } else if ("restartApplication".equals(action)) {
             return execRestartApplication(args, callbackContext);
+        } else if ("getPackageHash".equals(action)) {
+            return execGetPackageHash(args, callbackContext);
+        } else if ("verifySignature".equals(action)) {
+            return execVerifySignature(args, callbackContext);
         } else {
             return false;
         }
+    }
+
+    private boolean execVerifySignature(final CordovaArgs args, final CallbackContext callbackContext) {
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... voids) {
+                // no actual code sign verification implemented for Android yet, just return null
+                callbackContext.success((String) null);
+                return null;
+            }
+        }.execute();
+        return true;
     }
 
     private boolean execGetBinaryHash(final CallbackContext callbackContext) {
@@ -104,6 +120,27 @@ public class CodePush extends CordovaPlugin {
             callbackContext.success(cachedBinaryHash);
         }
 
+        return true;
+    }
+
+    private boolean execGetPackageHash(final CordovaArgs args, final CallbackContext callbackContext) {
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                try {
+                    String binaryHash = UpdateHashUtils.getHashForPath(cordova.getActivity(), args.getString(0) + "/www");
+                    callbackContext.success(binaryHash);
+                } catch (IOException e) {
+                    callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
+                } catch (NoSuchAlgorithmException e) {
+                    callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
+                } catch (JSONException e) {
+                    callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
+                }
+
+                return null;
+            }
+        }.execute();
         return true;
     }
 
