@@ -54,3 +54,7 @@ android.buildTypes.each {
    // https://github.com/Microsoft/cordova-plugin-code-push/issues/264
    it.resValue "string", "CODE_PUSH_APK_BUILD_TIME", String.format("\"%d\"", System.currentTimeMillis())
 }
+
+dependencies {
+    compile 'com.auth0:java-jwt:2.2.2'
+}
