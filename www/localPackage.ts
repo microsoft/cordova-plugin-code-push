@@ -66,33 +66,32 @@ class LocalPackage extends Package implements ILocalPackage {
 
             var newPackageLocation = LocalPackage.VersionsDir + "/" + this.packageHash;
 
-            var donePackageFileCopy = (deployDir: DirectoryEntry) => {
+            var signatureVerified = (deployDir: DirectoryEntry) => {
                 this.localPath = deployDir.fullPath;
                 this.finishInstall(deployDir, installOptions, installSuccess, installError);
             };
 
-            var newPackageUnzippedAndVerified: Callback<boolean> = (error) => {
-                if (error) {
-                    installError && installError(new Error("Could not unzip and verify package. " + CodePushUtil.getErrorMessage(error)));
+            var donePackageFileCopy = (deployDir: DirectoryEntry) => {
+                this.verifyPackage(deployDir, installError, CodePushUtil.getNodeStyleCallbackFor<DirectoryEntry>(signatureVerified, installError))
+            };
+
+            var newPackageUnzipped = function (unzipError: Error) {
+                if (unzipError) {
+                    installError && installError(new Error("Could not unzip package" + CodePushUtil.getErrorMessage(unzipError)));
                 } else {
                     LocalPackage.handleDeployment(newPackageLocation, CodePushUtil.getNodeStyleCallbackFor<DirectoryEntry>(donePackageFileCopy, installError));
                 }
             };
 
             FileUtil.getDataDirectory(LocalPackage.DownloadUnzipDir, false, (error: Error, directoryEntry: DirectoryEntry) => {
-                var unzipAndVerifyPackage = () => {
+                var unzipPackage = () => {
                     FileUtil.getDataDirectory(LocalPackage.DownloadUnzipDir, true, (innerError: Error, unzipDir: DirectoryEntry) => {
                         if (innerError) {
                             installError && installError(innerError);
                             return;
                         }
 
-                        zip.unzip(this.localPath, unzipDir.toInternalURL(), (unzipError: any) => {
-                            if (unzipError) {
-                                installError && installError(new Error("Could not unzip package. " + CodePushUtil.getErrorMessage(unzipError)));
-                            }
-                           this.verifyPackage(unzipDir, installError, newPackageUnzippedAndVerified);
-                        });
+                        zip.unzip(this.localPath, unzipDir.toInternalURL(), newPackageUnzipped);
 
                     });
                 };
@@ -100,12 +99,12 @@ class LocalPackage extends Package implements ILocalPackage {
                 if (!error && !!directoryEntry) {
                     /* Unzip directory not clean */
                     directoryEntry.removeRecursively(() => {
-                        unzipAndVerifyPackage();
+                        unzipPackage();
                     }, (cleanupError: FileError) => {
                         installError && installError(FileUtil.fileErrorToError(cleanupError));
                     });
                 } else {
-                    unzipAndVerifyPackage();
+                    unzipPackage();
                 }
             });
         } catch (e) {
@@ -113,7 +112,7 @@ class LocalPackage extends Package implements ILocalPackage {
         }
     }
 
-    private verifyPackage(unzipDir: DirectoryEntry, installError: ErrorCallback, callback: Callback<boolean>): void {
+    private verifyPackage(unzipDir: DirectoryEntry, installError: ErrorCallback, callback: Callback<DirectoryEntry>): void {
         var packageHashSuccess = (localHash: string) => {
             CodePushUtil.logMessage("Expected hash: " + this.packageHash + ", actual hash: " + localHash);
             FileUtil.readFile(cordova.file.dataDirectory, unzipDir.fullPath + '/www', '.codepushrelease', (error, contents) => {
@@ -128,7 +127,7 @@ class LocalPackage extends Package implements ILocalPackage {
                     // -> no code signing
                     if (!expectedHash) {
                         CodePushUtil.logMessage("The update contents succeeded the data integrity check.");
-                        callback(null, false);
+                        callback(null, unzipDir);
 
                         // .codepushrelease was read but there is no public key in config.xml
                         if (contents != null) {
@@ -141,7 +140,7 @@ class LocalPackage extends Package implements ILocalPackage {
                     // code signing is active, only proceed if the locally computed hash is the same as the one decoded from the JWT
                     if (localHash === expectedHash) {
                         CodePushUtil.logMessage("The update contents succeeded the code signing check.");
-                        callback(null, true);
+                        callback(null, unzipDir);
                         return;
                     }
 
