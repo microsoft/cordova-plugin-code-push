@@ -56,5 +56,5 @@ android.buildTypes.each {
 }
 
 dependencies {
-    compile 'com.auth0:java-jwt:2.2.2'
+    compile 'com.nimbusds:nimbus-jose-jwt:5.1'
 }

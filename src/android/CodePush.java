@@ -4,8 +4,9 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.util.Base64;
 
-import com.auth0.jwt.JWTVerifier;
-import com.auth0.jwt.JWTVerifyException;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
+import com.nimbusds.jwt.SignedJWT;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.ConfigXmlParser;
@@ -18,14 +19,12 @@ import org.json.JSONException;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
-import java.security.SignatureException;
+import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
-
 import java.util.Date;
 import java.util.Map;
 
@@ -114,17 +113,15 @@ public class CodePush extends CordovaPlugin {
                 try {
                     publicKey = parsePublicKey(stringPublicKey);
                 } catch (CodePushException e) {
-                    callbackContext.error("Error occured while creating the a public key" + e.getMessage());
+                    callbackContext.error("Error occurred while creating the a public key" + e.getMessage());
                     return null;
                 }
-
 
                 final String signature = getSignature(args);
                 if (signature == null) {
                     callbackContext.error("The update could not be verified because no signature was found.");
                     return null;
                 }
-
 
                 final Map<String, Object> claims;
                 try {
@@ -162,17 +159,13 @@ public class CodePush extends CordovaPlugin {
 
     private Map<String, Object> verifyAndDecodeJWT(String jwt, PublicKey publicKey) throws CodePushException {
         try {
-            final JWTVerifier verifier = new JWTVerifier(publicKey);
-            return verifier.verify(jwt);
-        } catch (NoSuchAlgorithmException e) {
-            throw new CodePushException(e);
-        } catch (InvalidKeyException e) {
-            throw new CodePushException(e);
-        } catch (IOException e) {
-            throw new CodePushException(e);
-        } catch (SignatureException e) {
-            throw new CodePushException(e);
-        } catch (JWTVerifyException e) {
+            SignedJWT signedJWT = SignedJWT.parse(jwt);
+            JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey)publicKey);
+            if (signedJWT.verify(verifier)) {
+                return signedJWT.getJWTClaimsSet().getClaims();
+            }
+            throw new CodePushException("JWT verification failed: wrong signature");
+        } catch (Exception e) {
             throw new CodePushException(e);
         }
     }
