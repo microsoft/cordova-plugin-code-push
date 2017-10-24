@@ -111,6 +111,8 @@ public class CodePush extends CordovaPlugin {
                         callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
                     } catch (NoSuchAlgorithmException e) {
                         callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
+                    } catch (ClassNotFoundException e) {
+                        callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
                     }
 
                     return null;
@@ -135,6 +137,8 @@ public class CodePush extends CordovaPlugin {
                 } catch (NoSuchAlgorithmException e) {
                     callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
                 } catch (JSONException e) {
+                    callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
+                } catch (ClassNotFoundException e) {
                     callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
                 }
 

@@ -28,18 +28,18 @@ public class UpdateHashUtils {
             ".DS_Store"
     ));
 
-    public static String getBinaryHash(Activity activity) throws IOException, NoSuchAlgorithmException {
+    public static String getBinaryHash(Activity activity) throws IOException, NoSuchAlgorithmException, ClassNotFoundException {
         return getHashForPath(activity, null);
     }
 
-    public static String getHashForPath(Activity activity, String path) throws IOException, NoSuchAlgorithmException {
+    public static String getHashForPath(Activity activity, String path) throws IOException, NoSuchAlgorithmException, ClassNotFoundException {
         ArrayList<String> manifestEntries = new ArrayList<String>();
         if (path == null) {
-            addFolderEntriesToManifest(manifestEntries, "www", "www", activity.getAssets());
+            addFolderEntriesToManifestFromAssets(manifestEntries, activity.getAssets(), "www");
         } else {
             File basePath = activity.getApplicationContext().getFilesDir();
             File fullPath = new File(basePath, path);
-            addFolderEntriesToManifest(manifestEntries, "www", fullPath.getPath(), null);
+            addFolderEntriesToManifest(manifestEntries, "www", fullPath.getPath());
         }
         Collections.sort(manifestEntries);
         JSONArray manifestJSONArray = new JSONArray();
@@ -52,13 +52,18 @@ public class UpdateHashUtils {
         return computeHash(new ByteArrayInputStream(manifestString.getBytes()));
     }
 
-    private static void addFolderEntriesToManifest(ArrayList<String> manifestEntries, String prefix, String path, AssetManager assetManager) throws IOException, NoSuchAlgorithmException {
-        String[] fileList;
-        if (assetManager != null) {
-            fileList = assetManager.list(path);
-        } else {
-            fileList = new File(path).list();
+    private static void addFolderEntriesToManifestFromAssets(ArrayList<String> manifestEntries, AssetManager assetManager, String path) throws IOException, NoSuchAlgorithmException, ClassNotFoundException {
+        String[] assetsList = Utilities.getAssetsList(assetManager, path, ignoredFiles);
+
+        for(String assetPath : assetsList){
+            InputStream inputStream = assetManager.open(assetPath);
+            manifestEntries.add(assetPath + ":" + computeHash(inputStream));
         }
+    }
+
+    private static void addFolderEntriesToManifest(ArrayList<String> manifestEntries, String prefix, String path) throws IOException, NoSuchAlgorithmException {
+        String[] fileList = new File(path).list();
+
         if (fileList != null && fileList.length > 0) {
             for (String pathInFolder : fileList) {
                 if (UpdateHashUtils.ignoredFiles.contains(pathInFolder)) {
@@ -67,14 +72,9 @@ public class UpdateHashUtils {
                 File relativePath = new File(prefix, pathInFolder);
                 File absolutePath = new File(path, pathInFolder);
                 if (absolutePath.isDirectory()) {
-                    addFolderEntriesToManifest(manifestEntries, relativePath.getPath(), absolutePath.getPath(), assetManager);
+                    addFolderEntriesToManifest(manifestEntries, relativePath.getPath(), absolutePath.getPath());
                 } else {
-                    InputStream inputStream;
-                    if (assetManager != null) {
-                        inputStream = assetManager.open(relativePath.getPath());
-                    } else {
-                        inputStream = new FileInputStream(absolutePath.getPath());
-                    }
+                    InputStream inputStream = new FileInputStream(absolutePath.getPath());
                     manifestEntries.add(relativePath.getPath() + ":" + computeHash(inputStream));
                 }
             }
