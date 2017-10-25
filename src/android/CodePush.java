@@ -2,6 +2,11 @@ package com.microsoft.cordova;
 
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
+import android.util.Base64;
+
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
+import com.nimbusds.jwt.SignedJWT;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.ConfigXmlParser;
@@ -14,9 +19,14 @@ import org.json.JSONException;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
-
+import java.security.PublicKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Native Android CodePush Cordova Plugin.
@@ -24,6 +34,8 @@ import java.util.Date;
 public class CodePush extends CordovaPlugin {
 
     private static final String DEPLOYMENT_KEY_PREFERENCE = "codepushdeploymentkey";
+    private static final String PUBLIC_KEY_PREFERENCE = "codepushpublickey";
+    private static final String SERVER_URL_PREFERENCE = "codepushserverurl";
     private static final String WWW_ASSET_PATH_PREFIX = "file:///android_asset/www/";
     private static boolean ShouldClearHistoryOnLoad = false;
     private CordovaWebView mainWebView;
@@ -56,7 +68,7 @@ public class CodePush extends CordovaPlugin {
         } else if ("getNativeBuildTime".equals(action)) {
             return execGetNativeBuildTime(callbackContext);
         } else if ("getServerURL".equals(action)) {
-            this.returnStringPreference("codepushserverurl", callbackContext);
+            this.returnStringPreference(SERVER_URL_PREFERENCE, callbackContext);
             return true;
         } else if ("install".equals(action)) {
             return execInstall(args, callbackContext);
@@ -89,12 +101,85 @@ public class CodePush extends CordovaPlugin {
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... voids) {
-                // no actual code sign verification implemented for Android yet, just return null
-                callbackContext.success((String) null);
+                String stringPublicKey = mainWebView.getPreferences().getString(PUBLIC_KEY_PREFERENCE, null);
+
+                // bail out early if no public key was configured in config.xml
+                if (stringPublicKey == null) {
+                    callbackContext.success((String) null);
+                    return null;
+                }
+
+                final PublicKey publicKey;
+                try {
+                    publicKey = parsePublicKey(stringPublicKey);
+                } catch (CodePushException e) {
+                    callbackContext.error("Error occurred while creating the a public key" + e.getMessage());
+                    return null;
+                }
+
+                final String signature = getSignature(args);
+                if (signature == null) {
+                    callbackContext.error("The update could not be verified because no signature was found.");
+                    return null;
+                }
+
+                final Map<String, Object> claims;
+                try {
+                    claims = verifyAndDecodeJWT(signature, publicKey);
+                } catch (CodePushException e) {
+                    callbackContext.error("The update could not be verified because it was not signed by a trusted party. " + e.getMessage());
+                    return null;
+                }
+
+                final String contentHash = (String) claims.get("contentHash");
+                if (contentHash == null) {
+                    callbackContext.error("The update could not be verified because the signature did not specify a content hash.");
+                    return null;
+                }
+
+                callbackContext.success(contentHash);
                 return null;
             }
         }.execute();
         return true;
+    }
+
+    private PublicKey parsePublicKey(String stringPublicKey) throws CodePushException {
+        try {
+            byte[] byteKey = Base64.decode(stringPublicKey.getBytes(), Base64.DEFAULT);
+            X509EncodedKeySpec X509Key = new X509EncodedKeySpec(byteKey);
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            return kf.generatePublic(X509Key);
+        } catch (InvalidKeySpecException e) {
+            throw new CodePushException(e);
+        } catch (NoSuchAlgorithmException e) {
+            throw new CodePushException(e);
+        }
+    }
+
+    private Map<String, Object> verifyAndDecodeJWT(String jwt, PublicKey publicKey) throws CodePushException {
+        try {
+            SignedJWT signedJWT = SignedJWT.parse(jwt);
+            JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey)publicKey);
+            if (signedJWT.verify(verifier)) {
+                return signedJWT.getJWTClaimsSet().getClaims();
+            }
+            throw new CodePushException("JWT verification failed: wrong signature");
+        } catch (Exception e) {
+            throw new CodePushException(e);
+        }
+    }
+
+    private String getSignature(CordovaArgs args) {
+        try {
+            if (args.isNull(0)) {
+                return null;
+            } else {
+                return args.getString(0);
+            }
+        } catch (JSONException e) {
+            return null;
+        }
     }
 
     private boolean execGetBinaryHash(final CallbackContext callbackContext) {
