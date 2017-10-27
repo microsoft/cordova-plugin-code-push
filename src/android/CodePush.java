@@ -90,54 +90,57 @@ public class CodePush extends CordovaPlugin {
             return execRestartApplication(args, callbackContext);
         } else if ("getPackageHash".equals(action)) {
             return execGetPackageHash(args, callbackContext);
-        } else if ("verifySignature".equals(action)) {
-            return execVerifySignature(args, callbackContext);
+        } else if ("decodeSignature".equals(action)) {
+            return execDecodeSignature(args, callbackContext);
+        } else if ("getPublicKey".equals(action)) {
+            return execGetPublicKey(args, callbackContext);
         } else {
             return false;
         }
     }
 
-    private boolean execVerifySignature(final CordovaArgs args, final CallbackContext callbackContext) {
+    private boolean execGetPublicKey(final CordovaArgs args, final CallbackContext callbackContext) {
+        String publicKey = mainWebView.getPreferences().getString(PUBLIC_KEY_PREFERENCE, null);
+        callbackContext.success(publicKey);
+        return true;
+    }
+
+    private boolean execDecodeSignature(final CordovaArgs args, final CallbackContext callbackContext) {
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... voids) {
-                String stringPublicKey = mainWebView.getPreferences().getString(PUBLIC_KEY_PREFERENCE, null);
-
-                // bail out early if no public key was configured in config.xml
-                if (stringPublicKey == null) {
-                    callbackContext.success((String) null);
-                    return null;
-                }
-
-                final PublicKey publicKey;
                 try {
-                    publicKey = parsePublicKey(stringPublicKey);
-                } catch (CodePushException e) {
-                    callbackContext.error("Error occurred while creating the a public key" + e.getMessage());
-                    return null;
+                    String stringPublicKey = args.getString(0);
+
+                    final PublicKey publicKey;
+                    try {
+                        publicKey = parsePublicKey(stringPublicKey);
+                    } catch (CodePushException e) {
+                        callbackContext.error("Error occurred while creating the a public key" + e.getMessage());
+                        return null;
+                    }
+
+                    final String signature = args.getString(1);
+
+                    final Map<String, Object> claims;
+                    try {
+                        claims = verifyAndDecodeJWT(signature, publicKey);
+                    } catch (CodePushException e) {
+                        callbackContext.error("The update could not be verified because it was not signed by a trusted party. " + e.getMessage());
+                        return null;
+                    }
+
+                    final String contentHash = (String) claims.get("contentHash");
+                    if (contentHash == null) {
+                        callbackContext.error("The update could not be verified because the signature did not specify a content hash.");
+                        return null;
+                    }
+                    callbackContext.success(contentHash);
+
+                } catch (Exception e) {
+                    callbackContext.error("Unknown error occurred during signature decoding. " + e.getMessage());
                 }
 
-                final String signature = getSignature(args);
-                if (signature == null) {
-                    callbackContext.error("The update could not be verified because no signature was found.");
-                    return null;
-                }
-
-                final Map<String, Object> claims;
-                try {
-                    claims = verifyAndDecodeJWT(signature, publicKey);
-                } catch (CodePushException e) {
-                    callbackContext.error("The update could not be verified because it was not signed by a trusted party. " + e.getMessage());
-                    return null;
-                }
-
-                final String contentHash = (String) claims.get("contentHash");
-                if (contentHash == null) {
-                    callbackContext.error("The update could not be verified because the signature did not specify a content hash.");
-                    return null;
-                }
-
-                callbackContext.success(contentHash);
                 return null;
             }
         }.execute();
@@ -150,9 +153,7 @@ public class CodePush extends CordovaPlugin {
             X509EncodedKeySpec X509Key = new X509EncodedKeySpec(byteKey);
             KeyFactory kf = KeyFactory.getInstance("RSA");
             return kf.generatePublic(X509Key);
-        } catch (InvalidKeySpecException e) {
-            throw new CodePushException(e);
-        } catch (NoSuchAlgorithmException e) {
+        } catch (Exception e) {
             throw new CodePushException(e);
         }
     }
@@ -160,25 +161,14 @@ public class CodePush extends CordovaPlugin {
     private Map<String, Object> verifyAndDecodeJWT(String jwt, PublicKey publicKey) throws CodePushException {
         try {
             SignedJWT signedJWT = SignedJWT.parse(jwt);
-            JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey)publicKey);
+            JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey) publicKey);
             if (signedJWT.verify(verifier)) {
-                return signedJWT.getJWTClaimsSet().getClaims();
+                Map<String, Object> claims = signedJWT.getJWTClaimsSet().getClaims();
+                Utilities.logMessage("JWT verification succeeded, payload content: " + claims.toString());
             }
             throw new CodePushException("JWT verification failed: wrong signature");
         } catch (Exception e) {
             throw new CodePushException(e);
-        }
-    }
-
-    private String getSignature(CordovaArgs args) {
-        try {
-            if (args.isNull(0)) {
-                return null;
-            } else {
-                return args.getString(0);
-            }
-        } catch (JSONException e) {
-            return null;
         }
     }
 
@@ -192,11 +182,7 @@ public class CodePush extends CordovaPlugin {
                         String binaryHash = UpdateHashUtils.getBinaryHash(cordova.getActivity());
                         codePushPackageManager.saveBinaryHash(binaryHash);
                         callbackContext.success(binaryHash);
-                    } catch (IOException e) {
-                        callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
-                    } catch (NoSuchAlgorithmException e) {
-                        callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
-                    } catch (ClassNotFoundException e) {
+                    } catch (Exception e) {
                         callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
                     }
 
@@ -217,13 +203,7 @@ public class CodePush extends CordovaPlugin {
                 try {
                     String binaryHash = UpdateHashUtils.getHashForPath(cordova.getActivity(), args.getString(0) + "/www");
                     callbackContext.success(binaryHash);
-                } catch (IOException e) {
-                    callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
-                } catch (NoSuchAlgorithmException e) {
-                    callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
-                } catch (JSONException e) {
-                    callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
-                } catch (ClassNotFoundException e) {
+                } catch (Exception e) {
                     callbackContext.error("An error occurred when trying to get the hash of the binary contents. " + e.getMessage());
                 }
 

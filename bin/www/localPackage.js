@@ -1,10 +1,10 @@
 
- /********************************************************************************************
- 	 THIS FILE HAS BEEN COMPILED FROM TYPESCRIPT SOURCES.
- 	 PLEASE DO NOT MODIFY THIS FILE DIRECTLY AS YOU WILL LOSE YOUR CHANGES WHEN RECOMPILING.
- 	 INSTEAD, EDIT THE TYPESCRIPT SOURCES UNDER THE WWW FOLDER, AND THEN RUN GULP.
- 	 FOR MORE INFORMATION, PLEASE SEE CONTRIBUTING.md.
- *********************************************************************************************/
+ /******************************************************************************************** 
+ 	 THIS FILE HAS BEEN COMPILED FROM TYPESCRIPT SOURCES. 
+ 	 PLEASE DO NOT MODIFY THIS FILE DIRECTLY AS YOU WILL LOSE YOUR CHANGES WHEN RECOMPILING. 
+ 	 INSTEAD, EDIT THE TYPESCRIPT SOURCES UNDER THE WWW FOLDER, AND THEN RUN GULP. 
+ 	 FOR MORE INFORMATION, PLEASE SEE CONTRIBUTING.md. 
+ *********************************************************************************************/ 
 
 
 "use strict";
@@ -43,13 +43,6 @@ var LocalPackage = (function (_super) {
                 Sdk.reportStatusDeploy(_this, AcquisitionStatus.DeploymentFailed, _this.deploymentKey);
             };
             var newPackageLocation = LocalPackage.VersionsDir + "/" + this.packageHash;
-            var signatureVerified = function (deployDir) {
-                _this.localPath = deployDir.fullPath;
-                _this.finishInstall(deployDir, installOptions, installSuccess, installError);
-            };
-            var donePackageFileCopy = function (deployDir) {
-                _this.verifyPackage(deployDir, installError, CodePushUtil.getNodeStyleCallbackFor(signatureVerified, installError));
-            };
             var newPackageUnzipped = function (unzipError) {
                 if (unzipError) {
                     installError && installError(new Error("Could not unzip package" + CodePushUtil.getErrorMessage(unzipError)));
@@ -57,6 +50,15 @@ var LocalPackage = (function (_super) {
                 else {
                     LocalPackage.handleDeployment(newPackageLocation, CodePushUtil.getNodeStyleCallbackFor(donePackageFileCopy, installError));
                 }
+            };
+            var donePackageFileCopy = function (deploymentResult) {
+                _this.verifyPackage(deploymentResult, installError, function () {
+                    packageVerified(deploymentResult.deployDir);
+                });
+            };
+            var packageVerified = function (deployDir) {
+                _this.localPath = deployDir.fullPath;
+                _this.finishInstall(deployDir, installOptions, installSuccess, installError);
             };
             FileUtil.getDataDirectory(LocalPackage.DownloadUnzipDir, false, function (error, directoryEntry) {
                 var unzipPackage = function () {
@@ -84,44 +86,122 @@ var LocalPackage = (function (_super) {
             installError && installError(new Error("An error occured while installing the package. " + CodePushUtil.getErrorMessage(e)));
         }
     };
-    LocalPackage.prototype.verifyPackage = function (unzipDir, installError, callback) {
+    LocalPackage.prototype.verifyPackage = function (deploymentResult, installError, successCallback) {
         var _this = this;
-        var packageHashSuccess = function (localHash) {
-            CodePushUtil.logMessage("Expected hash: " + _this.packageHash + ", actual hash: " + localHash);
-            FileUtil.readFile(cordova.file.dataDirectory, unzipDir.fullPath + '/www', '.codepushrelease', function (error, contents) {
-                var verifySignatureSuccess = function (expectedHash) {
-                    if (localHash !== _this.packageHash) {
-                        installError(new Error("package hash verification failed"));
-                        return;
+        var unzipDir = deploymentResult.deployDir;
+        var verificationFail = function (error) {
+            installError && installError(error);
+        };
+        var verify = function (isSignatureVerificationEnabled, isSignatureAppearedInBundle, publicKey, signature) {
+            if (isSignatureVerificationEnabled) {
+                if (isSignatureAppearedInBundle) {
+                    _this.verifyHash(unzipDir, _this.packageHash, verificationFail, function () {
+                        _this.verifySignature(unzipDir, _this.packageHash, publicKey, signature, verificationFail, successCallback);
+                    });
+                }
+                else {
+                    var errorMessage = "Error! Public key was provided but there is no JWT signature within app bundle to verify. " +
+                        "Possible reasons, why that might happen: \n" +
+                        "1. You've been released CodePush bundle update using version of CodePush CLI that is not support code signing.\n" +
+                        "2. You've been released CodePush bundle update without providing --privateKeyPath option.";
+                    installError && installError(new Error(errorMessage));
+                }
+            }
+            else {
+                if (isSignatureAppearedInBundle) {
+                    CodePushUtil.logMessage("Warning! JWT signature exists in codepush update but code integrity check couldn't be performed because there is no public key configured. " +
+                        "Please ensure that public key is properly configured within your application.");
+                    _this.verifyHash(unzipDir, _this.packageHash, verificationFail, successCallback);
+                }
+                else {
+                    if (deploymentResult.isDiffUpdate) {
+                        _this.verifyHash(unzipDir, _this.packageHash, verificationFail, successCallback);
                     }
-                    if (!expectedHash) {
-                        CodePushUtil.logMessage("The update contents succeeded the data integrity check.");
-                        callback(null, unzipDir);
-                        if (contents != null) {
-                            CodePushUtil.logMessage("Warning! JWT signature exists in codepush update but code integrity check couldn't be performed because there is no public key configured. \n" +
-                                "Please ensure that a public key is properly configured within your application.");
-                        }
-                        return;
-                    }
-                    if (localHash === expectedHash) {
-                        CodePushUtil.logMessage("The update contents succeeded the code signing check.");
-                        callback(null, unzipDir);
-                        return;
-                    }
-                    installError(new Error("The update contents failed the code signing check."));
-                };
-                var verifySignatureFail = function (error) {
-                    installError && installError(new Error("The update contents failed the code signing check. " + error));
-                };
-                CodePushUtil.logMessage("Verifying signature for folder path: " + unzipDir.fullPath);
-                cordova.exec(verifySignatureSuccess, verifySignatureFail, "CodePush", "verifySignature", [contents]);
+                    successCallback();
+                }
+            }
+        };
+        if (deploymentResult.isDiffUpdate) {
+            CodePushUtil.logMessage("Applying diff update");
+        }
+        else {
+            CodePushUtil.logMessage("Applying full update");
+        }
+        var isSignatureVerificationEnabled, isSignatureAppearedInBundle;
+        var publicKey;
+        this.getPublicKey(function (error, publicKeyResult) {
+            if (error) {
+                installError && installError(new Error("Error reading public key. " + error));
+                return;
+            }
+            publicKey = publicKeyResult;
+            isSignatureVerificationEnabled = (publicKey !== null);
+            _this.getSignatureFromUpdate(deploymentResult.deployDir, function (error, signature) {
+                if (error) {
+                    installError && installError(new Error("Error reading signature from update. " + error));
+                    return;
+                }
+                isSignatureAppearedInBundle = (signature !== null);
+                verify(isSignatureAppearedInBundle, isSignatureVerificationEnabled, publicKey, signature);
             });
+        });
+    };
+    LocalPackage.prototype.getPublicKey = function (callback) {
+        var success = function (publicKey) {
+            callback(null, publicKey);
+        };
+        var fail = function (error) {
+            callback(error, null);
+        };
+        cordova.exec(success, fail, "CodePush", "getPublicKey", []);
+    };
+    LocalPackage.prototype.getSignatureFromUpdate = function (unzipDir, callback) {
+        var rootUri = cordova.file.dataDirectory;
+        var path = unzipDir.fullPath + '/www';
+        var fileName = '.codepushrelease';
+        FileUtil.fileExists(rootUri, path, fileName, function (result) {
+            if (!result) {
+                callback(null, null);
+                return;
+            }
+            FileUtil.readFile(rootUri, path, fileName, function (error, signature) {
+                if (error) {
+                    callback(error, null);
+                    return;
+                }
+                callback(null, signature);
+            });
+        });
+    };
+    LocalPackage.prototype.verifyHash = function (unzipDir, newUpdateHash, errorCallback, successCallback) {
+        var packageHashSuccess = function (computedHash) {
+            if (computedHash !== newUpdateHash) {
+                errorCallback(new Error("The update contents failed the data integrity check."));
+                return;
+            }
+            CodePushUtil.logMessage("The update contents succeeded the data integrity check.");
+            successCallback();
         };
         var packageHashFail = function (error) {
-            installError && installError(new Error("unable to compute hash for package: " + error));
+            errorCallback(new Error("Unable to compute hash for package: " + error));
         };
         CodePushUtil.logMessage("Verifying hash for folder path: " + unzipDir.fullPath);
         cordova.exec(packageHashSuccess, packageHashFail, "CodePush", "getPackageHash", [unzipDir.fullPath]);
+    };
+    LocalPackage.prototype.verifySignature = function (unzipDir, newUpdateHash, publicKey, signature, errorCallback, successCallback) {
+        var decodeSignatureSuccess = function (contentHash) {
+            if (contentHash !== newUpdateHash) {
+                errorCallback(new Error("The update contents failed the code signing check."));
+                return;
+            }
+            CodePushUtil.logMessage("The update contents succeeded the code signing check.");
+            successCallback();
+        };
+        var decodeSignatureFail = function (error) {
+            errorCallback(new Error("Unable to verify signature for package: " + error));
+        };
+        CodePushUtil.logMessage("Verifying signature for folder path: " + unzipDir.fullPath);
+        cordova.exec(decodeSignatureSuccess, decodeSignatureFail, "CodePush", "decodeSignature", [publicKey, signature]);
     };
     LocalPackage.prototype.finishInstall = function (deployDir, installOptions, installSuccess, installError) {
         var _this = this;
@@ -177,7 +257,7 @@ var LocalPackage = (function (_super) {
                 }
                 else {
                     LocalPackage.handleCleanDeployment(newPackageLocation, function (error) {
-                        deployCallback(error, deployDir);
+                        deployCallback(error, { deployDir: deployDir, isDiffUpdate: false });
                     });
                 }
             });
@@ -219,7 +299,7 @@ var LocalPackage = (function (_super) {
                             cleanDeployCallback(copyError, null);
                         }
                         else {
-                            cleanDeployCallback(null, deployDir);
+                            cleanDeployCallback(null, { deployDir: deployDir, isDiffUpdate: false });
                         }
                     });
                 }
@@ -284,7 +364,7 @@ var LocalPackage = (function (_super) {
                                     handleError(new Error("Cannot clean up deleted manifest files."));
                                 }
                                 else {
-                                    diffCallback(null, deployDir);
+                                    diffCallback(null, { deployDir: deployDir, isDiffUpdate: true });
                                 }
                             });
                         });
