@@ -6,7 +6,8 @@
 + (NSArray *)ignoredFilenames {
     return @[
             @".codepushrelease",
-            @".DS_Store"
+            @".DS_Store",
+            @"__MACOSX"
     ];
 }
 

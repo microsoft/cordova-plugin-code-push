@@ -25,7 +25,8 @@ import java.util.Set;
 public class UpdateHashUtils {
     private static final Set<String> ignoredFiles = new HashSet<String>(Arrays.asList(
             ".codepushrelease",
-            ".DS_Store"
+            ".DS_Store",
+            "__MACOSX"
     ));
 
     public static String getBinaryHash(Activity activity) throws IOException, NoSuchAlgorithmException, ClassNotFoundException {

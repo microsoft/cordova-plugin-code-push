@@ -71,26 +71,17 @@ StatusReport* rollbackStatusReport = nil;
     }];
 }
 
-- (void)verifySignature:(CDVInvokedUrlCommand *)command {
+- (void)getPublicKey:(CDVInvokedUrlCommand *)command {
+	NSString *publicKey = ((CDVViewController *) self.viewController).settings[PublicKeyPreference];
+    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                                      messageAsString:publicKey];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)decodeSignature:(CDVInvokedUrlCommand *)command {
     [self.commandDelegate runInBackground:^{
-        NSString *jwt = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
-        NSString *publicKey = ((CDVViewController *) self.viewController).settings[PublicKeyPreference];
-
-        // bail out early if no public key was configured in config.xml
-        if (!publicKey) {
-            [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
-            return;
-        }
-
-        // no .codepushrelease file in the update (or it couldn't be read)
-        if (!jwt || [jwt isEqualToString:@""]) {
-            [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
-                                                                     messageAsString:@"\"Error! Public key was provided but there is no JWT signature within app bundle to verify.\n"
-                                                                             @"Possible reasons, why that might happen: \n"
-                                                                             @"You've released a CodePush bundle update using a version of CodePush CLI that does not support code signing.\n"
-                                                                             @"You've released a CodePush bundle update without providing the --privateKeyPath option."]
-                                        callbackId:command.callbackId];
-        }
+        NSString *publicKey = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
+        NSString *jwt = [command argumentAtIndex:1 withDefault:nil andClass:[NSString class]];
 
         id <JWTAlgorithmDataHolderProtocol> verifyDataHolder = [JWTAlgorithmRSFamilyDataHolder new]
                 .keyExtractorType([JWTCryptoKeyExtractor publicKeyWithPEMBase64].type)
@@ -100,6 +91,7 @@ StatusReport* rollbackStatusReport = nil;
         JWTCodingResultType *verifyResult = verifyBuilder.result;
         CDVPluginResult *pluginResult;
         if (verifyResult.successResult) {
+            CPLog(@"JWT signature verification succeeded, payload content:  %@", verifyResult.successResult.payload);
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
                                              messageAsString:verifyResult.successResult.payload[@"contentHash"]];
         } else {
