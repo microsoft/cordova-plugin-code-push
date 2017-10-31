@@ -95,7 +95,13 @@ var FileUtil = (function () {
     FileUtil.dataDirectoryExists = function (path, callback) {
         FileUtil.directoryExists(cordova.file.dataDirectory, path, callback);
     };
-    FileUtil.copyDirectoryEntriesTo = function (sourceDir, destinationDir, callback) {
+    FileUtil.copyDirectoryEntriesTo = function (sourceDir, destinationDir, ignoreList, callback) {
+        if (ignoreList.indexOf(".DS_Store") === -1) {
+            ignoreList.push(".DS_Store");
+        }
+        if (ignoreList.indexOf("__MACOSX") === -1) {
+            ignoreList.push("__MACOSX");
+        }
         var fail = function (error) {
             callback(FileUtil.fileErrorToError(error), null);
         };
@@ -104,7 +110,7 @@ var FileUtil = (function () {
             var copyOne = function () {
                 if (i < entries.length) {
                     var nextEntry = entries[i++];
-                    if (nextEntry.name === ".DS_Store" || nextEntry.name === "__MACOSX") {
+                    if (ignoreList.indexOf(nextEntry.name) > 0) {
                         copyOne();
                     }
                     else {
@@ -113,7 +119,7 @@ var FileUtil = (function () {
                                 callback(new Error("Error during entry replacement. Error code: " + fileError.code), null);
                             };
                             if (destinationEntry.isDirectory) {
-                                FileUtil.copyDirectoryEntriesTo(nextEntry, destinationEntry, function (error) {
+                                FileUtil.copyDirectoryEntriesTo(nextEntry, destinationEntry, ignoreList, function (error) {
                                     if (error) {
                                         callback(error, null);
                                     }

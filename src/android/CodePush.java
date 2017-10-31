@@ -18,6 +18,7 @@ import org.json.JSONException;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.MalformedURLException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -37,6 +38,7 @@ public class CodePush extends CordovaPlugin {
     private static final String PUBLIC_KEY_PREFERENCE = "codepushpublickey";
     private static final String SERVER_URL_PREFERENCE = "codepushserverurl";
     private static final String WWW_ASSET_PATH_PREFIX = "file:///android_asset/www/";
+    private static final String NEW_LINE = System.getProperty("line.separator");
     private static boolean ShouldClearHistoryOnLoad = false;
     private CordovaWebView mainWebView;
     private CodePushPackageManager codePushPackageManager;
@@ -149,6 +151,11 @@ public class CodePush extends CordovaPlugin {
 
     private PublicKey parsePublicKey(String stringPublicKey) throws CodePushException {
         try {
+            stringPublicKey = stringPublicKey
+                    .replace("-----BEGIN PUBLIC KEY-----", "")
+                    .replace("-----END PUBLIC KEY-----", "")
+                    .replace("&#xA;", "") //gradle automatically replaces new line to &#xA;
+                    .replace(NEW_LINE, "");
             byte[] byteKey = Base64.decode(stringPublicKey.getBytes(), Base64.DEFAULT);
             X509EncodedKeySpec X509Key = new X509EncodedKeySpec(byteKey);
             KeyFactory kf = KeyFactory.getInstance("RSA");
@@ -165,6 +172,7 @@ public class CodePush extends CordovaPlugin {
             if (signedJWT.verify(verifier)) {
                 Map<String, Object> claims = signedJWT.getJWTClaimsSet().getClaims();
                 Utilities.logMessage("JWT verification succeeded, payload content: " + claims.toString());
+                return claims;
             }
             throw new CodePushException("JWT verification failed: wrong signature");
         } catch (Exception e) {

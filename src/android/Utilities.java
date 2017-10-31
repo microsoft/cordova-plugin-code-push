@@ -79,7 +79,7 @@ public class Utilities {
 
     public static void logException(Throwable e) {
         Log.e(CodePush.class.getName(), "An error occured. " + e.getMessage(), e);
-    }/media/rbikkinin/work/projects/cordova-code-signing/platforms/android/src/com/microsoft/cordova/CodePush.java
+    }
 
     public static void logMessage(String message) {
         Log.e(CodePush.class.getName(), message);

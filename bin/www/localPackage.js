@@ -88,15 +88,15 @@ var LocalPackage = (function (_super) {
     };
     LocalPackage.prototype.verifyPackage = function (deploymentResult, installError, successCallback) {
         var _this = this;
-        var unzipDir = deploymentResult.deployDir;
+        var deployDir = deploymentResult.deployDir;
         var verificationFail = function (error) {
             installError && installError(error);
         };
         var verify = function (isSignatureVerificationEnabled, isSignatureAppearedInBundle, publicKey, signature) {
             if (isSignatureVerificationEnabled) {
                 if (isSignatureAppearedInBundle) {
-                    _this.verifyHash(unzipDir, _this.packageHash, verificationFail, function () {
-                        _this.verifySignature(unzipDir, _this.packageHash, publicKey, signature, verificationFail, successCallback);
+                    _this.verifyHash(deployDir, _this.packageHash, verificationFail, function () {
+                        _this.verifySignature(deployDir, _this.packageHash, publicKey, signature, verificationFail, successCallback);
                     });
                 }
                 else {
@@ -111,11 +111,11 @@ var LocalPackage = (function (_super) {
                 if (isSignatureAppearedInBundle) {
                     CodePushUtil.logMessage("Warning! JWT signature exists in codepush update but code integrity check couldn't be performed because there is no public key configured. " +
                         "Please ensure that public key is properly configured within your application.");
-                    _this.verifyHash(unzipDir, _this.packageHash, verificationFail, successCallback);
+                    _this.verifyHash(deployDir, _this.packageHash, verificationFail, successCallback);
                 }
                 else {
                     if (deploymentResult.isDiffUpdate) {
-                        _this.verifyHash(unzipDir, _this.packageHash, verificationFail, successCallback);
+                        _this.verifyHash(deployDir, _this.packageHash, verificationFail, successCallback);
                     }
                     successCallback();
                 }
@@ -142,7 +142,7 @@ var LocalPackage = (function (_super) {
                     return;
                 }
                 isSignatureAppearedInBundle = (signature !== null);
-                verify(isSignatureAppearedInBundle, isSignatureVerificationEnabled, publicKey, signature);
+                verify(isSignatureVerificationEnabled, isSignatureAppearedInBundle, publicKey, signature);
             });
         });
     };
@@ -155,11 +155,11 @@ var LocalPackage = (function (_super) {
         };
         cordova.exec(success, fail, "CodePush", "getPublicKey", []);
     };
-    LocalPackage.prototype.getSignatureFromUpdate = function (unzipDir, callback) {
+    LocalPackage.prototype.getSignatureFromUpdate = function (deployDir, callback) {
         var rootUri = cordova.file.dataDirectory;
-        var path = unzipDir.fullPath + '/www';
+        var path = deployDir.fullPath + '/www';
         var fileName = '.codepushrelease';
-        FileUtil.fileExists(rootUri, path, fileName, function (result) {
+        FileUtil.fileExists(rootUri, path, fileName, function (error, result) {
             if (!result) {
                 callback(null, null);
                 return;
@@ -173,7 +173,7 @@ var LocalPackage = (function (_super) {
             });
         });
     };
-    LocalPackage.prototype.verifyHash = function (unzipDir, newUpdateHash, errorCallback, successCallback) {
+    LocalPackage.prototype.verifyHash = function (deployDir, newUpdateHash, errorCallback, successCallback) {
         var packageHashSuccess = function (computedHash) {
             if (computedHash !== newUpdateHash) {
                 errorCallback(new Error("The update contents failed the data integrity check."));
@@ -185,10 +185,10 @@ var LocalPackage = (function (_super) {
         var packageHashFail = function (error) {
             errorCallback(new Error("Unable to compute hash for package: " + error));
         };
-        CodePushUtil.logMessage("Verifying hash for folder path: " + unzipDir.fullPath);
-        cordova.exec(packageHashSuccess, packageHashFail, "CodePush", "getPackageHash", [unzipDir.fullPath]);
+        CodePushUtil.logMessage("Verifying hash for folder path: " + deployDir.fullPath);
+        cordova.exec(packageHashSuccess, packageHashFail, "CodePush", "getPackageHash", [deployDir.fullPath]);
     };
-    LocalPackage.prototype.verifySignature = function (unzipDir, newUpdateHash, publicKey, signature, errorCallback, successCallback) {
+    LocalPackage.prototype.verifySignature = function (deployDir, newUpdateHash, publicKey, signature, errorCallback, successCallback) {
         var decodeSignatureSuccess = function (contentHash) {
             if (contentHash !== newUpdateHash) {
                 errorCallback(new Error("The update contents failed the code signing check."));
@@ -200,7 +200,7 @@ var LocalPackage = (function (_super) {
         var decodeSignatureFail = function (error) {
             errorCallback(new Error("Unable to verify signature for package: " + error));
         };
-        CodePushUtil.logMessage("Verifying signature for folder path: " + unzipDir.fullPath);
+        CodePushUtil.logMessage("Verifying signature for folder path: " + deployDir.fullPath);
         cordova.exec(decodeSignatureSuccess, decodeSignatureFail, "CodePush", "decodeSignature", [publicKey, signature]);
     };
     LocalPackage.prototype.finishInstall = function (deployDir, installOptions, installSuccess, installError) {
@@ -294,7 +294,7 @@ var LocalPackage = (function (_super) {
                     cleanDeployCallback(new Error("Could not copy new package."), null);
                 }
                 else {
-                    FileUtil.copyDirectoryEntriesTo(unzipDir, deployDir, function (copyError) {
+                    FileUtil.copyDirectoryEntriesTo(unzipDir, deployDir, [], function (copyError) {
                         if (copyError) {
                             cleanDeployCallback(copyError, null);
                         }
@@ -306,7 +306,7 @@ var LocalPackage = (function (_super) {
             });
         });
     };
-    LocalPackage.copyCurrentPackage = function (newPackageLocation, copyCallback) {
+    LocalPackage.copyCurrentPackage = function (newPackageLocation, ignoreList, copyCallback) {
         var handleError = function (e) {
             copyCallback && copyCallback(e, null);
         };
@@ -329,7 +329,7 @@ var LocalPackage = (function (_super) {
                 }
                 else {
                     var success = function (currentPackageDirectory) {
-                        FileUtil.copyDirectoryEntriesTo(currentPackageDirectory, deployDir, copyCallback);
+                        FileUtil.copyDirectoryEntriesTo(currentPackageDirectory, deployDir, ignoreList, copyCallback);
                     };
                     var fail = function (fileSystemError) {
                         copyCallback && copyCallback(FileUtil.fileErrorToError(fileSystemError), null);
@@ -350,7 +350,7 @@ var LocalPackage = (function (_super) {
         var handleError = function (e) {
             diffCallback(e, null);
         };
-        LocalPackage.copyCurrentPackage(newPackageLocation, function (currentPackageError) {
+        LocalPackage.copyCurrentPackage(newPackageLocation, [".codepushrelease"], function (currentPackageError) {
             LocalPackage.handleCleanDeployment(newPackageLocation, function (cleanDeployError) {
                 FileUtil.readFileEntry(diffManifest, function (error, content) {
                     if (error || currentPackageError || cleanDeployError) {

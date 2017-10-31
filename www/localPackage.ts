@@ -116,7 +116,7 @@ class LocalPackage extends Package implements ILocalPackage {
 
     private verifyPackage(deploymentResult: DeploymentResult, installError: ErrorCallback, successCallback: SuccessCallback<void>): void {
         
-        var unzipDir = deploymentResult.deployDir;
+        var deployDir = deploymentResult.deployDir;
 
         var verificationFail: ErrorCallback = (error: Error) => {
             installError && installError(error);
@@ -125,8 +125,8 @@ class LocalPackage extends Package implements ILocalPackage {
         var verify = (isSignatureVerificationEnabled: boolean, isSignatureAppearedInBundle: boolean, publicKey: string, signature: string) => {
             if (isSignatureVerificationEnabled) {
                 if (isSignatureAppearedInBundle) {
-                    this.verifyHash(unzipDir, this.packageHash, verificationFail, () => {
-                        this.verifySignature(unzipDir, this.packageHash, publicKey, signature, verificationFail, successCallback);
+                    this.verifyHash(deployDir, this.packageHash, verificationFail, () => {
+                        this.verifySignature(deployDir, this.packageHash, publicKey, signature, verificationFail, successCallback);
                     });
                 } else {
                     var errorMessage = 
@@ -144,11 +144,11 @@ class LocalPackage extends Package implements ILocalPackage {
                     );
                         
                     //verifyHash
-                    this.verifyHash(unzipDir, this.packageHash, verificationFail, successCallback);
+                    this.verifyHash(deployDir, this.packageHash, verificationFail, successCallback);
                 } else {
                     if (deploymentResult.isDiffUpdate){
                         //verifyHash
-                        this.verifyHash(unzipDir, this.packageHash, verificationFail, successCallback);
+                        this.verifyHash(deployDir, this.packageHash, verificationFail, successCallback);
                     }
                     successCallback();
                 }          
@@ -181,7 +181,7 @@ class LocalPackage extends Package implements ILocalPackage {
 
                 isSignatureAppearedInBundle = (signature !== null);
 
-                verify(isSignatureAppearedInBundle, isSignatureVerificationEnabled, publicKey, signature);
+                verify(isSignatureVerificationEnabled, isSignatureAppearedInBundle, publicKey, signature);
             });
         });
     }
@@ -199,13 +199,13 @@ class LocalPackage extends Package implements ILocalPackage {
         cordova.exec(success, fail,"CodePush","getPublicKey",[]);
     }
 
-    private getSignatureFromUpdate(unzipDir: DirectoryEntry, callback: Callback<string>){
+    private getSignatureFromUpdate(deployDir: DirectoryEntry, callback: Callback<string>){
 
         var rootUri = cordova.file.dataDirectory;
-        var path = unzipDir.fullPath + '/www';
+        var path = deployDir.fullPath + '/www';
         var fileName = '.codepushrelease';
 
-        FileUtil.fileExists(rootUri, path, fileName, (result) => {
+        FileUtil.fileExists(rootUri, path, fileName, (error, result) => {
             if (!result) {
                 // signature absents in the bundle
                 callback(null, null);
@@ -224,7 +224,7 @@ class LocalPackage extends Package implements ILocalPackage {
         });
     }
 
-    private verifyHash(unzipDir: DirectoryEntry, newUpdateHash: string, errorCallback: ErrorCallback, successCallback: SuccessCallback<void>){
+    private verifyHash(deployDir: DirectoryEntry, newUpdateHash: string, errorCallback: ErrorCallback, successCallback: SuccessCallback<void>){
         var packageHashSuccess = (computedHash: string) => {
             if (computedHash !== newUpdateHash) {
                 errorCallback(new Error("The update contents failed the data integrity check."));
@@ -237,11 +237,11 @@ class LocalPackage extends Package implements ILocalPackage {
         var packageHashFail = (error: Error) => {
             errorCallback(new Error("Unable to compute hash for package: " + error));
         }
-        CodePushUtil.logMessage("Verifying hash for folder path: " + unzipDir.fullPath);
-        cordova.exec(packageHashSuccess, packageHashFail, "CodePush", "getPackageHash", [unzipDir.fullPath]);
+        CodePushUtil.logMessage("Verifying hash for folder path: " + deployDir.fullPath);
+        cordova.exec(packageHashSuccess, packageHashFail, "CodePush", "getPackageHash", [deployDir.fullPath]);
     }
 
-    private verifySignature(unzipDir: DirectoryEntry, newUpdateHash: string, publicKey: string, signature: string, errorCallback: ErrorCallback, successCallback: SuccessCallback<void>){
+    private verifySignature(deployDir: DirectoryEntry, newUpdateHash: string, publicKey: string, signature: string, errorCallback: ErrorCallback, successCallback: SuccessCallback<void>){
         var decodeSignatureSuccess = (contentHash: string) => {
             if (contentHash !== newUpdateHash) {
                 errorCallback(new Error("The update contents failed the code signing check."));
@@ -254,7 +254,7 @@ class LocalPackage extends Package implements ILocalPackage {
         var decodeSignatureFail = (error: Error) => {
             errorCallback(new Error("Unable to verify signature for package: " + error));
         }
-        CodePushUtil.logMessage("Verifying signature for folder path: " + unzipDir.fullPath);
+        CodePushUtil.logMessage("Verifying signature for folder path: " + deployDir.fullPath);
         cordova.exec(decodeSignatureSuccess, decodeSignatureFail, "CodePush", "decodeSignature", [publicKey, signature]);
     }    
 
@@ -358,7 +358,7 @@ class LocalPackage extends Package implements ILocalPackage {
                 if (unzipDirErr || deployDirError) {
                     cleanDeployCallback(new Error("Could not copy new package."), null);
                 } else {
-                    FileUtil.copyDirectoryEntriesTo(unzipDir, deployDir, (copyError: Error) => {
+                    FileUtil.copyDirectoryEntriesTo(unzipDir, deployDir, [/*no need to ignore copy anything*/], (copyError: Error) => {
                         if (copyError) {
                             cleanDeployCallback(copyError, null);
                         } else {
@@ -370,7 +370,7 @@ class LocalPackage extends Package implements ILocalPackage {
         });
     }
 
-    private static copyCurrentPackage(newPackageLocation: string, copyCallback: Callback<void>): void {
+    private static copyCurrentPackage(newPackageLocation: string, ignoreList: string[], copyCallback: Callback<void>): void {
         var handleError = (e: Error) => {
             copyCallback && copyCallback(e, null);
         };
@@ -394,7 +394,7 @@ class LocalPackage extends Package implements ILocalPackage {
                     handleError(new Error("Could not acquire the source/destination folders. "));
                 } else {
                     var success = (currentPackageDirectory: DirectoryEntry) => {
-                        FileUtil.copyDirectoryEntriesTo(currentPackageDirectory, deployDir, copyCallback);
+                        FileUtil.copyDirectoryEntriesTo(currentPackageDirectory, deployDir, ignoreList, copyCallback);
                     };
 
                     var fail = (fileSystemError: FileError) => {
@@ -422,8 +422,8 @@ class LocalPackage extends Package implements ILocalPackage {
             diffCallback(e, null);
         };
 
-        /* copy old files */
-        LocalPackage.copyCurrentPackage(newPackageLocation, (currentPackageError: Error) => {
+        /* copy old files except signature file */
+        LocalPackage.copyCurrentPackage(newPackageLocation, [".codepushrelease"], (currentPackageError: Error) => {
             /* copy new files */
             LocalPackage.handleCleanDeployment(newPackageLocation, (cleanDeployError: Error) => {
                 /* delete files mentioned in the manifest */
