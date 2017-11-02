@@ -81,6 +81,15 @@ StatusReport* rollbackStatusReport = nil;
 - (void)decodeSignature:(CDVInvokedUrlCommand *)command {
     [self.commandDelegate runInBackground:^{
         NSString *publicKey = [command argumentAtIndex:0 withDefault:nil andClass:[NSString class]];
+
+        // remove BEGIN / END tags and line breaks from public key string
+        publicKey = [publicKey stringByReplacingOccurrencesOfString:@"-----BEGIN PUBLIC KEY-----\n"
+                                                         withString:@""];
+        publicKey = [publicKey stringByReplacingOccurrencesOfString:@"-----END PUBLIC KEY-----"
+                                                         withString:@""];
+        publicKey = [publicKey stringByReplacingOccurrencesOfString:@"\n"
+                                                         withString:@""];
+
         NSString *jwt = [command argumentAtIndex:1 withDefault:nil andClass:[NSString class]];
 
         id <JWTAlgorithmDataHolderProtocol> verifyDataHolder = [JWTAlgorithmRSFamilyDataHolder new]
