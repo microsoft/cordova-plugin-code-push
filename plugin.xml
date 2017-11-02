@@ -80,7 +80,7 @@
         </platform>
 
         <platform name="ios">
-            <framework src="JWT" type="podspec" spec="3.0.0-beta.4" />
+            <framework src="JWT" type="podspec" spec="3.0.0-beta.6" />
             <source-file src="src/ios/CDVWKWebViewEngine+CodePush.m" />
             <header-file src="src/ios/CodePush.h" />
             <source-file src="src/ios/CodePush.m" />
