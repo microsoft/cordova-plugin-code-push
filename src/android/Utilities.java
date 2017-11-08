@@ -81,6 +81,10 @@ public class Utilities {
         Log.e(CodePush.class.getName(), "An error occured. " + e.getMessage(), e);
     }
 
+    public static void logMessage(String message) {
+        Log.e(CodePush.class.getName(), message);
+    }
+
 
     /**
      * Getting the full path to all the assets in a given asset path.

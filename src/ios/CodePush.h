@@ -14,7 +14,9 @@
 - (void)restartApplication:(CDVInvokedUrlCommand *)command;
 - (void)getBinaryHash:(CDVInvokedUrlCommand *)command;
 - (void)getPackageHash:(CDVInvokedUrlCommand *)command;
-- (void)verifySignature:(CDVInvokedUrlCommand *)command;
+- (void)decodeSignature:(CDVInvokedUrlCommand *)command;
+- (void)getPublicKey:(CDVInvokedUrlCommand *)command;
 - (void)pluginInitialize;
 
+void CPLog(NSString *formatString, ...);
 @end
