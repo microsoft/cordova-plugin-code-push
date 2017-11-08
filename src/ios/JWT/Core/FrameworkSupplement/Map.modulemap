@@ -1,0 +1,5 @@
+framework module JWT {
+	umbrella header "CodePushJWT.h"
+	export *
+	module * { export * }
+}

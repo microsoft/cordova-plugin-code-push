@@ -80,7 +80,6 @@
         </platform>
 
         <platform name="ios">
-            <framework src="JWT" type="podspec" spec="3.0.0-beta.4" />
             <source-file src="src/ios/CDVWKWebViewEngine+CodePush.m" />
             <header-file src="src/ios/CodePush.h" />
             <source-file src="src/ios/CodePush.m" />
@@ -99,6 +98,59 @@
             <source-file src="src/ios/UpdateHashUtils.m" />
             <header-file src="src/ios/Utilities.h" />
             <source-file src="src/ios/Utilities.m" />
+
+            <!-- JWT -->
+            <source-file src="src/ios/JWT/Core/Algorithms/Base/CodePushJWTAlgorithmFactory.m" />
+            <source-file src="src/ios/JWT/Core/Algorithms/Base/CodePushJWTAlgorithmNone.m" />
+            <source-file src="src/ios/JWT/Core/Algorithms/ESFamily/CodePushJWTAlgorithmESBase.m" />
+            <source-file src="src/ios/JWT/Core/Algorithms/Holders/CodePushJWTAlgorithmDataHolder.m" />
+            <source-file src="src/ios/JWT/Core/Algorithms/Holders/CodePushJWTAlgorithmDataHolderChain.m" />
+            <source-file src="src/ios/JWT/Core/Algorithms/HSFamily/CodePushJWTAlgorithmHSBase.m" />
+            <source-file src="src/ios/JWT/Core/Algorithms/RSFamily/CodePushJWTAlgorithmRSBase.m" />
+            <source-file src="src/ios/JWT/Core/Algorithms/RSFamily/RSKeys/CodePushJWTCryptoKey.m" />
+            <source-file src="src/ios/JWT/Core/Algorithms/RSFamily/RSKeys/CodePushJWTCryptoKeyExtractor.m" />
+            <source-file src="src/ios/JWT/Core/Algorithms/RSFamily/RSKeys/CodePushJWTCryptoSecurity.m" />
+            <source-file src="src/ios/JWT/Core/ClaimSet/CodePushJWTClaim.m" />
+            <source-file src="src/ios/JWT/Core/ClaimSet/CodePushJWTClaimsSet.m" />
+            <source-file src="src/ios/JWT/Core/ClaimSet/CodePushJWTClaimsSetSerializer.m" />
+            <source-file src="src/ios/JWT/Core/ClaimSet/CodePushJWTClaimsSetVerifier.m" />
+            <source-file src="src/ios/JWT/Core/Coding/CodePushJWTCoding+ResultTypes.m" />
+            <source-file src="src/ios/JWT/Core/Coding/CodePushJWTCoding+VersionOne.m" />
+            <source-file src="src/ios/JWT/Core/Coding/CodePushJWTCoding+VersionThree.m" />
+            <source-file src="src/ios/JWT/Core/Coding/CodePushJWTCoding+VersionTwo.m" />
+            <source-file src="src/ios/JWT/Core/Coding/CodePushJWTCoding.m" />
+            <source-file src="src/ios/JWT/Core/Supplement/CodePushJWTBase64Coder.m" />
+            <source-file src="src/ios/JWT/Core/Supplement/CodePushJWTErrorDescription.m" />
+            <header-file src="src/ios/JWT/Core/Algorithms/Base/CodePushJWTAlgorithm.h" />
+            <header-file src="src/ios/JWT/Core/Algorithms/Base/CodePushJWTAlgorithmFactory.h" />
+            <header-file src="src/ios/JWT/Core/Algorithms/Base/CodePushJWTAlgorithmNone.h" />
+            <header-file src="src/ios/JWT/Core/Algorithms/ESFamily/CodePushJWTAlgorithmESBase.h" />
+            <header-file src="src/ios/JWT/Core/Algorithms/Holders/CodePushJWTAlgorithmDataHolder.h" />
+            <header-file src="src/ios/JWT/Core/Algorithms/Holders/CodePushJWTAlgorithmDataHolderChain.h" />
+            <header-file src="src/ios/JWT/Core/Algorithms/HSFamily/CodePushJWTAlgorithmHSBase.h" />
+            <header-file src="src/ios/JWT/Core/Algorithms/RSFamily/CodePushJWTAlgorithmRSBase.h" />
+            <header-file src="src/ios/JWT/Core/Algorithms/RSFamily/CodePushJWTRSAlgorithm.h" />
+            <header-file src="src/ios/JWT/Core/Algorithms/RSFamily/RSKeys/CodePushJWTCryptoKey.h" />
+            <header-file src="src/ios/JWT/Core/Algorithms/RSFamily/RSKeys/CodePushJWTCryptoKeyExtractor.h" />
+            <header-file src="src/ios/JWT/Core/Algorithms/RSFamily/RSKeys/CodePushJWTCryptoSecurity.h" />
+            <header-file src="src/ios/JWT/Core/ClaimSet/CodePushJWTClaim.h" />
+            <header-file src="src/ios/JWT/Core/ClaimSet/CodePushJWTClaimsSet.h" />
+            <header-file src="src/ios/JWT/Core/ClaimSet/CodePushJWTClaimsSetSerializer.h" />
+            <header-file src="src/ios/JWT/Core/ClaimSet/CodePushJWTClaimsSetVerifier.h" />
+            <header-file src="src/ios/JWT/Core/Coding/CodePushJWTCoding+ResultTypes.h" />
+            <header-file src="src/ios/JWT/Core/Coding/CodePushJWTCoding+VersionOne.h" />
+            <header-file src="src/ios/JWT/Core/Coding/CodePushJWTCoding+VersionThree.h" />
+            <header-file src="src/ios/JWT/Core/Coding/CodePushJWTCoding+VersionTwo.h" />
+            <header-file src="src/ios/JWT/Core/Coding/CodePushJWTCoding.h" />
+            <header-file src="src/ios/JWT/Core/FrameworkSupplement/CodePushJWT.h" />
+            <header-file src="src/ios/JWT/Core/Supplement/CodePushJWTBase64Coder.h" />
+            <header-file src="src/ios/JWT/Core/Supplement/CodePushJWTDeprecations.h" />
+            <header-file src="src/ios/JWT/Core/Supplement/CodePushJWTErrorDescription.h" />   
+
+            <!-- Base64 -->
+            <source-file src="src/ios/Base64/CodePushMF_Base64Additions.m" />   
+            <header-file src="src/ios/Base64/CodePushMF_Base64Additions.h" />  
+
             <config-file target="config.xml" parent="/*">
                 <feature name="CodePush">
                     <param name="ios-package" value="CodePush" />

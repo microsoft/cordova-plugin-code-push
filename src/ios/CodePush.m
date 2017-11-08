@@ -9,7 +9,7 @@
 #import "CodePushReportingManager.h"
 #import "StatusReport.h"
 #import "UpdateHashUtils.h"
-#import <JWT.h>
+#import "CodePushJWT.h"
 
 @implementation CodePush
 
