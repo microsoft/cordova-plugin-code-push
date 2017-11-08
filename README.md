@@ -69,6 +69,20 @@ With the CodePush plugin installed, configure your app to use it via the followi
     As a reminder, these keys are generated for you when you created your CodePush app via the CLI. If you need to retrieve them, you can simply run `code-push deployment ls APP_NAME -k`, and grab the key for the specific deployment you want to use (e.g. `Staging`, `Production`). 
     
     *NOTE: You [must](http://microsoft.github.io/code-push/docs/cli.html#link-4) create a separate CodePush app for iOS and Android, which is why the above sample illustrates declaring seperate keys for Android and iOS. If you're only developing for a single platform, then you only need to specify the deployment key for either Android or iOS, so you don't need to add the additional `<platform>` element as illustrated above.*
+
+    Beginning from version **1.10.0** you can sign your update bundles (for more information about code signing please refer to relevant documentation [section](https://github.com/Microsoft/code-push/blob/master/cli/README.md#code-signing)). In order to enable code signing for Cordova application you should setup public key to verify bundles signature by providing following `preference` setting in `config.xml`:
+
+     ```xml
+    <platform name="android">
+        ...
+        <preference name="CodePushPublicKey" value="YOUR-PUBLIC-KEY" />
+    </platform>
+    <platform name="ios">
+        ...
+        <preference name="CodePushPublicKey" value="YOUR-PUBLIC-KEY" />
+    </platform>
+    ```
+    You can use the same private/public key pair for each platform.
     
 2. If you're using an `<access origin="*" />` element in your `config.xml` file, then your app is already allowed to communicate with the CodePush servers and you can safely skip this step. Otherwise, add the following additional `<access />` elements:
  
@@ -154,9 +168,12 @@ code-push release-cordova MyApp-Android android --rollout 25%
 # limiting the update to exact version name in the config.xml file
 code-push release-cordova MyApp-Android android --targetBinaryVersion "~1.1.0"
 
-# Release the update now but mark it as disabled
+# Release an update now but mark it as disabled
 # so that no users can download it yet
 code-push release-cordova MyApp-ios ios -x
+
+# Release an update signed by private key (public key should be configured for application)
+code-push release-cordova MyApp-Android --privateKeyPath ~/rsa/private_key.pem
 ```
 
 The CodePush client supports differential updates, so even though you are releasing your app code on every update, your end users will only actually download the files they need. The service handles this automatically so that you can focus on creating awesome apps and we can worry about optimizing end user downloads.
