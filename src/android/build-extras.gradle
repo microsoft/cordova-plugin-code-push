@@ -21,8 +21,11 @@
  */
 ext.postBuildExtras = {
     
-    // Since cordova-android 7 assets directory moved to android/app/src/main/assets instead of android/assets
-    def inAssetsDir = file("src/main/assets").exists() ? file("src/main/assets") : file("assets")
+    def inAssetsDir = file("src/main/assets")
+    if (!inAssetsDir.exists()) { // Add support for cordova-android < 7.0.0
+        inAssetsDir = file("assets")
+    }
+
     def outAssetsDir = inAssetsDir
     def outFile = new File(outAssetsDir, "cdvasset.manifest")
 
