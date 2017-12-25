@@ -65,12 +65,9 @@ class CodePushUtil {
      * Logs an error message using the CodePush tag.
      */
     public static logError(message: String, error?: Error): void {
-        var errorMessage = message || "" + " " + CodePushUtil.getErrorMessage(error);
-        var stackTrace = '';
-        if (error.stack) {
-            stackTrace += '. Stacktrace: ' + error.stack;
-        }
-        console.error(CodePushUtil.TAG + " " + errorMessage + stackTrace);
+        const errorMessage = message || CodePushUtil.getErrorMessage(error);
+        const stackTrace = error.stack ? `. Stacktrace: ${error.stack}` : '';
+        console.error(`${CodePushUtil.TAG} ${errorMessage}${stackTrace}`);
     }
 }
 
