@@ -20,7 +20,12 @@
        under the License.
  */
 ext.postBuildExtras = {
-    def inAssetsDir = file("assets")
+    
+    def inAssetsDir = file("src/main/assets")
+    if (!inAssetsDir.exists()) { // Add support for cordova-android < 7.0.0
+        inAssetsDir = file("assets")
+    }
+
     def outAssetsDir = inAssetsDir
     def outFile = new File(outAssetsDir, "cdvasset.manifest")
 

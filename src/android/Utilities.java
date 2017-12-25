@@ -23,6 +23,8 @@ import static java.lang.Long.parseLong;
  * Utilities class used for file and other common native operations.
  */
 public class Utilities {
+    private static final String ASSETS_MANIFEST_FILENAME = "cdvasset.manifest";
+
     public static String readFileContents(File file) throws IOException {
         StringBuilder sb = new StringBuilder();
         BufferedReader br = null;
@@ -98,7 +100,7 @@ public class Utilities {
         ObjectInputStream ois = null;
         List<String> flatAssetPaths = new ArrayList<String>();
         try {
-            ois = new ObjectInputStream(assetManager.open("cdvasset.manifest"));
+            ois = new ObjectInputStream(assetManager.open(ASSETS_MANIFEST_FILENAME));
             Map<String, String[]> directoryList = (Map<String, String[]>) ois.readObject();
 
             for(String directoryKey: directoryList.keySet()){
