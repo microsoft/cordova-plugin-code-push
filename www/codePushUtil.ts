@@ -66,7 +66,7 @@ class CodePushUtil {
      */
     public static logError(message: String, error?: Error): void {
         const errorMessage = message || CodePushUtil.getErrorMessage(error);
-        const stackTrace = error.stack ? `. Stacktrace: ${error.stack}` : '';
+        const stackTrace = error.stack ? `. StackTrace: ${error.stack}` : '';
         console.error(`${CodePushUtil.TAG} ${errorMessage}${stackTrace}`);
     }
 }
