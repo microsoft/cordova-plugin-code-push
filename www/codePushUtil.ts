@@ -66,7 +66,11 @@ class CodePushUtil {
      */
     public static logError(message: String, error?: Error): void {
         var errorMessage = message || "" + " " + CodePushUtil.getErrorMessage(error);
-        console.error(CodePushUtil.TAG + " " + errorMessage);
+        var stackTrace = '';
+        if (error.stack) {
+            stackTrace += '. Stacktrace: ' + error.stack;
+        }
+        console.error(CodePushUtil.TAG + " " + errorMessage + stackTrace);
     }
 }
 
