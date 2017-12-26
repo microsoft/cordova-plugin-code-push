@@ -35,7 +35,7 @@ var CodePushUtil = (function () {
         console.log(CodePushUtil.TAG + " " + msg);
     };
     CodePushUtil.logError = function (message, error) {
-        var errorMessage = message || CodePushUtil.getErrorMessage(error);
+        var errorMessage = (message || "") + " " + CodePushUtil.getErrorMessage(error);
         var stackTrace = error.stack ? ". StackTrace: " + error.stack : '';
         console.error(CodePushUtil.TAG + " " + errorMessage + stackTrace);
     };
