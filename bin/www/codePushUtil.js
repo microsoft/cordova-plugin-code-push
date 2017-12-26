@@ -35,8 +35,9 @@ var CodePushUtil = (function () {
         console.log(CodePushUtil.TAG + " " + msg);
     };
     CodePushUtil.logError = function (message, error) {
-        var errorMessage = message || "" + " " + CodePushUtil.getErrorMessage(error);
-        console.error(CodePushUtil.TAG + " " + errorMessage);
+        var errorMessage = (message || "") + " " + CodePushUtil.getErrorMessage(error);
+        var stackTrace = error.stack ? ". StackTrace: " + error.stack : '';
+        console.error(CodePushUtil.TAG + " " + errorMessage + stackTrace);
     };
     CodePushUtil.TAG = "[CodePush]";
     CodePushUtil.invokeErrorCallback = function (error, errorCallback) {
