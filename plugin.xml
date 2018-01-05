@@ -6,8 +6,8 @@
         <keywords>cordova,code,push</keywords>
         <repo>https://github.com/Microsoft/cordova-plugin-code-push.git</repo>
 
+        <hook type="before_plugin_install" src="scripts/beforeInstall.js" />    
         <dependency id="code-push" version="2.0.4" />
-        <dependency id="cordova-plugin-file-transfer" version="1.6.3" />
         <dependency id="cordova-plugin-zip" version=">=3.0.0" />
         <dependency id="cordova-plugin-dialogs" version=">=1.1.1" />
         <dependency id="cordova-plugin-device" version=">=1.1.0" />
