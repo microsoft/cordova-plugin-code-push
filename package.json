@@ -28,6 +28,8 @@
     "@types/cordova": "0.0.34",
     "@types/cordova-plugin-device": "0.0.3",
     "@types/cordova-plugin-dialogs": "0.0.3",
+    "@types/cordova-plugin-file": "0.0.3",
+    "@types/cordova-plugin-file-transfer": "0.0.3",
     "@types/mkdirp": "^0.5.1",
     "@types/mocha": "^2.2.43",
     "@types/node": "^8.0.28",
