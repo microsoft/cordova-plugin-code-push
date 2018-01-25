@@ -33,13 +33,18 @@
                 console.log("Installing the latest version of file-transfer plugin... ");
                 execSync(cordovaCLI + ' plugin add cordova-plugin-file-transfer@latest');
             } catch (e) {
-                console.log('The version of file plugin appears to be incompatible with the latest file transfer version. Installing compatible version of file transfer.... ');
+                console.log('The version of file plugin appears to be incompatible with the latest file transfer version. Installing compatible version of file transfer... ');
                 execSync(cordovaCLI + ' plugin add cordova-plugin-file-transfer@1.4.0');
             }
         }
     }
     if (!plugins.includes('cordova-plugin-zip')) {
-        execSync(cordovaCLI + ' plugin add cordova-plugin-zip');
+        try {
+            execSync(cordovaCLI + ' plugin add cordova-plugin-zip');
+        } catch (e) {
+            console.log('Something went wrong when installing cordova-plugin-zip... Installing the stable version of zip... ');
+            execSync(cordovaCLI + ' plugin add cordova-plugin-zip@3.1.0');            
+        }
     }
     deferral.resolve();
 
