@@ -38,11 +38,13 @@
             }
         }
     }
-    try {
-        execSync(cordovaCLI + ' plugin add cordova-plugin-zip');
-    } catch (e) {
-        console.log('Something went wrong when installing cordova-plugin-zip... Installing the stable version of zip... ');
-        execSync(cordovaCLI + ' plugin add cordova-plugin-zip@3.1.0');            
+    if (!plugins.includes('cordova-plugin-zip')) {
+        try {
+            execSync(cordovaCLI + ' plugin add cordova-plugin-zip');
+        } catch (e) {
+            console.log('Something went wrong when installing cordova-plugin-zip... Installing the stable version of zip... ');
+            execSync(cordovaCLI + ' plugin add cordova-plugin-zip@3.1.0');            
+        }
     }
     deferral.resolve();
 
