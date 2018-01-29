@@ -20,9 +20,10 @@
     console.log("Cordova version is " + cordovaVersion);
 
     var plugins = execSync(cordovaCLI + ' plugin ls');
-    if (!plugins.includes('cordova-plugin-file-transfer')) {
+
+    if (plugins.indexOf('cordova-plugin-file-transfer') < 0) {
         if (parseFloat(cordovaVersion) < 6.3) {
-            if (!plugins.includes('cordova-plugin-file')) {
+            if (plugins.indexOf('cordova-plugin-file') < 0) {
                 console.log("Installing the compatible version of file plugin... ");
                 execSync(cordovaCLI + ' plugin add cordova-plugin-file@3.0.0');
             }
@@ -38,7 +39,7 @@
             }
         }
     }
-    if (!plugins.includes('cordova-plugin-zip')) {
+    if (plugins.indexOf('cordova-plugin-zip') < 0) {
         try {
             execSync(cordovaCLI + ' plugin add cordova-plugin-zip');
         } catch (e) {
