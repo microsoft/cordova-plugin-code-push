@@ -248,9 +248,10 @@ class CodePush implements CodePushCordovaPlugin {
      *                     The callback will be called only once, and the possible statuses are defined by the SyncStatus enum.
      * @param syncOptions Optional SyncOptions parameter configuring the behavior of the sync operation.
      * @param downloadProgress Optional callback invoked during the download process. It is called several times with one DownloadProgress parameter.
+     * @param syncErrback Optional errback invoked if an error occurs. The callback will be called only once
      *
      */
-    public sync(syncCallback?: SuccessCallback<any>, syncOptions?: SyncOptions, downloadProgress?: SuccessCallback<DownloadProgress>): void {
+    public sync(syncCallback?: SuccessCallback<any>, syncOptions?: SyncOptions, downloadProgress?: SuccessCallback<DownloadProgress>, syncErrback?: ErrorCallback): void {
         /* Check if a sync is already in progress */
         if (CodePush.SyncInProgress) {
             /* A sync is already in progress */
@@ -261,7 +262,7 @@ class CodePush implements CodePushCordovaPlugin {
              * If the sync status is a result status, then the sync must be complete and the flag must be updated
              * Otherwise, do not change the flag and trigger the syncCallback as usual
              */
-            var syncCallbackAndUpdateSyncInProgress: SuccessCallback<any> = (result: any): void => {
+            var syncCallbackAndUpdateSyncInProgress: Callback<any> = (err: Error, result: any): void => {
                 switch (result) {
                     case SyncStatus.ERROR:
                     case SyncStatus.IN_PROGRESS:
@@ -275,6 +276,11 @@ class CodePush implements CodePushCordovaPlugin {
                         /* The sync is not yet complete, so do nothing */
                         break;
                 }
+
+                if (err) {
+                    syncErrback && syncErrback(err);
+                }
+
                 syncCallback && syncCallback(result);
             };
 
@@ -296,7 +302,7 @@ class CodePush implements CodePushCordovaPlugin {
      * @param downloadProgress Optional callback invoked during the download process. It is called several times with one DownloadProgress parameter.
      *
      */
-    private syncInternal(syncCallback?: SuccessCallback<any>, syncOptions?: SyncOptions, downloadProgress?: SuccessCallback<DownloadProgress>): void {
+    private syncInternal(syncCallback?: Callback<any>, syncOptions?: SyncOptions, downloadProgress?: SuccessCallback<DownloadProgress>): void {
 
         /* No options were specified, use default */
         if (!syncOptions) {
@@ -324,7 +330,7 @@ class CodePush implements CodePushCordovaPlugin {
 
         var onError = (error: Error) => {
             CodePushUtil.logError("An error occurred during sync.", error);
-            syncCallback && syncCallback(SyncStatus.ERROR);
+            syncCallback && syncCallback(error, SyncStatus.ERROR);
         };
 
         var onInstallSuccess = (appliedWhen: InstallMode) => {
@@ -343,16 +349,16 @@ class CodePush implements CodePushCordovaPlugin {
                     break;
             }
 
-            syncCallback && syncCallback(SyncStatus.UPDATE_INSTALLED);
+            syncCallback && syncCallback(null, SyncStatus.UPDATE_INSTALLED);
         };
 
         var onDownloadSuccess = (localPackage: ILocalPackage) => {
-            syncCallback && syncCallback(SyncStatus.INSTALLING_UPDATE);
+            syncCallback && syncCallback(null, SyncStatus.INSTALLING_UPDATE);
             localPackage.install(onInstallSuccess, onError, syncOptions);
         };
 
         var downloadAndInstallUpdate = (remotePackage: RemotePackage) => {
-            syncCallback && syncCallback(SyncStatus.DOWNLOADING_PACKAGE);
+            syncCallback && syncCallback(null, SyncStatus.DOWNLOADING_PACKAGE);
             remotePackage.download(onDownloadSuccess, onError, downloadProgress);
         };
 
@@ -363,12 +369,12 @@ class CodePush implements CodePushCordovaPlugin {
                     CodePushUtil.logMessage("An update is available, but it is being ignored due to have been previously rolled back.");
                 }
 
-                syncCallback && syncCallback(SyncStatus.UP_TO_DATE);
+                syncCallback && syncCallback(null, SyncStatus.UP_TO_DATE);
             } else {
                 var dlgOpts: UpdateDialogOptions = <UpdateDialogOptions>syncOptions.updateDialog;
                 if (dlgOpts) {
                     CodePushUtil.logMessage("Awaiting user action.");
-                    syncCallback && syncCallback(SyncStatus.AWAITING_USER_ACTION);
+                    syncCallback && syncCallback(null, SyncStatus.AWAITING_USER_ACTION);
                 }
                 if (remotePackage.isMandatory && syncOptions.updateDialog) {
                     /* Alert user */
@@ -388,7 +394,7 @@ class CodePush implements CodePushCordovaPlugin {
                             default:
                                 /* Cancel */
                                 CodePushUtil.logMessage("User cancelled the update.");
-                                syncCallback && syncCallback(SyncStatus.UPDATE_IGNORED);
+                                syncCallback && syncCallback(null, SyncStatus.UPDATE_IGNORED);
                                 break;
                         }
                     };
@@ -404,7 +410,7 @@ class CodePush implements CodePushCordovaPlugin {
             }
         };
 
-        syncCallback && syncCallback(SyncStatus.CHECKING_FOR_UPDATE);
+        syncCallback && syncCallback(null, SyncStatus.CHECKING_FOR_UPDATE);
         window.codePush.checkForUpdate(onUpdate, onError, syncOptions.deploymentKey);
     }
 

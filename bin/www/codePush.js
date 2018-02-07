@@ -160,13 +160,13 @@ var CodePush = (function () {
             CodePushUtil.invokeErrorCallback(new Error("An error occurred while querying for updates." + CodePushUtil.getErrorMessage(e)), queryError);
         }
     };
-    CodePush.prototype.sync = function (syncCallback, syncOptions, downloadProgress) {
+    CodePush.prototype.sync = function (syncCallback, syncOptions, downloadProgress, syncErrback) {
         if (CodePush.SyncInProgress) {
             CodePushUtil.logMessage("Sync already in progress.");
             syncCallback && syncCallback(SyncStatus.IN_PROGRESS);
         }
         else {
-            var syncCallbackAndUpdateSyncInProgress = function (result) {
+            var syncCallbackAndUpdateSyncInProgress = function (err, result) {
                 switch (result) {
                     case SyncStatus.ERROR:
                     case SyncStatus.IN_PROGRESS:
@@ -176,6 +176,9 @@ var CodePush = (function () {
                         CodePush.SyncInProgress = false;
                     default:
                         break;
+                }
+                if (err) {
+                    syncErrback && syncErrback(err);
                 }
                 syncCallback && syncCallback(result);
             };
@@ -203,7 +206,7 @@ var CodePush = (function () {
         window.codePush.notifyApplicationReady();
         var onError = function (error) {
             CodePushUtil.logError("An error occurred during sync.", error);
-            syncCallback && syncCallback(SyncStatus.ERROR);
+            syncCallback && syncCallback(error, SyncStatus.ERROR);
         };
         var onInstallSuccess = function (appliedWhen) {
             switch (appliedWhen) {
@@ -219,14 +222,14 @@ var CodePush = (function () {
                     }
                     break;
             }
-            syncCallback && syncCallback(SyncStatus.UPDATE_INSTALLED);
+            syncCallback && syncCallback(null, SyncStatus.UPDATE_INSTALLED);
         };
         var onDownloadSuccess = function (localPackage) {
-            syncCallback && syncCallback(SyncStatus.INSTALLING_UPDATE);
+            syncCallback && syncCallback(null, SyncStatus.INSTALLING_UPDATE);
             localPackage.install(onInstallSuccess, onError, syncOptions);
         };
         var downloadAndInstallUpdate = function (remotePackage) {
-            syncCallback && syncCallback(SyncStatus.DOWNLOADING_PACKAGE);
+            syncCallback && syncCallback(null, SyncStatus.DOWNLOADING_PACKAGE);
             remotePackage.download(onDownloadSuccess, onError, downloadProgress);
         };
         var onUpdate = function (remotePackage) {
@@ -235,13 +238,13 @@ var CodePush = (function () {
                 if (updateShouldBeIgnored) {
                     CodePushUtil.logMessage("An update is available, but it is being ignored due to have been previously rolled back.");
                 }
-                syncCallback && syncCallback(SyncStatus.UP_TO_DATE);
+                syncCallback && syncCallback(null, SyncStatus.UP_TO_DATE);
             }
             else {
                 var dlgOpts = syncOptions.updateDialog;
                 if (dlgOpts) {
                     CodePushUtil.logMessage("Awaiting user action.");
-                    syncCallback && syncCallback(SyncStatus.AWAITING_USER_ACTION);
+                    syncCallback && syncCallback(null, SyncStatus.AWAITING_USER_ACTION);
                 }
                 if (remotePackage.isMandatory && syncOptions.updateDialog) {
                     var message = dlgOpts.appendReleaseDescription ?
@@ -258,7 +261,7 @@ var CodePush = (function () {
                             case 2:
                             default:
                                 CodePushUtil.logMessage("User cancelled the update.");
-                                syncCallback && syncCallback(SyncStatus.UPDATE_IGNORED);
+                                syncCallback && syncCallback(null, SyncStatus.UPDATE_IGNORED);
                                 break;
                         }
                     };
@@ -272,7 +275,7 @@ var CodePush = (function () {
                 }
             }
         };
-        syncCallback && syncCallback(SyncStatus.CHECKING_FOR_UPDATE);
+        syncCallback && syncCallback(null, SyncStatus.CHECKING_FOR_UPDATE);
         window.codePush.checkForUpdate(onUpdate, onError, syncOptions.deploymentKey);
     };
     CodePush.prototype.getDefaultSyncOptions = function () {
