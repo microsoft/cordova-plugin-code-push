@@ -49,7 +49,7 @@ export class ProjectManager {
         var indexHtml = "www/index.html";
         var destinationIndexPath = path.join(projectDirectory, indexHtml);
 
-        return ProjectManager.execChildProcess("cordova create " + projectDirectory + " " + appNamespace + " " + appName + " --copy-from " + templatePath)
+        return ProjectManager.execChildProcess("cordova create " + projectDirectory + " " + appNamespace + " " + appName + " --template " + templatePath)
             .then<string>(ProjectManager.replaceString.bind(undefined, destinationIndexPath, ProjectManager.CODE_PUSH_APP_VERSION_PLACEHOLDER, version));
     }
     
@@ -246,7 +246,7 @@ export class ProjectManager {
         var deferred = Q.defer<string>();
 
         options = options || {};
-        options.maxBuffer = 1024 * 500;
+        options.maxBuffer = 1024 * 1024;
         // abort processes that run longer than five minutes
         options.timeout = 5 * 60 * 1000;
 

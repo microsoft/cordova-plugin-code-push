@@ -32,7 +32,7 @@ var shouldUseWkWebView = testUtil.readShouldUseWkWebView();
 var shouldSetup: boolean = testUtil.readShouldSetup();
 var restartEmulators: boolean = testUtil.readRestartEmulators();
 
-const TestAppName = "TestCodePush";
+const TestAppName = "CodePushTest";
 const TestNamespace = "com.microsoft.codepush.test";
 const AcquisitionSDKPluginName = "code-push";
 const WkWebViewEnginePluginName = "cordova-plugin-wkwebview-engine";
@@ -86,24 +86,32 @@ function setupTests(): void {
         });
 
         console.log("Building test project.");
-        // create the test project
-        promises.push(createTestProject(testRunDirectory)
-            .then(() => {
-                console.log("Building update project.");
-                // create the update project
-                return createTestProject(updatesDirectory);
-            }));
+        promises.push(createTestProject(testRunDirectory));
+
+        console.log("Building update project.");
+        promises.push(createTestProject(updatesDirectory));
 
         Q.all<string>(promises).then(() => { done(); }, (error) => { done(error); });
     });
 }
 
 function createTestProject(directory: string): Q.Promise<string> {
-    return projectManager.setupProject(
-        directory, templatePath,
-        TestAppName, TestNamespace)
-        .then<string>(() => { return projectManager.addPlugin(directory, AcquisitionSDKPluginName); })
-        .then<string>(() => { return projectManager.addPlugin(directory, thisPluginPath); });
+    return projectManager.setupProject(directory, templatePath, TestAppName, TestNamespace)
+    .then(() => {
+        var promises: Q.Promise<string>[] = [];
+        
+        targetPlatforms.forEach(platform => {
+            promises.push(projectManager.addPlatform(directory, platform));
+        });
+
+        return Q.all<string>(promises);
+    })
+    .then(() => {
+        return projectManager.addPlugin(directory, AcquisitionSDKPluginName);    
+    })
+    .then(() => {
+        return projectManager.addPlugin(directory, thisPluginPath);
+    });
 }
 
 function createDefaultResponse(): su.CheckForUpdateResponseMock {
@@ -170,7 +178,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
         app.use(function(req: any, res: any, next: any) {
             res.setHeader("Access-Control-Allow-Origin", "*");
             res.setHeader("Access-Control-Allow-Methods", "*");
-            res.setHeader("Access-Control-Allow-Headers", "origin, content-type, accept, X-CodePush-SDK-Version");
+            res.setHeader("Access-Control-Allow-Headers", "origin, content-type, accept, X-CodePush-SDK-Version, X-CodePush-Plugin-Version, X-CodePush-Plugin-Name");
             next();
         });
 
@@ -242,16 +250,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
     describe("window.codePush", function() {
         before(() => {
             setupServer();
-            return projectManager.uninstallApplication(TestNamespace, targetPlatform)
-                .then(() => {
-                    return projectManager.addPlatform(testRunDirectory, targetPlatform);
-                })
-                .then(() => {
-                    return projectManager.addPlatform(updatesDirectory, targetPlatform);
-                }, () => { return null; /* ignore if platform has already been added */ })
-                .then(() => {
-                    return useWkWebView ? projectManager.addPlugin(testRunDirectory, WkWebViewEnginePluginName).then(() => { return projectManager.addPlugin(updatesDirectory, WkWebViewEnginePluginName); }) : null;
-                });
+            return projectManager.uninstallApplication(TestNamespace, targetPlatform);
         });
 
         after(() => {
