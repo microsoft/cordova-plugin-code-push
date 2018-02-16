@@ -117,7 +117,9 @@ var LocalPackage = (function (_super) {
                     if (deploymentResult.isDiffUpdate) {
                         _this.verifyHash(deployDir, _this.packageHash, verificationFail, successCallback);
                     }
-                    successCallback();
+                    else {
+                        successCallback();
+                    }
                 }
             }
         };
