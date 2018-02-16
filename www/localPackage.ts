@@ -149,8 +149,9 @@ class LocalPackage extends Package implements ILocalPackage {
                     if (deploymentResult.isDiffUpdate){
                         //verifyHash
                         this.verifyHash(deployDir, this.packageHash, verificationFail, successCallback);
+                    } else {
+                        successCallback();
                     }
-                    successCallback();
                 }          
             }
         }
