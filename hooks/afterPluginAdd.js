@@ -12,6 +12,7 @@ module.exports = function (ctx) {
             deferral.reject("An error occured. Please ensure that either the Cordova or PhoneGap CLI is installed.");
         }
     }
+    console.log("Using " + cordovaCLI + " for adding plugins...");
 
     if (ctx.cmdLine.includes("cordova-plugin-code-push")) {
         var plugins = ctx.opts.cordova.plugins;
