@@ -61,7 +61,6 @@ public class UpdateHashUtils {
                 InputStream inputStream = assetManager.open(assetPath);
                 manifestEntries.add(assetPath + ":" + computeHash(inputStream));
             } catch (FileNotFoundException e) {
-                System.out.println(e);
                 // ignore: AAPT ignore some file which we can't, it's OK
                 // https://github.com/Microsoft/cordova-plugin-code-push/issues/374#issuecomment-376558284
             }
