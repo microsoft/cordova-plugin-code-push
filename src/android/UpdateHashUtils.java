@@ -41,7 +41,7 @@ public class UpdateHashUtils {
         } else {
             File basePath = activity.getApplicationContext().getFilesDir();
             File fullPath = new File(basePath, path);
-            addFolderEntriesToManifest(manifestEntries, "www", fullPath.getPath());
+            addFolderEntriesToManifest(manifestEntries, "www", fullPath.getPath());                
         }
         Collections.sort(manifestEntries);
         JSONArray manifestJSONArray = new JSONArray();
@@ -71,7 +71,7 @@ public class UpdateHashUtils {
     private static void addFolderEntriesToManifest(ArrayList<String> manifestEntries, String prefix, String path) throws IOException, NoSuchAlgorithmException {
         String[] fileList = new File(path).list();
 
-        if (fileList != null && fileList.length > 0) {
+        if (fileList != null) {
             for (String pathInFolder : fileList) {
                 if (UpdateHashUtils.ignoredFiles.contains(pathInFolder)) {
                     continue;
@@ -85,8 +85,6 @@ public class UpdateHashUtils {
                     manifestEntries.add(relativePath.getPath() + ":" + computeHash(inputStream));
                 }
             }
-        } else {
-            throw new IOException("invalid directory path " + path);
         }
     }
 
