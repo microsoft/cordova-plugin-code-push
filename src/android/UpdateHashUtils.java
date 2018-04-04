@@ -41,7 +41,7 @@ public class UpdateHashUtils {
         } else {
             File basePath = activity.getApplicationContext().getFilesDir();
             File fullPath = new File(basePath, path);
-            addFolderEntriesToManifest(manifestEntries, "www", fullPath.getPath());                
+            addFolderEntriesToManifest(manifestEntries, "www", fullPath.getPath());
         }
         Collections.sort(manifestEntries);
         JSONArray manifestJSONArray = new JSONArray();
