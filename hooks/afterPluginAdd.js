@@ -1,6 +1,5 @@
 module.exports = function (ctx) {
-
-    if (ctx.cmdLine.includes("cordova-plugin-code-push")) {
+    if (ctx.cmdLine.indexOf("cordova-plugin-code-push") > -1 ) {
         console.log("Starting hook afterPluginAdd.js of corodva-plugin-code-push...");
         var execSync = require('child_process').execSync;
 
