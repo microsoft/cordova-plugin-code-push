@@ -51,7 +51,7 @@ public class UpdateHashUtils {
 
         // The JSON serialization turns path separators into "\/", e.g. "www\/images\/image.png"
         String manifestString = manifestJSONArray.toString().replace("\\/", "/");
-        return computeHash(new ByteArrayInputStream(manifestString.getBytes()));
+        return computeHashForString(manifestString);
     }
 
     private static void addFolderEntriesToManifestFromAssets(ArrayList<String> manifestEntries, AssetManager assetManager, String path) throws IOException, NoSuchAlgorithmException, ClassNotFoundException {
@@ -108,5 +108,28 @@ public class UpdateHashUtils {
         byte[] hash = messageDigest.digest();
         return String.format("%064x", new java.math.BigInteger(1, hash));
     }
+    
+    private static String computeHashForString(String inputString) throws IOException, NoSuchAlgorithmException {
+        try {
+            // Create MD5 Hash
+            MessageDigest digest = java.security.MessageDigest
+                    .getInstance("SHA-256");
+            digest.update(inputString.getBytes());
+            byte messageDigest[] = digest.digest();
 
+            // Create Hex String
+            StringBuilder hexString = new StringBuilder();
+            for (byte aMessageDigest : messageDigest) {
+                String h = Integer.toHexString(0xFF & aMessageDigest);
+                while (h.length() < 2)
+                    h = "0" + h;
+                hexString.append(h);
+            }
+            return hexString.toString();
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
 }
