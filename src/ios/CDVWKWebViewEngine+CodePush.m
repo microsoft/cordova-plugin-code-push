@@ -1,6 +1,5 @@
 #if defined(__has_include)
 #if __has_include("CDVWKWebViewEngine.h")
-#if !(TARGET_OS_SIMULATOR)
 
 #import "CDVWKWebViewEngine.h"
 
@@ -33,6 +32,5 @@
 
 @end
 
-#endif
 #endif
 #endif
