@@ -2,7 +2,7 @@
 
 # Apache Cordova Plugin for CodePush
 
-This plugin provides client-side integration for the [CodePush service](http://codepush.tools), allowing you to easily add a dynamic update experience to your Cordova app(s).
+This plugin provides client-side integration for the [CodePush service](https://docs.microsoft.com/en-us/appcenter/distribution/codepush/), allowing you to easily add a dynamic update experience to your Cordova app(s).
 
 <!-- Cordova Catelog -->
 
