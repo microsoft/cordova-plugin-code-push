@@ -3,14 +3,36 @@ module.exports = function (ctx) {
 
     var cordovaCLI = "cordova";
     try {
+        // global cordova
         execSync(cordovaCLI);
     } catch (e) {
+
         try {
-            cordovaCLI = "phonegap";
+            // local cordova
+            cordovaCLI = "$(npm bin)/cordova";
             execSync(cordovaCLI);
         } catch (e) {
-            deferral.reject("An error occured. Please ensure that either the Cordova or PhoneGap CLI is installed.");
+
+            try {
+                // global phonegap
+                cordovaCLI = "phonegap";
+                execSync(cordovaCLI);
+            } catch (e) {
+
+                try {
+                    // local phonegap
+                    cordovaCLI = "$(npm bin)/phonegap";
+                    execSync(cordovaCLI);
+                } catch (e) {
+                    var Q = context.requireCordovaModule('q');
+                    var deferral = new Q.defer();
+                    deferral.reject("An error occured. Please ensure that either the Cordova or PhoneGap CLI is installed globally or locally.");
+                }
+
+            }
+
         }
+
     }
 
     var plugins = ctx.opts.cordova.plugins;
