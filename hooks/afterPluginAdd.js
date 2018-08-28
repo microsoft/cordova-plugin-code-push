@@ -1,38 +1,38 @@
 module.exports = function (ctx) {
     var execSync = require('child_process').execSync;
 
+    var localNodeMudulePreCommand = "$(npm bin)/";
+    var hideOutput = " > /dev/null 2>&1";
+    if (/^win/.test(process.platform)) {
+        hideOutput = " >NUL 2>1";
+        localNodeMudulePreCommand = "%CD%\\node_modules\\.bin\\";
+    }
+
     var cordovaCLI = "cordova";
     try {
         // global cordova
-        execSync(cordovaCLI);
+        execSync(cordovaCLI + hideOutput);
     } catch (e) {
-
         try {
             // local cordova
-            cordovaCLI = "$(npm bin)/cordova";
-            execSync(cordovaCLI);
+            cordovaCLI = localNodeMudulePreCommand + 'cordova';
+            execSync(cordovaCLI + hideOutput);
         } catch (e) {
-
             try {
                 // global phonegap
                 cordovaCLI = "phonegap";
-                execSync(cordovaCLI);
+                execSync(cordovaCLI + hideOutput);
             } catch (e) {
-
                 try {
                     // local phonegap
-                    cordovaCLI = "$(npm bin)/phonegap";
-                    execSync(cordovaCLI);
+                    cordovaCLI = localNodeMudulePreCommand + "phonegap";
+                    execSync(cordovaCLI + hideOutput);
                 } catch (e) {
-                    var Q = context.requireCordovaModule('q');
-                    var deferral = new Q.defer();
-                    deferral.reject("An error occured. Please ensure that either the Cordova or PhoneGap CLI is installed globally or locally.");
+                    console.error('An error occured. Please ensure that either the Cordova or PhoneGap CLI is installed globally or locally.');
+                    return;
                 }
-
             }
-
         }
-
     }
 
     var plugins = ctx.opts.cordova.plugins;
@@ -41,14 +41,14 @@ module.exports = function (ctx) {
         console.log("Adding the cordova-plugin-file@4.3.3... ");
         var output = execSync(cordovaCLI + ' plugin add cordova-plugin-file@4.3.3').toString();
         console.log(output);
-        plugins = execSync('cordova plugin').toString();
+        plugins = execSync(cordovaCLI + ' plugin').toString();
     }
 
     if (plugins.indexOf("cordova-plugin-file-transfer") == -1) {
         console.log("Adding the cordova-plugin-file-transfer@1.6.3... ");
         var output = execSync(cordovaCLI + ' plugin add cordova-plugin-file-transfer@1.6.3').toString();
         console.log(output);
-        plugins = execSync('cordova plugin').toString();
+        plugins = execSync(cordovaCLI + ' plugin').toString();
     }
 
     if (plugins.indexOf("cordova-plugin-zip") == -1) {
