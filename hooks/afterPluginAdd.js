@@ -1,28 +1,35 @@
 module.exports = function (ctx) {
     var execSync = require('child_process').execSync;
 
+    var localNodeMudulePreCommand = "$(npm bin)/";
+    var hideOutput = " > /dev/null 2>&1";
+    if (/^win/.test(process.platform)) {
+        hideOutput = " >NUL 2>1";
+        localNodeMudulePreCommand = "%CD%\\node_modules\\.bin\\";
+    }
+
     var cordovaCLI = "cordova";
     try {
         // global cordova
-        execSync(cordovaCLI);
+        execSync(cordovaCLI + hideOutput);
     } catch (e) {
         try {
             // local cordova
-            cordovaCLI = "$(npm bin)/cordova";
-            execSync(cordovaCLI);
+            cordovaCLI = localNodeMudulePreCommand + 'cordova';
+            execSync(cordovaCLI + hideOutput);
         } catch (e) {
             try {
                 // global phonegap
                 cordovaCLI = "phonegap";
-                execSync(cordovaCLI);
+                execSync(cordovaCLI + hideOutput);
             } catch (e) {
                 try {
                     // local phonegap
-                    cordovaCLI = "$(npm bin)/phonegap";
-                    execSync(cordovaCLI);
+                    cordovaCLI = localNodeMudulePreCommand + "phonegap";
+                    execSync(cordovaCLI + hideOutput);
                 } catch (e) {
                     console.error('An error occured. Please ensure that either the Cordova or PhoneGap CLI is installed globally or locally.');
-                    return ;
+                    return;
                 }
             }
         }
