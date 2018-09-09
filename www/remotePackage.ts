@@ -8,7 +8,7 @@ import LocalPackage = require("./localPackage");
 import Package = require("./package");
 import NativeAppInfo = require("./nativeAppInfo");
 import CodePushUtil = require("./codePushUtil");
-import FileTransfer = require("./fileTransfer");
+import FileDownloader = require("./fileDownloader");
 import Sdk = require("./sdk");
 
 /**
@@ -16,16 +16,16 @@ import Sdk = require("./sdk");
  */
 class RemotePackage extends Package implements IRemotePackage {
 
-    private currentFileTransfer: FileTransfer;
+    private currentFileTransfer: FileDownloader;
 
     /**
      * The URL at which the package is available for download.
      */
     public downloadUrl: string;
-    
+
     /**
      * Downloads the package update from the CodePush service.
-     * 
+     *
      * @param successCallback Called with one parameter, the downloaded package information, once the download completed successfully.
      * @param errorCallback Optional callback invoked in case of an error.
      * @param downloadProgress Optional callback invoked during the download process. It is called several times with one DownloadProgress parameter.
@@ -36,7 +36,7 @@ class RemotePackage extends Package implements IRemotePackage {
             if (!this.downloadUrl) {
                 CodePushUtil.invokeErrorCallback(new Error("The remote package does not contain a download URL."), errorCallback);
             } else {
-                this.currentFileTransfer = new FileTransfer();
+                this.currentFileTransfer = new FileDownloader();
 
                 var downloadSuccess = (fileEntry: FileEntry) => {
                     this.currentFileTransfer = null;
@@ -71,7 +71,10 @@ class RemotePackage extends Package implements IRemotePackage {
 
                 this.currentFileTransfer.onprogress = (progressEvent: ProgressEvent) => {
                     if (downloadProgress) {
-                        var dp: DownloadProgress = { receivedBytes: progressEvent.loaded, totalBytes: progressEvent.total };
+                        var dp: DownloadProgress = {
+                            receivedBytes: progressEvent.loaded,
+                            totalBytes: progressEvent.total
+                        };
                         downloadProgress(dp);
                     }
                 };
@@ -82,10 +85,10 @@ class RemotePackage extends Package implements IRemotePackage {
             CodePushUtil.invokeErrorCallback(new Error("An error occured while downloading the package. " + (e && e.message) ? e.message : ""), errorCallback);
         }
     }
-    
+
     /**
      * Aborts the current download session, previously started with download().
-     * 
+     *
      * @param abortSuccess Optional callback invoked if the abort operation succeeded.
      * @param abortError Optional callback invoked in case of an error.
      */
@@ -93,7 +96,7 @@ class RemotePackage extends Package implements IRemotePackage {
         try {
             if (this.currentFileTransfer) {
                 this.currentFileTransfer.abort();
-            
+
                 /* abort succeeded */
                 abortSuccess && abortSuccess();
             }

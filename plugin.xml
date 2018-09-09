@@ -25,6 +25,10 @@
             <clobbers target="RemotePackage" />
         </js-module>
 
+        <js-module src="bin/www/fileDownloader.js" name="fileDownloader">
+            <clobbers target="FileDownloader" />
+        </js-module>
+
         <js-module src="bin/www/syncStatus.js" name="syncStatus">
             <clobbers target="SyncStatus" />
         </js-module>

@@ -1,4 +1,4 @@
-class FileTransfer {
+class FileDownloader {
     onprogress: ((ev: ProgressEvent) => void) | null;
     private _xhr: XMLHttpRequest;
 
@@ -44,4 +44,4 @@ class FileTransfer {
     }
 }
 
-export = FileTransfer;
+export = FileDownloader;

@@ -22,7 +22,7 @@ var LocalPackage = require("./localPackage");
 var Package = require("./package");
 var NativeAppInfo = require("./nativeAppInfo");
 var CodePushUtil = require("./codePushUtil");
-var FileTransfer = require("./fileTransfer");
+var FileDownloader = require("./fileDownloader");
 var Sdk = require("./sdk");
 var RemotePackage = (function (_super) {
     __extends(RemotePackage, _super);
@@ -37,7 +37,7 @@ var RemotePackage = (function (_super) {
                 CodePushUtil.invokeErrorCallback(new Error("The remote package does not contain a download URL."), errorCallback);
             }
             else {
-                this.currentFileTransfer = new FileTransfer();
+                this.currentFileTransfer = new FileDownloader();
                 var downloadSuccess = function (fileEntry) {
                     _this.currentFileTransfer = null;
                     fileEntry.file(function (file) {
@@ -66,7 +66,10 @@ var RemotePackage = (function (_super) {
                 };
                 this.currentFileTransfer.onprogress = function (progressEvent) {
                     if (downloadProgress) {
-                        var dp = { receivedBytes: progressEvent.loaded, totalBytes: progressEvent.total };
+                        var dp = {
+                            receivedBytes: progressEvent.loaded,
+                            totalBytes: progressEvent.total
+                        };
                         downloadProgress(dp);
                     }
                 };

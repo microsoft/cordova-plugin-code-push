@@ -8,10 +8,10 @@
 
 
 "use strict";
-var FileTransfer = (function () {
-    function FileTransfer() {
+var FileDownloader = (function () {
+    function FileDownloader() {
     }
-    FileTransfer.prototype.download = function (source, target, successCallback, errorCallback) {
+    FileDownloader.prototype.download = function (source, target, successCallback, errorCallback) {
         var _this = this;
         window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function (fs) {
             fs.root.getFile(target, { create: true, exclusive: false }, function (fileEntry) {
@@ -41,12 +41,12 @@ var FileTransfer = (function () {
             }, errorCallback);
         }, errorCallback);
     };
-    FileTransfer.prototype.abort = function () {
+    FileDownloader.prototype.abort = function () {
         if (this._xhr) {
             this._xhr.abort();
             this._xhr = null;
         }
     };
-    return FileTransfer;
+    return FileDownloader;
 }());
-module.exports = FileTransfer;
+module.exports = FileDownloader;
