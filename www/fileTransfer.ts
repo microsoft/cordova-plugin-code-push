@@ -14,10 +14,21 @@ class FileTransfer {
                 }
 
                 this._xhr.onload = (oEvent) => {
-                    const blob = this._xhr.response; // Note: not oReq.responseText
+                    const blob = this._xhr.response; // Note: not .responseText
                     if (blob) {
-                        successCallback(fileEntry);
-                        this._xhr = null;
+                        // Create a FileWriter object for our FileSystemFileEntry.
+                        fileEntry.createWriter((fileWriter) => {
+                            fileWriter.onwriteend = (e) => {
+                                successCallback(fileEntry);
+                            };
+
+                            fileWriter.onerror = (e) => {
+                                errorCallback(new Error('Could not save response to local filesystem! ' + e.toString()));
+                            };
+
+                            // Create a new Blob and write it to target
+                            fileWriter.write(blob);
+                        });
                     } else errorCallback(new Error('Could not download binary blob!'));
                 };
                 this._xhr.send(null);

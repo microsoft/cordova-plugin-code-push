@@ -15,7 +15,6 @@ var FileTransfer = (function () {
         var _this = this;
         window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function (fs) {
             fs.root.getFile(target, { create: true, exclusive: false }, function (fileEntry) {
-                console.log('fileEntry is file? ' + fileEntry.isFile.toString(), fileEntry);
                 _this._xhr = new XMLHttpRequest();
                 _this._xhr.open('GET', source, true);
                 _this._xhr.responseType = 'blob';
@@ -25,8 +24,15 @@ var FileTransfer = (function () {
                 _this._xhr.onload = function (oEvent) {
                     var blob = _this._xhr.response;
                     if (blob) {
-                        successCallback(fileEntry);
-                        _this._xhr = null;
+                        fileEntry.createWriter(function (fileWriter) {
+                            fileWriter.onwriteend = function (e) {
+                                successCallback(fileEntry);
+                            };
+                            fileWriter.onerror = function (e) {
+                                errorCallback(new Error('Could not save response to local filesystem! ' + e.toString()));
+                            };
+                            fileWriter.write(blob);
+                        });
                     }
                     else
                         errorCallback(new Error('Could not download binary blob!'));
