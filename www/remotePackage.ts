@@ -1,5 +1,4 @@
 /// <reference path="../typings/codePush.d.ts" />
-/// <reference types="cordova-plugin-file-transfer" />
 
 "use strict";
 
@@ -9,6 +8,7 @@ import LocalPackage = require("./localPackage");
 import Package = require("./package");
 import NativeAppInfo = require("./nativeAppInfo");
 import CodePushUtil = require("./codePushUtil");
+import FileTransfer = require("./fileTransfer");
 import Sdk = require("./sdk");
 
 /**
@@ -26,8 +26,8 @@ class RemotePackage extends Package implements IRemotePackage {
     /**
      * Downloads the package update from the CodePush service.
      * 
-     * @param downloadSuccess Called with one parameter, the downloaded package information, once the download completed successfully.
-     * @param downloadError Optional callback invoked in case of an error.
+     * @param successCallback Called with one parameter, the downloaded package information, once the download completed successfully.
+     * @param errorCallback Optional callback invoked in case of an error.
      * @param downloadProgress Optional callback invoked during the download process. It is called several times with one DownloadProgress parameter.
      */
     public download(successCallback: SuccessCallback<LocalPackage>, errorCallback?: ErrorCallback, downloadProgress?: SuccessCallback<DownloadProgress>): void {
@@ -64,9 +64,9 @@ class RemotePackage extends Package implements IRemotePackage {
                     });
                 };
 
-                var downloadError = (error: FileTransferError) => {
+                var downloadError = (error: FileError) => {
                     this.currentFileTransfer = null;
-                    CodePushUtil.invokeErrorCallback(new Error(error.body), errorCallback);
+                    CodePushUtil.invokeErrorCallback(new Error("Could not access file system. Error code: " + error.code), errorCallback);
                 };
 
                 this.currentFileTransfer.onprogress = (progressEvent: ProgressEvent) => {
@@ -76,7 +76,7 @@ class RemotePackage extends Package implements IRemotePackage {
                     }
                 };
 
-                this.currentFileTransfer.download(this.downloadUrl, cordova.file.dataDirectory + LocalPackage.DownloadDir + "/" + LocalPackage.PackageUpdateFileName, downloadSuccess, downloadError, true);
+                this.currentFileTransfer.download(this.downloadUrl, cordova.file.dataDirectory + LocalPackage.DownloadDir + "/" + LocalPackage.PackageUpdateFileName, downloadSuccess, downloadError);
             }
         } catch (e) {
             CodePushUtil.invokeErrorCallback(new Error("An error occured while downloading the package. " + (e && e.message) ? e.message : ""), errorCallback);

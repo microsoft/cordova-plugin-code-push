@@ -22,6 +22,7 @@ var LocalPackage = require("./localPackage");
 var Package = require("./package");
 var NativeAppInfo = require("./nativeAppInfo");
 var CodePushUtil = require("./codePushUtil");
+var FileTransfer = require("./fileTransfer");
 var Sdk = require("./sdk");
 var RemotePackage = (function (_super) {
     __extends(RemotePackage, _super);
@@ -61,7 +62,7 @@ var RemotePackage = (function (_super) {
                 };
                 var downloadError = function (error) {
                     _this.currentFileTransfer = null;
-                    CodePushUtil.invokeErrorCallback(new Error(error.body), errorCallback);
+                    CodePushUtil.invokeErrorCallback(new Error("Could not access file system. Error code: " + error.code), errorCallback);
                 };
                 this.currentFileTransfer.onprogress = function (progressEvent) {
                     if (downloadProgress) {
@@ -69,7 +70,7 @@ var RemotePackage = (function (_super) {
                         downloadProgress(dp);
                     }
                 };
-                this.currentFileTransfer.download(this.downloadUrl, cordova.file.dataDirectory + LocalPackage.DownloadDir + "/" + LocalPackage.PackageUpdateFileName, downloadSuccess, downloadError, true);
+                this.currentFileTransfer.download(this.downloadUrl, cordova.file.dataDirectory + LocalPackage.DownloadDir + "/" + LocalPackage.PackageUpdateFileName, downloadSuccess, downloadError);
             }
         }
         catch (e) {
