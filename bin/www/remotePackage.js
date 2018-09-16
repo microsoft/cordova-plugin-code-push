@@ -22,6 +22,7 @@ var LocalPackage = require("./localPackage");
 var Package = require("./package");
 var NativeAppInfo = require("./nativeAppInfo");
 var CodePushUtil = require("./codePushUtil");
+var FileDownloader = require("./fileDownloader");
 var Sdk = require("./sdk");
 var RemotePackage = (function (_super) {
     __extends(RemotePackage, _super);
@@ -36,7 +37,7 @@ var RemotePackage = (function (_super) {
                 CodePushUtil.invokeErrorCallback(new Error("The remote package does not contain a download URL."), errorCallback);
             }
             else {
-                this.currentFileTransfer = new FileTransfer();
+                this.currentFileTransfer = new FileDownloader();
                 var downloadSuccess = function (fileEntry) {
                     _this.currentFileTransfer = null;
                     fileEntry.file(function (file) {
@@ -61,15 +62,18 @@ var RemotePackage = (function (_super) {
                 };
                 var downloadError = function (error) {
                     _this.currentFileTransfer = null;
-                    CodePushUtil.invokeErrorCallback(new Error(error.body), errorCallback);
+                    CodePushUtil.invokeErrorCallback(new Error("Could not access file system. Error code: " + error.code), errorCallback);
                 };
                 this.currentFileTransfer.onprogress = function (progressEvent) {
                     if (downloadProgress) {
-                        var dp = { receivedBytes: progressEvent.loaded, totalBytes: progressEvent.total };
+                        var dp = {
+                            receivedBytes: progressEvent.loaded,
+                            totalBytes: progressEvent.total
+                        };
                         downloadProgress(dp);
                     }
                 };
-                this.currentFileTransfer.download(this.downloadUrl, cordova.file.dataDirectory + LocalPackage.DownloadDir + "/" + LocalPackage.PackageUpdateFileName, downloadSuccess, downloadError, true);
+                this.currentFileTransfer.download(this.downloadUrl, cordova.file.dataDirectory + LocalPackage.DownloadDir + "/" + LocalPackage.PackageUpdateFileName, downloadSuccess, downloadError);
             }
         }
         catch (e) {

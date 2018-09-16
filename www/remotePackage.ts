@@ -1,5 +1,4 @@
 /// <reference path="../typings/codePush.d.ts" />
-/// <reference types="cordova-plugin-file-transfer" />
 
 "use strict";
 
@@ -9,6 +8,7 @@ import LocalPackage = require("./localPackage");
 import Package = require("./package");
 import NativeAppInfo = require("./nativeAppInfo");
 import CodePushUtil = require("./codePushUtil");
+import FileDownloader = require("./fileDownloader");
 import Sdk = require("./sdk");
 
 /**
@@ -16,18 +16,18 @@ import Sdk = require("./sdk");
  */
 class RemotePackage extends Package implements IRemotePackage {
 
-    private currentFileTransfer: FileTransfer;
+    private currentFileTransfer: FileDownloader;
 
     /**
      * The URL at which the package is available for download.
      */
     public downloadUrl: string;
-    
+
     /**
      * Downloads the package update from the CodePush service.
-     * 
-     * @param downloadSuccess Called with one parameter, the downloaded package information, once the download completed successfully.
-     * @param downloadError Optional callback invoked in case of an error.
+     *
+     * @param successCallback Called with one parameter, the downloaded package information, once the download completed successfully.
+     * @param errorCallback Optional callback invoked in case of an error.
      * @param downloadProgress Optional callback invoked during the download process. It is called several times with one DownloadProgress parameter.
      */
     public download(successCallback: SuccessCallback<LocalPackage>, errorCallback?: ErrorCallback, downloadProgress?: SuccessCallback<DownloadProgress>): void {
@@ -36,15 +36,15 @@ class RemotePackage extends Package implements IRemotePackage {
             if (!this.downloadUrl) {
                 CodePushUtil.invokeErrorCallback(new Error("The remote package does not contain a download URL."), errorCallback);
             } else {
-                this.currentFileTransfer = new FileTransfer();
+                this.currentFileTransfer = new FileDownloader();
 
-                var downloadSuccess = (fileEntry: FileEntry) => {
+                const downloadSuccess = (fileEntry: FileEntry) => {
                     this.currentFileTransfer = null;
 
                     fileEntry.file((file: File) => {
 
                         NativeAppInfo.isFailedUpdate(this.packageHash, (installFailed: boolean) => {
-                            var localPackage = new LocalPackage();
+                            const localPackage = new LocalPackage();
                             localPackage.deploymentKey = this.deploymentKey;
                             localPackage.description = this.description;
                             localPackage.label = this.label;
@@ -64,28 +64,31 @@ class RemotePackage extends Package implements IRemotePackage {
                     });
                 };
 
-                var downloadError = (error: FileTransferError) => {
+                const downloadError = (error: FileError) => {
                     this.currentFileTransfer = null;
-                    CodePushUtil.invokeErrorCallback(new Error(error.body), errorCallback);
+                    CodePushUtil.invokeErrorCallback(new Error("Could not access file system. Error code: " + error.code), errorCallback);
                 };
 
                 this.currentFileTransfer.onprogress = (progressEvent: ProgressEvent) => {
                     if (downloadProgress) {
-                        var dp: DownloadProgress = { receivedBytes: progressEvent.loaded, totalBytes: progressEvent.total };
+                        const dp: DownloadProgress = {
+                            receivedBytes: progressEvent.loaded,
+                            totalBytes: progressEvent.total
+                        };
                         downloadProgress(dp);
                     }
                 };
 
-                this.currentFileTransfer.download(this.downloadUrl, cordova.file.dataDirectory + LocalPackage.DownloadDir + "/" + LocalPackage.PackageUpdateFileName, downloadSuccess, downloadError, true);
+                this.currentFileTransfer.download(this.downloadUrl, cordova.file.dataDirectory + LocalPackage.DownloadDir + "/" + LocalPackage.PackageUpdateFileName, downloadSuccess, downloadError);
             }
         } catch (e) {
             CodePushUtil.invokeErrorCallback(new Error("An error occured while downloading the package. " + (e && e.message) ? e.message : ""), errorCallback);
         }
     }
-    
+
     /**
      * Aborts the current download session, previously started with download().
-     * 
+     *
      * @param abortSuccess Optional callback invoked if the abort operation succeeded.
      * @param abortError Optional callback invoked in case of an error.
      */
@@ -93,7 +96,7 @@ class RemotePackage extends Package implements IRemotePackage {
         try {
             if (this.currentFileTransfer) {
                 this.currentFileTransfer.abort();
-            
+
                 /* abort succeeded */
                 abortSuccess && abortSuccess();
             }
