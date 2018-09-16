@@ -38,13 +38,13 @@ class RemotePackage extends Package implements IRemotePackage {
             } else {
                 this.currentFileTransfer = new FileDownloader();
 
-                var downloadSuccess = (fileEntry: FileEntry) => {
+                const downloadSuccess = (fileEntry: FileEntry) => {
                     this.currentFileTransfer = null;
 
                     fileEntry.file((file: File) => {
 
                         NativeAppInfo.isFailedUpdate(this.packageHash, (installFailed: boolean) => {
-                            var localPackage = new LocalPackage();
+                            const localPackage = new LocalPackage();
                             localPackage.deploymentKey = this.deploymentKey;
                             localPackage.description = this.description;
                             localPackage.label = this.label;
@@ -64,14 +64,14 @@ class RemotePackage extends Package implements IRemotePackage {
                     });
                 };
 
-                var downloadError = (error: FileError) => {
+                const downloadError = (error: FileError) => {
                     this.currentFileTransfer = null;
                     CodePushUtil.invokeErrorCallback(new Error("Could not access file system. Error code: " + error.code), errorCallback);
                 };
 
                 this.currentFileTransfer.onprogress = (progressEvent: ProgressEvent) => {
                     if (downloadProgress) {
-                        var dp: DownloadProgress = {
+                        const dp: DownloadProgress = {
                             receivedBytes: progressEvent.loaded,
                             totalBytes: progressEvent.total
                         };
