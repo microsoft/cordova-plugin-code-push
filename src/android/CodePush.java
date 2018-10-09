@@ -19,7 +19,11 @@ import org.json.JSONException;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
@@ -48,6 +52,7 @@ public class CodePush extends CordovaPlugin {
     private boolean didUpdate = false;
     private boolean didStartApp = false;
     private long lastPausedTimeMs = 0;
+    private boolean hasIonicWebViewEngine = false;
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
@@ -518,6 +523,41 @@ public class CodePush extends CordovaPlugin {
     private void navigateToURL(String url) {
         if (url != null) {
             CodePush.ShouldClearHistoryOnLoad = true;
+
+            if (this.hasIonicWebViewEngine) {
+                try {
+
+                    String ionicWebViewEngineUrlPath = new URI(url).getPath();
+                    ionicWebViewEngineUrlPath = ionicWebViewEngineUrlPath.substring(0, ionicWebViewEngineUrlPath.indexOf("/index.html"));
+
+                    Class ionicWebViewEngineClass = Class.forName("com.ionicframework.cordova.webview.IonicWebViewEngine");
+                    Object ionicWebViewEngine = ionicWebViewEngineClass.cast(this.mainWebView.getEngine());
+                    Method setServerBasePath = ionicWebViewEngineClass.getMethod("setServerBasePath", String.class);
+
+                    String finalIonicWebViewEngineUrlPath = ionicWebViewEngineUrlPath;
+                    this.cordova.getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                setServerBasePath.invoke(ionicWebViewEngine, finalIonicWebViewEngineUrlPath);
+                            } catch (IllegalAccessException e) {
+                                e.printStackTrace();
+                            } catch (InvocationTargetException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+
+                    return;
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                } catch (NoSuchMethodException e) {
+                    e.printStackTrace();
+                } catch (URISyntaxException e) {
+                    e.printStackTrace();
+                }
+            }
+
             this.mainWebView.loadUrlIntoView(url, false);
         }
     }
@@ -614,6 +654,11 @@ public class CodePush extends CordovaPlugin {
                 codePushReportingManager.reportStatus(codePushReportingManager.getAndClearFailedReport(), this.mainWebView);
             }
         }
+
+        try {
+            Class.forName("com.ionicframework.cordova.webview.IonicWebViewEngine");
+            this.hasIonicWebViewEngine = true;
+        } catch (ClassNotFoundException e) {}
     }
 
     /**
