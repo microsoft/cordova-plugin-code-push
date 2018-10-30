@@ -29,7 +29,7 @@ In order to ensure that your end users always have a functioning version of your
 
 ## Supported Cordova Platforms
 
-Cordova 5.0.0+ is fully supported, along with the following asociated platforms:
+Cordova 5.0.0+ is fully supported, along with the following associated platforms:
 
 * Android ([cordova-android](https://github.com/apache/cordova-android) 4.0.0+) - *Including CrossWalk!* 
 * iOS ([cordova-ios](https://github.com/apache/cordova-ios) 3.9.0+) - *Note: In order to use CodePush along with the [`cordova-plugin-wkwebview-engine`](https://github.com/apache/cordova-plugin-wkwebview-engine) plugin, you need to install `v1.5.1-beta+` version of `cordova-plugin-code-push`, which includes full support for apps using either WebView.*
@@ -40,7 +40,7 @@ To check which versions of each Cordova platform you are currently using, you ca
 cordova platform ls
 ```
 
-If you're running an older Android and/or iOS platform than is mentioned above, and would be open to upgrading, you can easily do so by running the following commands (omitting a platform if it isn't neccessary):
+If you're running an older Android and/or iOS platform than is mentioned above, and would be open to upgrading, you can easily do so by running the following commands (omitting a platform if it isn't necessary):
 
 ```shell
 cordova platform update android
@@ -70,7 +70,7 @@ With the CodePush plugin installed, configure your app to use it via the followi
     
     As a reminder, these keys are generated for you when you created your CodePush app via the CLI. If you need to retrieve them, you can simply run `code-push deployment ls APP_NAME -k`, and grab the key for the specific deployment you want to use (e.g. `Staging`, `Production`). 
     
-    *NOTE: You [must](https://docs.microsoft.com/en-us/appcenter/distribution/codepush/cli#releasing-updates) create a separate CodePush app for iOS and Android, which is why the above sample illustrates declaring seperate keys for Android and iOS. If you're only developing for a single platform, then you only need to specify the deployment key for either Android or iOS, so you don't need to add the additional `<platform>` element as illustrated above.*
+    *NOTE: You [must](https://docs.microsoft.com/en-us/appcenter/distribution/codepush/cli#releasing-updates) create a separate CodePush app for iOS and Android, which is why the above sample illustrates declaring separate keys for Android and iOS. If you're only developing for a single platform, then you only need to specify the deployment key for either Android or iOS, so you don't need to add the additional `<platform>` element as illustrated above.*
 
     Beginning from version **1.10.0** you can sign your update bundles (for more information about code signing please refer to relevant documentation [section](https://github.com/Microsoft/code-push/blob/master/cli/README.md#code-signing)). In order to enable code signing for Cordova application you should setup public key to verify bundles signature by providing following `preference` setting in `config.xml`:
 
@@ -652,7 +652,7 @@ Defines the possible statuses of the [sync](#codepushsync) operation. There are 
 
 - __UPDATE_IGNORED__: The app has an optional update, which the end user chose to ignore. *(This is only applicable when the `updateDialog` is used)*
  
-- __ERROR__: An error occured during the `sync` operation. This might be an error while communicating with the server, downloading or unziping the update. The console logs should contain more information about what happened. No update has been applied in this case.
+- __ERROR__: An error occurred during the `sync` operation. This might be an error while communicating with the server, downloading or unziping the update. The console logs should contain more information about what happened. No update has been applied in this case.
 
 - __IN_PROGRESS__: Another sync is already running, so this attempt to sync has been aborted.
 
