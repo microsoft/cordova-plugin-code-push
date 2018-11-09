@@ -533,7 +533,7 @@ public class CodePush extends CordovaPlugin {
                     Object ionicWebViewEngine = ionicWebViewEngineClass.cast(this.mainWebView.getEngine());
                     Method setServerBasePath = ionicWebViewEngineClass.getMethod("setServerBasePath", String.class);
 
-                    String finalIonicWebViewEngineUrlPath = ionicWebViewEngineUrlPath;
+                    final String finalIonicWebViewEngineUrlPath = ionicWebViewEngineUrlPath;
                     this.cordova.getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
