@@ -52,8 +52,7 @@ public class CodePush extends CordovaPlugin {
     private boolean didUpdate = false;
     private boolean didStartApp = false;
     private long lastPausedTimeMs = 0;
-    private boolean hasIonicWebViewEngine = false;
-
+    
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
@@ -524,7 +523,7 @@ public class CodePush extends CordovaPlugin {
         if (url != null) {
             CodePush.ShouldClearHistoryOnLoad = true;
 
-            if (this.hasIonicWebViewEngine) {
+            if (this.hasIonicWebViewEngine()) {
                 try {
 
                     String ionicWebViewEngineUrlPath = new URI(url).getPath();
@@ -534,7 +533,7 @@ public class CodePush extends CordovaPlugin {
                     Object ionicWebViewEngine = ionicWebViewEngineClass.cast(this.mainWebView.getEngine());
                     Method setServerBasePath = ionicWebViewEngineClass.getMethod("setServerBasePath", String.class);
 
-                    String finalIonicWebViewEngineUrlPath = ionicWebViewEngineUrlPath;
+                    final String finalIonicWebViewEngineUrlPath = ionicWebViewEngineUrlPath;
                     this.cordova.getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -556,9 +555,9 @@ public class CodePush extends CordovaPlugin {
                 } catch (URISyntaxException e) {
                     e.printStackTrace();
                 }
+            } else {
+                this.mainWebView.loadUrlIntoView(url, false);
             }
-
-            this.mainWebView.loadUrlIntoView(url, false);
         }
     }
 
@@ -654,11 +653,14 @@ public class CodePush extends CordovaPlugin {
                 codePushReportingManager.reportStatus(codePushReportingManager.getAndClearFailedReport(), this.mainWebView);
             }
         }
+    }
 
+    private Boolean hasIonicWebViewEngine() {
         try {
             Class.forName("com.ionicframework.cordova.webview.IonicWebViewEngine");
-            this.hasIonicWebViewEngine = true;
-        } catch (ClassNotFoundException e) {}
+            return true;
+            } catch (ClassNotFoundException e) {}
+        return false;
     }
 
     /**
