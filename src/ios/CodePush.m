@@ -479,7 +479,6 @@ StatusReport* rollbackStatusReport = nil;
     if (URL) {
         if ([self isCDVWKWebViewEngineAmbient]) {
             [self setServerBasePath:URL.path];
-            // ((CDVViewController *)self.viewController).startPage = [self getConfigLaunchUrl]; it is not necessary
         } else {
             ((CDVViewController *)self.viewController).startPage = [URL absoluteString];
         }

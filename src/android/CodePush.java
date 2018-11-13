@@ -52,7 +52,7 @@ public class CodePush extends CordovaPlugin {
     private boolean didUpdate = false;
     private boolean didStartApp = false;
     private long lastPausedTimeMs = 0;
-    
+
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
@@ -539,20 +539,14 @@ public class CodePush extends CordovaPlugin {
                         public void run() {
                             try {
                                 setServerBasePath.invoke(ionicWebViewEngine, finalIonicWebViewEngineUrlPath);
-                            } catch (IllegalAccessException e) {
-                                e.printStackTrace();
-                            } catch (InvocationTargetException e) {
+                            } catch (IllegalAccessException | InvocationTargetException e) {
                                 e.printStackTrace();
                             }
                         }
                     });
 
                     return;
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
-                } catch (NoSuchMethodException e) {
-                    e.printStackTrace();
-                } catch (URISyntaxException e) {
+                } catch (ClassNotFoundException | NoSuchMethodException | URISyntaxException e) {
                     e.printStackTrace();
                 }
             } else {
@@ -659,7 +653,7 @@ public class CodePush extends CordovaPlugin {
         try {
             Class.forName("com.ionicframework.cordova.webview.IonicWebViewEngine");
             return true;
-            } catch (ClassNotFoundException e) {}
+        } catch (ClassNotFoundException e) {}
         return false;
     }
 
