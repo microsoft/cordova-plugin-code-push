@@ -400,7 +400,7 @@ StatusReport* rollbackStatusReport = nil;
     // use the WebViewEngine for performing navigations only if the host app
     // is running 4.0.0+, and fallback to directly using the WebView otherwise.
 #ifdef __CORDOVA_4_0_0
-    if ([self isCDVWKWebViewEngineAmbient]) {
+    if ([self hasIonicWebViewEngine]) {
         [self setServerBasePath:url.path];
     } else {
         [self.webViewEngine loadRequest:[NSURLRequest requestWithURL:url]];
@@ -410,7 +410,7 @@ StatusReport* rollbackStatusReport = nil;
 #endif
 }
 
-- (Boolean) isCDVWKWebViewEngineAmbient {
+- (Boolean) hasIonicWebViewEngine {
     NSString * webViewEngineClass = NSStringFromClass([self.webViewEngine class]);
     SEL setServerBasePath = NSSelectorFromString(@"setServerBasePath:");
     if ([webViewEngineClass  isEqual: @"CDVWKWebViewEngine"] && [self.webViewEngine respondsToSelector:setServerBasePath]) {
@@ -421,7 +421,7 @@ StatusReport* rollbackStatusReport = nil;
 }
 
 - (void) setServerBasePath:(NSString*)serverPath {
-    if ([self isCDVWKWebViewEngineAmbient]) {
+    if ([self hasIonicWebViewEngine]) {
         SEL setServerBasePath = NSSelectorFromString(@"setServerBasePath:");
         NSMutableArray * urlPathComponents = [serverPath pathComponents].mutableCopy;
         [urlPathComponents removeLastObject];
@@ -477,9 +477,8 @@ StatusReport* rollbackStatusReport = nil;
 - (void)redirectStartPageToURL:(NSString*)packageLocation{
     NSURL* URL = [self getStartPageURLForLocalPackage:packageLocation];
     if (URL) {
-        if ([self isCDVWKWebViewEngineAmbient]) {
+        if ([self hasIonicWebViewEngine]) {
             [self setServerBasePath:URL.path];
-            // ((CDVViewController *)self.viewController).startPage = [self getConfigLaunchUrl]; it is not necessary
         } else {
             ((CDVViewController *)self.viewController).startPage = [URL absoluteString];
         }
