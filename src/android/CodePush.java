@@ -527,9 +527,8 @@ public class CodePush extends CordovaPlugin {
                     String ionicWebViewEngineUrlPath = new URI(url).getPath();
                     String ionicWebViewEngineServerPath = ionicWebViewEngineUrlPath.substring(0, ionicWebViewEngineUrlPath.indexOf("/index.html"));
                     this.setServerBasePath(ionicWebViewEngineServerPath);
-                    return;
                 } catch (URISyntaxException e) {
-                    e.printStackTrace();
+                    Utilities.logException(e);
                 }
             } else {
                 this.mainWebView.loadUrlIntoView(url, false);
@@ -652,15 +651,14 @@ public class CodePush extends CordovaPlugin {
               try {
                 setServerBasePath.invoke(ionicWebViewEngine, ionicWebViewEngineServerPath);
               } catch (IllegalAccessException | InvocationTargetException e) {
-                e.printStackTrace();
+                Utilities.logException(e);
               }
             }
           });
-          return;
         } catch (ClassNotFoundException | NoSuchMethodException e) {
-          e.printStackTrace();
+          Utilities.logException(e);
         }
-  }
+    }
 
     /**
      * The final call you receive before your activity is destroyed.
