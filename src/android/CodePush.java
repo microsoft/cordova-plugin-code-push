@@ -638,18 +638,17 @@ public class CodePush extends CordovaPlugin {
         return false;
     }
 
-    private void setServerBasePath(String serverPath) {
+    private void setServerBasePath(final String serverPath) {
         try {
           Class ionicWebViewEngineClass = Class.forName("com.ionicframework.cordova.webview.IonicWebViewEngine");
           Object ionicWebViewEngine = ionicWebViewEngineClass.cast(this.mainWebView.getEngine());
           Method setServerBasePath = ionicWebViewEngineClass.getMethod("setServerBasePath", String.class);
 
-          final String ionicWebViewEngineServerPath = serverPath;
           this.cordova.getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
               try {
-                setServerBasePath.invoke(ionicWebViewEngine, ionicWebViewEngineServerPath);
+                setServerBasePath.invoke(ionicWebViewEngine, serverPath);
               } catch (IllegalAccessException | InvocationTargetException e) {
                 Utilities.logException(e);
               }
