@@ -3,7 +3,6 @@ var del = require("del");
 var gulp = require("gulp");
 var path = require("path");
 var Q = require("q");
-var runSequence = require("run-sequence");
 
 var sourcePath = "./www";
 var testPath = "./test";
@@ -144,10 +143,6 @@ function runTests(callback, options) {
     execCommand(command, args, callback);
 }
 
-gulp.task("compile", function (callback) {
-    runSequence("compile-src", "compile-test", callback);
-});
-
 gulp.task("compile-test", function () {
     var ts = require("gulp-typescript");
     var insert = require("gulp-insert");
@@ -167,6 +162,8 @@ gulp.task("compile-src", function () {
         .pipe(insert.prepend(compiledSourceWarningMessage))
         .pipe(gulp.dest(path.join(binPath, sourcePath)));
 });
+
+gulp.task("compile", gulp.series("compile-src", "compile-test"));
 
 gulp.task("tslint", function () {
     var tslint = require('gulp-tslint');
@@ -227,9 +224,7 @@ gulp.task("clean", function () {
     return del([binPath + "/**"], { force: true });
 });
 
-gulp.task("default", function (callback) {
-    runSequence("clean", "compile", "tslint", callback);
-});
+gulp.task("default", gulp.series("clean", "compile", "tslint"));
 
 ////////////////////////////////////////////////////////////////////////
 // Test Tasks //////////////////////////////////////////////////////////
@@ -307,19 +302,13 @@ gulp.task("test-setup-both", function (callback) {
 });
 
 // Builds, sets up test projects, and starts the Android emulator
-gulp.task("test-setup-build-android", function (callback) {
-    runSequence("default", "test-setup-android", callback);
-});
+gulp.task("test-setup-build-android", gulp.series("default", "test-setup-android"));
 
 // Builds, sets up test projects, and starts the iOS emulator
-gulp.task("test-setup-build-ios", function (callback) {
-    runSequence("default", "test-setup-ios", callback);
-});
+gulp.task("test-setup-build-ios", gulp.series("default", "test-setup-ios"));
 
 // Builds, sets up test projects, and starts both emulators
-gulp.task("test-setup-build-both", function (callback) {
-    runSequence("default", "test-setup-both", callback);
-});
+gulp.task("test-setup-build-both", gulp.series("default", "test-setup-both"));
 
 ////////////////////////////////////////////////////////////////////////
 // Fast Test Tasks
@@ -327,19 +316,13 @@ gulp.task("test-setup-build-both", function (callback) {
 // Runs tests but doesn't build or start emulators.
 
 // Run on Android fast
-gulp.task("test-android-fast", ["test-setup-android"], function (callback) {
-    runSequence("test-run-android", callback);
-});
+gulp.task("test-android-fast", gulp.series("test-setup-android", "test-run-android"));
 
 // Run on iOS with the UiWebView fast
-gulp.task("test-ios-ui-fast", ["test-setup-ios"], function (callback) {
-    runSequence("test-run-ios-ui", callback);
-});
+gulp.task("test-ios-ui-fast", gulp.series("test-setup-ios", "test-run-ios-ui"));
 
 // Run on iOS with the WkWebView fast
-gulp.task("test-ios-wk-fast", ["test-setup-ios"], function (callback) {
-    runSequence("test-run-ios-wk", callback);
-});
+gulp.task("test-ios-wk-fast", gulp.series("test-setup-ios", "test-run-ios-wk"));
 
 ////////////////////////////////////////////////////////////////////////
 // Fast Composition Test Tasks
@@ -347,24 +330,16 @@ gulp.task("test-ios-wk-fast", ["test-setup-ios"], function (callback) {
 // Run tests but doesn't build or start emulators.
 
 // Run on iOS with the UiWebView fast
-gulp.task("test-android-ios-ui-fast", ["test-setup-both"], function (callback) {
-    runSequence("test-run-android", "test-run-ios-ui", callback);
-});
+gulp.task("test-android-ios-ui-fast", gulp.series("test-setup-both", "test-run-android", "test-run-ios-ui"));
 
 // Run on iOS with the WkWebView fast
-gulp.task("test-android-ios-wk-fast", ["test-setup-both"], function (callback) {
-    runSequence("test-run-android", "test-run-ios-wk", callback);
-});
+gulp.task("test-android-ios-wk-fast", gulp.series("test-setup-both", "test-run-android", "test-run-ios-wk"));
 
 // Run on iOS with both WebViews fast
-gulp.task("test-ios-fast", ["test-setup-ios"], function (callback) {
-    runSequence("test-run-ios-ui", "test-run-ios-wk", callback);
-});
+gulp.task("test-ios-fast", gulp.series("test-setup-ios", "test-run-ios-ui", "test-run-ios-wk"));
 
 // Run on iOS with the WkWebView fast
-gulp.task("test-fast", ["test-setup-both"], function (callback) {
-    runSequence("test-run-android", "test-run-ios-ui", "test-run-ios-wk", callback);
-});
+gulp.task("test-fast", gulp.series("test-setup-both", "test-run-android", "test-run-ios-ui", "test-run-ios-wk"));
 
 ////////////////////////////////////////////////////////////////////////
 // Test Tasks
@@ -372,19 +347,13 @@ gulp.task("test-fast", ["test-setup-both"], function (callback) {
 // Run tests, build, and start emulators.
 
 // Run on Android
-gulp.task("test-android", ["test-setup-build-android"], function (callback) {
-    runSequence("test-run-android", callback);
-});
+gulp.task("test-android", gulp.series("test-setup-build-android", "test-run-android"));
 
 // Run on iOS with the UiWebView
-gulp.task("test-ios-ui", ["test-setup-build-ios"], function (callback) {
-    runSequence("test-run-ios-ui", callback);
-});
+gulp.task("test-ios-ui", gulp.series("test-setup-build-ios", "test-run-ios-ui"));
 
 // Run on iOS with the WkWebView
-gulp.task("test-ios-wk", ["test-setup-build-ios"], function (callback) {
-    runSequence("test-run-ios-wk", callback);
-});
+gulp.task("test-ios-wk", gulp.series("test-setup-build-ios", "test-run-ios-wk"));
 
 ////////////////////////////////////////////////////////////////////////
 // Composition Test Tasks
@@ -392,21 +361,13 @@ gulp.task("test-ios-wk", ["test-setup-build-ios"], function (callback) {
 // Run tests, build, and start emulators.
 
 // Run on Android and iOS with UiWebViews
-gulp.task("test-android-ios-ui", ["test-setup-build-both"], function (callback) {
-    runSequence("test-run-android", "test-run-ios-ui", callback);
-});
+gulp.task("test-android-ios-ui", gulp.series("test-setup-build-both", "test-run-android", "test-run-ios-ui"));
 
 // Run on Android and iOS with WkWebViews
-gulp.task("test-android-ios-wk", ["test-setup-build-both"], function (callback) {
-    runSequence("test-run-android", "test-run-ios-wk", callback);
-});
+gulp.task("test-android-ios-wk", gulp.series("test-setup-build-both", "test-run-android", "test-run-ios-wk"));
 
 // Run on iOS with both WebViews
-gulp.task("test-ios", ["test-setup-build-ios"], function (callback) {
-    runSequence("test-run-ios-ui", "test-run-ios-wk", callback);
-});
+gulp.task("test-ios", gulp.series("test-setup-build-ios", "test-run-ios-ui", "test-run-ios-wk"));
 
 // Run on Android and iOS with both WebViews
-gulp.task("test", ["test-setup-build-both"], function (callback) {
-    runSequence("test-run-android", "test-run-ios-ui", "test-run-ios-wk", callback);
-});
+gulp.task("test", gulp.series("test-setup-build-both", "test-run-android", "test-run-ios-ui", "test-run-ios-wk"));
