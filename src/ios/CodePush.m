@@ -1,5 +1,6 @@
 #import <Cordova/CDV.h>
 #import <Cordova/CDVConfigParser.h>
+#import <Cordova/CDVWebViewEngineProtocol.h>
 #import "CodePush.h"
 #import "CodePushPackageMetadata.h"
 #import "CodePushPackageManager.h"
@@ -400,28 +401,24 @@ StatusReport* rollbackStatusReport = nil;
     // use the WebViewEngine for performing navigations only if the host app
     // is running 4.0.0+, and fallback to directly using the WebView otherwise.
 #ifdef __CORDOVA_4_0_0
-    if ([self hasIonicWebViewEngine]) {
-        [self setServerBasePath:url.path];
-    } else {
-        [self.webViewEngine loadRequest:[NSURLRequest requestWithURL:url]];
-    }
+    [self.webViewEngine loadRequest:[NSURLRequest requestWithURL:url]];
 #else
     [(UIWebView*)self.webView loadRequest:[NSURLRequest requestWithURL:url]];
 #endif
 }
 
-- (Boolean) hasIonicWebViewEngine {
-    NSString * webViewEngineClass = NSStringFromClass([self.webViewEngine class]);
++ (Boolean) hasIonicWebViewEngine:(id<CDVWebViewEngineProtocol>) webViewEngine {
+    NSString * webViewEngineClass = NSStringFromClass([webViewEngine class]);
     SEL setServerBasePath = NSSelectorFromString(@"setServerBasePath:");
-    if ([webViewEngineClass  isEqual: @"CDVWKWebViewEngine"] && [self.webViewEngine respondsToSelector:setServerBasePath]) {
+    if ([webViewEngineClass  isEqual: @"CDVWKWebViewEngine"] && [webViewEngine respondsToSelector:setServerBasePath]) {
         return true;
     } else {
         return false;
     }
 }
 
-- (void) setServerBasePath:(NSString*)serverPath {
-    if ([self hasIonicWebViewEngine]) {
++ (void) setServerBasePath:(NSString*)serverPath webView:(id<CDVWebViewEngineProtocol>) webViewEngine {
+    if ([CodePush hasIonicWebViewEngine: webViewEngine]) {
         SEL setServerBasePath = NSSelectorFromString(@"setServerBasePath:");
         NSMutableArray * urlPathComponents = [serverPath pathComponents].mutableCopy;
         [urlPathComponents removeLastObject];
@@ -430,7 +427,7 @@ StatusReport* rollbackStatusReport = nil;
 #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
         CDVInvokedUrlCommand * command = [CDVInvokedUrlCommand commandFromJson:[NSArray arrayWithObjects: @"", @"", @"", [NSMutableArray arrayWithObject:serverBasePath], nil]];
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self.webViewEngine performSelector: setServerBasePath withObject: command];
+            [webViewEngine performSelector: setServerBasePath withObject: command];
         });
 #pragma clang diagnostic pop
     }
@@ -477,8 +474,8 @@ StatusReport* rollbackStatusReport = nil;
 - (void)redirectStartPageToURL:(NSString*)packageLocation{
     NSURL* URL = [self getStartPageURLForLocalPackage:packageLocation];
     if (URL) {
-        if ([self hasIonicWebViewEngine]) {
-            [self setServerBasePath:URL.path];
+        if ([CodePush hasIonicWebViewEngine: self.webViewEngine]) {
+            [CodePush setServerBasePath:URL.path webView:self.webViewEngine];
         } else {
             ((CDVViewController *)self.viewController).startPage = [URL absoluteString];
         }
