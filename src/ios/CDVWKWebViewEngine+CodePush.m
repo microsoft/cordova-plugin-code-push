@@ -11,12 +11,12 @@
 
 - (id)loadRequest:(NSURLRequest *)request {
     NSURL *readAccessURL;
-    
+
     if (request.URL.isFileURL) {
-        // All file URL requests should be handled with setServerBasePath in case if It is Ionic app.
+        // All file URL requests should be handled with the setServerBasePath in case if it is Ionic app.
         if ([CodePush hasIonicWebViewEngine: self]) {
             [CodePush setServerBasePath:request.URL.path webView: self];
-                
+
             return nil;
         }
 
@@ -33,7 +33,7 @@
             // If we didn't set this, then the attempt to navigate from the bundle to a CodePush update would fail.
             readAccessURL = [[[NSBundle mainBundle] bundleURL] URLByDeletingLastPathComponent];
         }
-        
+
         return [(WKWebView*)self.engineWebView loadFileURL:request.URL allowingReadAccessToURL:readAccessURL];
     } else {
         return [(WKWebView*)self.engineWebView loadRequest: request];
