@@ -14,7 +14,6 @@
             so this is the once way to make plugin works for both versions
         -->
         <dependency id="cordova-plugin-file" url="https://github.com/apache/cordova-plugin-file#4.3.3" commit="4.3.3" />
-        <dependency id="cordova-plugin-file-transfer" url="https://github.com/apache/cordova-plugin-file-transfer#1.6.3" commit="1.6.3" />
         <dependency id="cordova-plugin-zip" version="3.1.0" />
 
         <js-module src="bin/www/codePush.js" name="codePush">
