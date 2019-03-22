@@ -19,7 +19,11 @@ import org.json.JSONException;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
@@ -518,7 +522,17 @@ public class CodePush extends CordovaPlugin {
     private void navigateToURL(String url) {
         if (url != null) {
             CodePush.ShouldClearHistoryOnLoad = true;
-            this.mainWebView.loadUrlIntoView(url, false);
+            if (this.hasIonicWebViewEngine()) {
+                try {
+                    String ionicWebViewEngineUrlPath = new URI(url).getPath();
+                    String ionicWebViewEngineServerPath = ionicWebViewEngineUrlPath.substring(0, ionicWebViewEngineUrlPath.indexOf("/index.html"));
+                    this.setServerBasePath(ionicWebViewEngineServerPath);
+                } catch (URISyntaxException e) {
+                    Utilities.logException(e);
+                }
+            } else {
+                this.mainWebView.loadUrlIntoView(url, false);
+            }
         }
     }
 
@@ -613,6 +627,39 @@ public class CodePush extends CordovaPlugin {
             } else if (codePushReportingManager.hasFailedReport()) {
                 codePushReportingManager.reportStatus(codePushReportingManager.getAndClearFailedReport(), this.mainWebView);
             }
+        }
+    }
+
+    private Boolean hasIonicWebViewEngine() {
+        try {
+            Class.forName("com.ionicframework.cordova.webview.IonicWebViewEngine");
+            return true;
+        } catch (ClassNotFoundException e) {}
+        return false;
+    }
+
+    private void setServerBasePath(final String serverPath) {
+        try {
+            Class ionicWebViewEngineClass = Class.forName("com.ionicframework.cordova.webview.IonicWebViewEngine");
+            final Object ionicWebViewEngine = ionicWebViewEngineClass.cast(this.mainWebView.getEngine());
+            final Method setServerBasePath = ionicWebViewEngineClass.getMethod("setServerBasePath", String.class);
+
+            this.cordova.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        setServerBasePath.invoke(ionicWebViewEngine, serverPath);
+                    } catch (IllegalAccessException e) {
+                        Utilities.logException(e);
+                    } catch (InvocationTargetException e) {
+                        Utilities.logException(e);
+                    }
+                }
+            });
+        } catch (ClassNotFoundException e) {
+            Utilities.logException(e);
+        } catch (NoSuchMethodException e) {
+            Utilities.logException(e);
         }
     }
 

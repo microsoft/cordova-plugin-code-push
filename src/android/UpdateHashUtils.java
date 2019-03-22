@@ -8,6 +8,7 @@ import org.json.JSONArray;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.DigestInputStream;
@@ -57,15 +58,20 @@ public class UpdateHashUtils {
         String[] assetsList = Utilities.getAssetsList(assetManager, path, ignoredFiles);
 
         for(String assetPath : assetsList){
-            InputStream inputStream = assetManager.open(assetPath);
-            manifestEntries.add(assetPath + ":" + computeHash(inputStream));
+            try {
+                InputStream inputStream = assetManager.open(assetPath);
+                manifestEntries.add(assetPath + ":" + computeHash(inputStream));
+            } catch (FileNotFoundException e) {
+                // ignore: AAPT ignore some file which we can't, it's OK
+                // https://github.com/Microsoft/cordova-plugin-code-push/issues/374#issuecomment-376558284
+            }
         }
     }
 
     private static void addFolderEntriesToManifest(ArrayList<String> manifestEntries, String prefix, String path) throws IOException, NoSuchAlgorithmException {
         String[] fileList = new File(path).list();
 
-        if (fileList != null && fileList.length > 0) {
+        if (fileList != null) {
             for (String pathInFolder : fileList) {
                 if (UpdateHashUtils.ignoredFiles.contains(pathInFolder)) {
                     continue;
@@ -79,8 +85,6 @@ public class UpdateHashUtils {
                     manifestEntries.add(relativePath.getPath() + ":" + computeHash(inputStream));
                 }
             }
-        } else {
-            throw new IOException("invalid directory path " + path);
         }
     }
 

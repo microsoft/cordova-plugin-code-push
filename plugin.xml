@@ -1,20 +1,17 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
-    <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-code-push" version="1.11.7">
+    <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-code-push" version="1.11.17">
         <name>CodePush</name>
         <description>This plugin allows you to push code updates to your apps instantly using the CodePush service</description>
         <license>MIT</license>
         <keywords>cordova,code,push</keywords>
         <repo>https://github.com/Microsoft/cordova-plugin-code-push.git</repo>
 
-        <dependency id="code-push" version="2.0.4" />
+        <dependency id="code-push" version="2.0.6" />
         <dependency id="cordova-plugin-dialogs" version=">=1.1.1" />
         <dependency id="cordova-plugin-device" version=">=1.1.0" />
-        <!--
-            Ancient dark magic! cordova@6.* works only with "commit" attribute, cordova@8.* works only with "#",
-            so this is the once way to make plugin works for both versions
-        -->
-        <dependency id="cordova-plugin-file" url="https://github.com/apache/cordova-plugin-file#4.3.3" commit="4.3.3" />
-        <dependency id="cordova-plugin-zip" version="3.1.0" />
+
+        <hook type="after_plugin_add" src="hooks/afterPluginAdd.js" />
+
 
         <js-module src="bin/www/codePush.js" name="codePush">
             <clobbers target="codePush" />
@@ -83,7 +80,6 @@
         </platform>
 
         <platform name="ios">
-            <source-file src="src/ios/CDVWKWebViewEngine+CodePush.m" />
             <header-file src="src/ios/CodePush.h" />
             <source-file src="src/ios/CodePush.m" />
             <header-file src="src/ios/CodePushPackageMetadata.h" />
@@ -101,6 +97,7 @@
             <source-file src="src/ios/UpdateHashUtils.m" />
             <header-file src="src/ios/Utilities.h" />
             <source-file src="src/ios/Utilities.m" />
+            <source-file src="src/ios/CDVWKWebViewEngine+CodePush.m" />
 
             <!-- JWT -->
             <source-file src="src/ios/JWT/Core/Algorithms/Base/CodePushJWTAlgorithmFactory.m" />
