@@ -203,7 +203,9 @@ var CodePush = (function () {
             var defaultOptions = this.getDefaultSyncOptions();
             CodePushUtil.copyUnassignedMembers(defaultOptions, syncOptions);
         }
-        window.codePush.notifyApplicationReady();
+        if (syncOptions.notifyApplicationReady !== false) {
+            window.codePush.notifyApplicationReady();
+        }
         var onError = function (error) {
             CodePushUtil.logError("An error occurred during sync.", error);
             syncCallback && syncCallback(error, SyncStatus.ERROR);
