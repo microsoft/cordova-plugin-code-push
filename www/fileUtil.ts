@@ -281,12 +281,12 @@ class FileUtil {
     public static readFileEntry(fileEntry: FileEntry, callback: Callback<string>): void {
         fileEntry.file((file: File) => {
             var fileReader = new FileReader();
-            fileReader.onloadend = (ev: any) => {
-                callback(null, ev.target.result);
+            fileReader.onloadend = (ev: ProgressEvent)=> {
+                callback(null, fileReader.result as string);
             };
 
-            fileReader.onerror = (ev: ErrorEvent) => {
-                callback(new Error("Could not get file. Error: " + ev.error), null);
+            fileReader.onerror = (ev: ProgressEvent) => {
+                callback(new Error("Could not get file. Error: " + fileReader.error), null);
             };
 
             fileReader.readAsText(file);

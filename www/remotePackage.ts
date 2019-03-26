@@ -108,8 +108,6 @@ class RemotePackage extends Package implements IRemotePackage {
                 });
 
                 this.currentFileTransfer.send()
-
-                //.download(this.downloadUrl,  downloadSuccess, downloadError, true);
             }
         } catch (e) {
             CodePushUtil.invokeErrorCallback(new Error("An error occured while downloading the package. " + (e && e.message) ? e.message : ""), errorCallback);

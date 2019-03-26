@@ -228,10 +228,10 @@ var FileUtil = (function () {
         fileEntry.file(function (file) {
             var fileReader = new FileReader();
             fileReader.onloadend = function (ev) {
-                callback(null, ev.target.result);
+                callback(null, fileReader.result);
             };
             fileReader.onerror = function (ev) {
-                callback(new Error("Could not get file. Error: " + ev.error), null);
+                callback(new Error("Could not get file. Error: " + fileReader.error), null);
             };
             fileReader.readAsText(file);
         }, function (error) {
