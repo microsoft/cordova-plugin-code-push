@@ -36,9 +36,9 @@ var RemotePackage = (function (_super) {
                 CodePushUtil.invokeErrorCallback(new Error("The remote package does not contain a download URL."), errorCallback);
             }
             else {
-                this.currentFileTransfer = new XMLHttpRequest();
-                this.currentFileTransfer.responseType = 'blob';
-                this.currentFileTransfer.open('GET', this.downloadUrl, true);
+                var filedir = cordova.file.dataDirectory + LocalPackage.DownloadDir + "/";
+                var filename = LocalPackage.PackageUpdateFileName;
+                this.currentFileTransfer = cordova.plugin.http.downloadFile(this.downloadUrl, {}, {}, filedir + filename);
                 var onFileError_1 = function (fileError, stage) {
                     var error = new Error("Could not access local package. Stage:" + stage + "Error code: " + fileError.code);
                     CodePushUtil.invokeErrorCallback(error, errorCallback);
@@ -65,28 +65,9 @@ var RemotePackage = (function (_super) {
                         });
                     }, function (fileError) { return onFileError_1(fileError, "READ_FILE"); });
                 };
-                this.currentFileTransfer.addEventListener('load', function (progressEvent) {
-                    var ok = _this.currentFileTransfer.status === 200;
-                    if (!ok) {
-                        CodePushUtil.invokeErrorCallback(new Error(_this.currentFileTransfer.statusText), errorCallback);
-                    }
-                    else {
-                        var filedir = cordova.file.dataDirectory + LocalPackage.DownloadDir + "/";
-                        var filename = LocalPackage.PackageUpdateFileName;
-                        RemotePackage.saveFile(_this.currentFileTransfer.response, filedir + filename, onFileReady_1, onFileError_1);
-                    }
-                });
-                this.currentFileTransfer.addEventListener('error', function (progressEvent) {
-                    _this.currentFileTransfer = null;
-                    CodePushUtil.invokeErrorCallback(new Error(_this.currentFileTransfer.statusText), errorCallback);
-                });
-                this.currentFileTransfer.addEventListener('progress', function (progressEvent) {
-                    if (downloadProgress) {
-                        var dp = { receivedBytes: progressEvent.loaded, totalBytes: progressEvent.total };
-                        downloadProgress(dp);
-                    }
-                });
-                this.currentFileTransfer.send();
+                this.currentFileTransfer
+                    .then(function (data) { return onFileReady_1(data); }, function (reason) { return onFileError_1(reason, "HTTP_REJECTED"); })
+                    .catch(function (reason) { return onFileError_1(reason, "HTTP_ERROR"); });
             }
         }
         catch (e) {
@@ -96,27 +77,13 @@ var RemotePackage = (function (_super) {
     RemotePackage.prototype.abortDownload = function (abortSuccess, abortError) {
         try {
             if (this.currentFileTransfer) {
-                this.currentFileTransfer.abort();
+                this.currentFileTransfer = undefined;
                 abortSuccess && abortSuccess();
             }
         }
         catch (e) {
             abortError && abortError(e);
         }
-    };
-    RemotePackage.saveFile = function (data, filePath, onFileReady, onFileError) {
-        var errorHandler = function (at) { return function (error) { return onFileError(error, at); }; };
-        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function openFs(fs) {
-            fs.root.getFile(filePath, { create: true, exclusive: false }, function makeEntry(fileEntry) {
-                fileEntry.createWriter(function writeFile(writer) {
-                    writer.addEventListener('writeend', function (e) {
-                        CodePushUtil.logMessage("Wrote file to" + fileEntry.fullPath);
-                        onFileReady(fileEntry);
-                    });
-                    writer.write(data);
-                }, errorHandler("WRITE_FILE"));
-            }, errorHandler("MAKE_ENTRY"));
-        }, errorHandler("OPEN_FS"));
     };
     return RemotePackage;
 }(Package));
