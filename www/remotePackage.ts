@@ -1,11 +1,9 @@
 /// <reference path="../typings/codePush.d.ts" />
-/// <reference path="../typings/http.d.ts" />
 /// <reference types="cordova-plugin-file" />
 
 "use strict";
-import { HTTPPlugin } from "../typings/http";
 
-declare var cordova: Cordova & { plugin: { http: HTTPPlugin }};
+declare var cordova: Cordova & { plugin: { http: any }};
 
 import LocalPackage = require("./localPackage");
 import Package = require("./package");
@@ -29,7 +27,7 @@ type FileSaverErrorHandler = (error: FileError, at: string) => void;
  */
 class RemotePackage extends Package implements IRemotePackage {
 
-    private currentFileTransfer: Promise<any>;
+    private isDownloading: boolean = false;
 
     /**
      * The URL at which the package is available for download.
@@ -49,19 +47,17 @@ class RemotePackage extends Package implements IRemotePackage {
             if (!this.downloadUrl) {
                 CodePushUtil.invokeErrorCallback(new Error("The remote package does not contain a download URL."), errorCallback);
             } else {
-                const filedir = cordova.file.dataDirectory + LocalPackage.DownloadDir + "/";
-                const filename = LocalPackage.PackageUpdateFileName;
-                this.currentFileTransfer = cordova.plugin.http.downloadFile(this.downloadUrl, {}, {}, filedir + filename)
+                this.isDownloading = true;
 
                 const onFileError: FileSaverErrorHandler = (fileError: FileError, stage: string) => {
                     const error = new Error("Could not access local package. Stage:" + stage + "Error code: " + fileError.code);
                     CodePushUtil.invokeErrorCallback(error, errorCallback);
                     CodePushUtil.logMessage(stage + ":" + fileError)
-                    this.currentFileTransfer = null;
+                    this.isDownloading = false;
                 };
 
                 const onFileReady: FileSaverCompletionHandler = (fileEntry: FileEntry) => {
-                    this.currentFileTransfer = null;
+                    this.isDownloading = false;
 
                     fileEntry.file((file: File) => {
 
@@ -84,12 +80,10 @@ class RemotePackage extends Package implements IRemotePackage {
                     }, fileError => onFileError(fileError, "READ_FILE"));
                 }
 
-                this.currentFileTransfer
-                    .then(
-                        (data: FileEntry) => onFileReady(data),
-                        (reason: any) => onFileError(reason, "HTTP_REJECTED")
-                    )
-                    .catch((reason: any) => onFileError(reason, "HTTP_ERROR"))
+                const filedir = cordova.file.dataDirectory + LocalPackage.DownloadDir + "/";
+                const filename = LocalPackage.PackageUpdateFileName;
+
+                cordova.plugin.http.downloadFile(this.downloadUrl, {}, {}, filedir + filename, onFileReady, onFileError);
             }
         } catch (e) {
             CodePushUtil.invokeErrorCallback(new Error("An error occured while downloading the package. " + (e && e.message) ? e.message : ""), errorCallback);
@@ -104,8 +98,8 @@ class RemotePackage extends Package implements IRemotePackage {
      */
     public abortDownload(abortSuccess?: SuccessCallback<void>, abortError?: ErrorCallback): void {
         try {
-            if (this.currentFileTransfer) {
-                this.currentFileTransfer = undefined;
+            if (this.isDownloading) {
+                this.isDownloading = false;
 
                 /* abort succeeded */
                 abortSuccess && abortSuccess();
