@@ -525,7 +525,7 @@ public class CodePush extends CordovaPlugin {
             if (this.hasIonicWebViewEngine()) {
                 try {
                     String ionicWebViewEngineUrlPath = new URI(url).getPath();
-                    String ionicWebViewEngineServerPath = ionicWebViewEngineUrlPath.substring(0, ionicWebViewEngineUrlPath.indexOf("/index.html"));
+                    String ionicWebViewEngineServerPath = ionicWebViewEngineUrlPath.substring(0, ionicWebViewEngineUrlPath.indexOf("/" + getConfigStartPageName()));
                     this.setServerBasePath(ionicWebViewEngineServerPath);
                 } catch (URISyntaxException e) {
                     Utilities.logException(e);
