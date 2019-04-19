@@ -6,6 +6,8 @@
 
 @implementation CDVWKWebViewEngine (CodePush)
 
+NSString* const IdentifierCodePushPath = @"codepush/deploy/versions";
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wobjc-protocol-method-implementation"
 
@@ -16,7 +18,7 @@
         // All file URL requests should be handled with the setServerBasePath in case if it is Ionic app.
         if ([CodePush hasIonicWebViewEngine: self]) {
             NSString* specifiedServerPath = [CodePush getCurrentServerBasePath];
-            if (![specifiedServerPath containsString:@"codepush/deploy/versions"] || [request.URL.path containsString:@"codepush/deploy/versions"]) {
+            if (![specifiedServerPath containsString:IdentifierCodePushPath] || [request.URL.path containsString:IdentifierCodePushPath]) {
                 [CodePush setServerBasePath:request.URL.path webView: self];
             }
 
