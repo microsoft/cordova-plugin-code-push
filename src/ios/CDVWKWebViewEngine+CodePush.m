@@ -25,7 +25,7 @@ NSString* const IdentifierCodePushPath = @"codepush/deploy/versions";
             return nil;
         }
 
-        if ([request.URL.absoluteString containsString:@"codepush"]) {
+        if ([request.URL.absoluteString containsString:IdentifierCodePushPath]) {
             // If the app is attempting to load a CodePush update, then we can lock the WebView down to
             // just the CodePush "versions" directory. This prevents non-CodePush assets from being accessible,
             // while still allowing us to navigate to a future update, as well as to the binary if a rollback is needed.
