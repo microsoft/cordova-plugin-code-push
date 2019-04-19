@@ -16,7 +16,7 @@
         // All file URL requests should be handled with the setServerBasePath in case if it is Ionic app.
         if ([CodePush hasIonicWebViewEngine: self]) {
             NSString* specifiedServerPath = [CodePush getCurrentServerBasePath];
-            if (![specifiedServerPath containsString:@"codepush"] || [request.URL.path containsString:@"codepush"]) {
+            if (![specifiedServerPath containsString:@"codepush/deploy/versions"] || [request.URL.path containsString:@"codepush/deploy/versions"]) {
                 [CodePush setServerBasePath:request.URL.path webView: self];
             }
 
