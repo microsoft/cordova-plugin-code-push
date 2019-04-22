@@ -19,6 +19,7 @@
 - (void)pluginInitialize;
 + (Boolean)hasIonicWebViewEngine:(id<CDVWebViewEngineProtocol>) webViewEngine;
 + (void) setServerBasePath:(NSString*)serverPath webView:(id<CDVWebViewEngineProtocol>) webViewEngine;
++ (NSString*) getCurrentServerBasePath;
 
 void CPLog(NSString *formatString, ...);
 @end

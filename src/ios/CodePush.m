@@ -14,6 +14,7 @@
 
 @implementation CodePush
 
+static NSString *specifiedServerPath = @"";
 bool didUpdate = false;
 bool pendingInstall = false;
 NSDate* lastResignedDate;
@@ -417,8 +418,13 @@ StatusReport* rollbackStatusReport = nil;
     }
 }
 
++ (NSString*) getCurrentServerBasePath {
+    return specifiedServerPath;
+}
+
 + (void) setServerBasePath:(NSString*)serverPath webView:(id<CDVWebViewEngineProtocol>) webViewEngine {
     if ([CodePush hasIonicWebViewEngine: webViewEngine]) {
+        specifiedServerPath = serverPath;
         SEL setServerBasePath = NSSelectorFromString(@"setServerBasePath:");
         NSMutableArray * urlPathComponents = [serverPath pathComponents].mutableCopy;
         [urlPathComponents removeLastObject];

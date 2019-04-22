@@ -6,6 +6,8 @@
 
 @implementation CDVWKWebViewEngine (CodePush)
 
+NSString* const IdentifierCodePushPath = @"codepush/deploy/versions";
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wobjc-protocol-method-implementation"
 
@@ -15,12 +17,15 @@
     if (request.URL.isFileURL) {
         // All file URL requests should be handled with the setServerBasePath in case if it is Ionic app.
         if ([CodePush hasIonicWebViewEngine: self]) {
-            [CodePush setServerBasePath:request.URL.path webView: self];
+            NSString* specifiedServerPath = [CodePush getCurrentServerBasePath];
+            if (![specifiedServerPath containsString:IdentifierCodePushPath] || [request.URL.path containsString:IdentifierCodePushPath]) {
+                [CodePush setServerBasePath:request.URL.path webView: self];
+            }
 
             return nil;
         }
 
-        if ([request.URL.absoluteString containsString:@"codepush"]) {
+        if ([request.URL.absoluteString containsString:IdentifierCodePushPath]) {
             // If the app is attempting to load a CodePush update, then we can lock the WebView down to
             // just the CodePush "versions" directory. This prevents non-CodePush assets from being accessible,
             // while still allowing us to navigate to a future update, as well as to the binary if a rollback is needed.
