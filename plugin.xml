@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
-    <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-code-push" version="1.11.17">
+    <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-code-push" version="1.11.18">
         <name>CodePush</name>
         <description>This plugin allows you to push code updates to your apps instantly using the CodePush service</description>
         <license>MIT</license>
