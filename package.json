@@ -23,6 +23,7 @@
   ],
   "author": "Microsoft Corporation",
   "license": "MIT",
+  "types": "./typings/codePush.d.ts",
   "devDependencies": {
     "@types/assert": "0.0.31",
     "@types/cordova": "0.0.34",
