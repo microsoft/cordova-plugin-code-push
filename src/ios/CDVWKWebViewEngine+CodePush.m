@@ -7,6 +7,7 @@
 @implementation CDVWKWebViewEngine (CodePush)
 
 NSString* const IdentifierCodePushPath = @"codepush/deploy/versions";
+BOOL navigationFailedFlag = false;
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wobjc-protocol-method-implementation"
@@ -46,6 +47,26 @@ NSString* const IdentifierCodePushPath = @"codepush/deploy/versions";
 }
 
 #pragma clang diagnostic pop
+
+- (void)webView:(WKWebView*)theWebView didFailNavigation:(WKNavigation*)navigation withError:(NSError*)error
+{
+    CDVViewController* vc = (CDVViewController*)self.viewController;
+    // Humble check for preventing infinity loop with navigation error handlers
+    if (!navigationFailedFlag) {
+        [self loadRequest: [NSURLRequest requestWithURL:[[NSURL alloc] initWithString:[vc startPage]]]];
+    } else {
+        NSString* message = [NSString stringWithFormat:@"Failed to load webpage with error: %@", [error localizedDescription]];
+        NSLog(@"%@", message);
+        [CDVUserAgentUtil releaseLock:vc.userAgentLockToken];
+        NSURL* errorUrl = vc.errorURL;
+        if (errorUrl) {
+            errorUrl = [NSURL URLWithString:[NSString stringWithFormat:@"?error=%@", [message stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] relativeToURL:errorUrl];
+            NSLog(@"%@", [errorUrl absoluteString]);
+            [theWebView loadRequest:[NSURLRequest requestWithURL:errorUrl]];
+        }
+    }
+    navigationFailedFlag =true;
+}
 
 @end
 
