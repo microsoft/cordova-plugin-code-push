@@ -51,10 +51,13 @@ BOOL navigationFailedFlag = false;
 - (void)webView:(WKWebView*)theWebView didFailNavigation:(WKNavigation*)navigation withError:(NSError*)error
 {
     CDVViewController* vc = (CDVViewController*)self.viewController;
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resetNavigationFailedFlag:) name:CDVPageDidLoadNotification object:nil];
     // Humble check for preventing infinity loop with navigation error handlers
     if (!navigationFailedFlag) {
+        navigationFailedFlag = true;
         [self loadRequest: [NSURLRequest requestWithURL:[[NSURL alloc] initWithString:[vc startPage]]]];
     } else {
+        [self resetNavigationFailedFlag:nil];
         NSString* message = [NSString stringWithFormat:@"Failed to load webpage with error: %@", [error localizedDescription]];
         NSLog(@"%@", message);
         [CDVUserAgentUtil releaseLock:vc.userAgentLockToken];
@@ -65,7 +68,12 @@ BOOL navigationFailedFlag = false;
             [theWebView loadRequest:[NSURLRequest requestWithURL:errorUrl]];
         }
     }
-    navigationFailedFlag =true;
+}
+
+- (void)resetNavigationFailedFlag:(NSNotification*)notification
+{
+    navigationFailedFlag = false;
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:CDVPageDidLoadNotification object:nil];
 }
 
 @end
