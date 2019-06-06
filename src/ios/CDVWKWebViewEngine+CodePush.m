@@ -50,23 +50,38 @@ BOOL navigationFailedFlag = false;
 
 - (void)webView:(WKWebView*)theWebView didFailNavigation:(WKNavigation*)navigation withError:(NSError*)error
 {
-    CDVViewController* vc = (CDVViewController*)self.viewController;
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resetNavigationFailedFlag:) name:CDVPageDidLoadNotification object:nil];
     // Humble check for preventing infinity loop with navigation error handlers
-    if (!navigationFailedFlag) {
-        navigationFailedFlag = true;
-        [self loadRequest: [NSURLRequest requestWithURL:[[NSURL alloc] initWithString:[vc startPage]]]];
+    if (!navigationFailedFlag)
+    {
+        CDVViewController* vc = (CDVViewController*)self.viewController;
+        // With null NSURLErrorFailingURLStringErrorKey navigation failed because of the webView terminating
+        if ([[error userInfo] objectForKey:NSURLErrorFailingURLStringErrorKey] == nil && [[vc startPage] containsString:IdentifierCodePushPath])
+        {
+            NSLog(@"Failed to load webpage with error: %@", [error localizedDescription]);
+            NSLog(@"Trying reload request with url: %@", [vc startPage]);
+            navigationFailedFlag = true;
+            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resetNavigationFailedFlag:) name:CDVPageDidLoadNotification object:nil];
+            [self loadRequest: [NSURLRequest requestWithURL:[[NSURL alloc] initWithString:[vc startPage]]]];
+        } else {
+            [self webView:theWebView defaultDidFailNavigation:navigation withError:error];
+        }
     } else {
         [self resetNavigationFailedFlag:nil];
-        NSString* message = [NSString stringWithFormat:@"Failed to load webpage with error: %@", [error localizedDescription]];
-        NSLog(@"%@", message);
-        [CDVUserAgentUtil releaseLock:vc.userAgentLockToken];
-        NSURL* errorUrl = vc.errorURL;
-        if (errorUrl) {
-            errorUrl = [NSURL URLWithString:[NSString stringWithFormat:@"?error=%@", [message stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] relativeToURL:errorUrl];
-            NSLog(@"%@", [errorUrl absoluteString]);
-            [theWebView loadRequest:[NSURLRequest requestWithURL:errorUrl]];
-        }
+        [self webView:theWebView defaultDidFailNavigation:navigation withError:error];
+    }
+}
+
+- (void)webView:(WKWebView*)theWebView defaultDidFailNavigation:(WKNavigation*)navigation withError:(NSError*)error
+{
+    CDVViewController* vc = (CDVViewController*)self.viewController;
+    NSString* message = [NSString stringWithFormat:@"Failed to load webpage with error: %@", [error localizedDescription]];
+    NSLog(@"%@", message);
+    [CDVUserAgentUtil releaseLock:vc.userAgentLockToken];
+    NSURL* errorUrl = vc.errorURL;
+    if (errorUrl) {
+        errorUrl = [NSURL URLWithString:[NSString stringWithFormat:@"?error=%@", [message stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] relativeToURL:errorUrl];
+        NSLog(@"%@", [errorUrl absoluteString]);
+        [theWebView loadRequest:[NSURLRequest requestWithURL:errorUrl]];
     }
 }
 
