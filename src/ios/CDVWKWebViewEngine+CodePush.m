@@ -7,11 +7,13 @@
 @implementation CDVWKWebViewEngine (CodePush)
 
 NSString* const IdentifierCodePushPath = @"codepush/deploy/versions";
+NSString* lastLoadedURL = @"";
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wobjc-protocol-method-implementation"
 
 - (id)loadRequest:(NSURLRequest *)request {
+    lastLoadedURL = request.URL.absoluteString;
     NSURL *readAccessURL;
 
     if (request.URL.isFileURL) {
@@ -50,14 +52,13 @@ NSString* const IdentifierCodePushPath = @"codepush/deploy/versions";
 // Fix bug related to unable WKWebView recovery after reinit with loaded codepush update
 - (void)webView:(WKWebView*)theWebView didFailNavigation:(WKNavigation*)navigation withError:(NSError*)error
 {
-    CDVViewController* vc = (CDVViewController*)self.viewController;
     // NSURLErrorFailingURLStringErrorKey is URL which caused a load to fail, if it's null then webView was terminated for some reason
-    if ([[error userInfo] objectForKey:NSURLErrorFailingURLStringErrorKey] == nil && [[vc startPage] containsString:IdentifierCodePushPath])
+    if ([[error userInfo] objectForKey:NSURLErrorFailingURLStringErrorKey] == nil && [lastLoadedURL containsString:IdentifierCodePushPath])
     {
         NSLog(@"Failed to load webpage with error: %@", [error localizedDescription]);
-        NSLog(@"Trying to reload request with url: %@", [vc startPage]);
+        NSLog(@"Trying to reload request with url: %@", lastLoadedURL);
         // Manually loading codepush start page via loadRequest method of this category
-        [self loadRequest: [NSURLRequest requestWithURL:[[NSURL alloc] initWithString:[vc startPage]]]];
+        [self loadRequest: [NSURLRequest requestWithURL:[[NSURL alloc] initWithString:lastLoadedURL]]];
     } else {
         // Default implementation of didFailNavigation method of CDVWKWebViewEngine.m
         CDVViewController* vc = (CDVViewController*)self.viewController;
