@@ -285,8 +285,8 @@ class FileUtil {
                 callback(null, ev.target.result);
             };
 
-            fileReader.onerror = (ev: ErrorEvent) => {
-                callback(new Error("Could not get file. Error: " + ev.error), null);
+            fileReader.onerror = () => {
+                callback(new Error("Could not get file. Error: " + fileReader.error.message), null);
             };
 
             fileReader.readAsText(file);
