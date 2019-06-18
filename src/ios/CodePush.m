@@ -129,7 +129,7 @@ StatusReport* rollbackStatusReport = nil;
             CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
             bool revertSuccess = (nil != currentMetadata && [self loadPackage:currentMetadata.localPath]);
             if (!revertSuccess) {
-                /* first update failed, go back to store version */
+                /* first update failed, go back to binary version */
                 [self loadStoreVersion];
             }
         }
@@ -139,7 +139,7 @@ StatusReport* rollbackStatusReport = nil;
 - (void)notifyApplicationReady:(CDVInvokedUrlCommand *)command {
     [self.commandDelegate runInBackground:^{
         if ([CodePushPackageManager isBinaryFirstRun]) {
-            // Report first run of a store version app
+            // Report first run of a binary version app
             [CodePushPackageManager markBinaryFirstRunFlag];
             NSString* appVersion = [Utilities getApplicationVersion];
             NSString* deploymentKey = ((CDVViewController *)self.viewController).settings[DeploymentKeyPreference];
