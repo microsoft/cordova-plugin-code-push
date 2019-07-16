@@ -9,9 +9,12 @@
 
 "use strict";
 var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -159,8 +162,8 @@ var LocalPackage = (function (_super) {
     };
     LocalPackage.prototype.getSignatureFromUpdate = function (deployDir, callback) {
         var rootUri = cordova.file.dataDirectory;
-        var path = deployDir.fullPath + '/www';
-        var fileName = '.codepushrelease';
+        var path = deployDir.fullPath + "/www";
+        var fileName = ".codepushrelease";
         FileUtil.fileExists(rootUri, path, fileName, function (error, result) {
             if (!result) {
                 callback(null, null);

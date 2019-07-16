@@ -5,6 +5,7 @@
 // All rights reserved.
 // Licensed under the MIT license.
 
+
 declare module Http {
     export const enum Verb {
         GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS, CONNECT, PATCH
