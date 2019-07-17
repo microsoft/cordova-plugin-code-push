@@ -1,3 +1,7 @@
+/// <reference path="../typings/codePush.d.ts" />
+/// <reference types="cordova-plugin-file" />
+/// <reference types="cordova" />
+
 "use strict";
 
 declare var cordova: Cordova;
