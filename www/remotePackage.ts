@@ -1,6 +1,3 @@
-/// <reference path="../typings/codePush.d.ts" />
-/// <reference types="cordova-plugin-file-transfer" />
-
 "use strict";
 
 declare var cordova: Cordova;
