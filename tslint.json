@@ -1,20 +1,25 @@
 {
     "rules": {
         "class-name": true,
-        "comment-format": [true,
+        "comment-format": [
+            true,
             "check-space"
         ],
-        "indent": [true,
+        "indent": [
+            true,
             "spaces"
         ],
-        "one-line": [true,
+        "one-line": [
+            true,
             "check-open-brace"
         ],
-        "quotemark": [true,
+        "quotemark": [
+            true,
             "double"
         ],
         "semicolon": true,
-        "whitespace": [true,
+        "whitespace": [
+            true,
             "check-branch",
             "check-operator",
             "check-separator",
