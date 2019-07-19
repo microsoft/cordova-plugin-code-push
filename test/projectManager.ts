@@ -32,7 +32,7 @@ export class ProjectManager {
 
     public static DEFAULT_APP_VERSION: string = "Store version";
 
-	/**
+    /**
 	 * Creates a new cordova test application at the specified path, and configures it
 	 * with the given server URL, android and ios deployment keys.
 	 */
@@ -215,7 +215,7 @@ export class ProjectManager {
         return ProjectManager.execChildProcess("cordova platform add " + targetPlatform.getCordovaName() + (version ? "@" + version : ""), { cwd: projectFolder });
     }
 
-	/**
+    /**
 	 * Replaces a regex in a file with a given string.
 	 */
     public static replaceString(filePath: string, regex: string, replacement: string): void {
