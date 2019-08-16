@@ -8,7 +8,7 @@
 
 
 "use strict";
-var DefaultServerUrl = "https://codepush.azurewebsites.net/";
+var DefaultServerUrl = "https://codepush.appcenter.ms/";
 var NativeAppInfo = (function () {
     function NativeAppInfo() {
     }

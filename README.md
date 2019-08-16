@@ -94,15 +94,15 @@ With the CodePush plugin installed, configure your app to use it via the followi
 2. If you're using an `<access origin="*" />` element in your `config.xml` file, then your app is already allowed to communicate with the CodePush servers and you can safely skip this step. Otherwise, add the following additional `<access />` elements:
  
     ```xml
-    <access origin="https://codepush.azurewebsites.net" />
+    <access origin="https://codepush.appcenter.ms" />
     <access origin="https://codepush.blob.core.windows.net" />
     <access origin="https://codepushupdates.azureedge.net" />
     ```
     
-3. To ensure that your app can access the CodePush server on [CSP](https://developer.mozilla.org/en-US/docs/Web/Security/CSP/Introducing_Content_Security_Policy)-compliant platforms, add `https://codepush.azurewebsites.net` to the `Content-Security-Policy` `meta` tag in your `index.html` file:
+3. To ensure that your app can access the CodePush server on [CSP](https://developer.mozilla.org/en-US/docs/Web/Security/CSP/Introducing_Content_Security_Policy)-compliant platforms, add `https://codepush.appcenter.ms` to the `Content-Security-Policy` `meta` tag in your `index.html` file:
   
     ```xml
-    <meta http-equiv="Content-Security-Policy" content="default-src https://codepush.azurewebsites.net 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *" />
+    <meta http-equiv="Content-Security-Policy" content="default-src https://codepush.appcenter.ms 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *" />
     ```
    
 4. Finally, double-check that you already have the [`cordova-plugin-whitelist`](https://github.com/apache/cordova-plugin-whitelist) plugin installed (most apps will). To check this, simply run the following command:
