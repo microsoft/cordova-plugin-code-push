@@ -142,19 +142,19 @@ class LocalPackage extends Package implements ILocalPackage {
                         "Warning! JWT signature exists in codepush update but code integrity check couldn't be performed because there is no public key configured. " +
                         "Please ensure that public key is properly configured within your application."
                     );
-                        
-                    //verifyHash
+
+                    // verifyHash
                     this.verifyHash(deployDir, this.packageHash, verificationFail, successCallback);
                 } else {
                     if (deploymentResult.isDiffUpdate){
-                        //verifyHash
+                        // verifyHash
                         this.verifyHash(deployDir, this.packageHash, verificationFail, successCallback);
                     } else {
                         successCallback();
                     }
                 }          
             }
-        }
+        };
 
         if (deploymentResult.isDiffUpdate){
             CodePushUtil.logMessage("Applying diff update");
@@ -191,20 +191,20 @@ class LocalPackage extends Package implements ILocalPackage {
 
         var success = (publicKey: string) => {
             callback(null, publicKey);
-        }
+        };
 
         var fail = (error: Error) => {
             callback(error, null);
-        }
+        };
 
-        cordova.exec(success, fail,"CodePush","getPublicKey",[]);
+        cordova.exec(success, fail, "CodePush", "getPublicKey", []);
     }
 
     private getSignatureFromUpdate(deployDir: DirectoryEntry, callback: Callback<string>){
 
         var rootUri = cordova.file.dataDirectory;
-        var path = deployDir.fullPath + '/www';
-        var fileName = '.codepushrelease';
+        var path = deployDir.fullPath + "/www";
+        var fileName = ".codepushrelease";
 
         FileUtil.fileExists(rootUri, path, fileName, (error, result) => {
             if (!result) {
@@ -215,7 +215,7 @@ class LocalPackage extends Package implements ILocalPackage {
 
             FileUtil.readFile(rootUri, path, fileName, (error, signature) => {
                 if (error) {
-                    //error reading signature file from bundle
+                    // error reading signature file from bundle
                     callback(error, null);
                     return;
                 }
@@ -234,10 +234,10 @@ class LocalPackage extends Package implements ILocalPackage {
 
             CodePushUtil.logMessage("The update contents succeeded the data integrity check.");
             successCallback();
-        }
+        };
         var packageHashFail = (error: Error) => {
             errorCallback(new Error("Unable to compute hash for package: " + error));
-        }
+        };
         CodePushUtil.logMessage("Verifying hash for folder path: " + deployDir.fullPath);
         cordova.exec(packageHashSuccess, packageHashFail, "CodePush", "getPackageHash", [deployDir.fullPath]);
     }
@@ -251,13 +251,13 @@ class LocalPackage extends Package implements ILocalPackage {
 
             CodePushUtil.logMessage("The update contents succeeded the code signing check.");
             successCallback();
-        }
+        };
         var decodeSignatureFail = (error: Error) => {
             errorCallback(new Error("Unable to verify signature for package: " + error));
-        }
+        };
         CodePushUtil.logMessage("Verifying signature for folder path: " + deployDir.fullPath);
         cordova.exec(decodeSignatureSuccess, decodeSignatureFail, "CodePush", "decodeSignature", [publicKey, signature]);
-    }    
+    }
 
     private finishInstall(deployDir: DirectoryEntry, installOptions: InstallOptions, installSuccess: SuccessCallback<InstallMode>, installError: ErrorCallback): void {
         function backupPackageInformationFileIfNeeded(backupIfNeededDone: Callback<void>) {
@@ -458,7 +458,7 @@ class LocalPackage extends Package implements ILocalPackage {
         FileUtil.writeStringToDataFile(content, LocalPackage.RootDir, LocalPackage.PackageInfoFile, true, callback);
     }
 
-	/**
+    /**
      * Backs up the current package information to the old package information file.
      * This file is used for recovery in case of an update going wrong.
      * @param callback In case of an error, this function will be called with the error as the fist parameter.

@@ -35,11 +35,11 @@ var app = {
     onDeviceReady: function () {
         // Migrate data from older versions
         window.codePush.getCurrentPackage(function (currentPackage) {
-            // getCurrentPackage returns null if no update was installed (app store version)
+            // getCurrentPackage returns null if no update was installed (binary version)
             if (currentPackage && currentPackage.isFirstRun) {
                 // First run after an update, migrate data
                 if (currentPackage.appVersion === "1.0.0") {
-                    // migrate data from store version to version 1.0.0
+                    // migrate data from binary version to version 1.0.0
                 } else if (currentPackage.appVersion === "2.0.0") {
                     // migrate data to version 2.0.0
                 }

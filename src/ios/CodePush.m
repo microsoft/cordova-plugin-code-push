@@ -14,6 +14,7 @@
 
 @implementation CodePush
 
+static NSString *specifiedServerPath = @"";
 bool didUpdate = false;
 bool pendingInstall = false;
 NSDate* lastResignedDate;
@@ -128,7 +129,7 @@ StatusReport* rollbackStatusReport = nil;
             CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
             bool revertSuccess = (nil != currentMetadata && [self loadPackage:currentMetadata.localPath]);
             if (!revertSuccess) {
-                /* first update failed, go back to store version */
+                /* first update failed, go back to binary version */
                 [self loadStoreVersion];
             }
         }
@@ -138,7 +139,7 @@ StatusReport* rollbackStatusReport = nil;
 - (void)notifyApplicationReady:(CDVInvokedUrlCommand *)command {
     [self.commandDelegate runInBackground:^{
         if ([CodePushPackageManager isBinaryFirstRun]) {
-            // Report first run of a store version app
+            // Report first run of a binary version app
             [CodePushPackageManager markBinaryFirstRunFlag];
             NSString* appVersion = [Utilities getApplicationVersion];
             NSString* deploymentKey = ((CDVViewController *)self.viewController).settings[DeploymentKeyPreference];
@@ -417,8 +418,13 @@ StatusReport* rollbackStatusReport = nil;
     }
 }
 
++ (NSString*) getCurrentServerBasePath {
+    return specifiedServerPath;
+}
+
 + (void) setServerBasePath:(NSString*)serverPath webView:(id<CDVWebViewEngineProtocol>) webViewEngine {
     if ([CodePush hasIonicWebViewEngine: webViewEngine]) {
+        specifiedServerPath = serverPath;
         SEL setServerBasePath = NSSelectorFromString(@"setServerBasePath:");
         NSMutableArray * urlPathComponents = [serverPath pathComponents].mutableCopy;
         [urlPathComponents removeLastObject];

@@ -186,7 +186,7 @@ export class TestUtil {
         }
     }
 
-	/**
+    /**
 	 * Reads command line options passed to mocha.
 	 */
     private static readMochaCommandLineOption(optionName: string): string {
@@ -204,7 +204,7 @@ export class TestUtil {
         return optionValue;
     }
 
-	/**
+    /**
 	 * Reads command line options passed to mocha.
 	 */
     private static readMochaCommandLineFlag(optionName: string): boolean {
