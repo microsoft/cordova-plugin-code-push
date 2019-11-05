@@ -22,7 +22,6 @@ class HttpRequester implements Http.Requester {
     }
 
     public request(verb: Http.Verb, url: string, callbackOrRequestBody: Callback<Http.Response> | string, callback?: Callback<Http.Response>): void {
-        var requestBody: string;
         var requestCallback: Callback<Http.Response> = callback;
 
         var options = HttpRequester.getInitialOptionsForVerb(verb);
@@ -37,8 +36,9 @@ class HttpRequester implements Http.Requester {
         }
 
         if (typeof callbackOrRequestBody === "string") {
+            // should be already JSON.stringify-ied, using plaintext serializer
             options.serializer = "utf8";
-            options.data = <any>requestBody;
+            options.data = <any>callbackOrRequestBody;
         }
 
         options.responseType = "text"; // Backward compatibility to xhr.responseText

@@ -32,7 +32,6 @@ var HttpRequester = (function () {
         }
     }
     HttpRequester.prototype.request = function (verb, url, callbackOrRequestBody, callback) {
-        var requestBody;
         var requestCallback = callback;
         var options = HttpRequester.getInitialOptionsForVerb(verb);
         if (options instanceof Error) {
@@ -45,7 +44,7 @@ var HttpRequester = (function () {
         }
         if (typeof callbackOrRequestBody === "string") {
             options.serializer = "utf8";
-            options.data = requestBody;
+            options.data = callbackOrRequestBody;
         }
         options.responseType = "text";
         cordova.plugin.http.sendRequest(url, options, function (success) {
