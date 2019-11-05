@@ -281,7 +281,7 @@ class FileUtil {
     public static readFileEntry(fileEntry: FileEntry, callback: Callback<string>): void {
         fileEntry.file((file: File) => {
             var fileReader = new FileReader();
-            fileReader.onloadend = (ev: ProgressEvent)=> {
+            fileReader.onloadend = (ev: ProgressEvent) => {
                 callback(null, fileReader.result as string);
             };
 

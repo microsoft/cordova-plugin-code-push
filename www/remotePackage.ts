@@ -3,24 +3,13 @@
 
 "use strict";
 
-declare var cordova: Cordova & { plugin: { http: any }};
+declare var cordova: Cordova & { plugin: { http: AdvancedHttp.Plugin }};
 
 import LocalPackage = require("./localPackage");
 import Package = require("./package");
 import NativeAppInfo = require("./nativeAppInfo");
 import CodePushUtil = require("./codePushUtil");
 import Sdk = require("./sdk");
-
-
-// Types used in file handling
-/**
- * A function which accepts @type {FileEntry} containing a file
- */
-type FileSaverCompletionHandler = (entry: FileEntry) => void;
-/**
- * A function which is called if file handling has failed
- */
-type FileSaverErrorHandler = (error: FileError, at: string) => void;
 
 /**
  * Defines a remote package, which represents an update package available for download.
@@ -52,7 +41,7 @@ class RemotePackage extends Package implements IRemotePackage {
                 const onFileError: FileSaverErrorHandler = (fileError: FileError, stage: string) => {
                     const error = new Error("Could not access local package. Stage:" + stage + "Error code: " + fileError.code);
                     CodePushUtil.invokeErrorCallback(error, errorCallback);
-                    CodePushUtil.logMessage(stage + ":" + fileError)
+                    CodePushUtil.logMessage(stage + ":" + fileError);
                     this.isDownloading = false;
                 };
 
@@ -78,7 +67,7 @@ class RemotePackage extends Package implements IRemotePackage {
                             Sdk.reportStatusDownload(localPackage, localPackage.deploymentKey);
                         });
                     }, fileError => onFileError(fileError, "READ_FILE"));
-                }
+                };
 
                 const filedir = cordova.file.dataDirectory + LocalPackage.DownloadDir + "/";
                 const filename = LocalPackage.PackageUpdateFileName;

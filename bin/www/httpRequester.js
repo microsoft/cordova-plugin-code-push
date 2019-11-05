@@ -8,58 +8,80 @@
 
 
 "use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var CodePushUtil = require("./codePushUtil");
 var HttpRequester = (function () {
     function HttpRequester(contentType) {
-        this.contentType = contentType;
+        cordova.plugin.http.setHeader("X-CodePush-Plugin-Name", "cordova-plugin-code-push");
+        cordova.plugin.http.setHeader("X-CodePush-Plugin-Version", cordova.require("cordova/plugin_list").metadata["cordova-plugin-code-push"]);
+        cordova.plugin.http.setHeader("X-CodePush-SDK-Version", cordova.require("cordova/plugin_list").metadata["code-push"]);
+        if (contentType) {
+            cordova.plugin.http.setHeader("Content-Type", contentType);
+        }
     }
     HttpRequester.prototype.request = function (verb, url, callbackOrRequestBody, callback) {
         var requestBody;
         var requestCallback = callback;
+        var options = HttpRequester.getInitialOptionsForVerb(verb);
+        if (options instanceof Error) {
+            CodePushUtil.logError("Could not make the HTTP request", options);
+            requestCallback && requestCallback(options, undefined);
+            return;
+        }
         if (!requestCallback && typeof callbackOrRequestBody === "function") {
             requestCallback = callbackOrRequestBody;
         }
         if (typeof callbackOrRequestBody === "string") {
-            requestBody = callbackOrRequestBody;
+            options.serializer = "utf8";
+            options.data = requestBody;
         }
-        var xhr = new XMLHttpRequest();
-        var methodName = this.getHttpMethodName(verb);
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4) {
-                var response = { statusCode: xhr.status, body: xhr.responseText };
-                requestCallback && requestCallback(null, response);
-            }
-        };
-        xhr.open(methodName, url, true);
-        if (this.contentType) {
-            xhr.setRequestHeader("Content-Type", this.contentType);
-        }
-        xhr.setRequestHeader("X-CodePush-Plugin-Name", "cordova-plugin-code-push");
-        xhr.setRequestHeader("X-CodePush-Plugin-Version", cordova.require("cordova/plugin_list").metadata["cordova-plugin-code-push"]);
-        xhr.setRequestHeader("X-CodePush-SDK-Version", cordova.require("cordova/plugin_list").metadata["code-push"]);
-        xhr.send(requestBody);
+        options.responseType = "text";
+        cordova.plugin.http.sendRequest(url, options, function (success) {
+            requestCallback && requestCallback(null, {
+                body: success.data,
+                statusCode: success.status,
+            });
+        }, function (failure) {
+            requestCallback && requestCallback(new Error(failure.error), null);
+        });
     };
-    HttpRequester.prototype.getHttpMethodName = function (verb) {
+    HttpRequester.getInitialOptionsForVerb = function (verb) {
         switch (verb) {
             case 0:
-                return "GET";
-            case 7:
-                return "CONNECT";
+                return { method: "get" };
             case 4:
-                return "DELETE";
+                return { method: "delete" };
             case 1:
-                return "HEAD";
-            case 6:
-                return "OPTIONS";
+                return { method: "head" };
             case 8:
-                return "PATCH";
+                return { method: "patch" };
             case 2:
-                return "POST";
+                return { method: "post" };
             case 3:
-                return "PUT";
+                return { method: "put" };
             case 5:
-                return "TRACE";
+            case 6:
+            case 7:
             default:
-                return null;
+                return new ((function (_super) {
+                    __extends(UnsupportedMethodError, _super);
+                    function UnsupportedMethodError() {
+                        return _super !== null && _super.apply(this, arguments) || this;
+                    }
+                    return UnsupportedMethodError;
+                }(Error)))("Unsupported HTTP method code [" + verb + "]");
         }
     };
     return HttpRequester;
