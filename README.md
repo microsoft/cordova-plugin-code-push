@@ -120,9 +120,11 @@ You are now ready to use the plugin in the application code. See the [sample app
 
 There is a possibility to specify WebView engine on the plugin build phase.
 
-By default UIWebView engine is used. You can force plugin to use WKWebView by the adding iOS specific preference:
+By default UIWebView engine is used. You can force plugin to use WKWebView by adding this iOS specific preference:
 
-    <preference name="WKWebViewOnly" value="true" />
+```xml
+<preference name="WKWebViewOnly" value="true" />
+```
 
 ## Plugin Usage
 
