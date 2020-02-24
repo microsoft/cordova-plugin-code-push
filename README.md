@@ -116,6 +116,14 @@ With the CodePush plugin installed, configure your app to use it via the followi
  
 You are now ready to use the plugin in the application code. See the [sample applications](/samples) for examples and the API documentation for more details.
 
+## iOS specific options
+
+There is a possibility to specify WebView engine on the plugin build phase.
+
+By default UIWebView engine is used. You can force plugin to use WKWebView by the adding iOS specific preference:
+
+    <preference name="WKWebViewOnly" value="true" />
+
 ## Plugin Usage
 
 With the CodePush plugin installed and configured, the only thing left is to add the necessary code to your app to control the following policies:
