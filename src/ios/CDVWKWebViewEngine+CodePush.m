@@ -17,7 +17,7 @@ NSString* lastLoadedURL = @"";
     lastLoadedURL = request.URL.absoluteString;
     NSURL *readAccessURL;
 
-    if (![lastLoadedURL containsString:@".app"]) {
+    if (![lastLoadedURL containsString:@".app"] && ![lastLoadedURL containsString:@"codepush"]) {
         return [self loadPluginRequest:request];
     }
 
