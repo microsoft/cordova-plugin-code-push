@@ -355,7 +355,7 @@ StatusReport* rollbackStatusReport = nil;
         [self handleUnconfirmedInstall:NO];
     }
 
-    [self navigateToLocalDeploymentIfExists];
+    //[self navigateToLocalDeploymentIfExists];
     // handle both ON_NEXT_RESUME and ON_NEXT_RESTART - the application might have been killed after transitioning to the background
     if (pendingInstall && (pendingInstall.installMode == ON_NEXT_RESTART || pendingInstall.installMode == ON_NEXT_RESUME)) {
         [self markUpdate];
