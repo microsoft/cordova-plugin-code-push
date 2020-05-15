@@ -230,8 +230,8 @@ var FileUtil = (function () {
             fileReader.onloadend = function (ev) {
                 callback(null, ev.target.result);
             };
-            fileReader.onerror = function (ev) {
-                callback(new Error("Could not get file. Error: " + ev.error), null);
+            fileReader.onerror = function () {
+                callback(new Error("Could not get file. Error: " + fileReader.error.message), null);
             };
             fileReader.readAsText(file);
         }, function (error) {

@@ -14,6 +14,7 @@
 
 @implementation CodePush
 
+static NSString *specifiedServerPath = @"";
 bool didUpdate = false;
 bool pendingInstall = false;
 NSDate* lastResignedDate;
@@ -128,7 +129,7 @@ StatusReport* rollbackStatusReport = nil;
             CodePushPackageMetadata* currentMetadata = [CodePushPackageManager getCurrentPackageMetadata];
             bool revertSuccess = (nil != currentMetadata && [self loadPackage:currentMetadata.localPath]);
             if (!revertSuccess) {
-                /* first update failed, go back to store version */
+                /* first update failed, go back to binary version */
                 [self loadStoreVersion];
             }
         }
@@ -138,7 +139,7 @@ StatusReport* rollbackStatusReport = nil;
 - (void)notifyApplicationReady:(CDVInvokedUrlCommand *)command {
     [self.commandDelegate runInBackground:^{
         if ([CodePushPackageManager isBinaryFirstRun]) {
-            // Report first run of a store version app
+            // Report first run of a binary version app
             [CodePushPackageManager markBinaryFirstRunFlag];
             NSString* appVersion = [Utilities getApplicationVersion];
             NSString* deploymentKey = ((CDVViewController *)self.viewController).settings[DeploymentKeyPreference];
@@ -400,7 +401,7 @@ StatusReport* rollbackStatusReport = nil;
     // maintaining back-compat with Cordova iOS 3.9.0, we need to conditionally
     // use the WebViewEngine for performing navigations only if the host app
     // is running 4.0.0+, and fallback to directly using the WebView otherwise.
-#ifdef __CORDOVA_4_0_0
+#if (WK_WEB_VIEW_ONLY && defined(__CORDOVA_4_0_0)) || defined(__CORDOVA_4_0_0)
     [self.webViewEngine loadRequest:[NSURLRequest requestWithURL:url]];
 #else
     [(UIWebView*)self.webView loadRequest:[NSURLRequest requestWithURL:url]];
@@ -417,8 +418,13 @@ StatusReport* rollbackStatusReport = nil;
     }
 }
 
++ (NSString*) getCurrentServerBasePath {
+    return specifiedServerPath;
+}
+
 + (void) setServerBasePath:(NSString*)serverPath webView:(id<CDVWebViewEngineProtocol>) webViewEngine {
     if ([CodePush hasIonicWebViewEngine: webViewEngine]) {
+        specifiedServerPath = serverPath;
         SEL setServerBasePath = NSSelectorFromString(@"setServerBasePath:");
         NSMutableArray * urlPathComponents = [serverPath pathComponents].mutableCopy;
         [urlPathComponents removeLastObject];

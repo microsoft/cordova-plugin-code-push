@@ -1,8 +1,10 @@
 [![appcenterbanner](https://user-images.githubusercontent.com/31293287/32969262-3cc5d48a-cb99-11e7-91bf-fa57c67a371c.png)](http://microsoft.github.io/code-push/)
 
+#### [Sign up With App Center](https://appcenter.ms/signup?utm_source=CodePush&utm_medium=Azure) to use CodePush
+
 # Apache Cordova Plugin for CodePush
 
-This plugin provides client-side integration for the [CodePush service](http://codepush.tools), allowing you to easily add a dynamic update experience to your Cordova app(s).
+This plugin provides client-side integration for the [CodePush service](https://microsoft.github.io/code-push/), allowing you to easily add a dynamic update experience to your Cordova app(s).
 
 <!-- Cordova Catelog -->
 
@@ -31,7 +33,7 @@ In order to ensure that your end users always have a functioning version of your
 
 Cordova 5.0.0+ is fully supported, along with the following associated platforms:
 
-* Android ([cordova-android](https://github.com/apache/cordova-android) 4.0.0+) - *Including CrossWalk!* 
+* Android ([cordova-android](https://github.com/apache/cordova-android) 4.0.0+) - *Including CrossWalk!* *Note: Only on TLS 1.2 compatible devices*
 * iOS ([cordova-ios](https://github.com/apache/cordova-ios) 3.9.0+) - *Note: In order to use CodePush along with the [`cordova-plugin-wkwebview-engine`](https://github.com/apache/cordova-plugin-wkwebview-engine) plugin, you need to install `v1.5.1-beta+` version of `cordova-plugin-code-push`, which includes full support for apps using either WebView.*
 
 To check which versions of each Cordova platform you are currently using, you can run the following command and inspect the `Installed platforms` list:
@@ -89,15 +91,15 @@ With the CodePush plugin installed, configure your app to use it via the followi
 2. If you're using an `<access origin="*" />` element in your `config.xml` file, then your app is already allowed to communicate with the CodePush servers and you can safely skip this step. Otherwise, add the following additional `<access />` elements:
  
     ```xml
-    <access origin="https://codepush.azurewebsites.net" />
+    <access origin="https://codepush.appcenter.ms" />
     <access origin="https://codepush.blob.core.windows.net" />
     <access origin="https://codepushupdates.azureedge.net" />
     ```
     
-3. To ensure that your app can access the CodePush server on [CSP](https://developer.mozilla.org/en-US/docs/Web/Security/CSP/Introducing_Content_Security_Policy)-compliant platforms, add `https://codepush.azurewebsites.net` to the `Content-Security-Policy` `meta` tag in your `index.html` file:
+3. To ensure that your app can access the CodePush server on [CSP](https://developer.mozilla.org/en-US/docs/Web/Security/CSP/Introducing_Content_Security_Policy)-compliant platforms, add `https://codepush.appcenter.ms` to the `Content-Security-Policy` `meta` tag in your `index.html` file:
   
     ```xml
-    <meta http-equiv="Content-Security-Policy" content="default-src https://codepush.azurewebsites.net 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *" />
+    <meta http-equiv="Content-Security-Policy" content="default-src https://codepush.appcenter.ms 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *" />
     ```
    
 4. Finally, double-check that you already have the [`cordova-plugin-whitelist`](https://github.com/apache/cordova-plugin-whitelist) plugin installed (most apps will). To check this, simply run the following command:
@@ -113,6 +115,11 @@ With the CodePush plugin installed, configure your app to use it via the followi
     ```
  
 You are now ready to use the plugin in the application code. See the [sample applications](/samples) for examples and the API documentation for more details.
+
+*NOTE: There is a possibility to specify WebView engine on the plugin build phase. By default UIWebView engine is used. You can force plugin to use WKWebView by adding this iOS specific preference:*
+```xml
+<preference name="WKWebViewOnly" value="true" />
+```
 
 ## Plugin Usage
 
@@ -155,7 +162,7 @@ code-push release-cordova MyApp-ios ios
 code-push release-cordova MyApp-Android android
 ```
 
-*NOTE: When releasing updates to CodePush, you do not need to bump your app's version in the `config.xml` file, since you aren't modifying the app store version at all. You only need to bump this version when you upgrade Cordova and/or one of your plugins, at which point, you need to release an update to the native store(s). CodePush will automatically generate a "label" for each release you make (e.g. `v3`) in order to help identify it within your release history.*
+*NOTE: When releasing updates to CodePush, you do not need to bump your app's version in the `config.xml` file, since you aren't modifying the binary version at all. You only need to bump this version when you upgrade Cordova and/or one of your plugins, at which point, you need to release an update to the native store(s). CodePush will automatically generate a "label" for each release you make (e.g. `v3`) in order to help identify it within your release history.*
 
 The `release-cordova` command enables such a simple workflow because it understands the standard layout of a Cordova app, and therefore, can generate your update and know exactly which files to upload. Additionally, in order to support flexible release strategies, the `release-cordova` command exposes numerous optional parameters that let you customize how the update should be distributed to your end users (e.g. Which binary versions are compatible with it? Should the release be viewed as mandatory?).  
 

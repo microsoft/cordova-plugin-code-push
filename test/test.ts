@@ -163,7 +163,7 @@ function verifyMessages(expectedMessages: (string | su.AppMessage)[], deferred: 
             deferred.reject(e);
         }
     };
-};
+}
 
 function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): void {
     var server: any;
@@ -235,7 +235,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
             updateResponse.packageHash = "randomHash-" + Math.floor(Math.random() * 10000);
         }
         return updateResponse;
-    };
+    }
 
     function setupScenario(scenarioPath: string): Q.Promise<string> {
         console.log("\nScenario: " + scenarioPath);
@@ -245,7 +245,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
     function setupUpdateScenario(updateScenarioPath: string, version: string): Q.Promise<string> {
         console.log("Creating an update at location: " + updatesDirectory);
         return projectManager.setupScenario(updatesDirectory, TestNamespace, templatePath, updateScenarioPath, targetPlatform, false, version);
-    };
+    }
 
     describe("window.codePush", function() {
         before(() => {

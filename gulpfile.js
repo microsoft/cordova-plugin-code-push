@@ -171,52 +171,8 @@ gulp.task("tslint", function () {
     // Configuration options adapted from TypeScript project:
     // https://github.com/Microsoft/TypeScript/blob/master/tslint.json
 
-    var config = {
-        "rules": {
-            "class-name": true,
-            "comment-format": [true,
-                "check-space"
-            ],
-            "indent": [true,
-                "spaces"
-            ],
-            "one-line": [true,
-                "check-open-brace"
-            ],
-            "no-unused-variable": true,
-            "no-use-before-declare": true,
-            "quotemark": [true,
-                "double"
-            ],
-            "semicolon": true,
-            "whitespace": [true,
-                "check-branch",
-                "check-operator",
-                "check-separator",
-                "check-type"
-            ],
-            "typedef-whitespace": [
-                true,
-                {
-                    "call-signature": "nospace",
-                    "index-signature": "nospace",
-                    "parameter": "nospace",
-                    "property-declaration": "nospace",
-                    "variable-declaration": "nospace"
-                },
-                {
-                    "call-signature": "onespace",
-                    "index-signature": "onespace",
-                    "parameter": "onespace",
-                    "property-declaration": "onespace",
-                    "variable-declaration": "onespace"
-                }
-            ],
-        }
-    }
-
     return gulp.src([sourcePath + tsFiles, testPath + tsFiles])
-        .pipe(tslint({ configuration: config, formatter: "verbose" }))
+        .pipe(tslint({ configuration: "./tslint.json", formatter: "verbose" }))
         .pipe(tslint.report());
 });
 
