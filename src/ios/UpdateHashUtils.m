@@ -29,25 +29,27 @@
     }
 
     for (NSString* fileName in folderFiles) {
-        if ([[self ignoredFilenames] containsObject:fileName]) {
-            continue;
-        }
-        NSString* fullFilePath = [folderPath stringByAppendingPathComponent:fileName];
-        NSString* relativePath = [pathPrefix stringByAppendingPathComponent:fileName];
-        BOOL isDir = NO;
-        if ([[NSFileManager defaultManager] fileExistsAtPath:fullFilePath
-                                                 isDirectory:&isDir] && isDir) {
-            [self addFolderEntriesToManifest:fullFilePath
-                                  pathPrefix:relativePath
-                             manifestEntries:manifestEntries
-                                       error:error];
-            if (*error) {
-                return;
+        @autoreleasepool {
+            if ([[self ignoredFilenames] containsObject:fileName]) {
+                continue;
             }
-        } else {
-            NSData* fileContents = [NSData dataWithContentsOfFile:fullFilePath];
-            NSString* fileContentsHash = [self computeHashForData:fileContents];
-            [manifestEntries addObject:[[relativePath stringByAppendingString:@":"] stringByAppendingString:fileContentsHash]];
+            NSString* fullFilePath = [folderPath stringByAppendingPathComponent:fileName];
+            NSString* relativePath = [pathPrefix stringByAppendingPathComponent:fileName];
+            BOOL isDir = NO;
+            if ([[NSFileManager defaultManager] fileExistsAtPath:fullFilePath
+                                                     isDirectory:&isDir] && isDir) {
+                [self addFolderEntriesToManifest:fullFilePath
+                                      pathPrefix:relativePath
+                                 manifestEntries:manifestEntries
+                                           error:error];
+                if (*error) {
+                    return;
+                }
+            } else {
+                NSData* fileContents = [NSData dataWithContentsOfFile:fullFilePath];
+                NSString* fileContentsHash = [self computeHashForData:fileContents];
+                [manifestEntries addObject:[[relativePath stringByAppendingString:@":"] stringByAppendingString:fileContentsHash]];
+            }
         }
     }
 }
