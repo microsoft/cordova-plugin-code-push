@@ -341,6 +341,11 @@ StatusReport* rollbackStatusReport = nil;
 - (void)navigateToLocalDeploymentIfExists {
     CodePushPackageMetadata* deployedPackageMetadata = [CodePushPackageManager getCurrentPackageMetadata];
     if (deployedPackageMetadata && deployedPackageMetadata.localPath) {
+        NSString* startPage = ((CDVViewController *)self.viewController).startPage;
+        NSURL* URL = [self getStartPageURLForLocalPackage:deployedPackageMetadata.localPath];
+        if (![URL.path containsString:startPage]) {
+            return;
+        }
         [self redirectStartPageToURL: deployedPackageMetadata.localPath];
     }
 }
@@ -355,6 +360,7 @@ StatusReport* rollbackStatusReport = nil;
         [self handleUnconfirmedInstall:NO];
     }
 
+    [self navigateToLocalDeploymentIfExists];
     // handle both ON_NEXT_RESUME and ON_NEXT_RESTART - the application might have been killed after transitioning to the background
     if (pendingInstall && (pendingInstall.installMode == ON_NEXT_RESTART || pendingInstall.installMode == ON_NEXT_RESUME)) {
         [self markUpdate];
