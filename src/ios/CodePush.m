@@ -341,6 +341,11 @@ StatusReport* rollbackStatusReport = nil;
 - (void)navigateToLocalDeploymentIfExists {
     CodePushPackageMetadata* deployedPackageMetadata = [CodePushPackageManager getCurrentPackageMetadata];
     if (deployedPackageMetadata && deployedPackageMetadata.localPath) {
+        NSString* startPage = ((CDVViewController *)self.viewController).startPage;
+        NSURL* URL = [self getStartPageURLForLocalPackage:deployedPackageMetadata.localPath];
+        if (![URL.path containsString:startPage]) {
+            return;
+        }
         [self redirectStartPageToURL: deployedPackageMetadata.localPath];
     }
 }
