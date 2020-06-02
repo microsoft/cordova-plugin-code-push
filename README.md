@@ -602,7 +602,7 @@ The optional `downloadProgress` callback is invoked several times during the dow
 
     Defines the format of the DownloadProgress object, used to send periodical update notifications on the progress of the update download.
 
-    ####### Properties
+    ###### Properties
 
     - __totalBytes__: The size of the downloading update package, in bytes. (Number)
     - __receivedBytes__: The number of bytes already downloaded. (Number)
