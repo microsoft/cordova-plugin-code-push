@@ -76,10 +76,10 @@ class RemotePackage extends Package implements IRemotePackage {
                     }
                 };
 
-                this.currentFileTransfer.download(this.downloadUrl, cordova.file.dataDirectory + LocalPackage.DownloadDir + "/" + LocalPackage.PackageUpdateFileName, downloadSuccess, downloadError, true);
+                this.currentFileTransfer.download(this.downloadUrl, cordova.file.dataDirectory + LocalPackage.DownloadDir + "/" + LocalPackage.PackageUpdateFileName, downloadSuccess, downloadError);
             }
         } catch (e) {
-            CodePushUtil.invokeErrorCallback(new Error("An error occured while downloading the package. " + (e && e.message) ? e.message : ""), errorCallback);
+            CodePushUtil.invokeErrorCallback(new Error("An error occurred while downloading the package. " + (e && e.message) ? e.message : ""), errorCallback);
         }
     }
     
