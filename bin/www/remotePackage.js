@@ -23,14 +23,20 @@ var __extends = (this && this.__extends) || (function () {
 })();
 var LocalPackage = require("./localPackage");
 var Package = require("./package");
+var FileUtil = require("./fileUtil");
 var NativeAppInfo = require("./nativeAppInfo");
 var CodePushUtil = require("./codePushUtil");
 var Sdk = require("./sdk");
 var RemotePackage = (function (_super) {
     __extends(RemotePackage, _super);
     function RemotePackage() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
+        var _this = _super.call(this) || this;
         _this.isDownloading = false;
+        FileUtil.getDataDirectory(LocalPackage.DownloadDir, true, function (error, _) {
+            if (error) {
+                CodePushUtil.logError("Can't create directory for download update.", error);
+            }
+        });
         return _this;
     }
     RemotePackage.prototype.download = function (successCallback, errorCallback, downloadProgress) {
