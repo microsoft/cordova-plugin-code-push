@@ -5,6 +5,7 @@
 /// <reference types="mkdirp" />
 
 "use strict";
+import tu = require("./testUtil");
 
 import child_process = require("child_process");
 import replace = require("replace");
@@ -17,6 +18,7 @@ import platform = require("./platform");
 
 var del = require("del");
 var archiver = require("archiver");
+var testUtil = tu.TestUtil;
 
 /**
  * In charge of Cordova project related operations.
@@ -45,14 +47,17 @@ export class ProjectManager {
             del.sync([projectDirectory], { force: true });
         }
         mkdirp.sync(projectDirectory);
-        
-        var indexHtml = "www/index.html";
-        var destinationIndexPath = path.join(projectDirectory, indexHtml);
+
+        const indexHtml = "www/index.html";
+        const destinationIndexPath = path.join(projectDirectory, indexHtml);
+        const packageFile = path.join(templatePath, "package.json");
+        const destinationPackageFile = path.join(projectDirectory, "package.json");
 
         return ProjectManager.execChildProcess("cordova create " + projectDirectory + " " + appNamespace + " " + appName + " --template " + templatePath)
+            .then<string>(testUtil.copyFile.bind(undefined, packageFile, destinationPackageFile, true))
             .then<string>(ProjectManager.replaceString.bind(undefined, destinationIndexPath, ProjectManager.CODE_PUSH_APP_VERSION_PLACEHOLDER, version));
     }
-    
+
     /**
      * Sets up the scenario for a test in an already existing Cordova project.
      */
@@ -60,18 +65,18 @@ export class ProjectManager {
         var indexHtml = "www/index.html";
         var templateIndexPath = path.join(templatePath, indexHtml);
         var destinationIndexPath = path.join(projectDirectory, indexHtml);
-        
+
         var scenarioJs = "www/" + jsPath;
         var templateScenarioJsPath = path.join(templatePath, scenarioJs);
         var destinationScenarioJsPath = path.join(projectDirectory, scenarioJs);
-        
+
         var configXml = "config.xml";
         var templateConfigXmlPath = path.join(templatePath, configXml);
         var destinationConfigXmlPath = path.join(projectDirectory, configXml);
-        
+
         var packageFile = eval("(" + fs.readFileSync("./package.json", "utf8") + ")");
         var pluginVersion = packageFile.version;
-        
+
         console.log("Setting up scenario " + jsPath + " in " + projectDirectory);
 
         // copy index html file and replace
@@ -104,7 +109,7 @@ export class ProjectManager {
         var deferred = Q.defer<string>();
         var archive = archiver.create("zip", {});
         var archivePath = path.join(projectDirectory, "update.zip");
-        
+
         console.log("Creating an update archive at: " + archivePath);
 
         if (fs.existsSync(archivePath)) {
@@ -113,40 +118,40 @@ export class ProjectManager {
         var writeStream = fs.createWriteStream(archivePath);
         var targetFolder = targetPlatform.getPlatformWwwPath(projectDirectory);
 
-        writeStream.on("close", function() {
+        writeStream.on("close", function () {
             deferred.resolve(archivePath);
         });
 
-        archive.on("error", function(e: Error) {
+        archive.on("error", function (e: Error) {
             deferred.reject(e);
         });
 
         if (isDiff) {
             archive.append(`{"deletedFiles":[]}`, { name: "hotcodepush.json" });
         }
-        
+
         archive.directory(targetFolder, "www");
         archive.pipe(writeStream);
         archive.finalize();
 
         return deferred.promise;
     }
-    
+
     /**
      * Adds a plugin to a Cordova project.
      */
     public static addPlugin(projectFolder: string, plugin: string): Q.Promise<string> {
         console.log("Adding plugin " + plugin + " to " + projectFolder);
         return ProjectManager.execChildProcess("cordova plugin add " + plugin, { cwd: projectFolder });
-    }  
-    
+    }
+
     /**
      * Removes a plugin from a Cordova project.
      */
     public static removePlugin(projectFolder: string, plugin: string): Q.Promise<string> {
         console.log("Removing plugin " + plugin + " from " + projectFolder);
         return ProjectManager.execChildProcess("cordova plugin remove " + plugin, { cwd: projectFolder });
-    }    
+    }
 
     /**
      * Builds a specific platform of a Cordova project. 
@@ -156,7 +161,7 @@ export class ProjectManager {
         // don't log the iOS build output because it is too verbose and overflows the buffer
         return ProjectManager.execChildProcess("cordova build " + targetPlatform.getCordovaName(), { cwd: projectFolder }, false);
     }
-    
+
     /**
      * Prepares a specific platform of a Cordova project. 
      */
@@ -188,7 +193,7 @@ export class ProjectManager {
         console.log("Preparing " + targetPlatform.getCordovaName() + " emulator for " + appNamespace + " tests");
         return targetPlatform.getEmulatorManager().prepareEmulatorForTest(appNamespace);
     }
-    
+
     /**
      * Uninstalls the app from the emulator.
      */
@@ -230,7 +235,7 @@ export class ProjectManager {
         console.log("Restarting " + appNamespace + " on " + targetPlatform.getCordovaName());
         return targetPlatform.getEmulatorManager().restartApplication(appNamespace);
     }
-    
+
     /**
      * Navigates away from the application and then navigates back to it.
      */

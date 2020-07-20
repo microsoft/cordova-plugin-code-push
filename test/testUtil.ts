@@ -5,6 +5,7 @@
 
 import child_process = require("child_process");
 import os = require("os");
+import fs = require("fs");
 import path = require("path");
 import Q = require("q");
 
@@ -140,6 +141,32 @@ export class TestUtil {
         var coreTestsOnly = TestUtil.readMochaCommandLineFlag(TestUtil.CORE_TESTS_ONLY);
         if (coreTestsOnly) console.log("only core tests");
         return coreTestsOnly;
+    }
+    /**
+     * Copies a file from a given location to another.
+     */
+    public static copyFile(source: string, destination: string, overwrite: boolean): Q.Promise<void>  {
+        var deferred = Q.defer<void>();
+        try {
+            console.log(`Copy ${source} to ${destination}`);
+            
+            var errorHandler = function (error: Error) {
+                deferred.reject(error);
+            };
+            if (overwrite && fs.existsSync(destination)) {
+                fs.unlinkSync(destination);
+            }
+            var readStream = fs.createReadStream(source);
+            readStream.on("error", errorHandler);
+            var writeStream = fs.createWriteStream(destination);
+            writeStream.on("error", errorHandler);
+            writeStream.on("close", deferred.resolve.bind(undefined, undefined));
+            readStream.pipe(writeStream);
+        }
+        catch (e) {
+            deferred.reject(e);
+        }
+        return deferred.promise;
     }
     
     /**

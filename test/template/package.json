@@ -1,0 +1,10 @@
+{
+    "name": "com.microsoft.codepush.test",
+    "displayName": "CodePushTest",
+    "description": "A sample Apache Cordova application that is used for testing the CodePush plugin.",
+    "keywords": [
+        "ecosystem:cordova"
+    ],
+    "author": "Microsoft Corporation",
+    "license": "MIT"
+}
