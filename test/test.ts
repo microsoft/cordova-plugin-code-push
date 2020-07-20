@@ -117,29 +117,29 @@ function createTestProject(directory: string): Q.Promise<string> {
 function createDefaultResponse(): su.CheckForUpdateResponseMock {
     var defaultResponse = new su.CheckForUpdateResponseMock();
 
-    defaultResponse.downloadURL = "";
+    defaultResponse.download_url = "";
     defaultResponse.description = "";
-    defaultResponse.isAvailable = false;
-    defaultResponse.isMandatory = false;
-    defaultResponse.appVersion = "";
-    defaultResponse.packageHash = "";
+    defaultResponse.is_available = false;
+    defaultResponse.is_mandatory = false;
+    defaultResponse.target_binary_range = "";
+    defaultResponse.package_hash = "";
     defaultResponse.label = "";
-    defaultResponse.packageSize = 0;
-    defaultResponse.updateAppVersion = false;
+    defaultResponse.package_size = 0;
+    defaultResponse.update_app_version = false;
 
     return defaultResponse;
 }
 
 function createMockResponse(mandatory: boolean = false): su.CheckForUpdateResponseMock {
     var updateResponse = new su.CheckForUpdateResponseMock();
-    updateResponse.isAvailable = true;
-    updateResponse.appVersion = "1.0.0";
-    updateResponse.downloadURL = "mock.url/download";
-    updateResponse.isMandatory = mandatory;
+    updateResponse.is_available = true;
+    updateResponse.target_binary_range = "1.0.0";
+    updateResponse.download_url = "mock.url/download";
+    updateResponse.is_mandatory = mandatory;
     updateResponse.label = "mock-update";
-    updateResponse.packageHash = "12345-67890";
-    updateResponse.packageSize = 12345;
-    updateResponse.updateAppVersion = false;
+    updateResponse.package_hash = "12345-67890";
+    updateResponse.package_size = 12345;
+    updateResponse.update_app_version = false;
 
     return updateResponse;
 }
@@ -182,7 +182,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
             next();
         });
 
-        app.get("/updateCheck", function(req: any, res: any) {
+        app.get("/v0.1/public/codepush/update_check", function(req: any, res: any) {
             updateCheckCallback && updateCheckCallback(req);
             res.send(mockResponse);
             console.log("Update check called from the app.");
@@ -190,7 +190,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
             console.log("Response: " + JSON.stringify(mockResponse));
         });
 
-        app.get("/download", function(req: any, res: any) {
+        app.get("/v0.1/public/codepush/report_status/download", function(req: any, res: any) {
             console.log("Application downloading the package.");
 
             res.download(mockUpdatePackagePath);
@@ -228,11 +228,11 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
 
     function getMockResponse(mandatory: boolean = false, randomHash: boolean = true): su.CheckForUpdateResponseMock {
         var updateResponse = createMockResponse(mandatory);
-        updateResponse.downloadURL = targetPlatform.getServerUrl() + "/download";
+        updateResponse.download_url = targetPlatform.getServerUrl() + "/download";
         // we need unique hashes to avoid conflicts - the application is not uninstalled between tests
         // and we store the failed hashes in preferences
         if (randomHash) {
-            updateResponse.packageHash = "randomHash-" + Math.floor(Math.random() * 10000);
+            updateResponse.package_hash = "randomHash-" + Math.floor(Math.random() * 10000);
         }
         return updateResponse;
     }
@@ -275,8 +275,8 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
             if (!onlyRunCoreTests) {
                 it("window.codePush.checkForUpdate.noUpdate", function(done: any) {
                     var noUpdateResponse = createDefaultResponse();
-                    noUpdateResponse.isAvailable = false;
-                    noUpdateResponse.appVersion = "0.0.1";
+                    noUpdateResponse.is_available = false;
+                    noUpdateResponse.target_binary_range = "0.0.1";
 
                     mockResponse = { updateInfo: noUpdateResponse };
 
@@ -294,8 +294,8 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
 
                 it("window.codePush.checkForUpdate.sendsBinaryHash", function(done: any) {
                     var noUpdateResponse = createDefaultResponse();
-                    noUpdateResponse.isAvailable = false;
-                    noUpdateResponse.appVersion = "0.0.1";
+                    noUpdateResponse.is_available = false;
+                    noUpdateResponse.target_binary_range = "0.0.1";
 
                     updateCheckCallback = (request: any) => {
                         try {
@@ -321,8 +321,8 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
 
                 it("window.codePush.checkForUpdate.noUpdate.updateAppVersion", function(done: any) {
                     var updateAppVersionResponse = createDefaultResponse();
-                    updateAppVersionResponse.updateAppVersion = true;
-                    updateAppVersionResponse.appVersion = "2.0.0";
+                    updateAppVersionResponse.update_app_version = true;
+                    updateAppVersionResponse.target_binary_range = "2.0.0";
 
                     mockResponse = { updateInfo: updateAppVersionResponse };
 
@@ -349,11 +349,11 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                         assert.equal(su.TestMessage.CHECK_UPDATE_AVAILABLE, requestBody.message);
                         assert.notEqual(null, requestBody.args[0]);
                         var remotePackage: IRemotePackage = requestBody.args[0];
-                        assert.equal(remotePackage.downloadUrl, updateResponse.downloadURL);
-                        assert.equal(remotePackage.isMandatory, updateResponse.isMandatory);
+                        assert.equal(remotePackage.downloadUrl, updateResponse.download_url);
+                        assert.equal(remotePackage.isMandatory, updateResponse.is_mandatory);
                         assert.equal(remotePackage.label, updateResponse.label);
-                        assert.equal(remotePackage.packageHash, updateResponse.packageHash);
-                        assert.equal(remotePackage.packageSize, updateResponse.packageSize);
+                        assert.equal(remotePackage.packageHash, updateResponse.package_hash);
+                        assert.equal(remotePackage.packageSize, updateResponse.package_size);
                         assert.equal(remotePackage.deploymentKey, targetPlatform.getDefaultDeploymentKey());
                         done();
                     } catch (e) {
@@ -440,7 +440,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
 
                 var getMockResponse = (): su.CheckForUpdateResponseMock => {
                     var updateResponse = createMockResponse();
-                    updateResponse.downloadURL = targetPlatform.getServerUrl() + "/download";
+                    updateResponse.download_url = targetPlatform.getServerUrl() + "/download";
                     return updateResponse;
                 };
 
@@ -497,7 +497,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
 
                 var getMockResponse = (): su.CheckForUpdateResponseMock => {
                     var updateResponse = createMockResponse();
-                    updateResponse.downloadURL = targetPlatform.getServerUrl() + "/download";
+                    updateResponse.download_url = targetPlatform.getServerUrl() + "/download";
                     return updateResponse;
                 };
 
@@ -986,8 +986,8 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
 
                     it("window.codePush.sync.noupdate", function(done: any) {
                         var noUpdateResponse = createDefaultResponse();
-                        noUpdateResponse.isAvailable = false;
-                        noUpdateResponse.appVersion = "0.0.1";
+                        noUpdateResponse.is_available = false;
+                        noUpdateResponse.target_binary_range = "0.0.1";
                         mockResponse = { updateInfo: noUpdateResponse };
 
                         Q({})
@@ -1021,7 +1021,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
 
                     it("window.codePush.sync.downloaderror", function(done: any) {
                         var invalidUrlResponse = createMockResponse();
-                        invalidUrlResponse.downloadURL = path.join(templatePath, "invalid_path.zip");
+                        invalidUrlResponse.download_url = path.join(templatePath, "invalid_path.zip");
                         mockResponse = { updateInfo: invalidUrlResponse };
 
                         Q({})
@@ -1091,8 +1091,8 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                                 // restart the app and make sure it didn't roll out!
                                 var deferred = Q.defer<void>();
                                 var noUpdateResponse = createDefaultResponse();
-                                noUpdateResponse.isAvailable = false;
-                                noUpdateResponse.appVersion = "0.0.1";
+                                noUpdateResponse.is_available = false;
+                                noUpdateResponse.target_binary_range = "0.0.1";
                                 mockResponse = { updateInfo: noUpdateResponse };
                                 testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                                 projectManager.restartApplication(TestNamespace, targetPlatform).done();
@@ -1121,8 +1121,8 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                 if (!onlyRunCoreTests) {
                     it("window.codePush.sync.2x.noupdate", function(done: any) {
                         var noUpdateResponse = createDefaultResponse();
-                        noUpdateResponse.isAvailable = false;
-                        noUpdateResponse.appVersion = "0.0.1";
+                        noUpdateResponse.is_available = false;
+                        noUpdateResponse.target_binary_range = "0.0.1";
                         mockResponse = { updateInfo: noUpdateResponse };
 
                         Q({})
@@ -1158,7 +1158,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
 
                     it("window.codePush.sync.2x.downloaderror", function(done: any) {
                         var invalidUrlResponse = createMockResponse();
-                        invalidUrlResponse.downloadURL = path.join(templatePath, "invalid_path.zip");
+                        invalidUrlResponse.download_url = path.join(templatePath, "invalid_path.zip");
                         mockResponse = { updateInfo: invalidUrlResponse };
 
                         Q({})
@@ -1237,8 +1237,8 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             // restart the app and make sure it didn't roll out!
                             var deferred = Q.defer<void>();
                             var noUpdateResponse = createDefaultResponse();
-                            noUpdateResponse.isAvailable = false;
-                            noUpdateResponse.appVersion = "0.0.1";
+                            noUpdateResponse.is_available = false;
+                            noUpdateResponse.target_binary_range = "0.0.1";
                             mockResponse = { updateInfo: noUpdateResponse };
                             testMessageCallback = verifyMessages([
                                 su.TestMessage.DEVICE_READY_AFTER_UPDATE,
@@ -1280,8 +1280,8 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             .then<void>(() => {
                                 var deferred = Q.defer<void>();
                                 var noUpdateResponse = createDefaultResponse();
-                                noUpdateResponse.isAvailable = false;
-                                noUpdateResponse.appVersion = "0.0.1";
+                                noUpdateResponse.is_available = false;
+                                noUpdateResponse.target_binary_range = "0.0.1";
                                 mockResponse = { updateInfo: noUpdateResponse };
                                 testMessageCallback = verifyMessages([
                                     su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
@@ -1308,8 +1308,8 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             })
                             .then<string>(() => {
                                 var noUpdateResponse = createDefaultResponse();
-                                noUpdateResponse.isAvailable = false;
-                                noUpdateResponse.appVersion = "0.0.1";
+                                noUpdateResponse.is_available = false;
+                                noUpdateResponse.target_binary_range = "0.0.1";
                                 mockResponse = { updateInfo: noUpdateResponse };
                                 return projectManager.resumeApplication(TestNamespace, targetPlatform, 3 * 1000);
                             })
@@ -1341,8 +1341,8 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             .then<void>(() => {
                                 var deferred = Q.defer<void>();
                                 var noUpdateResponse = createDefaultResponse();
-                                noUpdateResponse.isAvailable = false;
-                                noUpdateResponse.appVersion = "0.0.1";
+                                noUpdateResponse.is_available = false;
+                                noUpdateResponse.target_binary_range = "0.0.1";
                                 mockResponse = { updateInfo: noUpdateResponse };
                                 testMessageCallback = verifyMessages([su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);
                                 projectManager.restartApplication(TestNamespace, targetPlatform).done();
@@ -1400,8 +1400,8 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                             .then<void>(() => {
                                 var deferred = Q.defer<void>();
                                 var noUpdateResponse = createDefaultResponse();
-                                noUpdateResponse.isAvailable = false;
-                                noUpdateResponse.appVersion = "0.0.1";
+                                noUpdateResponse.is_available = false;
+                                noUpdateResponse.target_binary_range = "0.0.1";
                                 mockResponse = { updateInfo: noUpdateResponse };
                                 testMessageCallback = verifyMessages([
                                     su.TestMessage.DEVICE_READY_AFTER_UPDATE], deferred);

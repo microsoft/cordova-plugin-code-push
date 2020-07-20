@@ -4,15 +4,15 @@
  * Class used to mock the codePush.checkForUpdate() response from the server.
  */
 export class CheckForUpdateResponseMock {
-    downloadURL: string;
-    isAvailable: boolean;
-    packageSize: number;
-    updateAppVersion: boolean;
-    appVersion: string;
+    download_url: string;
+    is_available: boolean;
+    package_size: number;
+    update_app_version: boolean;
+    target_binary_range: string;
     description: string;
     label: string;
-    packageHash: string;
-    isMandatory: boolean;
+    package_hash: string;
+    is_mandatory: boolean;
 }
 
 /**
@@ -20,8 +20,8 @@ export class CheckForUpdateResponseMock {
  */
 export class UpdateCheckRequestMock {
     deploymentKey: string;
-    appVersion: string;
-    packageHash: string;
+    target_binary_range: string;
+    package_hash: string;
     isCompanion: boolean;
 }
 
