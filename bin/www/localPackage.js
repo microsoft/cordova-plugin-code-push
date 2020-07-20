@@ -140,13 +140,13 @@ var LocalPackage = (function (_super) {
                 return;
             }
             publicKey = publicKeyResult;
-            isSignatureVerificationEnabled = (publicKey !== null);
+            isSignatureVerificationEnabled = !!publicKey;
             _this.getSignatureFromUpdate(deploymentResult.deployDir, function (error, signature) {
                 if (error) {
                     installError && installError(new Error("Error reading signature from update. " + error));
                     return;
                 }
-                isSignatureAppearedInBundle = (signature !== null);
+                isSignatureAppearedInBundle = !!signature;
                 verify(isSignatureVerificationEnabled, isSignatureAppearedInBundle, publicKey, signature);
             });
         });
