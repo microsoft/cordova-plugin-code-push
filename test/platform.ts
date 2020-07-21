@@ -349,14 +349,26 @@ export class AndroidEmulatorManager implements IEmulatorManager {
             // List all of the packages on the device.
             return tu.TestUtil.getProcessOutput("adb shell pm list packages");
         }
+
         function startAndroidEmulator(androidEmulatorName: string): Q.Promise<string> {
-            return tu.TestUtil.getProcessOutput("emulator @" + androidEmulatorName);
+            const androidEmulatorCommand = `emulator @${androidEmulatorName}`;
+            let osSpecificCommand = "";
+            if (process.platform === "darwin") {
+                osSpecificCommand = `${androidEmulatorCommand} &`;
+            } else {
+                osSpecificCommand = `START /B ${androidEmulatorCommand}`;
+            }
+            return tu.TestUtil.getProcessOutput(osSpecificCommand, { timeout: 5000 }, false);
         }
+
         function killAndroidEmulator(): Q.Promise<string> {
             return tu.TestUtil.getProcessOutput("adb emu kill");
         }
 
-        return bootEmulatorInternal("Android", restartEmulators, tu.TestUtil.readAndroidEmulator(), checkAndroidEmulator, startAndroidEmulator, killAndroidEmulator);
+        return tu.TestUtil.readAndroidEmulator()
+            .then((AndroidEmulatorName: string) => {
+                return bootEmulatorInternal("Android", restartEmulators, AndroidEmulatorName, checkAndroidEmulator, startAndroidEmulator, killAndroidEmulator);
+            });
     }
 
     /**

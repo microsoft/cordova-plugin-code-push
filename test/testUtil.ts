@@ -84,14 +84,34 @@ export class TestUtil {
         var iOSServerUrl = commandLineOption ? commandLineOption : TestUtil.defaultIOSServerUrl;
         return iOSServerUrl;
     }
-    
+
     /**
      * Reads the Android emulator to use
      */
-    public static readAndroidEmulator(): string {
+    public static readAndroidEmulator(): Q.Promise<string> {
+        var deferred = Q.defer<string>();
+        
+        function onReadAndroidEmuName(androidEmulatorName: string) {
+            console.log("Using " + androidEmulatorName + " for Android tests");
+            deferred.resolve(androidEmulatorName);
+        }
+            
         var commandLineOption = TestUtil.readMochaCommandLineOption(TestUtil.ANDROID_EMULATOR);
-        var androidEmulator = commandLineOption ? commandLineOption : TestUtil.defaultAndroidEmulator;
-        return androidEmulator;
+        if (commandLineOption) {
+            onReadAndroidEmuName(commandLineOption);
+        } else {
+            // get the most recent iOS simulator to run tests on
+            this.getProcessOutput("emulator -list-avds")
+                .then(function (Devices) {
+                    const listOfDevices = Devices.trim().split("\n");
+                    onReadAndroidEmuName(listOfDevices[listOfDevices.length - 1]);
+                })
+                .catch((error) => {
+                    deferred.reject(error);
+                });
+        }
+                
+        return deferred.promise;
     }
     
     /**
