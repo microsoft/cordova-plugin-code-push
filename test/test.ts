@@ -107,9 +107,6 @@ function createTestProject(directory: string): Q.Promise<string> {
         return Q.all<string>(promises);
     })
     .then(() => {
-        return projectManager.addPlugin(directory, AcquisitionSDKPluginName);    
-    })
-    .then(() => {
         return projectManager.addPlugin(directory, thisPluginPath);
     });
 }

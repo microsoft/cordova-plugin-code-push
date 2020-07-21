@@ -62,20 +62,22 @@ export class ProjectManager {
      * Sets up the scenario for a test in an already existing Cordova project.
      */
     public static setupScenario(projectDirectory: string, appId: string, templatePath: string, jsPath: string, targetPlatform: platform.IPlatform, build: boolean = true, version: string = ProjectManager.DEFAULT_APP_VERSION): Q.Promise<string> {
-        var indexHtml = "www/index.html";
-        var templateIndexPath = path.join(templatePath, indexHtml);
-        var destinationIndexPath = path.join(projectDirectory, indexHtml);
+        const indexHtml = "www/index.html";
+        const templateIndexPath = path.join(templatePath, indexHtml);
+        const destinationIndexPath = path.join(projectDirectory, indexHtml);
 
-        var scenarioJs = "www/" + jsPath;
-        var templateScenarioJsPath = path.join(templatePath, scenarioJs);
-        var destinationScenarioJsPath = path.join(projectDirectory, scenarioJs);
+        const scenarioJs = "www/" + jsPath;
+        const templateScenarioJsPath = path.join(templatePath, scenarioJs);
+        const destinationScenarioJsPath = path.join(projectDirectory, scenarioJs);
 
-        var configXml = "config.xml";
-        var templateConfigXmlPath = path.join(templatePath, configXml);
-        var destinationConfigXmlPath = path.join(projectDirectory, configXml);
+        const configXml = "config.xml";
+        const templateConfigXmlPath = path.join(templatePath, configXml);
+        const destinationConfigXmlPath = path.join(projectDirectory, configXml);
 
-        var packageFile = eval("(" + fs.readFileSync("./package.json", "utf8") + ")");
-        var pluginVersion = packageFile.version;
+        const packageFile = eval("(" + fs.readFileSync("./package.json", "utf8") + ")");
+        const pluginVersion = packageFile.version;
+        const AndroidManifest = path.join(projectDirectory, "platforms", "android", "app", "src", "main", "AndroidManifest.xml");
+
 
         console.log("Setting up scenario " + jsPath + " in " + projectDirectory);
 
@@ -97,6 +99,11 @@ export class ProjectManager {
             .then<string>(ProjectManager.replaceString.bind(undefined, destinationConfigXmlPath, ProjectManager.IOS_KEY_PLACEHOLDER, platform.IOS.getInstance().getDefaultDeploymentKey()))
             .then<string>(ProjectManager.replaceString.bind(undefined, destinationConfigXmlPath, ProjectManager.SERVER_URL_PLACEHOLDER, targetPlatform.getServerUrl()))
             .then<string>(ProjectManager.replaceString.bind(undefined, destinationConfigXmlPath, ProjectManager.PLUGIN_VERSION_PLACEHOLDER, pluginVersion))
+            .then<string>(() => { 
+                if (targetPlatform.getCordovaName() === "android") {
+                return ProjectManager.replaceString.bind(undefined, AndroidManifest, "<application android:hardwareAccelerated=\"true\" android:icon=\"@mipmap/ic_launcher\" android:label=\"@string/app_name\" android:supportsRtl=\"true\">", "<application android:hardwareAccelerated=\"true\" android:icon=\"@mipmap/ic_launcher\" android:label=\"@string/app_name\" android:usesCleartextTraffic=\"true\" android:supportsRtl=\"true\">");
+                }
+            })
             .then<string>(() => {
                 return build ? ProjectManager.buildPlatform(projectDirectory, targetPlatform) : ProjectManager.preparePlatform(projectDirectory, targetPlatform);
             });
