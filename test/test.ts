@@ -365,7 +365,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                 updateCheckCallback = (request: any) => {
                     try {
                         assert.notEqual(null, request);
-                        assert.equal(request.query.deploymentKey, targetPlatform.getDefaultDeploymentKey());
+                        assert.equal(request.query.deployment_key, targetPlatform.getDefaultDeploymentKey());
                     } catch (e) {
                         done(e);
                     }
@@ -414,7 +414,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                     updateCheckCallback = (request: any) => {
                         try {
                             assert.notEqual(null, request);
-                            assert.equal(request.query.deploymentKey, "CUSTOM-DEPLOYMENT-KEY");
+                            assert.equal(request.query.deployment_key, "CUSTOM-DEPLOYMENT-KEY");
                             done();
                         } catch (e) {
                             done(e);
