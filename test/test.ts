@@ -151,10 +151,10 @@ function verifyMessages(expectedMessages: (string | su.AppMessage)[], deferred: 
         try {
             console.log("Message index: " + messageIndex);
             if (typeof expectedMessages[messageIndex] === "string") {
-                assert.equal(expectedMessages[messageIndex], requestBody.message);
+                assert.equal(requestBody.message, expectedMessages[messageIndex]);
             }
             else {
-                assert(su.areEqual(<su.AppMessage>expectedMessages[messageIndex], requestBody));
+                assert(su.areEqual(requestBody, <su.AppMessage>expectedMessages[messageIndex]));
             }
             /* end of message array */
             if (++messageIndex === expectedMessages.length) {
@@ -815,7 +815,9 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                     mockResponse = { update_info: getMockResponse() };
 
                     /* create an update */
-                    setupUpdateScenario(UpdateNotifyApplicationReadyConditional, "Update 1 (good update)")
+                    setupScenario(ScenarioInstallOnRestartWithRevert).then<string>(() => {
+                        return setupUpdateScenario(UpdateNotifyApplicationReadyConditional, "Update 1 (good update)");
+                        })
                         .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
                         .then<void>((updatePath: string) => {
                             var deferred = Q.defer<void>();
