@@ -229,7 +229,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
 
     function getMockResponse(mandatory: boolean = false, randomHash: boolean = true): su.CheckForUpdateResponseMock {
         var updateResponse = createMockResponse(mandatory);
-        updateResponse.download_url = targetPlatform.getServerUrl() + "/download";
+        updateResponse.download_url = targetPlatform.getServerUrl() + "/v0.1/public/codepush/report_status/download";
         // we need unique hashes to avoid conflicts - the application is not uninstalled between tests
         // and we store the failed hashes in preferences
         if (randomHash) {

@@ -313,7 +313,7 @@ export class IOSEmulatorManager implements IEmulatorManager {
      */
     resumeApplication(appId: string, delayBeforeResumingMs: number = 1000): Q.Promise<string> {
         // open a default iOS app (for example, camera)
-        return this.launchInstalledApplication("com.apple.camera")
+        return this.launchInstalledApplication("com.apple.Preferences")
             .then<void>(() => {
                 console.log("Waiting for " + delayBeforeResumingMs + "ms before resuming the test application.");
                 return Q.delay(delayBeforeResumingMs);
