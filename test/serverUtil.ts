@@ -6,12 +6,14 @@
 export class CheckForUpdateResponseMock {
     download_url: string;
     is_available: boolean;
+    is_disabled: boolean;
     package_size: number;
     update_app_version: boolean;
     target_binary_range: string;
     description: string;
     label: string;
     package_hash: string;
+    should_run_binary_version: boolean;
     is_mandatory: boolean;
 }
 
