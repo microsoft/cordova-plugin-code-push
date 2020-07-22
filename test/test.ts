@@ -441,7 +441,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
 
                 var getMockResponse = (): su.CheckForUpdateResponseMock => {
                     var updateResponse = createMockResponse();
-                    updateResponse.download_url = targetPlatform.getServerUrl() + "/download";
+                    updateResponse.download_url = targetPlatform.getServerUrl() + "/v0.1/public/codepush/report_status/download";
                     return updateResponse;
                 };
 
@@ -498,7 +498,7 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
 
                 var getMockResponse = (): su.CheckForUpdateResponseMock => {
                     var updateResponse = createMockResponse();
-                    updateResponse.download_url = targetPlatform.getServerUrl() + "/download";
+                    updateResponse.download_url = targetPlatform.getServerUrl() + "/v0.1/public/codepush/report_status/download";
                     return updateResponse;
                 };
 
