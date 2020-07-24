@@ -112,7 +112,7 @@ export class Android implements IPlatform {
     }
 
     public getPlatformWwwPath(projectDirectory: string): string {
-        return path.join(projectDirectory, "platforms/android/assets/www");
+        return path.join(projectDirectory, "platforms/android/app/src/main/assets/www");
     }
 
     public getEmulatorManager(): IEmulatorManager {
