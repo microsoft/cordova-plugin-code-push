@@ -550,7 +550,9 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
                     mockResponse = { update_info: getMockResponse() };
 
                     /* create an update */
-                    setupUpdateScenario(UpdateNotifyApplicationReady, "Update 1")
+                    setupScenario(ScenarioInstall).then<string>(() => {
+                        return setupUpdateScenario(UpdateNotifyApplicationReadyConditional, "Update 1");
+                        })
                         .then<string>(projectManager.createUpdateArchive.bind(undefined, updatesDirectory, targetPlatform))
                         .then<void>((updatePath: string) => {
                             var deferred = Q.defer<void>();

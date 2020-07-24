@@ -134,7 +134,7 @@ export class ProjectManager {
         });
 
         if (isDiff) {
-            archive.append(`{"deletedFiles":[]}`, { name: "hotcodepush.json" });
+            archive.append(`{"deletedFiles":[]}`, { name: "www/hotcodepush.json" });
         }
 
         archive.directory(targetFolder, "www");
