@@ -99,9 +99,9 @@ export class ProjectManager {
             .then<string>(ProjectManager.replaceString.bind(undefined, destinationConfigXmlPath, ProjectManager.IOS_KEY_PLACEHOLDER, platform.IOS.getInstance().getDefaultDeploymentKey()))
             .then<string>(ProjectManager.replaceString.bind(undefined, destinationConfigXmlPath, ProjectManager.SERVER_URL_PLACEHOLDER, targetPlatform.getServerUrl()))
             .then<string>(ProjectManager.replaceString.bind(undefined, destinationConfigXmlPath, ProjectManager.PLUGIN_VERSION_PLACEHOLDER, pluginVersion))
-            .then<string>(() => { 
+            .then<void>(() => { 
                 if (targetPlatform.getCordovaName() === "android") {
-                return ProjectManager.replaceString.bind(undefined, AndroidManifest, "<application android:hardwareAccelerated=\"true\" android:icon=\"@mipmap/ic_launcher\" android:label=\"@string/app_name\" android:supportsRtl=\"true\">", "<application android:hardwareAccelerated=\"true\" android:icon=\"@mipmap/ic_launcher\" android:label=\"@string/app_name\" android:usesCleartextTraffic=\"true\" android:supportsRtl=\"true\">");
+                return ProjectManager.replaceString(AndroidManifest, "<application android:hardwareAccelerated=\"true\" android:icon=\"@mipmap/ic_launcher\" android:label=\"@string/app_name\" android:supportsRtl=\"true\">", "<application android:hardwareAccelerated=\"true\" android:icon=\"@mipmap/ic_launcher\" android:label=\"@string/app_name\" android:usesCleartextTraffic=\"true\" android:supportsRtl=\"true\">");
                 }
             })
             .then<string>(() => {
