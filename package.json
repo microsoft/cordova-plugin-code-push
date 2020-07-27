@@ -30,7 +30,6 @@
     "@types/cordova-plugin-device": "^1.1.5",
     "@types/cordova-plugin-dialogs": "^1.3.2",
     "@types/cordova-plugin-file": "^0.0.3",
-    "@types/cordova-plugin-file-transfer": "^1.6.2",
     "@types/mkdirp": "^0.5.2",
     "@types/mocha": "^5.2.7",
     "@types/node": "^12.6.3",
