@@ -5,6 +5,7 @@
 
 import child_process = require("child_process");
 import os = require("os");
+import fs = require("fs");
 import path = require("path");
 import Q = require("q");
 
@@ -83,14 +84,34 @@ export class TestUtil {
         var iOSServerUrl = commandLineOption ? commandLineOption : TestUtil.defaultIOSServerUrl;
         return iOSServerUrl;
     }
-    
+
     /**
      * Reads the Android emulator to use
      */
-    public static readAndroidEmulator(): string {
+    public static readAndroidEmulator(): Q.Promise<string> {
+        var deferred = Q.defer<string>();
+        
+        function onReadAndroidEmuName(androidEmulatorName: string) {
+            console.log("Using " + androidEmulatorName + " for Android tests");
+            deferred.resolve(androidEmulatorName);
+        }
+            
         var commandLineOption = TestUtil.readMochaCommandLineOption(TestUtil.ANDROID_EMULATOR);
-        var androidEmulator = commandLineOption ? commandLineOption : TestUtil.defaultAndroidEmulator;
-        return androidEmulator;
+        if (commandLineOption) {
+            onReadAndroidEmuName(commandLineOption);
+        } else {
+            // get the most recent iOS simulator to run tests on
+            this.getProcessOutput("emulator -list-avds")
+                .then(function (Devices) {
+                    const listOfDevices = Devices.trim().split("\n");
+                    onReadAndroidEmuName(listOfDevices[listOfDevices.length - 1]);
+                })
+                .catch((error) => {
+                    deferred.reject(error);
+                });
+        }
+                
+        return deferred.promise;
     }
     
     /**
@@ -140,6 +161,32 @@ export class TestUtil {
         var coreTestsOnly = TestUtil.readMochaCommandLineFlag(TestUtil.CORE_TESTS_ONLY);
         if (coreTestsOnly) console.log("only core tests");
         return coreTestsOnly;
+    }
+    /**
+     * Copies a file from a given location to another.
+     */
+    public static copyFile(source: string, destination: string, overwrite: boolean): Q.Promise<void>  {
+        var deferred = Q.defer<void>();
+        try {
+            console.log(`Copy ${source} to ${destination}`);
+            
+            var errorHandler = function (error: Error) {
+                deferred.reject(error);
+            };
+            if (overwrite && fs.existsSync(destination)) {
+                fs.unlinkSync(destination);
+            }
+            var readStream = fs.createReadStream(source);
+            readStream.on("error", errorHandler);
+            var writeStream = fs.createWriteStream(destination);
+            writeStream.on("error", errorHandler);
+            writeStream.on("close", deferred.resolve.bind(undefined, undefined));
+            readStream.pipe(writeStream);
+        }
+        catch (e) {
+            deferred.reject(e);
+        }
+        return deferred.promise;
     }
     
     /**
