@@ -34,7 +34,7 @@ var restartEmulators: boolean = testUtil.readRestartEmulators();
 
 const TestAppName = "CodePushTest";
 const TestNamespace = "com.microsoft.codepush.test";
-const AcquisitionSDKPluginName = "code-push@3.1.2";
+const AcquisitionSDKPluginName = "code-push";
 const WkWebViewEnginePluginName = "cordova-plugin-wkwebview-engine";
 
 const ScenarioCheckForUpdatePath = "js/scenarioCheckForUpdate.js";
@@ -105,9 +105,6 @@ function createTestProject(directory: string): Q.Promise<string> {
         });
 
         return Q.all<string>(promises);
-    })
-    .then(() => {
-        return projectManager.addPlugin(directory, AcquisitionSDKPluginName);    
     })
     .then(() => {
         return projectManager.addPlugin(directory, thisPluginPath);
