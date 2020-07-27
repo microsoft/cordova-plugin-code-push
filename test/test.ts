@@ -34,7 +34,7 @@ var restartEmulators: boolean = testUtil.readRestartEmulators();
 
 const TestAppName = "CodePushTest";
 const TestNamespace = "com.microsoft.codepush.test";
-const AcquisitionSDKPluginName = "code-push";
+const AcquisitionSDKPluginName = "code-push@3.1.2";
 const WkWebViewEnginePluginName = "cordova-plugin-wkwebview-engine";
 
 const ScenarioCheckForUpdatePath = "js/scenarioCheckForUpdate.js";
@@ -105,6 +105,9 @@ function createTestProject(directory: string): Q.Promise<string> {
         });
 
         return Q.all<string>(promises);
+    })
+    .then(() => {
+        return projectManager.addPlugin(directory, AcquisitionSDKPluginName);    
     })
     .then(() => {
         return projectManager.addPlugin(directory, thisPluginPath);
@@ -251,7 +254,10 @@ function runTests(targetPlatform: platform.IPlatform, useWkWebView: boolean): vo
     describe("window.codePush", function() {
         before(() => {
             setupServer();
-            return projectManager.uninstallApplication(TestNamespace, targetPlatform);
+            return projectManager.uninstallApplication(TestNamespace, targetPlatform)
+            .then(() => { 
+                return useWkWebView ? projectManager.addPlugin(testRunDirectory, WkWebViewEnginePluginName).then(() => { return projectManager.addPlugin(updatesDirectory, WkWebViewEnginePluginName); }) : null;
+            });
         });
 
         after(() => {
