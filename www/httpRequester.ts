@@ -2,76 +2,80 @@
 
 "use strict";
 
-declare var cordova: Cordova;
+import CodePushUtil = require("./codePushUtil");
+
+declare var cordova: Cordova & { plugin: { http: AdvancedHttp.Plugin } };
 
 /**
  * XMLHttpRequest-based implementation of Http.Requester.
  */
 class HttpRequester implements Http.Requester {
 
-    private contentType: string;
-
     constructor(contentType?: string) {
-        this.contentType = contentType;
+        // Set headers for all requests
+        cordova.plugin.http.setHeader("X-CodePush-Plugin-Name", "cordova-plugin-code-push");
+        cordova.plugin.http.setHeader("X-CodePush-Plugin-Version", cordova.require("cordova/plugin_list").metadata["cordova-plugin-code-push"]);
+        cordova.plugin.http.setHeader("X-CodePush-SDK-Version", cordova.require("cordova/plugin_list").metadata["code-push"]);
+        if (contentType) {
+            cordova.plugin.http.setHeader("Content-Type", contentType);
+        }
     }
 
     public request(verb: Http.Verb, url: string, callbackOrRequestBody: Callback<Http.Response> | string, callback?: Callback<Http.Response>): void {
-        var requestBody: string;
         var requestCallback: Callback<Http.Response> = callback;
+
+        var options = HttpRequester.getInitialOptionsForVerb(verb);
+        if (options instanceof Error) {
+            CodePushUtil.logError("Could not make the HTTP request", options);
+            requestCallback && requestCallback(options, undefined);
+            return;
+        }
 
         if (!requestCallback && typeof callbackOrRequestBody === "function") {
             requestCallback = <Callback<Http.Response>>callbackOrRequestBody;
         }
 
         if (typeof callbackOrRequestBody === "string") {
-            requestBody = <string>callbackOrRequestBody;
+            // should be already JSON.stringify-ied, using plaintext serializer
+            options.serializer = "utf8";
+            options.data = <any>callbackOrRequestBody;
         }
 
-        var xhr = new XMLHttpRequest();
-        var methodName = this.getHttpMethodName(verb);
-        xhr.onreadystatechange = function(): void {
-            if (xhr.readyState === 4) {
-                var response: Http.Response = { statusCode: xhr.status, body: xhr.responseText };
-                requestCallback && requestCallback(null, response);
-            }
-        };
-        xhr.open(methodName, url, true);
-        if (this.contentType) {
-            xhr.setRequestHeader("Content-Type", this.contentType);
-        }
+        options.responseType = "text"; // Backward compatibility to xhr.responseText
 
-        xhr.setRequestHeader("X-CodePush-Plugin-Name", "cordova-plugin-code-push");
-        xhr.setRequestHeader("X-CodePush-Plugin-Version", cordova.require("cordova/plugin_list").metadata["cordova-plugin-code-push"]);
-        xhr.setRequestHeader("X-CodePush-SDK-Version", cordova.require("cordova/plugin_list").metadata["code-push"]);
-        xhr.send(requestBody);
+        cordova.plugin.http.sendRequest(url, options, function(success) {
+            requestCallback && requestCallback(null, {
+                body: success.data, // this should be plaintext
+                statusCode: success.status,
+            });
+        }, function(failure) {
+            requestCallback && requestCallback(new Error(failure.error), null);
+        });
     }
 
     /**
-     * Gets the HTTP method name as a string.
-     * The reason for which this is needed is because the Http.Verb enum is defined as a constant => Verb[Verb.METHOD_NAME] is not defined in the compiled JS.
+     * Builds the initial options object for the advanced-http plugin, if the HTTP method is supported.
+     * The reason for which this is needed is because the Http.Verb enum corresponds to integer values from native runtime.
      */
-    private getHttpMethodName(verb: Http.Verb): string {
+    private static getInitialOptionsForVerb(verb: Http.Verb): AdvancedHttp.Options | Error {
         switch (verb) {
             case Http.Verb.GET:
-                return "GET";
-            case Http.Verb.CONNECT:
-                return "CONNECT";
+                return { method: "get" };
             case Http.Verb.DELETE:
-                return "DELETE";
+                return { method: "delete" };
             case Http.Verb.HEAD:
-                return "HEAD";
-            case Http.Verb.OPTIONS:
-                return "OPTIONS";
+                return { method: "head" };
             case Http.Verb.PATCH:
-                return "PATCH";
+                return { method: "patch" };
             case Http.Verb.POST:
-                return "POST";
+                return { method: "post" };
             case Http.Verb.PUT:
-                return "PUT";
+                return { method: "put" };
             case Http.Verb.TRACE:
-                return "TRACE";
+            case Http.Verb.OPTIONS:
+            case Http.Verb.CONNECT:
             default:
-                return null;
+                return new(class UnsupportedMethodError extends Error {})(`Unsupported HTTP method code [${verb}]`);
         }
     }
 }

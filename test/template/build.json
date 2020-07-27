@@ -1,0 +1,1 @@
+{ "ios": { "debug": { "buildFlag": [ "-UseModernBuildSystem=0" ] }, "release": { "buildFlag": [ "-UseModernBuildSystem=0" ] } } }

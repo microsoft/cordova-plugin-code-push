@@ -228,7 +228,7 @@ var FileUtil = (function () {
         fileEntry.file(function (file) {
             var fileReader = new FileReader();
             fileReader.onloadend = function (ev) {
-                callback(null, ev.target.result);
+                callback(null, fileReader.result);
             };
             fileReader.onerror = function () {
                 callback(new Error("Could not get file. Error: " + fileReader.error.message), null);

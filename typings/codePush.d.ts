@@ -4,8 +4,92 @@
 // Copyright (c) Microsoft Corporation
 // All rights reserved.
 // Licensed under the MIT license.
+/// <reference types="cordova-plugin-file" />
+
+// Types used in file handling
+/**
+ * A function which accepts @type {FileEntry} containing a file
+ */
+type FileSaverCompletionHandler = (entry: FileEntry) => void;
+/**
+ * A function which is called if file handling has failed
+ */
+type FileSaverErrorHandler = (error: FileError, at: string) => void;
+
+/**
+ * @namespace AdvancedHttp describes the select types from cordova-plugin-advanced-http
+ * The plugin authors do not provide typescript typings, relying on ionic-native typings,
+ * which require the project to use ionic promisify-style plugin versions.
+ *
+ * @see https://github.com/silkimen/cordova-plugin-advanced-http/issues/32
+ *
+ * For additional type documentation:
+ * - @see README for cordova-plugin-advanced-http and the
+ * - @see https://github.com/ionic-team/ionic-native/blob/master/src/%40ionic-native/plugins/http/index.ts
+ *   for partial typings provided by ionic
+ */
+declare namespace AdvancedHttp {
+
+    /**
+     * Response is passed to @method sendRequest callbacks.
+     */
+    export interface Response {
+        /**
+         * The status number of the response
+         */
+        status: number;
+        /**
+         * The headers of the response
+         */
+        headers: any;
+        /**
+         * The URL of the response. This property will be the final URL obtained after any redirects.
+         */
+        url: string;
+        /**
+         * The data that is in the response. This property usually exists when a promise returned by a request method resolves.
+         */
+        data?: any;
+        /**
+         * Error response from the server. This property usually exists when a promise returned by a request method rejects.
+         */
+        error?: string;
+    }
+
+    /**
+     * Options object configures @method sendRequest calls
+     */
+    export interface Options {
+        method: 'get' | 'post' | 'put' | 'patch' | 'head' | 'delete' | 'upload' | 'download';
+        data?: { [index: string]: any };
+        params?: { [index: string]: string | number };
+        serializer?: 'json' | 'urlencoded' | 'utf8';
+        timeout?: number;
+        headers?: { [index: string]: string };
+        filePath?: string | string[];
+        name?: string | string[];
+        responseType?: 'text' | 'arraybuffer' | 'blob' | 'json';
+    }
+
+    export class Plugin {
+        /**
+         * setHeader sets global headers for cordova-plugin-advanced-http calls
+         */
+        setHeader(arg1: string, arg2: string, arg3?: string): void;
+        /**
+         * sendRequest handles the lifetime of an HTTP call
+         */
+        sendRequest(url: string, options: Options, onSuccess: (r: Response) => void, onError: (r: Response) => void): void;
+        /**
+         * downloadFile wraps @method sendRequest to provide an easy interface for working with files
+         */
+        downloadFile(url: string, body: object, headers: object, filePath: string, onSuccess: FileSaverCompletionHandler, onFailure: FileSaverErrorHandler): void;
+    }
+
+}
 
 declare module Http {
+    // Integer based verbs that will be passed by Acquisition SDK
     export const enum Verb {
         GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS, CONNECT, PATCH
     }
