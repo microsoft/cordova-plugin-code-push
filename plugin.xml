@@ -13,9 +13,6 @@
         <dependency id="cordova-plugin-advanced-http" version=">=2.2.0" />
         <dependency id="cordova-plugin-zip" version=">=3.1.0" />
 
-        <hook type="after_plugin_add" src="hooks/afterPluginAdd.js" />
-
-
         <js-module src="bin/www/codePush.js" name="codePush">
             <clobbers target="codePush" />
         </js-module>
