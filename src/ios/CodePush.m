@@ -524,7 +524,7 @@ StatusReport* rollbackStatusReport = nil;
         if ([CodePush hasIonicWebViewEngine: self.webViewEngine]) {
             [CodePush setServerBasePath:URL.path webView:self.webViewEngine];
         } else {
-            ((CDVViewController *)self.viewController).startPage = [URL absoluteString];
+            [self loadURL: URL];
         }
     }
 }
