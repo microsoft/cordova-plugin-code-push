@@ -1,6 +1,7 @@
 #import <Cordova/CDV.h>
 #import <Cordova/CDVConfigParser.h>
 #import <Cordova/CDVWebViewEngineProtocol.h>
+#import <WebKit/WKWebView.h>
 #import "CodePush.h"
 #import "CodePushPackageMetadata.h"
 #import "CodePushPackageManager.h"
@@ -20,6 +21,7 @@ bool pendingInstall = false;
 NSDate* lastResignedDate;
 NSString* const DeploymentKeyPreference = @"codepushdeploymentkey";
 NSString* const PublicKeyPreference = @"codepushpublickey";
+NSString* const IdentifierCodePushPath = @"codepush/deploy/versions";
 StatusReport* rollbackStatusReport = nil;
 
 - (void)getBinaryHash:(CDVInvokedUrlCommand *)command {
@@ -407,7 +409,41 @@ StatusReport* rollbackStatusReport = nil;
     // use the WebViewEngine for performing navigations only if the host app
     // is running 4.0.0+, and fallback to directly using the WebView otherwise.
 #if (WK_WEB_VIEW_ONLY && defined(__CORDOVA_4_0_0)) || defined(__CORDOVA_4_0_0)
-    [self.webViewEngine loadRequest:[NSURLRequest requestWithURL:url]];
+
+    if (url.isFileURL) {
+        NSURL *readAccessURL;
+
+        // All file URL requests should be handled with the setServerBasePath in case if it is Ionic app.
+        if ([CodePush hasIonicWebViewEngine: self.webViewEngine]) {
+            NSString* specifiedServerPath = [CodePush getCurrentServerBasePath];
+            if (![specifiedServerPath containsString:IdentifierCodePushPath] || [url.path containsString:IdentifierCodePushPath]) {
+                [CodePush setServerBasePath:url.path webView: self.webViewEngine];
+            }
+
+            return;
+        }
+
+        if ([url.absoluteString containsString:IdentifierCodePushPath]) {
+            // If the app is attempting to load a CodePush update, then we can lock the WebView down to
+            // just the CodePush "versions" directory. This prevents non-CodePush assets from being accessible,
+            // while still allowing us to navigate to a future update, as well as to the binary if a rollback is needed.
+            NSString *libraryPath = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES)[0];
+            readAccessURL = [NSURL fileURLWithPathComponents:@[libraryPath, @"NoCloud", @"codepush", @"deploy", @"versions"]];
+        } else {
+            // In order to allow the WebView to be navigated from the app bundle to another location, we (for some
+            // entirely unknown reason) need to ensure that the "read access URL" is set to the parent of the bundle
+            // as opposed to the www folder, which is what the WKWebViewEngine would attempt to set it to by default.
+            // If we didn't set this, then the attempt to navigate from the bundle to a CodePush update would fail.
+            readAccessURL = [[[NSBundle mainBundle] bundleURL] URLByDeletingLastPathComponent];
+        }
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [(WKWebView*)self.webViewEngine loadFileURL:url allowingReadAccessToURL:readAccessURL];
+        });
+        return;
+    }
+
+    [(UIWebView*)self.webView loadRequest:[NSURLRequest requestWithURL:url]];
 #else
     [(UIWebView*)self.webView loadRequest:[NSURLRequest requestWithURL:url]];
 #endif
