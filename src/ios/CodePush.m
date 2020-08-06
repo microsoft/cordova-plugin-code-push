@@ -1,6 +1,7 @@
 #import <Cordova/CDV.h>
 #import <Cordova/CDVConfigParser.h>
 #import <Cordova/CDVWebViewEngineProtocol.h>
+#import <Cordova/NSDictionary+CordovaPreferences.h>
 #import <WebKit/WKWebView.h>
 #import "CodePush.h"
 #import "CodePushPackageMetadata.h"
@@ -22,6 +23,7 @@ NSDate* lastResignedDate;
 NSString* const DeploymentKeyPreference = @"codepushdeploymentkey";
 NSString* const PublicKeyPreference = @"codepushpublickey";
 NSString* const IdentifierCodePushPath = @"codepush/deploy/versions";
+NSString* lastLoadedURL = @"";
 StatusReport* rollbackStatusReport = nil;
 
 - (void)getBinaryHash:(CDVInvokedUrlCommand *)command {
@@ -409,45 +411,42 @@ StatusReport* rollbackStatusReport = nil;
     // use the WebViewEngine for performing navigations only if the host app
     // is running 4.0.0+, and fallback to directly using the WebView otherwise.
 #if (WK_WEB_VIEW_ONLY && defined(__CORDOVA_4_0_0)) || defined(__CORDOVA_4_0_0)
-
-    if (url.isFileURL) {
-        NSURL *readAccessURL;
-
-        // All file URL requests should be handled with the setServerBasePath in case if it is Ionic app.
-        if ([CodePush hasIonicWebViewEngine: self.webViewEngine]) {
-            NSString* specifiedServerPath = [CodePush getCurrentServerBasePath];
-            if (![specifiedServerPath containsString:IdentifierCodePushPath] || [url.path containsString:IdentifierCodePushPath]) {
-                [CodePush setServerBasePath:url.path webView: self.webViewEngine];
-            }
-
-            return;
-        }
-
-        if ([url.absoluteString containsString:IdentifierCodePushPath]) {
-            // If the app is attempting to load a CodePush update, then we can lock the WebView down to
-            // just the CodePush "versions" directory. This prevents non-CodePush assets from being accessible,
-            // while still allowing us to navigate to a future update, as well as to the binary if a rollback is needed.
-            NSString *libraryPath = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES)[0];
-            readAccessURL = [NSURL fileURLWithPathComponents:@[libraryPath, @"NoCloud", @"codepush", @"deploy", @"versions"]];
-        } else {
-            // In order to allow the WebView to be navigated from the app bundle to another location, we (for some
-            // entirely unknown reason) need to ensure that the "read access URL" is set to the parent of the bundle
-            // as opposed to the www folder, which is what the WKWebViewEngine would attempt to set it to by default.
-            // If we didn't set this, then the attempt to navigate from the bundle to a CodePush update would fail.
-            readAccessURL = [[[NSBundle mainBundle] bundleURL] URLByDeletingLastPathComponent];
-        }
-        
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [(WKWebView*)self.webViewEngine loadFileURL:url allowingReadAccessToURL:readAccessURL];
-        });
-        return;
-    }
-
-    [(UIWebView*)self.webView loadRequest:[NSURLRequest requestWithURL:url]];
+    [self loadPluginRequest:[NSURLRequest requestWithURL:url]];
 #else
     [(UIWebView*)self.webView loadRequest:[NSURLRequest requestWithURL:url]];
 #endif
 }
+
+- (id)loadPluginRequest:(NSURLRequest *)request {
+    if (request.URL.fileURL) {
+        NSDictionary* settings = self.commandDelegate.settings;
+        NSString *bind = [settings cordovaSettingForKey:@"hostname"];
+        if(bind == nil){
+            bind = @"localhost";
+        }
+        NSString *scheme = [settings cordovaSettingForKey:@"scheme"];
+        if(scheme == nil || [scheme isEqualToString:@"http"] || [scheme isEqualToString:@"https"]  || [scheme isEqualToString:@"file"]){
+            scheme = @"app";
+        }
+        NSString *CDV_LOCAL_SERVER = [NSString stringWithFormat:@"%@://%@", scheme, bind];
+        
+        NSURL* startURL = [NSURL URLWithString:((CDVViewController *)self.viewController).startPage];
+        NSString* startFilePath = [self.commandDelegate pathForResource:[startURL path]];
+        NSURL *url = [[NSURL URLWithString:CDV_LOCAL_SERVER] URLByAppendingPathComponent:request.URL.path];
+        if ([request.URL.path isEqualToString:startFilePath]) {
+            url = [NSURL URLWithString:CDV_LOCAL_SERVER];
+        }
+        if(request.URL.query) {
+            url = [NSURL URLWithString:[@"?" stringByAppendingString:request.URL.query] relativeToURL:url];
+        }
+        if(request.URL.fragment) {
+            url = [NSURL URLWithString:[@"#" stringByAppendingString:request.URL.fragment] relativeToURL:url];
+        }
+        request = [NSURLRequest requestWithURL:url];
+    }
+    return [(WKWebView*)self.webViewEngine loadRequest:request];
+}
+
 
 + (Boolean) hasIonicWebViewEngine:(id<CDVWebViewEngineProtocol>) webViewEngine {
     NSString * webViewEngineClass = NSStringFromClass([webViewEngine class]);
