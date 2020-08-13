@@ -155,7 +155,7 @@ Once your app has been configured and distributed to your users, and you've made
 
 *NOTE: Before you can start releasing updates, please log into App Center by running the `appcenter login` command*
 
-In its most basic form, this command only requires one parameter: your owner name + "/" + app name.
+In it's the most basic form, this command only requires one parameter: your owner name + "/" + app name.
 
 ```shell
 appcenter codepush release-cordova -a <ownerName>/<appName>
