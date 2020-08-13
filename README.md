@@ -69,9 +69,9 @@ With the CodePush plugin installed, configure your app to use it via the followi
         <preference name="CodePushDeploymentKey" value="YOUR-IOS-DEPLOYMENT-KEY" />
     </platform>
     ```
-    
-    As a reminder, these keys are generated for you when you created your CodePush app via the CLI. If you need to retrieve them, you can simply run `code-push deployment ls APP_NAME -k`, and grab the key for the specific deployment you want to use (e.g. `Staging`, `Production`). 
-    
+
+    As a reminder, these keys are generated for you when you created your CodePush app via the CLI. If you need to retrieve them, you can simply run `appcenter codepush deployment list <ownerName>/<appName> --displayKeys`, and grab the key for the specific deployment you want to use (e.g. `Staging`, `Production`).
+
     *NOTE: You [must](https://docs.microsoft.com/en-us/appcenter/distribution/codepush/cli#releasing-updates) create a separate CodePush app for iOS and Android, which is why the above sample illustrates declaring separate keys for Android and iOS. If you're only developing for a single platform, then you only need to specify the deployment key for either Android or iOS, so you don't need to add the additional `<platform>` element as illustrated above.*
 
     Beginning from version **1.10.0** you can sign your update bundles (for more information about code signing please refer to relevant documentation [section](https://github.com/Microsoft/code-push/blob/master/cli/README.md#code-signing)). In order to enable code signing for Cordova application you should setup public key to verify bundles signature by providing following `preference` setting in `config.xml`:
@@ -151,38 +151,40 @@ Additionally, if you would like to display an update confirmation dialog (an "ac
 
 ## Releasing Updates
 
-Once your app has been configured and distributed to your users, and you've made some code and/or asset changes, it's time to instantly release them! The simplest (and recommended) way to do this is to use the `release-cordova` comand in the CodePush CLI, which will handle preparing and releasing your update to the CodePush server. 
+Once your app has been configured and distributed to your users, and you've made some code and/or asset changes, it's time to instantly release them! The simplest (and recommended) way to do this is to use the `release-cordova` command in the App Center CLI, which will handle preparing and releasing your update to the CodePush server.
 
-In it's most basic form, this command only requires two parameters: your app name and the platform you are creating the update for (either `ios` or `android`).
+*NOTE: Before you can start releasing updates, please log into App Center by running the `appcenter login` command*
+
+In its most basic form, this command only requires one parameter: your owner name + "/" + app name.
 
 ```shell
-code-push release-cordova <appName> <platform>
+appcenter codepush release-cordova -a <ownerName>/<appName>
 
-code-push release-cordova MyApp-ios ios
-code-push release-cordova MyApp-Android android
+appcenter codepush release-cordova -a <ownerName>/MyApp-ios
+appcenter codepush release-cordova -a <ownerName>/MyApp-Android
 ```
 
 *NOTE: When releasing updates to CodePush, you do not need to bump your app's version in the `config.xml` file, since you aren't modifying the binary version at all. You only need to bump this version when you upgrade Cordova and/or one of your plugins, at which point, you need to release an update to the native store(s). CodePush will automatically generate a "label" for each release you make (e.g. `v3`) in order to help identify it within your release history.*
 
-The `release-cordova` command enables such a simple workflow because it understands the standard layout of a Cordova app, and therefore, can generate your update and know exactly which files to upload. Additionally, in order to support flexible release strategies, the `release-cordova` command exposes numerous optional parameters that let you customize how the update should be distributed to your end users (e.g. Which binary versions are compatible with it? Should the release be viewed as mandatory?).  
+The `release-cordova` command enables such a simple workflow because it understands the standard layout of a Cordova app, and therefore, can generate your update and know exactly which files to upload. Additionally, in order to support flexible release strategies, the `release-cordova` command exposes numerous optional parameters that let you customize how the update should be distributed to your end users (e.g. Which binary versions are compatible with it? Should the release be viewed as mandatory?).
 
 ```shell
 # Release a mandatory update with a changelog
-code-push release-cordova MyApp-ios ios -m --description "Modified the header color"
+appcenter codepush release-cordova -a <ownerName>/MyApp-ios -m --description "Modified the header color"
 
 # Release a dev Android build to just 1/4 of your end users
-code-push release-cordova MyApp-Android android --rollout 25%
+appcenter codepush release-cordova -a <ownerName>/MyApp-android --rollout 25
 
 # Release an update that targets users running any 1.1.* binary, as opposed to
 # limiting the update to exact version name in the config.xml file
-code-push release-cordova MyApp-Android android --targetBinaryVersion "~1.1.0"
+appcenter codepush release-cordova -a <ownerName>/MyApp-android --target-binary-version "~1.1.0"
 
 # Release an update now but mark it as disabled
 # so that no users can download it yet
-code-push release-cordova MyApp-ios ios -x
+appcenter codepush release-cordova -a <ownerName>/MyApp-ios -x
 
 # Release an update signed by private key (public key should be configured for application)
-code-push release-cordova MyApp-Android --privateKeyPath ~/rsa/private_key.pem
+appcenter codepush release-cordova -a <ownerName>/MyApp-android --private-key-path ~/rsa/private_key.pem
 ```
 
 The CodePush client supports differential updates, so even though you are releasing your app code on every update, your end users will only actually download the files they need. The service handles this automatically so that you can focus on creating awesome apps and we can worry about optimizing end user downloads.
