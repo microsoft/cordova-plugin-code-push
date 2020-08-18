@@ -10,6 +10,7 @@ This plugin provides client-side integration for the [CodePush service](https://
 
 * [How does it work?](#how-does-it-work)
 * [Supported Cordova Platforms](#supported-cordova-platforms)
+* [Deprecating old versions](#deprecating-old-versions)
 * [Getting Started](#getting-started)
 * [Plugin Usage](#plugin-usage)
 * [Releasing Updates](#releasing-updates)
@@ -48,6 +49,12 @@ If you're running an older Android and/or iOS platform than is mentioned above, 
 cordova platform update android
 cordova platform update ios
 ```
+
+## Deprecating old versions
+
+Since CodePush is migrating to a new service all versions of cordova-plugin-code-push that lower than **[1.12.0](https://github.com/microsoft/cordova-plugin-code-push/releases/tag/v1.12.0)** will not work in the nearest future.
+
+[Here](https://github.com/microsoft/code-push/blob/05039f43194f99b4ed266144bdd518ef38d16832/migration-notice.md) is info about migrating. <!-- TODO: Update link when that docs will be in Master -->
 
 ## Getting Started
 
