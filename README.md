@@ -54,7 +54,7 @@ cordova platform update ios
 
 Since CodePush is migrating to a new service all versions of cordova-plugin-code-push lower than **[1.12.0](https://github.com/microsoft/cordova-plugin-code-push/releases/tag/v1.12.0)** will not work in the nearest future.
 
-You can find more information in our [documentation](https://github.com/microsoft/code-push/blob/master/MigrationNotice.md).* <!-- TODO: Update link when that docs will be in Master -->
+You can find more information in our [documentation](https://github.com/microsoft/code-push/blob/master/migration-notice.md).
 
 ## Getting Started
 
