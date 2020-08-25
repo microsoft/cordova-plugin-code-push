@@ -96,15 +96,25 @@ NSString* lastLoadedURL = @"";
     } else {
         // Default implementation of didFailNavigation method of CDVWKWebViewEngine.m
         CDVViewController* vc = (CDVViewController*)self.viewController;
+#ifndef __CORDOVA_6_0_0
+        [CDVUserAgentUtil releaseLock:vc.userAgentLockToken];
+#endif
+
         NSString* message = [NSString stringWithFormat:@"Failed to load webpage with error: %@", [error localizedDescription]];
         NSLog(@"%@", message);
-        [CDVUserAgentUtil releaseLock:vc.userAgentLockToken];
+
         NSURL* errorUrl = vc.errorURL;
         if (errorUrl) {
-            errorUrl = [NSURL URLWithString:[NSString stringWithFormat:@"?error=%@", [message stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] relativeToURL:errorUrl];
+            NSCharacterSet *charSet = [NSCharacterSet URLFragmentAllowedCharacterSet];
+            errorUrl = [NSURL URLWithString:[NSString stringWithFormat:@"?error=%@", [message stringByAddingPercentEncodingWithAllowedCharacters:charSet]] relativeToURL:errorUrl];
             NSLog(@"%@", [errorUrl absoluteString]);
             [theWebView loadRequest:[NSURLRequest requestWithURL:errorUrl]];
         }
+#ifdef DEBUG
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleDisplayName"] message:message preferredStyle:UIAlertControllerStyleAlert];
+        [alertController addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"OK", nil) style:UIAlertActionStyleDefault handler:nil]];
+        [vc presentViewController:alertController animated:YES completion:nil];
+#endif
     }
 }
 
