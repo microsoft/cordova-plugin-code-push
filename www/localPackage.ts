@@ -115,7 +115,7 @@ class LocalPackage extends Package implements ILocalPackage {
     }
 
     private verifyPackage(deploymentResult: DeploymentResult, installError: ErrorCallback, successCallback: SuccessCallback<void>): void {
-        
+
         var deployDir = deploymentResult.deployDir;
 
         var verificationFail: ErrorCallback = (error: Error) => {
@@ -129,7 +129,7 @@ class LocalPackage extends Package implements ILocalPackage {
                         this.verifySignature(deployDir, this.packageHash, publicKey, signature, verificationFail, successCallback);
                     });
                 } else {
-                    var errorMessage = 
+                    var errorMessage =
                     "Error! Public key was provided but there is no JWT signature within app bundle to verify. " +
                     "Possible reasons, why that might happen: \n" +
                     "1. You've been released CodePush bundle update using version of CodePush CLI that is not support code signing.\n" +
@@ -152,7 +152,7 @@ class LocalPackage extends Package implements ILocalPackage {
                     } else {
                         successCallback();
                     }
-                }          
+                }
             }
         };
 
@@ -172,7 +172,7 @@ class LocalPackage extends Package implements ILocalPackage {
             }
 
             publicKey = publicKeyResult;
-            isSignatureVerificationEnabled = (publicKey !== null);
+            isSignatureVerificationEnabled = !!publicKey;
 
             this.getSignatureFromUpdate(deploymentResult.deployDir, (error, signature) => {
                 if (error) {
@@ -180,7 +180,7 @@ class LocalPackage extends Package implements ILocalPackage {
                     return;
                 }
 
-                isSignatureAppearedInBundle = (signature !== null);
+                isSignatureAppearedInBundle = !!signature;
 
                 verify(isSignatureVerificationEnabled, isSignatureAppearedInBundle, publicKey, signature);
             });
@@ -219,7 +219,7 @@ class LocalPackage extends Package implements ILocalPackage {
                     callback(error, null);
                     return;
                 }
-                
+
                 callback(null, signature);
             });
         });
