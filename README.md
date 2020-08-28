@@ -6,7 +6,7 @@
 
 This plugin provides client-side integration for the [CodePush service](https://microsoft.github.io/code-push/), allowing you to easily add a dynamic update experience to your Cordova app(s).
 
-<!-- Cordova Catelog -->
+<!-- Cordova Catalog -->
 
 * [How does it work?](#how-does-it-work)
 * [Supported Cordova Platforms](#supported-cordova-platforms)
@@ -18,7 +18,7 @@ This plugin provides client-side integration for the [CodePush service](https://
 * [PhoneGap Build](#phonegap-build)
 * [Example Apps](#example-apps)
 
-<!-- Cordova Catelog -->
+<!-- Cordova Catalog -->
 
 ## How does it work?
 
@@ -94,33 +94,33 @@ With the CodePush plugin installed, configure your app to use it via the followi
     </platform>
     ```
     You can use the same private/public key pair for each platform.
-    
+
 2. If you're using an `<access origin="*" />` element in your `config.xml` file, then your app is already allowed to communicate with the CodePush servers and you can safely skip this step. Otherwise, add the following additional `<access />` elements:
- 
+
     ```xml
     <access origin="https://codepush.appcenter.ms" />
     <access origin="https://codepush.blob.core.windows.net" />
     <access origin="https://codepushupdates.azureedge.net" />
     ```
-    
+
 3. To ensure that your app can access the CodePush server on [CSP](https://developer.mozilla.org/en-US/docs/Web/Security/CSP/Introducing_Content_Security_Policy)-compliant platforms, add `https://codepush.appcenter.ms` to the `Content-Security-Policy` `meta` tag in your `index.html` file:
-  
+
     ```xml
     <meta http-equiv="Content-Security-Policy" content="default-src https://codepush.appcenter.ms 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *" />
     ```
-   
+
 4. Finally, double-check that you already have the [`cordova-plugin-whitelist`](https://github.com/apache/cordova-plugin-whitelist) plugin installed (most apps will). To check this, simply run the following command:
 
     ```shell
     cordova plugin ls
     ```
-    
+
     If `cordova-plugin-whitelist` is in the list, then you are good to go. Otherwise, simply run the following command to add it:
-    
+
     ```shell
     cordova plugin add cordova-plugin-whitelist
     ```
- 
+
 You are now ready to use the plugin in the application code. See the [sample applications](/samples) for examples and the API documentation for more details.
 
 *NOTE: There is a possibility to specify WebView engine on the plugin build phase. By default UIWebView engine is used. You can force plugin to use WKWebView by adding this iOS specific preference:*
@@ -198,7 +198,7 @@ The CodePush client supports differential updates, so even though you are releas
 
 *NOTE: for **Ionic** apps you need to run `ionic build` before running `cordova-release` or `release` command in order to build web assets.*
 
-For more details about how the `release-cordova` command works, as well as the various parameters it exposes, refer to the [CLI docs](https://github.com/Microsoft/code-push/tree/master/cli#releasing-updates-cordova). Additionally, if you would prefer to handle running the `cordova prepare` command yourself, and therefore, want an even more flexible solution than `release-cordova`, refer to the [`release` command](https://github.com/Microsoft/code-push/tree/master/cli#releasing-updates-general) for more details.
+For more details about how the `release-cordova` command works, as well as the various parameters it exposes, refer to the [CLI docs](https://docs.microsoft.com/en-us/appcenter/distribution/codepush/cli#releasing-updates-cordova). Additionally, if you would prefer to handle running the `cordova prepare` command yourself, and therefore, want an even more flexible solution than `release-cordova`, refer to the [`release` command](https://docs.microsoft.com/en-us/appcenter/distribution/codepush/cli#releasing-updates-general) for more details.
 
 If you run into any issues, or have any questions/comments/feedback, you can [e-mail us](mailto:codepushfeed@microsoft.com) and/or open a new issue on this repo and we'll respond ASAP!
 
@@ -241,7 +241,7 @@ When the update check completes, it will trigger the `onUpdateCheck` callback wi
 1. `null` if there is no update available. This occurs in the following scenarios:
 
     1. The configured deployment doesn't contain any releases, and therefore, nothing to update.
-    
+
     2. The latest release within the configured deployment is targeting a different binary version than what you're currently running (either older or newer).
 
     3. The currently running app already has the latest release from the configured deployment, and therefore, doesn't need it again.
@@ -281,9 +281,9 @@ When the update retrieval completes, it will trigger the `onSuccess` callback wi
 1. `null` if the app is currently running the HTML start page from the binary and not a CodePush update. This occurs in the following scenarios:
 
     1. The end-user installed the app binary and has yet to install a CodePush update
-    
+
     2. The end-user installed an update of the binary (e.g. from the store), which cleared away the old CodePush updates, and gave precedence back to the binary.
-    
+
 2. A `LocalPackage` instance which represents the metadata for the currently running CodePush update.
 
 Parameters:
@@ -300,7 +300,7 @@ codePush.getCurrentPackage(function (update) {
         console.log("No updates have been installed");
         return;
     }
-    
+
     // If the current app "session" represents the first time
     // this update has run, and it had a description provided
     // with it upon release, let's show it to the end user
@@ -321,7 +321,7 @@ Gets the metadata for the currently pending update (if one exists). An update is
 When the update retrieval completes, it will trigger the `onSuccess` callback with one of two possible values:
 
 1. `null` if the app doesn't currently have a pending update (e.g. the app is already running the latest available version).
-    
+
 2. A `LocalPackage` instance which represents the metadata for the currently pending CodePush update.
 
 Parameters:
@@ -387,7 +387,7 @@ Example Usage:
 
 ```javascript
 // Fully silent update which keeps the app in
-// sync with the server, without ever 
+// sync with the server, without ever
 // interrupting the end user
 codePush.sync();
 
@@ -408,7 +408,7 @@ While the sync method tries to make it easy to perform silent and active updates
 - __downloadProgress__: Called periodically when an available update is being downloaded from the CodePush server. The method is called with a `DownloadProgress` object, which contains the following two properties:
 
     - __totalBytes__ *(Number)* - The total number of bytes expected to be received for this update (i.e. the size of the set of files which changed from the previous release).
-    
+
     - __receivedBytes__ *(Number)* - The number of bytes downloaded thus far, which can be used to track download progress.
 
 #### SyncOptions
@@ -466,14 +466,14 @@ codePush.sync(null, { updateDialog: { updateTitle: "An update is available!" } }
 codePush.sync(null, {
    updateDialog: {
     appendReleaseDescription: true,
-    descriptionPrefix: "\n\nChange log:\n"   
+    descriptionPrefix: "\n\nChange log:\n"
    },
    installMode: InstallMode.IMMEDIATE
 });
 
 // Silently check for the update, but
 // display a custom downloading UI
-// via the SyncStatus and DowloadProgress callbacks
+// via the SyncStatus and DownloadProgress callbacks
 codePush.sync(syncStatus, null, downloadProgress);
 
 function syncStatus(status) {
@@ -499,7 +499,7 @@ The `sync` method can be called anywhere you'd like to check for an update. That
 
 ### Package objects
 
-The `checkForUpdate` and `getCurrentPackage` methods invoke success callbacks, that when triggered, provide acces to "package" objects. The package represents your code update as well as any extra metadata (e.g. description, mandatory?). The CodePush API has the distinction between the following types of packages:
+The `checkForUpdate` and `getCurrentPackage` methods invoke success callbacks, that when triggered, provide access to "package" objects. The package represents your code update as well as any extra metadata (e.g. description, mandatory?). The CodePush API has the distinction between the following types of packages:
 
 1. `LocalPackage`: Represents a downloaded update that is either already running, or has been installed and is pending an app restart.
 
@@ -561,7 +561,7 @@ var onUpdateCheck = function (remotePackage) {
     if (!remotePackage) {
         console.log("The application is up to date.");
     } else {
-        // The hash of each previously reverted package is stored for later use. 
+        // The hash of each previously reverted package is stored for later use.
         // This way, we avoid going into an infinite bad update/revert loop.
         if (!remotePackage.failedInstall) {
             console.log("A CodePush update is available. Package hash: " + remotePackage.packageHash);
@@ -667,8 +667,8 @@ Defines the possible statuses of the [sync](#codepushsync) operation. There are 
 - __UPDATE_INSTALLED__: An available update has been installed and will be run either immediately after the callback function returns or the next time the app resumes/restarts, depending on the `InstallMode` specified in `SyncOptions`.
 
 - __UPDATE_IGNORED__: The app has an optional update, which the end user chose to ignore. *(This is only applicable when the `updateDialog` is used)*
- 
-- __ERROR__: An error occurred during the `sync` operation. This might be an error while communicating with the server, downloading or unziping the update. The console logs should contain more information about what happened. No update has been applied in this case.
+
+- __ERROR__: An error occurred during the `sync` operation. This might be an error while communicating with the server, downloading or unzipping the update. The console logs should contain more information about what happened. No update has been applied in this case.
 
 - __IN_PROGRESS__: Another sync is already running, so this attempt to sync has been aborted.
 
