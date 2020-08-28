@@ -46,7 +46,7 @@ class LocalPackage extends Package implements ILocalPackage {
      * Otherwise, the install operation will be marked as failed, and the application is reverted to its previous version on the next run.
      *
      * @param installSuccess Callback invoked if the install operation succeeded.
-     * @param installError Optional callback inovoked in case of an error.
+     * @param installError Optional callback invoked in case of an error.
      * @param installOptions Optional parameter used for customizing the installation behavior.
      */
     public install(installSuccess: SuccessCallback<InstallMode>, errorCallback?: ErrorCallback, installOptions?: InstallOptions) {
@@ -110,7 +110,7 @@ class LocalPackage extends Package implements ILocalPackage {
                 }
             });
         } catch (e) {
-            installError && installError(new Error("An error occured while installing the package. " + CodePushUtil.getErrorMessage(e)));
+            installError && installError(new Error("An error occurred while installing the package. " + CodePushUtil.getErrorMessage(e)));
         }
     }
 
@@ -130,10 +130,10 @@ class LocalPackage extends Package implements ILocalPackage {
                     });
                 } else {
                     var errorMessage =
-                    "Error! Public key was provided but there is no JWT signature within app bundle to verify. " +
-                    "Possible reasons, why that might happen: \n" +
-                    "1. You've been released CodePush bundle update using version of CodePush CLI that is not support code signing.\n" +
-                    "2. You've been released CodePush bundle update without providing --privateKeyPath option.";
+                        "Error! Public key was provided but there is no JWT signature within app bundle to verify. " +
+                        "Possible reasons, why that might happen: \n" +
+                        "1. You've been released CodePush bundle update using version of CodePush CLI that is not support code signing.\n" +
+                        "2. You've been released CodePush bundle update without providing --privateKeyPath option.";
                     installError && installError(new Error(errorMessage));
                 }
             } else {
@@ -146,7 +146,7 @@ class LocalPackage extends Package implements ILocalPackage {
                     // verifyHash
                     this.verifyHash(deployDir, this.packageHash, verificationFail, successCallback);
                 } else {
-                    if (deploymentResult.isDiffUpdate){
+                    if (deploymentResult.isDiffUpdate) {
                         // verifyHash
                         this.verifyHash(deployDir, this.packageHash, verificationFail, successCallback);
                     } else {
@@ -156,7 +156,7 @@ class LocalPackage extends Package implements ILocalPackage {
             }
         };
 
-        if (deploymentResult.isDiffUpdate){
+        if (deploymentResult.isDiffUpdate) {
             CodePushUtil.logMessage("Applying diff update");
         } else {
             CodePushUtil.logMessage("Applying full update");
@@ -200,7 +200,7 @@ class LocalPackage extends Package implements ILocalPackage {
         cordova.exec(success, fail, "CodePush", "getPublicKey", []);
     }
 
-    private getSignatureFromUpdate(deployDir: DirectoryEntry, callback: Callback<string>){
+    private getSignatureFromUpdate(deployDir: DirectoryEntry, callback: Callback<string>) {
 
         var rootUri = cordova.file.dataDirectory;
         var path = deployDir.fullPath + "/www";
@@ -225,7 +225,7 @@ class LocalPackage extends Package implements ILocalPackage {
         });
     }
 
-    private verifyHash(deployDir: DirectoryEntry, newUpdateHash: string, errorCallback: ErrorCallback, successCallback: SuccessCallback<void>){
+    private verifyHash(deployDir: DirectoryEntry, newUpdateHash: string, errorCallback: ErrorCallback, successCallback: SuccessCallback<void>) {
         var packageHashSuccess = (computedHash: string) => {
             if (computedHash !== newUpdateHash) {
                 errorCallback(new Error("The update contents failed the data integrity check."));
@@ -242,7 +242,7 @@ class LocalPackage extends Package implements ILocalPackage {
         cordova.exec(packageHashSuccess, packageHashFail, "CodePush", "getPackageHash", [deployDir.fullPath]);
     }
 
-    private verifySignature(deployDir: DirectoryEntry, newUpdateHash: string, publicKey: string, signature: string, errorCallback: ErrorCallback, successCallback: SuccessCallback<void>){
+    private verifySignature(deployDir: DirectoryEntry, newUpdateHash: string, publicKey: string, signature: string, errorCallback: ErrorCallback, successCallback: SuccessCallback<void>) {
         var decodeSignatureSuccess = (contentHash: string) => {
             if (contentHash !== newUpdateHash) {
                 errorCallback(new Error("The update contents failed the code signing check."));
@@ -285,11 +285,22 @@ class LocalPackage extends Package implements ILocalPackage {
                                 /* invoke success before navigating */
                                 installSuccess && installSuccess(installModeToUse);
                                 /* no need for callbacks, the javascript context will reload */
-                                cordova.exec(() => { }, () => { }, "CodePush", "install", [deployDir.fullPath,
-                                    installModeToUse.toString(), installOptions.minimumBackgroundDuration.toString()]);
+                                cordova.exec(() => { }, () => { }, "CodePush", "install",
+                                    [
+                                        deployDir.fullPath,
+                                        installModeToUse.toString(),
+                                        installOptions.minimumBackgroundDuration.toString()
+                                    ]
+                                );
                             } else {
-                                cordova.exec(() => { installSuccess && installSuccess(installModeToUse); }, () => { installError && installError(); }, "CodePush", "install", [deployDir.fullPath,
-                                    installModeToUse.toString(), installOptions.minimumBackgroundDuration.toString()]);
+                                cordova.exec(() => { installSuccess && installSuccess(installModeToUse); },
+                                    () => { installError && installError(); }, "CodePush", "install",
+                                    [
+                                        deployDir.fullPath,
+                                        installModeToUse.toString(),
+                                        installOptions.minimumBackgroundDuration.toString()
+                                    ]
+                                );
                             }
                         };
 
@@ -300,7 +311,7 @@ class LocalPackage extends Package implements ILocalPackage {
 
                         var preInstallFailure = (preInstallError?: any) => {
                             CodePushUtil.logError("Preinstall failure.", preInstallError);
-                            var error = new Error("An error has occured while installing the package. " + CodePushUtil.getErrorMessage(preInstallError));
+                            var error = new Error("An error has occurred while installing the package. " + CodePushUtil.getErrorMessage(preInstallError));
                             installError && installError(error);
                         };
 
@@ -319,7 +330,7 @@ class LocalPackage extends Package implements ILocalPackage {
                     LocalPackage.handleDiffDeployment(newPackageLocation, diffManifest, deployCallback);
                 } else {
                     LocalPackage.handleCleanDeployment(newPackageLocation, (error: Error) => {
-                        deployCallback(error, {deployDir, isDiffUpdate: false});
+                        deployCallback(error, { deployDir, isDiffUpdate: false });
                     });
                 }
             });
@@ -363,7 +374,7 @@ class LocalPackage extends Package implements ILocalPackage {
                         if (copyError) {
                             cleanDeployCallback(copyError, null);
                         } else {
-                            cleanDeployCallback(null, {deployDir, isDiffUpdate: false});
+                            cleanDeployCallback(null, { deployDir, isDiffUpdate: false });
                         }
                     });
                 }
@@ -438,7 +449,7 @@ class LocalPackage extends Package implements ILocalPackage {
                                 if (deleteError || deployDirError) {
                                     handleError(new Error("Cannot clean up deleted manifest files."));
                                 } else {
-                                    diffCallback(null, {deployDir, isDiffUpdate: true});
+                                    diffCallback(null, { deployDir, isDiffUpdate: true });
                                 }
                             });
                         });
