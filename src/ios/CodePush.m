@@ -11,6 +11,7 @@
 #import "StatusReport.h"
 #import "UpdateHashUtils.h"
 #import "CodePushJWT.h"
+#import "WebViewShared.h"
 
 @implementation CodePush
 
@@ -21,6 +22,7 @@ NSDate* lastResignedDate;
 NSString* const DeploymentKeyPreference = @"codepushdeploymentkey";
 NSString* const PublicKeyPreference = @"codepushpublickey";
 StatusReport* rollbackStatusReport = nil;
+WebViewShared* webViewShared = nil;
 
 - (void)getBinaryHash:(CDVInvokedUrlCommand *)command {
     [self.commandDelegate runInBackground:^{
@@ -351,6 +353,9 @@ StatusReport* rollbackStatusReport = nil;
 }
 
 - (void)pluginInitialize {
+    webViewShared = [WebViewShared getInstanceOrCreate:self.webViewEngine
+                                              andCommandDelegate:self.commandDelegate
+                                               andViewController:self.viewController];
     // register for "on resume", "on pause" notifications
     [self clearDeploymentsIfBinaryUpdated];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillEnterForeground) name:UIApplicationWillEnterForegroundNotification object:nil];
@@ -402,15 +407,20 @@ StatusReport* rollbackStatusReport = nil;
 }
 
 - (void)loadURL:(NSURL*)url {
+    // Fix file:// requests issues for cordova-ios 6+
+    if([Utilities cordova6OrGreater]) {
+        [webViewShared loadRequest:[NSURLRequest requestWithURL:url]];
+    } else {
     // In order to make use of the "modern" Cordova platform, while still
     // maintaining back-compat with Cordova iOS 3.9.0, we need to conditionally
     // use the WebViewEngine for performing navigations only if the host app
     // is running 4.0.0+, and fallback to directly using the WebView otherwise.
-#if (WK_WEB_VIEW_ONLY && defined(__CORDOVA_4_0_0)) || defined(__CORDOVA_4_0_0)
-    [self.webViewEngine loadRequest:[NSURLRequest requestWithURL:url]];
-#else
-    [(UIWebView*)self.webView loadRequest:[NSURLRequest requestWithURL:url]];
-#endif
+    #if (WK_WEB_VIEW_ONLY && defined(__CORDOVA_4_0_0)) || defined(__CORDOVA_4_0_0)
+        [self.webViewEngine loadRequest:[NSURLRequest requestWithURL:url]];
+    #else
+        [(UIWebView*)self.webView loadRequest:[NSURLRequest requestWithURL:url]];
+    #endif
+    }
 }
 
 + (Boolean) hasIonicWebViewEngine:(id<CDVWebViewEngineProtocol>) webViewEngine {

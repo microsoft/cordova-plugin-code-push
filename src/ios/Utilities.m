@@ -24,6 +24,10 @@
     return fileDate;
 }
 
++ (BOOL)cordova6OrGreater{
+    return NSClassFromString(@"CDVWebViewEngine");
+}
+
 void CPLog(NSString *formatString, ...) {
     va_list args;
     va_start(args, formatString);
