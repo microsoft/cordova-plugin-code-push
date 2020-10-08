@@ -25,7 +25,7 @@ NSString* lastLoadedURL = @"";
 // Fix bug related to unable WKWebView recovery after reinit with loaded codepush update
 - (void)webView:(WKWebView*)theWebView didFailNavigation:(WKNavigation*)navigation withError:(NSError*)error {
     // NSURLErrorFailingURLStringErrorKey is URL which caused a load to fail, if it's null then webView was terminated for some reason
-    if ([[error userInfo] objectForKey:NSURLErrorFailingURLStringErrorKey] == nil && [lastLoadedURL containsString:IdentifierCodePushPath]) {
+    if ([[error userInfo] objectForKey:NSURLErrorFailingURLStringErrorKey] == nil && [lastLoadedURL containsString:[WebViewShared getIdentifierCodePushPath]]) {
         NSLog(@"Failed to load webpage with error: %@", [error localizedDescription]);
         NSLog(@"Trying to reload request with url: %@", lastLoadedURL);
         // Manually loading codepush start page via loadRequest method of this category

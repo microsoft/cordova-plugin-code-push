@@ -8,7 +8,6 @@
 id<CDVWebViewEngineProtocol> webViewEngine;
 id<CDVCommandDelegate> commandDelegate;
 UIViewController* viewController;
-NSString* const IdentifierCodePushPath = @"codepush/deploy/versions";
 
 + (id)getInstanceOrCreate:(id<CDVWebViewEngineProtocol>)webViewEngine andCommandDelegate:(id<CDVCommandDelegate>)commandDelegate andViewController:(UIViewController*)viewController {
     static WebViewShared* instance = nil;
@@ -19,6 +18,10 @@ NSString* const IdentifierCodePushPath = @"codepush/deploy/versions";
                                andViewController:viewController];
     });
     return instance;
+}
+
++ (NSString*)getIdentifierCodePushPath{
+    return @"codepush/deploy/versions";
 }
     
 - (id)initWithWebViewEngine:(id<CDVWebViewEngineProtocol>)webViewEngine andCommandDelegate:(id<CDVCommandDelegate>)commandDelegate andViewController:(UIViewController*)viewController {
@@ -34,10 +37,11 @@ NSString* const IdentifierCodePushPath = @"codepush/deploy/versions";
 
 - (id)loadRequest:(NSURLRequest *)request {
     NSString* lastLoadedURL = request.URL.absoluteString;
+    NSString* identifierCodePushPath = [WebViewShared getIdentifierCodePushPath];
     NSURL *readAccessURL;
 
     NSURL* bundleURL = [[NSBundle mainBundle] bundleURL];
-    if (![lastLoadedURL containsString:bundleURL.path] && ![lastLoadedURL containsString:IdentifierCodePushPath]) {
+    if (![lastLoadedURL containsString:bundleURL.path] && ![lastLoadedURL containsString:identifierCodePushPath]) {
         // Happens only for Ionic apps
         return [self loadIonicPluginRequest: request];
     }
@@ -46,14 +50,14 @@ NSString* const IdentifierCodePushPath = @"codepush/deploy/versions";
         // All file URL requests should be handled with the setServerBasePath in case if it is Ionic app.
         if ([CodePush hasIonicWebViewEngine: self.webViewEngine]) {
             NSString* specifiedServerPath = [CodePush getCurrentServerBasePath];
-            if (![specifiedServerPath containsString:IdentifierCodePushPath] || [request.URL.path containsString:IdentifierCodePushPath]) {
+            if (![specifiedServerPath containsString:identifierCodePushPath] || [request.URL.path containsString:identifierCodePushPath]) {
                 [CodePush setServerBasePath:request.URL.path webView: self.webViewEngine];
             }
 
             return nil;
         }
 
-        if ([request.URL.absoluteString containsString:IdentifierCodePushPath]) {
+        if ([request.URL.absoluteString containsString:identifierCodePushPath) {
             // If the app is attempting to load a CodePush update, then we can lock the WebView down to
             // just the CodePush "versions" directory. This prevents non-CodePush assets from being accessible,
             // while still allowing us to navigate to a future update, as well as to the binary if a rollback is needed.

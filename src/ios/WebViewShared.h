@@ -8,6 +8,7 @@
 @property UIViewController *viewController;
 
 + (id)getInstanceOrCreate:(id<CDVWebViewEngineProtocol>)webViewEngine andCommandDelegate:(id<CDVCommandDelegate>)commandDelegate andViewController:(UIViewController *)viewController;
++ (NSString *)getIdentifierCodePushPath;
 - (id)initWithWebViewEngine:(id<CDVWebViewEngineProtocol>)webViewEngine andCommandDelegate:(id<CDVCommandDelegate>)commandDelegate andViewController:(UIViewController *)viewController;
 - (id)loadRequest:(NSURLRequest *)request;
 - (id)loadIonicPluginRequest:(NSURLRequest *)request;
