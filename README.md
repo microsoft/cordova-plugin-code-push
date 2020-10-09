@@ -123,7 +123,7 @@ With the CodePush plugin installed, configure your app to use it via the followi
 
 You are now ready to use the plugin in the application code. See the [sample applications](/samples) for examples and the API documentation for more details.
 
-*NOTE: There is a possibility to specify WebView engine on the plugin build phase. By default UIWebView engine is used. You can force plugin to use WKWebView by adding this iOS specific preference:*
+*NOTE: For Cordova 4, 5 there is a possibility to specify WebView engine on the plugin build phase. By default UIWebView engine is used. You can force plugin to use WKWebView by installing [cordova-plugin-wkwebview-engine](https://www.npmjs.com/package/cordova-plugin-wkwebview-engine) and adding this iOS specific preference:*
 ```xml
 <preference name="WKWebViewOnly" value="true" />
 ```
