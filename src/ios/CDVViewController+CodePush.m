@@ -20,7 +20,7 @@
     [self viewDidLoad_codepush];
     
     /*
-     In original viewDid method from CDVViewController at the end it tries to open using something like self.webViewEngine loadRequest [self appUrl].
+     In original viewDid method from CDVViewController at the end it tries to open start page using something like self.webViewEngine loadRequest [self appUrl].
      [self appUrl] is only resolves full path for startPage.
      For example
      

@@ -411,15 +411,15 @@ WebViewShared* webViewShared = nil;
     if([Utilities cordova6OrGreater]) {
         [webViewShared loadRequest:[NSURLRequest requestWithURL:url]];
     } else {
-    // In order to make use of the "modern" Cordova platform, while still
-    // maintaining back-compat with Cordova iOS 3.9.0, we need to conditionally
-    // use the WebViewEngine for performing navigations only if the host app
-    // is running 4.0.0+, and fallback to directly using the WebView otherwise.
-    #if (WK_WEB_VIEW_ONLY && defined(__CORDOVA_4_0_0)) || defined(__CORDOVA_4_0_0)
-        [self.webViewEngine loadRequest:[NSURLRequest requestWithURL:url]];
-    #else
-        [(UIWebView*)self.webView loadRequest:[NSURLRequest requestWithURL:url]];
-    #endif
+        // In order to make use of the "modern" Cordova platform, while still
+        // maintaining back-compat with Cordova iOS 3.9.0, we need to conditionally
+        // use the WebViewEngine for performing navigations only if the host app
+        // is running 4.0.0+, and fallback to directly using the WebView otherwise.
+        #if (WK_WEB_VIEW_ONLY && defined(__CORDOVA_4_0_0)) || defined(__CORDOVA_4_0_0)
+            [self.webViewEngine loadRequest:[NSURLRequest requestWithURL:url]];
+        #else
+            [(UIWebView*)self.webView loadRequest:[NSURLRequest requestWithURL:url]];
+        #endif
     }
 }
 
