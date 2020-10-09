@@ -2,7 +2,6 @@
 #if __has_include("CDVWKWebViewEngine.h")
 
 #import "CDVWKWebViewEngine.h"
-#import "CodePush.h"
 #import "WebViewShared.h"
 
 @implementation CDVWKWebViewEngine (CodePush)
