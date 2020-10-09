@@ -16,7 +16,7 @@ NSString* lastLoadedURL = @"";
     WebViewShared* webViewShared = [WebViewShared getInstanceOrCreate:self.webViewEngine
                                                             andCommandDelegate:self.commandDelegate
                                                              andViewController:self.viewController];
-    return [webViewShared loadRequest: request];
+    return [webViewShared loadRequest:request];
 }
 
 #pragma clang diagnostic pop

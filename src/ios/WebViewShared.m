@@ -43,15 +43,15 @@ UIViewController* viewController;
     NSURL* bundleURL = [[NSBundle mainBundle] bundleURL];
     if (![lastLoadedURL containsString:bundleURL.path] && ![lastLoadedURL containsString:identifierCodePushPath]) {
         // Happens only for Ionic apps
-        return [self loadIonicPluginRequest: request];
+        return [self loadIonicPluginRequest:request];
     }
 
     if (request.URL.isFileURL) {
         // All file URL requests should be handled with the setServerBasePath in case if it is Ionic app.
-        if ([CodePush hasIonicWebViewEngine: self.webViewEngine]) {
+        if ([CodePush hasIonicWebViewEngine:self.webViewEngine]) {
             NSString* specifiedServerPath = [CodePush getCurrentServerBasePath];
             if (![specifiedServerPath containsString:identifierCodePushPath] || [request.URL.path containsString:identifierCodePushPath]) {
-                [CodePush setServerBasePath:request.URL.path webView: self.webViewEngine];
+                [CodePush setServerBasePath:request.URL.path webView:self.webViewEngine];
             }
 
             return nil;
@@ -73,7 +73,7 @@ UIViewController* viewController;
 
         return [(WKWebView*)self.webViewEngine loadFileURL:request.URL allowingReadAccessToURL:readAccessURL];
     } else {
-        return [(WKWebView*)self.webViewEngine loadRequest: request];
+        return [(WKWebView*)self.webViewEngine loadRequest:request];
     }
 }
 
