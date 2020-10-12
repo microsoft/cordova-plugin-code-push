@@ -2,6 +2,9 @@
 
 @implementation Utilities
 
+static BOOL CDVWebViewEngineChecked = NO;
+static BOOL CDVWebViewEngineExists = NO;
+
 + (NSString*)getApplicationVersion{
     return [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
 }
@@ -24,8 +27,12 @@
     return fileDate;
 }
 
-+ (BOOL)cordova6OrGreater{
-    return NSClassFromString(@"CDVWebViewEngine");
++ (BOOL)CDVWebViewEngineAvailable{
+    if (!CDVWebViewEngineChecked) {
+        CDVWebViewEngineChecked = YES;
+        CDVWebViewEngineExists = NSClassFromString(@"CDVWebViewEngine") != nil;
+    }
+    return CDVWebViewEngineExists;
 }
 
 void CPLog(NSString *formatString, ...) {

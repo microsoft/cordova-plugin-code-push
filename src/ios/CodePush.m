@@ -408,7 +408,7 @@ WebViewShared* webViewShared = nil;
 
 - (void)loadURL:(NSURL*)url {
     // Fix file:// requests issues for cordova-ios 6+
-    if([Utilities cordova6OrGreater]) {
+    if([Utilities CDVWebViewEngineAvailable]) {
         [webViewShared loadRequest:[NSURLRequest requestWithURL:url]];
     } else {
         // In order to make use of the "modern" Cordova platform, while still

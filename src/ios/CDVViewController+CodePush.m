@@ -40,7 +40,7 @@
      Note 1: self.webViewEngine loadRequest will be failing anyway but calling [webViewShared loadRequest] will hide it for user.
      Note 2: It affects only cordova-ios 6 apps
     */
-    if([Utilities cordova6OrGreater]) {
+    if([Utilities CDVWebViewEngineAvailable]) {
         WebViewShared* webViewShared = [WebViewShared getInstanceOrCreate:self.webViewEngine
                                                   andCommandDelegate:self.commandDelegate
                                                    andViewController:self];

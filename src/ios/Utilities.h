@@ -3,6 +3,6 @@
 + (NSString*)getApplicationVersion;
 + (NSString*)getApplicationTimestamp;
 + (NSDate*)getApplicationBuildTime;
-+ (BOOL)cordova6OrGreater;
++ (BOOL)CDVWebViewEngineAvailable;
 
 @end
