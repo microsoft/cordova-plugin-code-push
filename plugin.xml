@@ -98,7 +98,10 @@
             <header-file src="src/ios/Utilities.h" />
             <source-file src="src/ios/Utilities.m" />
             <source-file src="src/ios/CDVWKWebViewEngine+CodePush.m" />
-
+            <source-file src="src/ios/WebViewShared.m" />
+            <source-file src="src/ios/WebViewShared.h" />
+            <source-file src="src/ios/CDVViewController+CodePush.m" />
+            
             <!-- JWT -->
             <source-file src="src/ios/JWT/Core/Algorithms/Base/CodePushJWTAlgorithmFactory.m" />
             <source-file src="src/ios/JWT/Core/Algorithms/Base/CodePushJWTAlgorithmNone.m" />
