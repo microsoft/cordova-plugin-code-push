@@ -2,9 +2,6 @@
 
 @implementation Utilities
 
-static BOOL CDVWebViewEngineChecked = NO;
-static BOOL CDVWebViewEngineExists = NO;
-
 + (NSString*)getApplicationVersion{
     return [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
 }
@@ -25,14 +22,6 @@ static BOOL CDVWebViewEngineExists = NO;
     NSDictionary *executableAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:appPlistPath error:nil];
     NSDate *fileDate = [executableAttributes objectForKey:@"NSFileModificationDate"];
     return fileDate;
-}
-
-+ (BOOL)CDVWebViewEngineAvailable{
-    if (!CDVWebViewEngineChecked) {
-        CDVWebViewEngineChecked = YES;
-        CDVWebViewEngineExists = NSClassFromString(@"CDVWebViewEngine") != nil;
-    }
-    return CDVWebViewEngineExists;
 }
 
 void CPLog(NSString *formatString, ...) {
