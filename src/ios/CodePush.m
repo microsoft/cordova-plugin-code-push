@@ -403,11 +403,12 @@ StatusReport* rollbackStatusReport = nil;
 }
 
 - (void)loadURL:(NSURL*)url {
-    BOOL atLeastCordova4 = NO;
-    #if defined(__CORDOVA_4_0_0)
-        atLeastCordova4 = YES;
-    #endif
-    if([Utilities CDVWebViewEngineAvailable] || (WK_WEB_VIEW_ONLY && atLeastCordova4))
+#if WK_WEB_VIEW_ONLY && defined(__CORDOVA_4_0_0)
+    BOOL useUiWebView = NO;
+#else
+    BOOL useUiWebView = YES;
+#endif
+    if([Utilities CDVWebViewEngineAvailable] || !useUiWebView)
     {
         [self.webViewEngine loadRequest:[NSURLRequest requestWithURL:url]];
     } else {
