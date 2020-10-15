@@ -35,7 +35,11 @@ In order to ensure that your end users always have a functioning version of your
 Cordova 5.0.0+ is fully supported, along with the following associated platforms:
 
 * Android ([cordova-android](https://github.com/apache/cordova-android) 4.0.0+) - *Including CrossWalk!* *Note: Only on TLS 1.2 compatible devices*
-* iOS ([cordova-ios](https://github.com/apache/cordova-ios) 3.9.0+) - *Note: In order to use CodePush along with the [`cordova-plugin-wkwebview-engine`](https://github.com/apache/cordova-plugin-wkwebview-engine) plugin, you need to install `v1.5.1-beta+` version of `cordova-plugin-code-push`, which includes full support for apps using either WebView.*
+* iOS ([cordova-ios](https://github.com/apache/cordova-ios) 3.9.0+) - please see notes below.
+
+> Note: Starting with v2.0.0 `cordova-plugin-code-push` doesn't support apps using UIWebView due to [Apple officially deprecated it and discourage developers from using it](https://developer.apple.com/news/?id=12232019b). Prior versions of the plugin still support UIWebView but be aware that the App Store will no longer accept new apps using UIWebView as of April 2020 and app updates using UIWebView as of December 2020.
+
+> Note: In order to use CodePush along with the [`cordova-plugin-wkwebview-engine`](https://github.com/apache/cordova-plugin-wkwebview-engine) plugin, you need to install `v1.5.1-beta+` version of `cordova-plugin-code-push`, which includes full support for apps using either WebView. Please see [Using WKWebView](#using-wkwebview) section for more information of how to confiure your app to use `cordova-plugin-wkwebview-engine`.
 
 To check which versions of each Cordova platform you are currently using, you can run the following command and inspect the `Installed platforms` list:
 
@@ -123,10 +127,15 @@ With the CodePush plugin installed, configure your app to use it via the followi
 
 You are now ready to use the plugin in the application code. See the [sample applications](/samples) for examples and the API documentation for more details.
 
-*NOTE: There is a possibility to specify WebView engine on the plugin build phase. By default UIWebView engine is used. You can force plugin to use WKWebView by adding this iOS specific preference:*
-```xml
-<preference name="WKWebViewOnly" value="true" />
-```
+### Using WKWebView
+
+For cordova-ios v4-v5 there is a possibility to specify WebView engine on the plugin build phase. By default UIWebView engine is used. To use WKWebView engine please do the following:
+
+* Install [cordova-plugin-wkwebview-engine](https://github.com/apache/cordova-plugin-wkwebview-engine#installation)
+* [Configure your app](https://github.com/apache/cordova-plugin-wkwebview-engine#required-permissions) to use WKWebView
+
+> Note: `cordova-plugin-wkwebview-engine` is just a workaround for cordova-ios v4-v5 users to be able to use WKWebView in their apps to avoid stop accepting updates via AppStore as of December 2020.
+Cordova-ios v6+ has full support for native WKWebView and doesn't require `cordova-plugin-wkwebview-engine`.
 
 ## Plugin Usage
 
