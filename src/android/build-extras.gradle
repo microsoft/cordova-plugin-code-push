@@ -63,5 +63,5 @@ android.buildTypes.each {
 }
 
 dependencies {
-    compile('com.nimbusds:nimbus-jose-jwt:5.1') { exclude group: "net.minidev", module: "json-smart" }
+    compile 'com.nimbusds:nimbus-jose-jwt:5.1'
 }
