@@ -10,7 +10,7 @@
         <dependency id="cordova-plugin-dialogs" version=">=1.1.1" />
         <dependency id="cordova-plugin-device" version=">=1.1.0" />
         <dependency id="cordova-plugin-file" version=">=6.0.1" />
-        <dependency id="cordova-plugin-advanced-http" url="https://github.com/meiram-tr/cordova-plugin-advanced-http" />
+        <dependency id="cordova-plugin-advanced-http" url="https://github.com/meiram-tr/cordova-plugin-advanced-http.git#c2a0317b8f52469293c89c7ea4d1fb51a1545d70" />
         <dependency id="cordova-plugin-zip" version=">=3.1.0" />
 
         <js-module src="bin/www/codePush.js" name="codePush">
