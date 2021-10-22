@@ -384,7 +384,7 @@ Immediately restarts the app. This method is for advanced scenarios, and is prim
 codePush.sync(syncCallback?, syncOptions?, downloadProgress?, syncErrback?);
 ```
 
-Synchronizes your app's code and images with the latest release to the configured deployment. Unlike the `checkForUpdate` method, which simply checks for the presence of an update, and let's you control what to do next, `sync` handles the update check, download and installation experience for you.
+Synchronizes your app's code and images with the latest release to the configured deployment. Unlike the `checkForUpdate` method, which simply checks for the presence of an update, and lets you control what to do next, `sync` handles the update check, download and installation experience for you.
 
 This method provides support for two different (but customizable) "modes" to easily enable apps with different requirements:
 
