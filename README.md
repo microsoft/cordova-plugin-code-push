@@ -1,6 +1,5 @@
-[![appcenterbanner](https://user-images.githubusercontent.com/31293287/32969262-3cc5d48a-cb99-11e7-91bf-fa57c67a371c.png)](http://microsoft.github.io/code-push/)
-
-#### [Sign up With App Center](https://appcenter.ms/signup?utm_source=CodePush&utm_medium=Azure) to use CodePush
+# Cordova support is retired in App Center
+Check our [blog post](https://devblogs.microsoft.com/appcenter/announcing-apache-cordova-retirement/) for more information.
 
 # Apache Cordova Plugin for CodePush
 
